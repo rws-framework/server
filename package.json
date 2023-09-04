@@ -89,5 +89,9 @@
     "webpack-cli": "^5.1.4",
     "pm2": "^5.3.0",
     "webpack-node-externals": "^3.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/papablack/rws.git"
   }
 }
