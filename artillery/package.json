@@ -1,0 +1,10 @@
+{
+  "name": "edrna_websocket_server_artillery",
+  "version": "1.0.0",
+  "description": "",  
+  "author": "skygate",
+  "license": "ISC",
+  "dependencies": {    
+    "artillery": "^2.0.0-36"
+  }
+}
