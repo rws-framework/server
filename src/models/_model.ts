@@ -1,4 +1,4 @@
-import {DBService, getAppConfig} from "@rws-js/server";
+import {DBService, getAppConfig} from "rws-js-server";
 
 import TrackType, {IMetaOpts} from "./annotations/TrackType";
 interface IModel{

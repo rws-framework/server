@@ -1,5 +1,5 @@
 {
-  "name": "@rws-js/server",
+  "name": "rws-js-server",
   "version": "1.1.0",
   "description": "",
   "main": "dist/src/index.js",

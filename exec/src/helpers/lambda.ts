@@ -1,4 +1,4 @@
-import { ConsoleService, IAppConfig, LambdaService } from '@rws-js/server';
+import { ConsoleService, IAppConfig, LambdaService } from 'rws-js-server';
 import path from 'path';
 
 const { log, warn, error, color } = ConsoleService;

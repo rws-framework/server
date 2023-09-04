@@ -21,7 +21,7 @@ Make sure you have Node.js installed on your local machine. If not, you can down
 ## Setting Up
 
 ```bash
-npm install @rws-js/server --save
+npm install rws-js-server --save
 ```
 
 ## Creating Server Configuration
@@ -114,7 +114,7 @@ Define the connection details for your MongoDB instance and server configuration
 **config.ts**:
 
 ```typescript
-import { IAppConfig } from "@rws-js/server";
+import { IAppConfig } from "rws-js-server";
 import ConfigService from "../services/ConfigService";
 import { getModels } from "../models";
 import ControllerList from "../controllers";
@@ -149,7 +149,7 @@ export default (): IAppConfig => {
 ***A sample command***:
 
 ```typescript
-import { ICmdParams, RWSCommand } from '@rws-js/server';
+import { ICmdParams, RWSCommand } from 'rws-js-server';
 
 class HelloCommand extends RWSCommand {
     constructor(){
@@ -213,7 +213,7 @@ export function getModels(): any[] {
 RWSModel example: 
 
 ```typescript
-import { RWSannotations, RWSModel } from "@rws-js/server";
+import { RWSannotations, RWSModel } from "rws-js-server";
 
 import ITimeTracker from "./interfaces/ITimeTracker";
 import 'reflect-metadata';
@@ -294,7 +294,7 @@ import routes from './routing/routes';
 *"path"* is request path
 
 ```typescript
-import {IHTTPRoute} from "@rws-js/server";
+import {IHTTPRoute} from "rws-js-server";
 
 export default (): IHTTPRoute[] => {
     return [
@@ -313,7 +313,7 @@ import {
     RWSannotations, 
     RWSController, 
     IRequestParams 
-} from "@rws-js/server";
+} from "rws-js-server";
 
 const { Route } = RWSannotations.routingAnnotations;
 class HomeController extends RWSController{
@@ -344,12 +344,12 @@ those routes goes to config file in "ws_routes" field
 
 ### Running the Server
 
-Create a new index.ts file in the root of your project. This file will import the serverInit function from @rws-js/server, and your configuration function from config.ts.
+Create a new index.ts file in the root of your project. This file will import the serverInit function from rws-js-server, and your configuration function from config.ts.
 
 **serverInit() takes in IAppConfig interface:**
 
 ```typescript
-import { IHTTPRoute, WsRoutes, RWSController, RWSCommand } from "@rws-js/server"
+import { IHTTPRoute, WsRoutes, RWSController, RWSCommand } from "rws-js-server"
 
 export default interface IAppConfig {    
     mongo_url: string
@@ -450,7 +450,7 @@ class DBService extends TheService {
 **index.ts**:
 
 ```typescript
-import { serverInit } from "@rws-js/server";
+import { serverInit } from "rws-js-server";
 
 import path from 'path';
 import ConfigService from "./services/ConfigService";

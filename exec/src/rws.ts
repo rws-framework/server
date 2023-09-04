@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getAppConfig, IAppConfig, RWSCommand, ICmdParams, ProcessService, ConsoleService } from '@rws-js/server';
+import { getAppConfig, IAppConfig, RWSCommand, ICmdParams, ProcessService, ConsoleService } from 'rws-js-server';
 import initAction from './helpers/init';
 import lambdaAction, { ILambdaParams } from './helpers/lambda';
 

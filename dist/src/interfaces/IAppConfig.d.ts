@@ -1,4 +1,4 @@
-import { IHTTPRoute, WsRoutes, RWSController, RWSCommand } from "@rws-js/server";
+import { IHTTPRoute, WsRoutes, RWSController, RWSCommand } from "rws-js-server";
 export default interface IAppConfig {
     mongo_url: string;
     mongo_db: string;

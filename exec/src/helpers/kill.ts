@@ -1,4 +1,4 @@
-import { ConsoleService, ProcessService } from '@rws-js/server';
+import { ConsoleService, ProcessService } from 'rws-js-server';
 const { log, warn, error, color } = ConsoleService;
 import path from 'path';
 import fs from 'fs';

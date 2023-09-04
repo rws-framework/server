@@ -15,7 +15,7 @@
       "sourceMap": true,    
       "declaration": true,
       "paths": {        
-        "@rws-js/server": ["./src/index"]
+        "rws-js-server": ["./src/index"]
       }
     },
     "include": [

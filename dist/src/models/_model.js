@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TrackType = void 0;
-const server_1 = require("@rws-js/server");
+const rws_js_server_1 = require("rws-js-server");
 const TrackType_1 = __importDefault(require("./annotations/TrackType"));
 exports.TrackType = TrackType_1.default;
 class Model {
@@ -144,7 +144,7 @@ class Model {
         let updatedModelData = data;
         if (this.id) {
             this.preUpdate();
-            updatedModelData = await server_1.DBService.update(data, this.getCollection());
+            updatedModelData = await rws_js_server_1.DBService.update(data, this.getCollection());
             await this._asyncFill(updatedModelData);
             this.postUpdate();
         }
@@ -152,7 +152,7 @@ class Model {
             this.preCreate();
             const timeSeriesModel = await Promise.resolve().then(() => __importStar(require('./types/TimeSeriesModel')));
             const isTimeSeries = this instanceof timeSeriesModel.default;
-            updatedModelData = await server_1.DBService.insert(data, this.getCollection(), isTimeSeries);
+            updatedModelData = await rws_js_server_1.DBService.insert(data, this.getCollection(), isTimeSeries);
             await this._asyncFill(updatedModelData);
             this.postCreate();
         }
@@ -209,11 +209,11 @@ class Model {
     }
     static async watchCollection(preRun) {
         const collection = Reflect.get(this, '_collection');
-        return await server_1.DBService.watchCollection(collection, preRun);
+        return await rws_js_server_1.DBService.watchCollection(collection, preRun);
     }
     static async findOneBy(conditions) {
         const collection = Reflect.get(this, '_collection');
-        const dbData = await server_1.DBService.findOneBy(collection, conditions);
+        const dbData = await rws_js_server_1.DBService.findOneBy(collection, conditions);
         if (dbData) {
             const inst = new this();
             return await inst._asyncFill(dbData);
@@ -222,17 +222,17 @@ class Model {
     }
     static async delete(conditions) {
         const collection = Reflect.get(this, '_collection');
-        return await server_1.DBService.delete(collection, conditions);
+        return await rws_js_server_1.DBService.delete(collection, conditions);
     }
     async delete() {
         const collection = Reflect.get(this, '_collection');
-        return await server_1.DBService.delete(collection, {
+        return await rws_js_server_1.DBService.delete(collection, {
             id: this.id
         });
     }
     static async findBy(conditions) {
         const collection = Reflect.get(this, '_collection');
-        const dbData = await server_1.DBService.findBy(collection, conditions);
+        const dbData = await rws_js_server_1.DBService.findBy(collection, conditions);
         if (dbData.length) {
             const instanced = [];
             for (const data of dbData) {
@@ -249,7 +249,7 @@ class Model {
         return newModel;
     }
     loadModels() {
-        const AppConfigService = (0, server_1.getAppConfig)();
+        const AppConfigService = (0, rws_js_server_1.getAppConfig)();
         return AppConfigService.get('user_models');
     }
 }
