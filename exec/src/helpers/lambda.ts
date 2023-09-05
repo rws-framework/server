@@ -1,5 +1,6 @@
-import { ConsoleService, IAppConfig, LambdaService } from 'rws-js-server';
+import { ConsoleService, IAppConfig, LambdaService, AWSService } from 'rws-js-server';
 import path from 'path';
+import fs from 'fs';
 
 const { log, warn, error, color } = ConsoleService;
 
@@ -20,15 +21,27 @@ interface ILambdaParams {
 const lambdaAction = async (params: ILambdaParams) => {
    log(color().green('[RWS Lambda CLI]') + ' preparing artillery lambda function...');
 
-   const vpcId = params.subnetId || await LambdaService.findDefaultVPC(); 
-
-   warn(`${moduleDir}/artillery`);
+   const vpcId = params.subnetId || await AWSService.findDefaultVPC(); 
  
    log(color().green('[RWS Lambda CLI]') + ' Progress: ');
-   const lambdaPaths = await LambdaService.archiveLambda(`${moduleDir}/artillery`, moduleCfgDir);
+
+   const sourceArtilleryCfg = `${path.resolve(process.cwd())}/artillery-config.yml`;
+   const targetArtilleryCfg = `${moduleDir}/lambda-functions/artillery/artillery-config.yml`;
+
+   if(fs.existsSync(targetArtilleryCfg)){
+    fs.unlinkSync(targetArtilleryCfg);
+   }
+
+   if(!fs.existsSync(sourceArtilleryCfg)){
+    throw `Create "artillery-config.yml" in your project root directory.`;
+   }
+
+   fs.copyFileSync(sourceArtilleryCfg, targetArtilleryCfg);   
+   
+   const lambdaPaths = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/artillery`, moduleCfgDir);
 
    try {
-    await LambdaService.deployLambda('junction-artillery', lambdaPaths, vpcId);
+        await LambdaService.deployLambda('RWS-artillery', lambdaPaths, vpcId);    
    } catch (e: Error | any) {
     error(e.message);
     log(e.stack);

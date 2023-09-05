@@ -17,6 +17,7 @@ import AuthService from './services/AuthService';
 import ConsoleService from './services/ConsoleService';
 import ProcessService from './services/ProcessService';
 import LambdaService from './services/LambdaService';
+import AWSService from './services/AWSService';
 
 
 import { InverseRelation, InverseTimeSeries, Relation, TrackType} from './models/annotations/index';
@@ -54,6 +55,7 @@ export {
     AuthService,
     ConsoleService,
     LambdaService,
+    AWSService,
 
     TimeSeriesModel,
 

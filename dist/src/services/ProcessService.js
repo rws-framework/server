@@ -322,6 +322,21 @@ class ProcessService extends _service_1.default {
             });
         });
     }
+    setRWSVar(fileName, value) {
+        const executionDir = process.cwd();
+        const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+        fs_1.default.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
+    }
+    getRWSVar(fileName) {
+        const executionDir = process.cwd();
+        const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+        try {
+            return fs_1.default.readFileSync(`${moduleCfgDir}/${fileName}`, 'utf-8');
+        }
+        catch (e) {
+            return null;
+        }
+    }
 }
 exports.default = ProcessService.getSingleton();
 //# sourceMappingURL=ProcessService.js.map

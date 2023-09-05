@@ -22,6 +22,8 @@ declare class ProcessService extends TheService {
     killProcess(scriptPath: string): Promise<void>;
     killRWS(): Promise<void>;
     runShellCommand(command: string): Promise<void>;
+    setRWSVar(fileName: string, value: string): void;
+    getRWSVar(fileName: string): string | null;
 }
 declare const _default_1: ProcessService;
 export default _default_1;

@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RWSTestSuite = exports.RWSannotations = exports.ProcessService = exports.AppDefaultConfig = exports.Socket = exports.TimeSeriesModel = exports.LambdaService = exports.ConsoleService = exports.AuthService = exports.DBService = exports.RWSServer = exports.RWSModel = exports.RWSCommand = exports.RWSSocket = exports.RWSService = exports.RWSController = exports.getAppConfig = exports.SetupRWS = exports.serverInit = void 0;
+exports.RWSTestSuite = exports.RWSannotations = exports.ProcessService = exports.AppDefaultConfig = exports.Socket = exports.TimeSeriesModel = exports.AWSService = exports.LambdaService = exports.ConsoleService = exports.AuthService = exports.DBService = exports.RWSServer = exports.RWSModel = exports.RWSCommand = exports.RWSSocket = exports.RWSService = exports.RWSController = exports.getAppConfig = exports.SetupRWS = exports.serverInit = void 0;
 const socket_io_1 = require("socket.io");
 Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return socket_io_1.Socket; } });
 const AppConfigService_1 = __importDefault(require("./services/AppConfigService"));
@@ -49,6 +49,8 @@ const ProcessService_1 = __importDefault(require("./services/ProcessService"));
 exports.ProcessService = ProcessService_1.default;
 const LambdaService_1 = __importDefault(require("./services/LambdaService"));
 exports.LambdaService = LambdaService_1.default;
+const AWSService_1 = __importDefault(require("./services/AWSService"));
+exports.AWSService = AWSService_1.default;
 const index_1 = require("./models/annotations/index");
 const index_2 = require("./routing/annotations/index");
 const AppConfigService_2 = require("./services/AppConfigService");

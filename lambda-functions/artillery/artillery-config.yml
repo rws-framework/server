@@ -1,0 +1,9 @@
+config:
+  target: 'https://junction.hal.skygate.io'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+scenarios:
+  - flow:
+      - get:
+          url: '/server/ping'

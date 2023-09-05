@@ -12,9 +12,9 @@ const { log, warn, error, color } = ConsoleService;
 
 let forceReload = false;
 
-if(args.indexOf('--force') > -1){
+if(args.indexOf('--force-compile') > -1){
     forceReload = true;
-    args = args.replace('--force', '');
+    args = args.replace('--force-compile', '');
 }
 
 const pm2 = require('pm2');
