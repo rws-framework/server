@@ -75,23 +75,31 @@ class AWSService extends TheService {
         }
     }
 
-    async createArchive(outputPath: string, sourcePath: string, onlyNodeModules = false): Promise<string> {
+    async createArchive(outputPath: string, sourcePath: string, onlyNodeModules = false, fullzip = false): Promise<string> {
         const archive = archiver('zip');
         const output = fs.createWriteStream(outputPath);
         archive.pipe(output);
 
-        if (onlyNodeModules) {
-            archive.glob('**', {
-                cwd: `${process.cwd()}/node_modules`,
-                dot: true,
-                ignore: ['.rws/**'],                
-            }, { prefix: 'node_modules' });
-        } else {
+        if(fullzip){
             archive.glob('**', {
                 cwd: sourcePath,
-                dot: true,
-                ignore: ['node_modules/**']
+                dot: true                      
             });
+        }else{
+
+            if (onlyNodeModules) {
+                archive.glob('**', {
+                    cwd: `${process.cwd()}/node_modules`,
+                    dot: true,
+                    ignore: ['.rws/**'],                
+                }, { prefix: 'node_modules' });
+            } else {
+                archive.glob('**', {
+                    cwd: sourcePath,
+                    dot: true,
+                    ignore: ['node_modules/**']
+                });
+            }
         }
 
         archive.finalize();
@@ -250,7 +258,7 @@ class AWSService extends TheService {
 
         if(!(await LambdaService.functionExists(_UNZIP_FUNCTION_NAME))){
             log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`);
-            const lambdaPaths = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs_loader`, moduleCfgDir);
+            const lambdaPaths = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs_loader`, moduleCfgDir, true);
 
             await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, lambdaPaths, subnetId, true);
         }

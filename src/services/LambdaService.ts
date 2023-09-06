@@ -26,32 +26,37 @@ class LambdaService extends TheService {
     super();
   }
 
-  async archiveLambda(lambdaDirPath: string, moduleCfgDir: string): Promise<[string, string]> {
+  async archiveLambda(lambdaDirPath: string, moduleCfgDir: string, fullArchive: boolean = false): Promise<[string, string]> {
     log(color().green('[RWS Lambda Service]') + ' initiating archiving of: ', lambdaDirPath);
     const lambdaDirName = lambdaDirPath.split('/').filter(Boolean).pop();
     const [zipPathWithoutNodeModules, zipPathWithNodeModules] = this.determineLambdaPackagePaths(lambdaDirName, moduleCfgDir);
 
-    // Create lambda directory if it doesn't exist
+    
     if (!fs.existsSync(path.join(moduleCfgDir, 'lambda'))) {
       fs.mkdirSync(path.join(moduleCfgDir, 'lambda'));
     }
 
     // Create archives
     const tasks: Promise<string>[] = [];
-    if (!fs.existsSync(zipPathWithNodeModules)) {
-      log(`${color().green('[RWS Lambda Service]')} archiving .node_modules from ROOT_DIR to .zip`);
-      tasks.push(AWSService.createArchive(zipPathWithNodeModules, lambdaDirPath, true));
-    }
-    
-    if (fs.existsSync(zipPathWithoutNodeModules)) {
-      fs.unlinkSync(zipPathWithoutNodeModules);
-    }
 
-    log(`${color().green('[RWS Lambda Service]')} archiving ${lambdaDirPath} to .zip`);
-    tasks.push(AWSService.createArchive(zipPathWithoutNodeModules, lambdaDirPath));
-    
-
-    await Promise.all(tasks);
+    if(fullArchive){
+      tasks.push(AWSService.createArchive(zipPathWithNodeModules, lambdaDirPath, false, true));
+    } else {
+      if (!fs.existsSync(zipPathWithNodeModules)) {
+        log(`${color().green('[RWS Lambda Service]')} archiving .node_modules from ROOT_DIR to .zip`);
+        tasks.push(AWSService.createArchive(zipPathWithNodeModules, lambdaDirPath, true));
+      }
+      
+      if (fs.existsSync(zipPathWithoutNodeModules)) {
+        fs.unlinkSync(zipPathWithoutNodeModules);
+      }
+  
+      log(`${color().green('[RWS Lambda Service]')} archiving ${lambdaDirPath} to .zip`);
+      tasks.push(AWSService.createArchive(zipPathWithoutNodeModules, lambdaDirPath));
+      
+  
+      await Promise.all(tasks);
+    }     
 
     log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('ZIP package complete.')}`);
 

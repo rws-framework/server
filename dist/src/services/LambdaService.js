@@ -17,26 +17,30 @@ class LambdaService extends _service_1.default {
         super();
         this.efs = aws_sdk_1.default.EFS;
     }
-    async archiveLambda(lambdaDirPath, moduleCfgDir) {
+    async archiveLambda(lambdaDirPath, moduleCfgDir, fullArchive = false) {
         log(color().green('[RWS Lambda Service]') + ' initiating archiving of: ', lambdaDirPath);
         const lambdaDirName = lambdaDirPath.split('/').filter(Boolean).pop();
         const [zipPathWithoutNodeModules, zipPathWithNodeModules] = this.determineLambdaPackagePaths(lambdaDirName, moduleCfgDir);
-        // Create lambda directory if it doesn't exist
         if (!fs_1.default.existsSync(path_1.default.join(moduleCfgDir, 'lambda'))) {
             fs_1.default.mkdirSync(path_1.default.join(moduleCfgDir, 'lambda'));
         }
         // Create archives
         const tasks = [];
-        if (!fs_1.default.existsSync(zipPathWithNodeModules)) {
-            log(`${color().green('[RWS Lambda Service]')} archiving .node_modules from ROOT_DIR to .zip`);
-            tasks.push(AWSService_1.default.createArchive(zipPathWithNodeModules, lambdaDirPath, true));
+        if (fullArchive) {
+            tasks.push(AWSService_1.default.createArchive(zipPathWithNodeModules, lambdaDirPath, false, true));
         }
-        if (fs_1.default.existsSync(zipPathWithoutNodeModules)) {
-            fs_1.default.unlinkSync(zipPathWithoutNodeModules);
+        else {
+            if (!fs_1.default.existsSync(zipPathWithNodeModules)) {
+                log(`${color().green('[RWS Lambda Service]')} archiving .node_modules from ROOT_DIR to .zip`);
+                tasks.push(AWSService_1.default.createArchive(zipPathWithNodeModules, lambdaDirPath, true));
+            }
+            if (fs_1.default.existsSync(zipPathWithoutNodeModules)) {
+                fs_1.default.unlinkSync(zipPathWithoutNodeModules);
+            }
+            log(`${color().green('[RWS Lambda Service]')} archiving ${lambdaDirPath} to .zip`);
+            tasks.push(AWSService_1.default.createArchive(zipPathWithoutNodeModules, lambdaDirPath));
+            await Promise.all(tasks);
         }
-        log(`${color().green('[RWS Lambda Service]')} archiving ${lambdaDirPath} to .zip`);
-        tasks.push(AWSService_1.default.createArchive(zipPathWithoutNodeModules, lambdaDirPath));
-        await Promise.all(tasks);
         log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('ZIP package complete.')}`);
         return [zipPathWithNodeModules, zipPathWithoutNodeModules];
     }
@@ -45,7 +49,7 @@ class LambdaService extends _service_1.default {
         const zipPathWithoutNodeModules = path_1.default.join(moduleCfgDir, 'lambda', `lambda-${lambdaDirName}-app.zip`);
         return [zipPathWithoutNodeModules, zipPathWithNodeModules];
     }
-    async deployLambda(functionName, appPaths, subnetId) {
+    async deployLambda(functionName, appPaths, subnetId, noEFS = false) {
         const [zipPath, layerPath] = appPaths;
         console.log(appPaths);
         this.region = (0, AppConfigService_1.default)().get('aws_lambda_region');
@@ -55,13 +59,15 @@ class LambdaService extends _service_1.default {
             await AWSService_1.default.S3BucketExists(s3BucketName);
             // const layerARN = await this.createLambdaLayer(layerPath, functionName);
             const [efsId, efsExisted] = await AWSService_1.default.createEFS('RWS_EFS', subnetId);
-            if (!efsExisted) {
-                log(`${color().green('[RWS Lambda Service]')} creating EFS for lambda.`);
-                await this.deployModules(layerPath, functionName, efsId, subnetId);
-            }
-            else {
-                log(`${color().green('[RWS Lambda Service]')} EFS for lambda is created.`);
-                await this.deployModules(layerPath, functionName, efsId, subnetId);
+            if (!noEFS) {
+                if (!efsExisted) {
+                    log(`${color().green('[RWS Lambda Service]')} creating EFS for lambda.`);
+                    await this.deployModules(layerPath, functionName, efsId, subnetId);
+                }
+                else {
+                    log(`${color().green('[RWS Lambda Service]')} EFS for lambda is created.`);
+                    await this.deployModules(layerPath, functionName, efsId, subnetId);
+                }
             }
             log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda on ' + this.region + ' using ' + s3BucketName)}`);
             const s3params = {

@@ -6,9 +6,9 @@ declare class LambdaService extends TheService {
     private s3;
     private efs;
     constructor();
-    archiveLambda(lambdaDirPath: string, moduleCfgDir: string): Promise<[string, string]>;
+    archiveLambda(lambdaDirPath: string, moduleCfgDir: string, fullArchive?: boolean): Promise<[string, string]>;
     determineLambdaPackagePaths(lambdaDirName: string, moduleCfgDir: string): [string, string];
-    deployLambda(functionName: string, appPaths: string[], subnetId?: string): Promise<any>;
+    deployLambda(functionName: string, appPaths: string[], subnetId?: string, noEFS?: boolean): Promise<any>;
     deployModules(layerPath: string, functionName: string, efsId: string, subnetId: string): Promise<void>;
     functionExists(functionName: String): Promise<boolean>;
     waitForLambda(functionName: string, timeoutMs?: number, intervalMs?: number): Promise<void>;

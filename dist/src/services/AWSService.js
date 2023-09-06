@@ -57,23 +57,31 @@ class AWSService extends _service_1.default {
             });
         }
     }
-    async createArchive(outputPath, sourcePath, onlyNodeModules = false) {
+    async createArchive(outputPath, sourcePath, onlyNodeModules = false, fullzip = false) {
         const archive = (0, archiver_1.default)('zip');
         const output = fs_1.default.createWriteStream(outputPath);
         archive.pipe(output);
-        if (onlyNodeModules) {
-            archive.glob('**', {
-                cwd: `${process.cwd()}/node_modules`,
-                dot: true,
-                ignore: ['.rws/**'],
-            }, { prefix: 'node_modules' });
-        }
-        else {
+        if (fullzip) {
             archive.glob('**', {
                 cwd: sourcePath,
-                dot: true,
-                ignore: ['node_modules/**']
+                dot: true
             });
+        }
+        else {
+            if (onlyNodeModules) {
+                archive.glob('**', {
+                    cwd: `${process.cwd()}/node_modules`,
+                    dot: true,
+                    ignore: ['.rws/**'],
+                }, { prefix: 'node_modules' });
+            }
+            else {
+                archive.glob('**', {
+                    cwd: sourcePath,
+                    dot: true,
+                    ignore: ['node_modules/**']
+                });
+            }
         }
         archive.finalize();
         return new Promise((resolve, reject) => {
@@ -210,8 +218,8 @@ class AWSService extends _service_1.default {
         const _UNZIP_FUNCTION_NAME = 'RWS_EFS_LOADER';
         if (!(await LambdaService_1.default.functionExists(_UNZIP_FUNCTION_NAME))) {
             log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`);
-            const lambdaPaths = await LambdaService_1.default.archiveLambda(`${moduleDir}/lambda-functions/efs_loader`, moduleCfgDir);
-            await LambdaService_1.default.deployLambda(_UNZIP_FUNCTION_NAME, lambdaPaths, subnetId);
+            const lambdaPaths = await LambdaService_1.default.archiveLambda(`${moduleDir}/lambda-functions/efs_loader`, moduleCfgDir, true);
+            await LambdaService_1.default.deployLambda(_UNZIP_FUNCTION_NAME, lambdaPaths, subnetId, true);
         }
         return _UNZIP_FUNCTION_NAME;
     }
