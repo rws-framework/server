@@ -337,6 +337,9 @@ class ProcessService extends _service_1.default {
             return null;
         }
     }
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 }
 exports.default = ProcessService.getSingleton();
 //# sourceMappingURL=ProcessService.js.map

@@ -119,4 +119,4 @@ class ConsoleService extends TheService
     }
 }
 
-export default ConsoleService.getSingleton();;
+export default ConsoleService.getSingleton();

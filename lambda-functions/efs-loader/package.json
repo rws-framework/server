@@ -1,0 +1,12 @@
+{
+  "name": "rws_efs_loader",
+  "version": "1.0.0",
+  "description": "",  
+  "author": "skygate",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {    
+    "aws-sdk": "^2.1450.0",
+    "unzipper": "^0.10.14"
+  }
+}

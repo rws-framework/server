@@ -90,5 +90,4 @@ class ConsoleService extends _service_1.default {
     }
 }
 exports.default = ConsoleService.getSingleton();
-;
 //# sourceMappingURL=ConsoleService.js.map

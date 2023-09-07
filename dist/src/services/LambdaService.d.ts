@@ -2,11 +2,8 @@ import TheService from "./_service";
 import { String } from "aws-sdk/clients/batch";
 declare class LambdaService extends TheService {
     private region;
-    private lambda;
-    private s3;
-    private efs;
     constructor();
-    archiveLambda(lambdaDirPath: string, moduleCfgDir: string, fullArchive?: boolean): Promise<[string, string]>;
+    archiveLambda(lambdaDirPath: string, moduleCfgDir: string): Promise<[string, string]>;
     determineLambdaPackagePaths(lambdaDirName: string, moduleCfgDir: string): [string, string];
     deployLambda(functionName: string, appPaths: string[], subnetId?: string, noEFS?: boolean): Promise<any>;
     deployModules(layerPath: string, functionName: string, efsId: string, subnetId: string): Promise<void>;

@@ -8,10 +8,6 @@ declare class AWSService extends TheService {
     private ec2;
     constructor();
     _initApis(): void;
-    createArchive(outputPath: string, sourcePath: string, onlyNodeModules?: boolean, fullzip?: boolean): Promise<string>;
-    S3BucketExists(bucketName: string): Promise<string>;
-    createEFS(functionName: string, subnetId: string): Promise<[string, boolean]>;
-    createMountTarget(fileSystemId: string, subnetId: string): Promise<void>;
     findDefaultVPC(): Promise<string>;
     getSubnetIdForVpc(vpcId: string): Promise<string>;
     listSecurityGroups(): Promise<string[]>;

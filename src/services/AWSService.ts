@@ -9,6 +9,8 @@ import fs from 'fs';
 import AWS from 'aws-sdk';
 import archiver from 'archiver';
 import { String } from "aws-sdk/clients/batch";
+import ZipService from "./ZipService";
+import FSService from "./FSService";
 
 
 const { log, warn, error, color, AWSProgressBar } = ConsoleService;
@@ -73,110 +75,13 @@ class AWSService extends TheService {
                 }
             });
         }
-    }
-
-    async createArchive(outputPath: string, sourcePath: string, onlyNodeModules = false, fullzip = false): Promise<string> {
-        const archive = archiver('zip');
-        const output = fs.createWriteStream(outputPath);
-        archive.pipe(output);
-
-        if(fullzip){
-            archive.glob('**', {
-                cwd: sourcePath,
-                dot: true                      
-            });
-        }else{
-
-            if (onlyNodeModules) {
-                archive.glob('**', {
-                    cwd: `${process.cwd()}/node_modules`,
-                    dot: true,
-                    ignore: ['.rws/**'],                
-                }, { prefix: 'node_modules' });
-            } else {
-                archive.glob('**', {
-                    cwd: sourcePath,
-                    dot: true,
-                    ignore: ['node_modules/**']
-                });
-            }
-        }
-
-        archive.finalize();
-
-        return new Promise((resolve, reject) => {
-            output.on('close', () => resolve(outputPath));
-            output.on('error', reject);
-        });
-    }
-
-    async S3BucketExists(bucketName: string): Promise<string> { 
-        try {
-            log('WTF0', this.getRegion());
-            await this.getS3().headBucket({ Bucket: bucketName }).promise();
-
-            return bucketName;
-        } catch (err: Error | any) {
-            if (err.code === 'NotFound') {
-                // Create bucket if it doesn't exist
-                const params = {
-                    Bucket: bucketName,
-                };
-
-                log('WTF', bucketName);
-
-                await this.getS3().createBucket(params).promise();
-                log(`${color().green(`[RWS Lambda Service]`)} s3 bucket ${bucketName} created.`);
-                return bucketName;
-            } else {
-                // Handle other errors
-                error(`Error checking bucket ${bucketName}:`, err);
-            }
-        }
-    }
-
-    async createEFS(functionName: string, subnetId: string): Promise<[string, boolean]> {      
-        const response = await this.getEFS().describeFileSystems({ CreationToken: functionName }).promise();
-
-        if (response.FileSystems && response.FileSystems.length > 0) {
-            return [response.FileSystems[0].FileSystemId, true];
-        } else {
-            const params = {
-                CreationToken: functionName,
-                PerformanceMode: 'generalPurpose',
-            };
-
-            try {
-                const response = await this.getEFS().createFileSystem(params).promise();
-                await this.createMountTarget(response.FileSystemId, subnetId);
-                console.log('EFS Created:', response);
-                return [response.FileSystemId, false];
-            } catch (error) {
-                console.log('Error creating EFS:', error);
-            }
-        }
-    }
-
-    async createMountTarget(fileSystemId: string, subnetId: string) {
-        const params = {
-            FileSystemId: fileSystemId,
-            SubnetId: subnetId,
-        };
-
-        try {
-            const response = await this.getEFS().createMountTarget(params).promise();
-            console.log('Mount Target Created:', response);
-        } catch (error) {
-            console.error('Error creating Mount Target:', error);
-        }
-    }
+    }        
 
     async findDefaultVPC() {
         try {
             const response = await this.getEC2().describeVpcs({ Filters: [{ Name: 'isDefault', Values: ['true'] }] }).promise();
 
-            if (response.Vpcs && response.Vpcs.length > 0) {
-                console.log('Default VPC ID:', response.Vpcs[0].VpcId);
+            if (response.Vpcs && response.Vpcs.length > 0) {                
                 return await this.getSubnetIdForVpc(response.Vpcs[0].VpcId);
             } else {
                 console.log('No default VPC found.');
@@ -205,15 +110,12 @@ class AWSService extends TheService {
 
     async listSecurityGroups(): Promise<string[]> 
     {
-
-
         try {
             const result = await this.getEC2().describeSecurityGroups().promise();
 
             const securityGroups = result.SecurityGroups || [];
 
-            const securityGroupIds = securityGroups.map(sg => sg.GroupId);
-            console.log('Security Group IDs:', securityGroupIds);
+            const securityGroupIds = securityGroups.map(sg => sg.GroupId);            
 
             return securityGroupIds;
         } catch (error) {
@@ -237,9 +139,12 @@ class AWSService extends TheService {
         };
     
         try {
+            log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function with ${modulesS3Key} in ${s3Bucket} bucket.`);
+
             const response = await this.getLambda().invoke(params).promise();
             return JSON.parse(response.Payload as string);
         } catch (error) {
+            // await FSService.deleteEFS(efsId);
             console.error('Error invoking Lambda:', error);
             throw error;
         }
@@ -251,20 +156,23 @@ class AWSService extends TheService {
 
         const filePath:string = module.id;        
         const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
-        const moduleDir = path.resolve(cmdDir, '..', '..');
+        const moduleDir = path.resolve(cmdDir, '..', '..', '..', '..');
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
 
         const _UNZIP_FUNCTION_NAME: string = 'RWS_EFS_LOADER';
 
+        log(`${color().green(`[RWS Clud FS Service]`)} processing EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`);
+
+
         if(!(await LambdaService.functionExists(_UNZIP_FUNCTION_NAME))){
-            log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`);
-            const lambdaPaths = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs_loader`, moduleCfgDir, true);
+            log(`${color().green(`[RWS Clud FS Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
+            const lambdaPaths = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
 
             await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, lambdaPaths, subnetId, true);
         }
 
         return _UNZIP_FUNCTION_NAME;
-    }
+    }    
 
     getS3(): AWS.S3 
     {

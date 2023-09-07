@@ -4,6 +4,7 @@
   "description": "",  
   "author": "skygate",
   "license": "ISC",
+  "type": "module",
   "dependencies": {    
     "artillery": "^2.0.0-36"
   }
