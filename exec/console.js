@@ -8,6 +8,10 @@ const { spawn, exec } = require('child_process');
 const crypto = require('crypto');
 const ProcessService = require('../dist/src/services/ProcessService').default;
 const ConsoleService = require('../dist/src/services/ConsoleService').default;
+const MD5Service = require('../dist/src/services/MD5Service').default;
+const UtilsService = require('../dist/src/services/UtilsService').default;
+
+const { filterNonEmpty } = UtilsService;
 const { log, warn, error, color } = ConsoleService;
 
 let forceReload = false;
@@ -48,8 +52,13 @@ const main = async () => {
     
     await generateCliClient();    
 
-    log(color().green('[RWS]') + ' generated CLI client executing...', command2map, ...args.split(' '))   
-    await ProcessService.PM2RunScript(`${webpackPath}/exec/dist/rws.js`, {}, command2map, ...args.split(' '));
+    log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`);
+
+    try {
+        await ProcessService.PM2ExecCommand(`${webpackPath}/exec/dist/rws.js`, { args: [command2map, ...filterNonEmpty(args.split(' '))] });
+    } catch(err) {
+        error(err);
+    }
 
     return;
 }
@@ -64,11 +73,9 @@ async function generateCliClient()
 
     const tsFile = path.resolve(__dirname, 'src') + '/rws.ts';
 
-    const cmdFiles = ProcessService.batchGenerateCommandFileMD5(moduleCfgDir);       
-    
-   
+    const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);       
 
-    if((!fs.existsSync(consoleClientHashFile) || await ProcessService.cliClientHasChanged(consoleClientHashFile, tsFile, cmdFiles)) || forceReload){
+    if((!fs.existsSync(consoleClientHashFile) || await MD5Service.cliClientHasChanged(consoleClientHashFile, tsFile, cmdFiles)) || forceReload){
         if(forceReload){
             warn('[RWS] Forcing CLI client reload...');
         }

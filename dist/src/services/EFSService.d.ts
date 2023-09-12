@@ -1,6 +1,6 @@
 import TheService from "./_service";
 import AWS from 'aws-sdk';
-declare class FSService extends TheService {
+declare class EFSService extends TheService {
     private region;
     private s3;
     private efs;
@@ -21,5 +21,5 @@ declare class FSService extends TheService {
     uploadToEFS(efsId: string, modulesS3Key: string, s3Bucket: string, subnetId: string): Promise<any>;
     processEFSLoader(subnetId: string): Promise<string>;
 }
-declare const _default: FSService;
+declare const _default: EFSService;
 export default _default;

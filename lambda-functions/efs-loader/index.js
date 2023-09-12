@@ -23,7 +23,7 @@ export const handler = async (event, context, callback) => {
           Key: modulesS3Key
       };
       
-      const zipFile = await s3.getObject(downloadParams).promise();
+      const zipFile = await S3.getObject(downloadParams).promise();
 
       // 2. Unzip the zip to efs ROOT/node_modules
       const destPath = '/mnt/efs/node_modules';

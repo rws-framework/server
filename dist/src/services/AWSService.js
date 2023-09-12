@@ -113,7 +113,7 @@ class AWSService extends _service_1.default {
             return JSON.parse(response.Payload);
         }
         catch (error) {
-            // await FSService.deleteEFS(efsId);
+            // await EFSService.deleteEFS(efsId);
             console.error('Error invoking Lambda:', error);
             throw error;
         }

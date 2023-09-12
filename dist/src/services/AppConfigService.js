@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppDefaultConfig = void 0;
 const _service_1 = __importDefault(require("./_service"));
+const fs_1 = __importDefault(require("fs"));
 const AppDefaultConfig = {
     mongo_url: null,
     mongo_db: null,
@@ -50,6 +51,21 @@ class AppConfigService extends _service_1.default {
             _service_1.default._instances[className] = new this(AppDefaultConfig);
         }
         return _service_1.default._instances[className];
+    }
+    setRWSVar(fileName, value) {
+        const executionDir = process.cwd();
+        const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+        fs_1.default.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
+    }
+    getRWSVar(fileName) {
+        const executionDir = process.cwd();
+        const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+        try {
+            return fs_1.default.readFileSync(`${moduleCfgDir}/${fileName}`, 'utf-8');
+        }
+        catch (e) {
+            return null;
+        }
     }
 }
 exports.default = (cfg) => AppConfigService.getConfigSingleton(cfg);

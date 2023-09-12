@@ -13,7 +13,7 @@ const { log, warn, error, color, AWSProgressBar } = ConsoleService;
 
 const __STATE_WAIT_TIME = 3000; //ms
 
-class FSService extends TheService {
+class EFSService extends TheService {
     private region: string;
 
     private s3: AWS.S3;
@@ -281,4 +281,4 @@ class FSService extends TheService {
     }    
 }
 
-export default FSService.getSingleton();
+export default EFSService.getSingleton();

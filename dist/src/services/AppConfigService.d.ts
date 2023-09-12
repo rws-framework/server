@@ -8,6 +8,8 @@ declare class AppConfigService extends TheService {
     get(key: keyof IAppConfig): any;
     reloadConfig(cfgString: string): AppConfigService;
     static getConfigSingleton<T extends new (...args: any[]) => TheService>(this: T, cfg?: IAppConfig): AppConfigService;
+    setRWSVar(fileName: string, value: string): void;
+    getRWSVar(fileName: string): string | null;
 }
 declare const _default: (cfg?: IAppConfig) => AppConfigService;
 export default _default;

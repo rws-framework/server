@@ -18,7 +18,10 @@ import ConsoleService from './services/ConsoleService';
 import ProcessService from './services/ProcessService';
 import LambdaService from './services/LambdaService';
 import AWSService from './services/AWSService';
-
+import EFSService from './services/EFSService';
+import MD5Service from './services/MD5Service';
+import TraversalService from './services/TraversalService';
+import UtilsService from './services/UtilsService';
 
 import { InverseRelation, InverseTimeSeries, Relation, TrackType} from './models/annotations/index';
 import { Route } from './routing/annotations/index';
@@ -56,6 +59,10 @@ export {
     ConsoleService,
     LambdaService,
     AWSService,
+    EFSService,
+    MD5Service,
+    TraversalService,
+    UtilsService,
 
     TimeSeriesModel,
 

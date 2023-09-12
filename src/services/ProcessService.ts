@@ -3,16 +3,16 @@ import { execSync } from 'child_process';
 import { exec, spawn } from 'child_process';
 import ConsoleService from "./ConsoleService";
 import pm2 from 'pm2';
-import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import UtilsService from "./UtilsService";
 
 const { log, warn, error, color } = ConsoleService;
 
 interface IExecCmdOpts {
-      verbose?: boolean
-      _default: any | null
+  verbose?: boolean
+  _default: any | null
 }
 
 interface PM2CommandParams {
@@ -20,7 +20,7 @@ interface PM2CommandParams {
   name: string // Generate a unique name for each command
   args: string[]
   cwd: string
-  interpreter: string 
+  interpreter?: string
   exec_mode: string
   instances: number
   max_memory_restart: string
@@ -30,9 +30,15 @@ interface PM2CommandParams {
   }
 }
 
+type InterpreterType = 'node' | 'none';
+
 interface ICommandOpts {
   exec_mode?: string
-  index?: number 
+  index?: number,
+  interpreter?: InterpreterType
+  env: {
+    [key: string]: string
+  }
 }
 
 interface PM2LogPacket {
@@ -51,243 +57,92 @@ const totalMemoryKB = totalMemoryBytes / 1024;
 const totalMemoryMB = totalMemoryKB / 1024;
 const totalMemoryGB = totalMemoryMB / 1024;
 
-class ProcessService extends TheService
-{
-  getParentPID(pid: number): number
-  {
-      const command = `ps -o ppid= -p ${pid} | awk '{print $1}'`;
-      return parseInt(execSync(command).toString().trim(), 10);
+
+class ProcessService extends TheService {
+
+  getParentPID(pid: number): number {
+    const command = `ps -o ppid= -p ${pid} | awk '{print $1}'`;
+    return parseInt(execSync(command).toString().trim(), 10);
   }
 
-  getAllProcessesIds(): number[]
-  {
-      const startingPID = process.pid;                
+  getAllProcessesIds(): number[] {
+    const startingPID = process.pid;
 
-      return [startingPID, this.getParentPID(startingPID)];
-  }       
-  
-  async calculateFileMD5(filePath: string): Promise<string> 
-  {
-    return new Promise((resolve, reject) => {
-      const hash = crypto.createHash('md5');
-      const input = fs.createReadStream(filePath);
-  
-      input.on('readable', () => {
-        const data = input.read();
-        if (data) {
-          hash.update(data);
-        } else {
-          resolve(hash.digest('hex'));
-        }
-      });
-  
-      input.on('error', reject);
-    });
+    return [startingPID, this.getParentPID(startingPID)];
   }
 
-  async generateCliHashes(fileNames: string[])
-  {      
-      const md5Pack: string[] = [];        
-
-      for(const key in fileNames){
-        const fileName = fileNames[key];
-        const md5 = await this.calculateFileMD5(fileName);
-        log(color().green('[RWS]') + ' Checking hashes for file:', fileName, md5);
-        md5Pack.push(md5);
-      }        
-
-      return md5Pack;
-  }
-
-  async cliClientHasChanged(consoleClientHashFile: string, tsFilename: string): Promise<boolean>
-  {    
-      const generatedHash: string = fs.readFileSync(consoleClientHashFile, 'utf-8');                    
-
-      log(color().green('[RWS]') + ' Comparing filesystem MD5 hashes to:', generatedHash);
-
-      const cmdFiles = this.batchGenerateCommandFileMD5(path.resolve(process.cwd(), 'node_modules', '.rws'));       
-      const currentSumHashes = (await this.generateCliHashes([tsFilename, ...cmdFiles])).join('/');      
-
-      if(generatedHash !== currentSumHashes){
-          return true;
-      }
-
-      return false;
-  }
-
-  getAllFilesInFolder(folderPath: string, ignoreFilenames: string[] = [], recursive: boolean = false): string[] 
-  {
-    const files: string[] = [];
-  
-    function traverseDirectory(currentPath: string): void 
-    {
-      const entries = fs.readdirSync(currentPath, { withFileTypes: true });
-  
-      entries.forEach(entry => {
-        const entryPath = path.join(currentPath, entry.name);
-  
-        if (entry.isFile()) {
-          if(!ignoreFilenames.includes(entryPath)){
-            files.push(entryPath);
-          }            
-        } else if (entry.isDirectory() && recursive) {
-          traverseDirectory(entryPath);
-        }
-      });
-    }
-  
-    traverseDirectory(folderPath);
-
-    return files;
-  }
-
-  batchGenerateCommandFileMD5(moduleCfgDir: string): string[]
-  {
-      if(!fs.existsSync(moduleCfgDir)){
-        fs.mkdirSync(moduleCfgDir);
-      }
-
-      if(!fs.existsSync(`${moduleCfgDir}/_cli_cmd_dir`)){
-        return [];
-      }
-
-      const cmdDirPath = fs.readFileSync(`${moduleCfgDir}/_cli_cmd_dir`, 'utf-8'); 
-      return this.getAllFilesInFolder(path.resolve(process.cwd()) + '/' + cmdDirPath, [
-        process.cwd() + '/' + cmdDirPath + '/index.ts'
-      ]);
-  }
-
-  private generatePM2Name(filePath: string)
-  {
+  private generatePM2Name(filePath: string) {
     return 'RWS:' + path.basename(filePath);
-  }  
+  }    
 
-  async PM2RunScript(scriptPath: string, commandOpts: ICommandOpts | null = null, ...args: string[]): Promise<string>
-  {
+  async PM2ExecCommand(command: string, commandOpts?: { options?: ICommandOpts, args?: string[] }): Promise<string> {
+
     let theOpts: ICommandOpts = {
       index: 0,
-      exec_mode: 'fork'
+      interpreter: 'none',
+      exec_mode: 'fork',      
+      env: {
+        FORCE_COLOR: '1'
+      }
     }
 
-    if(commandOpts){
-      theOpts = Object.assign(theOpts, commandOpts);
+    if (commandOpts?.options) {
+      theOpts = Object.assign(theOpts, commandOpts.options);
     }
 
-    const {index, exec_mode} = theOpts;
+    const { index, exec_mode } = theOpts;
 
     const _self = this;
-    return new Promise((resolve, reject) => {
-        pm2.connect((err) => {
-            if (err) {
-              console.error(err);
-              reject(err);
-
-              process.exit(2)
-            }
-
-            const processName = _self.generatePM2Name(scriptPath);
-          
-            pm2.start({
-                script: scriptPath,                
-                name: processName,
-                args: args,
-                cwd: process.cwd(),
-                exec_mode: exec_mode,
-                autorestart: false,
-                instances: 1,
-                max_memory_restart: `${Math.round(totalMemoryGB * 0.75)}G`,
-                env: {
-                  'FORCE_COLOR': '1'  // Force colorized output
-                } 
-            }, function(err, apps) {
-              if (err) {
-                console.error(err)
-                return pm2.disconnect()
-              }         
-
-              pm2.launchBus((err, bus) => {
-                bus.on('log:out', function (packet: PM2LogPacket) {
-                  if (packet.process.name === processName) {
-                    console.log(packet.data);
-                  }
-                });
-                bus.on('log:err', function (packet: PM2LogPacket) {
-                  if (packet.process.name === processName) {
-                    console.error(packet.data);
-                  }
-                });
-              });
-
-              const interval = setInterval(() => {
-                pm2.describe(processName, (err, processDescription) => {
-                  if (err) {
-                    console.error(err);
-                    clearInterval(interval);
-                    reject(err);
-                    pm2.disconnect();
-                    return;
-                  }
-      
-                  const procInfo = processDescription[0];
-                  if (procInfo && procInfo.pm2_env && procInfo.pm2_env.status === 'stopped') {
-                    clearInterval(interval);
-                    resolve(processName);
-                    pm2.disconnect();
-                  }
-                });
-              }, 1000);              
-            })
-        })
-    });
-  }
-
-  async PM2ExecCommand(command: string, commandOpts: ICommandOpts | null = null): Promise<string> {
-
-    let theOpts: ICommandOpts = {
-      index: 0,
-      exec_mode: 'fork'
-    }
-
-    if(commandOpts){
-      theOpts = Object.assign(theOpts, commandOpts);
-    }
-
-    const {index, exec_mode} = theOpts;
 
     return new Promise((resolve, reject) => {
       pm2.connect((err) => {
         if (err) {
           console.error(err);
           reject(err);
-          process.exit(2);
+          _self._PM2KillSelf();
         }
-  
+
         const totalMemoryBytes = os.totalmem();
         const totalMemoryGB = totalMemoryBytes / (1024 * 1024 * 1024);
-        const [cmd, ...args] = command.split(' ');
 
-        const processName = `RWS:Command_${index}_${command.replace('.','_')}`;
+        let cmd;
+        let args;        
+
+        if (commandOpts?.args) {
+          cmd = command;
+          args = UtilsService.filterNonEmpty(commandOpts.args);
+        } else {
+          [cmd, ...args] = UtilsService.filterNonEmpty(command.split(' '));
+        }
+
+        if(cmd.indexOf('.js') > -1){
+          theOpts.interpreter = 'node';
+        }
+
+        let envVars = {
+          FORCE_COLOR: '1'
+        }
+
+        const processName = `RWS:Command_${index}_${command.replace('.', '_')}`;
 
         const proc: PM2CommandParams = {
           script: cmd,
           name: processName,
           args: args,
           cwd: process.cwd(),
-          interpreter: 'none',
+          interpreter: theOpts.interpreter,
           autorestart: false,
           exec_mode: exec_mode,
           instances: 1,
-          max_memory_restart: `${Math.round(totalMemoryGB * 0.75)}G`,
-          env: {
-            'FORCE_COLOR': '1'  // Force colorized output
-          }
+          max_memory_restart: `${Math.round(totalMemoryGB * 0.75)}G`, 
+          env: envVars 
         };
-  
-        pm2.start(proc, (err) => {
+
+        pm2.start(proc, (err) => {          
           if (err) {
-            console.error(err);
+            console.error(err);            
             reject(err);
-            process.exit(2);
+            _self._PM2KillSelf();
           }
 
           pm2.launchBus((err, bus) => {
@@ -298,35 +153,62 @@ class ProcessService extends TheService
             });
 
             bus.on('log:err', function (packet: PM2LogPacket) {
-              if (packet.process.name === processName) {
-                console.error(packet.data);
-              }
-            });    
-          });
-          
-          const interval = setInterval(() => {
-            pm2.describe(processName, (err, processDescription) => {
-              if (err) {
-                console.error(err);
-                clearInterval(interval);
-                reject(err);
-                pm2.disconnect();
-                return;
-              }
-  
-              const procInfo = processDescription[0];
-              if (procInfo && procInfo.pm2_env && procInfo.pm2_env.status === 'stopped') {
-                clearInterval(interval);
-                resolve(processName);
-                pm2.disconnect();
+              if (packet.process.name === processName) {      
+                console.error(packet.data);                          
               }
             });
-          }, 1000);
+
+            bus.on('log:warn', function (packet: PM2LogPacket) {
+              if (packet.process.name === processName) {      
+                console.warn(packet.data);                          
+              }
+            });
+          });
+
+          _self.isProcessDead(processName).then((isDead: boolean) => {
+            if (isDead) {
+              resolve(processName);
+            }
+          }).catch((e) => {
+            reject(e);
+            // _self._PM2KillSelf();
+          });
         });
       });
     });
   }
-  
+
+  async isProcessDead(processName: string, _interval = 800): Promise<boolean> {
+    const _self = this;
+
+    return new Promise((resolve, reject) => {
+      const interval = setInterval(() => {
+        pm2.describe(processName, (err, processDescription) => {
+          if (err) {
+            console.error(err);
+            clearInterval(interval);
+            reject(err);
+            _self._PM2KillSelf();
+            return;
+          }
+
+          const procInfo = processDescription[0];
+          if (procInfo && procInfo.pm2_env && procInfo.pm2_env.status === 'stopped') {
+            clearInterval(interval);
+            resolve(true);
+            pm2.disconnect();
+          }
+        });
+      }, _interval);
+    });
+  }
+
+  private _PM2KillSelf(): void {
+    error(`[RWS PM2] R.I.P. ERROR: because of your bad programming pm2 killed itself...`);
+    pm2.disconnect();
+    process.exit(2);
+  }
+
   async PM2RunCommandsInParallel(commands: string[]): Promise<void> {
     const _self = this;
 
@@ -352,7 +234,7 @@ class ProcessService extends TheService
           reject(err);
           process.exit(2);
         }
-  
+
         pm2.delete(_self.generatePM2Name(scriptPath), (err) => {
           if (err) {
             console.error(err);
@@ -373,19 +255,19 @@ class ProcessService extends TheService
           reject(err);
           process.exit(2);
         }
-  
+
         pm2.list((err, processDescriptionList) => {
           if (err) {
             console.error(err);
             reject(err);
             process.exit(2);
           }
-  
-          const targetProcesses = processDescriptionList.filter((proc) => 
+
+          const targetProcesses = processDescriptionList.filter((proc) =>
             proc.name.startsWith("RWS:")
           );
-  
-          const deletePromises = targetProcesses.map((proc) => 
+
+          const deletePromises = targetProcesses.map((proc) =>
             new Promise<void>((res, rej) => {
               pm2.delete(proc.name, (err) => {
                 if (err) {
@@ -396,7 +278,7 @@ class ProcessService extends TheService
               });
             })
           );
-  
+
           Promise.all(deletePromises)
             .then(() => resolve())
             .catch((err) => {
@@ -409,43 +291,22 @@ class ProcessService extends TheService
     });
   }
 
-  async runShellCommand(command: string): Promise<void> 
-  {
+  async runShellCommand(command: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const [cmd, ...args] = command.split(' ');
       const spawned = spawn(cmd, args, { stdio: 'inherit' });  // stdio: 'inherit' allows you to see real-time output
 
       spawned.on('exit', (code) => {
-          if (code !== 0) {
-              return reject(new Error(`Command failed with exit code ${code}`));
-          }
-          resolve();
+        if (code !== 0) {
+          return reject(new Error(`Command failed with exit code ${code}`));
+        }
+        resolve();
       });
 
       spawned.on('error', (error) => {
-          reject(error);
+        reject(error);
       });
     });
-  }
-
-  setRWSVar(fileName: string, value: string)
-  {
-    const executionDir = process.cwd();    
-    const moduleCfgDir = `${executionDir}/node_modules/.rws`;
-
-    fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
-  }
-
-  getRWSVar(fileName: string): string | null
-  {
-    const executionDir = process.cwd();    
-    const moduleCfgDir = `${executionDir}/node_modules/.rws`;
-
-    try{
-      return fs.readFileSync(`${moduleCfgDir}/${fileName}`, 'utf-8');
-    } catch (e: any){
-      return null;
-    }
   }
 
   sleep(ms: number): Promise<void> {
@@ -455,4 +316,4 @@ class ProcessService extends TheService
 
 export default ProcessService.getSingleton();
 
-export {IExecCmdOpts}
+export { IExecCmdOpts }

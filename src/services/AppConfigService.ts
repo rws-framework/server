@@ -1,5 +1,6 @@
 import TheService from "./_service";
 import IAppConfig from "../interfaces/IAppConfig";
+import fs from 'fs';
 
 const AppDefaultConfig: IAppConfig = {
   mongo_url: null,
@@ -57,6 +58,26 @@ class AppConfigService extends TheService{
     }
 
     return TheService._instances[className] as AppConfigService;
+  }
+
+  setRWSVar(fileName: string, value: string)
+  {
+    const executionDir = process.cwd();    
+    const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+
+    fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
+  }
+
+  getRWSVar(fileName: string): string | null
+  {
+    const executionDir = process.cwd();    
+    const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+
+    try{
+      return fs.readFileSync(`${moduleCfgDir}/${fileName}`, 'utf-8');
+    } catch (e: any){
+      return null;
+    }
   }
 }
 

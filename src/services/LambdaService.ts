@@ -12,7 +12,7 @@ import AWS from 'aws-sdk';
 import archiver from 'archiver';
 import { String } from "aws-sdk/clients/batch";
 import { getAppConfig, ProcessService } from "rws-js-server";
-import FSService from "./FSService";
+import EFSService from "./EFSService";
 
 
 const { log, warn, error, color, AWSProgressBar } = ConsoleService;
@@ -76,14 +76,10 @@ class LambdaService extends TheService {
 
       await S3Service.bucketExists(s3BucketName);
 
-      const [efsId, accessPointArn, efsExisted] = await FSService.getOrCreateEFS('RWS_EFS', subnetId);
+      const [efsId, accessPointArn, efsExisted] = await EFSService.getOrCreateEFS('RWS_EFS', subnetId);
 
-      if(!noEFS){
-        if(!efsExisted){            
-          await this.deployModules(layerPath, functionName, efsId, subnetId);
-        }else{
-          await this.deployModules(layerPath, functionName, efsId, subnetId); //@TODO: make it on-demand
-        }
+      if(!noEFS && !efsExisted){
+        await this.deployModules(layerPath, efsId, subnetId);
       }      
 
       log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda on ' + this.region + ' using ' + s3BucketName)}`);
@@ -144,9 +140,9 @@ class LambdaService extends TheService {
     }
   }
 
-  async deployModules(layerPath: string, functionName: string, efsId: string, subnetId: string) {
+  async deployModules(layerPath: string, efsId: string, subnetId: string, force: boolean = false) {
     const _RWS_MODULES_UPLOADED = '_rws_efs_modules_uploaded';
-    const savedKey = ProcessService.getRWSVar(_RWS_MODULES_UPLOADED);
+    const savedKey = !force ? getAppConfig().getRWSVar(_RWS_MODULES_UPLOADED) : null;
     const S3Bucket = getAppConfig().get('aws_lambda_bucket');
     
     if(savedKey){
@@ -156,7 +152,7 @@ class LambdaService extends TheService {
       return;
     }
 
-    log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda modules on ' + this.region + ' using ' + functionName)}`);    
+    log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda modules on ' + this.region)}`);    
 
     if(!savedKey){
       const zipFile = fs.readFileSync(layerPath);
@@ -175,7 +171,7 @@ class LambdaService extends TheService {
 
       log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('lambda layer is uploaded to ' + this.region + ' with key:  ' + s3Path)}`);
 
-      ProcessService.setRWSVar(_RWS_MODULES_UPLOADED, s3Path);      
+      AppConfigService().setRWSVar(_RWS_MODULES_UPLOADED, s3Path);      
       await AWSService.uploadToEFS(efsId, s3Path, S3Bucket, subnetId);
     }   
   }  

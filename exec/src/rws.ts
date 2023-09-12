@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { getAppConfig, IAppConfig, RWSCommand, ICmdParams, ProcessService, ConsoleService } from 'rws-js-server';
+import { getAppConfig, IAppConfig, RWSCommand, ICmdParams, ProcessService, ConsoleService, MD5Service } from 'rws-js-server';
 import initAction from './helpers/init';
 import lambdaAction, { ILambdaParams } from './helpers/lambda';
 
@@ -13,13 +13,11 @@ const path = require('path');
 const command = process.argv[2];
 // process.argv[3] will be the parameter args for commands
 const cmdParamString = process.argv[3];
-const cmdArgs = cmdParamString.length > 2 ? cmdParamString.split(',') : [];
+const cmdArgs = !!cmdParamString && cmdParamString.length > 2 ? cmdParamString.split(',') : [];
 
 const commandExecutionArgs: ICmdParams = {_default: null};
 
-if(cmdParamString && cmdParamString.indexOf('=') > -1){
-    console.log(cmdParamString);
-    
+if(cmdParamString && cmdParamString.indexOf('=') > -1){    
     cmdArgs.forEach((arg) => {    
         const argData = arg.split('=');
         commandExecutionArgs[argData[0]] = argData[1];
@@ -61,9 +59,8 @@ const main = async () => {
 
         commandExecutionArgs._rws_config = APP_CFG;
 
-        const cmdFiles = ProcessService.batchGenerateCommandFileMD5(moduleCfgDir);     
-
-        const currentSumHashes = (await ProcessService.generateCliHashes([tsFile, ...cmdFiles])).join('/');
+        const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);     
+        const currentSumHashes = (await MD5Service.generateCliHashes([tsFile, ...cmdFiles])).join('/');
 
         if(!savedHash || currentSumHashes !== savedHash){            
             fs.writeFileSync(consoleClientHashFile, currentSumHashes);
@@ -105,7 +102,7 @@ const main = async () => {
         case 'run':
             const scriptPath: string = commandExecutionArgs.path || commandExecutionArgs._default 
             const scriptArgs: string[] = commandExecutionArgs.args || [];
-            await ProcessService.PM2RunScript(scriptPath, {}, ...scriptArgs);
+            await ProcessService.PM2ExecCommand(scriptPath, { args: scriptArgs });
             break;
 
         case 'watch':            
@@ -116,9 +113,10 @@ const main = async () => {
             break;
 
         case 'lambda':                
-            const subnetId: string = commandExecutionArgs.subnetId || commandExecutionArgs._default;
+            const lambdaDirName: string = commandExecutionArgs.lambdaDirName || commandExecutionArgs._default;
+            const subnetId: string = commandExecutionArgs.subnetId || null;
 
-            await lambdaAction({
+            await lambdaAction(lambdaDirName, {
                 rwsConfig: commandExecutionArgs._rws_config,
                 subnetId: subnetId
             });

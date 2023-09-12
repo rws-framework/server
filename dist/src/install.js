@@ -72,12 +72,13 @@ async function main(cfg) {
     const dbUrl = await AppConfigService.get('mongo_url');
     const moduleDir = path_1.default.resolve(__dirname) + '/../..';
     const executionDir = path_1.default.resolve(process.cwd());
-    let template = `generator client {
-    provider = "prisma-client-js"    
-  }`;
-    template += `\ndatasource db {
-    provider = "mongodb"  
-    url = "${dbUrl}"
+    const dbType = 'mongodb';
+    let template = `generator client {\n
+    provider = "prisma-client-js"\n
+  }\n\n`;
+    template += `\ndatasource db {\n
+    provider = "${dbType}"\n
+    url = env("DATABASE_URL")\n
   }\n\n`;
     const usermodels = await AppConfigService.get('user_models');
     usermodels.forEach((model) => {
@@ -95,8 +96,11 @@ async function main(cfg) {
     });
     const schemaPath = path_1.default.join(moduleDir, 'prisma', 'schema.prisma');
     fs_1.default.writeFileSync(schemaPath, template);
+    process.env.DB_URL = dbUrl;
     // Define the command you want to run
-    await ProcessService_1.default.PM2ExecCommand('npx prisma generate --schema=' + schemaPath);
+    await ProcessService_1.default.PM2ExecCommand('npx prisma generate --schema=' + schemaPath, { options: { env: {
+                DB_URL: dbUrl
+            } } });
     log(color().green('[RWS Init]') + ' prisma schema generated from ', schemaPath);
     return;
 }

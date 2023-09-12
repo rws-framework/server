@@ -10,7 +10,7 @@ import AWS from 'aws-sdk';
 import archiver from 'archiver';
 import { String } from "aws-sdk/clients/batch";
 import ZipService from "./ZipService";
-import FSService from "./FSService";
+import EFSService from "./EFSService";
 
 
 const { log, warn, error, color, AWSProgressBar } = ConsoleService;
@@ -144,7 +144,7 @@ class AWSService extends TheService {
             const response = await this.getLambda().invoke(params).promise();
             return JSON.parse(response.Payload as string);
         } catch (error) {
-            // await FSService.deleteEFS(efsId);
+            // await EFSService.deleteEFS(efsId);
             console.error('Error invoking Lambda:', error);
             throw error;
         }
