@@ -17,6 +17,7 @@ import EFSService from "./EFSService";
 
 const { log, warn, error, color, AWSProgressBar } = ConsoleService;
 
+const MIN = 60; // 1MIN = 60s
 
 class LambdaService extends TheService {
 
@@ -45,6 +46,10 @@ class LambdaService extends TheService {
     
     if (fs.existsSync(lambdaPath)) {
       fs.unlinkSync(lambdaPath);
+    }
+
+    if(fs.existsSync(lambdaPath + '/package.json')){
+      await ProcessService.runShellCommand(`cd ${lambdaPath} && npm install`);
     }
 
     log(`${color().green('[RWS Lambda Service]')} archiving ${color().yellowBright(lambdaDirPath)} to:\n ${color().yellowBright(lambdaPath)}`);
@@ -82,16 +87,20 @@ class LambdaService extends TheService {
         await this.deployModules(layerPath, efsId, subnetId);
       }      
 
-      log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda on ' + this.region + ' using ' + s3BucketName)}`);
+      log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda on ' + this.region)} using ${color().red(`S3://${s3BucketName}/${functionName}.zip`)}`);
+
+      log(`${color().green('[RWS Lambda Service]')} uploading ${color().yellowBright(zipPath)}...`);
+
       const s3params = {
         Bucket: s3BucketName,
         Key: functionName + '.zip', // File name you want to save as in S3
         Body: zipFile
       };
            
-      const s3Data = await S3Service.upload(s3params);
+      const s3Data = await S3Service.upload(s3params, true);
 
-      log(`${color().green('[RWS Lambda Service]')} uploading ${zipPath} to S3Bucket`);
+      log(`${color().green('[RWS Lambda Service]')} uploaded ${color().yellowBright(zipPath)} to ${color().red(`S3://${s3BucketName}/${functionName}.zip`)}`);
+      
 
       const s3Path = s3Data.Key;
       const Code = {
@@ -101,17 +110,20 @@ class LambdaService extends TheService {
 
       let data = null;
 
-      if (await this.functionExists(functionName)) {
+      const _HANDLER = 'index.handler';
+      const functionDidExist: boolean = await this.functionExists(functionName);
+
+      if (functionDidExist) {
         data = await AWSService.getLambda().updateFunctionCode({
           FunctionName: functionName,
           ...Code
-        }).promise();
+        }).promise();                  
       } else {
         const createParams: AWS.Lambda.Types.CreateFunctionRequest = {
           FunctionName: functionName,
           Runtime: 'nodejs18.x',
           Role: AppConfigService().get('aws_lambda_role'),
-          Handler: 'index.js',
+          Handler: _HANDLER,
           Code,
           VpcConfig: {
             SubnetIds: [subnetId],  // Add your subnet IDs
@@ -122,7 +134,9 @@ class LambdaService extends TheService {
                 Arn: accessPointArn,
                 LocalMountPath: '/mnt/efs'  // The path in your Lambda function environment where the EFS will be mounted
             }
-          ]
+          ],
+          MemorySize: 2048,
+          Timeout: 15 * MIN
         };     
         
         log(color().green('[RWS Lambda Service] is creating Lambda function named: ') + color().yellowBright(functionName));
@@ -130,7 +144,32 @@ class LambdaService extends TheService {
         data = await AWSService.getLambda().createFunction(createParams).promise()
       }
 
-      await this.waitForLambda(functionName);
+      await this.waitForLambda(functionName, functionDidExist ? 'creation' : 'update');      
+      
+      if(functionDidExist){
+        const functionInfo = await AWSService.getLambda().getFunction({
+          FunctionName: functionName
+        }).promise();
+
+
+        if(functionInfo.Configuration.Handler !== _HANDLER){
+          log(color().green('[RWS Lambda Service]') + ' is changing handler for Lambda function named: ' + color().yellowBright(functionName));
+
+          await AWSService.getLambda().updateFunctionConfiguration({
+            FunctionName: functionName,
+            Handler: _HANDLER
+          }, (err, data) => {
+            if (err) {
+              console.log(err, err.stack);
+            } else {
+              console.log(data);
+            }
+          }).promise();
+
+          await this.waitForLambda(functionName, 'handler update');
+
+        }
+      }
       
       log(`${color().green(`[RWS Lambda Service] lambda function "${functionName}" deployed`)}`);
     } catch (err: Error | any) {
@@ -189,9 +228,9 @@ class LambdaService extends TheService {
     return true;
   }
 
-  async waitForLambda(functionName: string, timeoutMs: number = 300000, intervalMs: number = 5000): Promise<void> {
+  async waitForLambda(functionName: string, waitFor: string = null,timeoutMs: number = 300000, intervalMs: number = 5000): Promise<void> {
     const startTime = Date.now();
-    log(`${color().yellowBright('[Lambda Listener] awaiting Lembda state change')}`);        
+    log(`${color().yellowBright('[Lambda Listener] awaiting Lambda ' + (waitFor !== null ? ' (' + waitFor + ')' : '') +' state change')}`);        
 
     while (Date.now() - startTime < timeoutMs) {
       log(`${color().yellowBright('[Lambda Listener] .')}`);      

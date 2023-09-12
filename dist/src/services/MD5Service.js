@@ -32,7 +32,6 @@ class MD5Service extends _service_1.default {
         for (const key in fileNames) {
             const fileName = fileNames[key];
             const md5 = await this.calculateFileMD5(fileName);
-            log(color().green('[RWS]') + ' Checking hashes for file:', fileName, md5);
             md5Pack.push(md5);
         }
         return md5Pack;

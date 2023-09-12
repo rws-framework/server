@@ -41,8 +41,7 @@ class MD5Service extends TheService {
 
         for (const key in fileNames) {
             const fileName: string = fileNames[key];          
-            const md5 = await this.calculateFileMD5(fileName);
-            log(color().green('[RWS]') + ' Checking hashes for file:', fileName, md5);
+            const md5 = await this.calculateFileMD5(fileName);        
             md5Pack.push(md5);
         }
 

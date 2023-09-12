@@ -124,7 +124,7 @@ class AWSService extends _service_1.default {
         const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
         const moduleDir = path_1.default.resolve(cmdDir, '..', '..', '..', '..');
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
-        const _UNZIP_FUNCTION_NAME = 'RWS_EFS_LOADER';
+        const _UNZIP_FUNCTION_NAME = 'RWS-efs-loader';
         log(`${color().green(`[RWS Clud FS Service]`)} processing EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`);
         if (!(await LambdaService_1.default.functionExists(_UNZIP_FUNCTION_NAME))) {
             log(`${color().green(`[RWS Clud FS Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);

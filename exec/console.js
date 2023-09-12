@@ -2,6 +2,16 @@
 
 const path = require('path');
 const fs = require('fs');
+
+let forceReload = false;
+
+for(let arg_key in process.argv){
+    if(process.argv[arg_key].indexOf('--reload') > -1){
+        forceReload = true;
+        process.argv[arg_key] = process.argv[arg_key].replace('--reload', '');
+    }   
+}
+
 const command2map = process.argv[2];
 let args = process.argv[3] || '';
 const { spawn, exec } = require('child_process');
@@ -14,12 +24,7 @@ const UtilsService = require('../dist/src/services/UtilsService').default;
 const { filterNonEmpty } = UtilsService;
 const { log, warn, error, color } = ConsoleService;
 
-let forceReload = false;
 
-if(args.indexOf('--force-compile') > -1){
-    forceReload = true;
-    args = args.replace('--force-compile', '');
-}
 
 const pm2 = require('pm2');
 

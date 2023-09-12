@@ -8,7 +8,7 @@ declare class LambdaService extends TheService {
     deployLambda(functionName: string, appPaths: string[], subnetId?: string, noEFS?: boolean): Promise<any>;
     deployModules(layerPath: string, efsId: string, subnetId: string, force?: boolean): Promise<void>;
     functionExists(functionName: String): Promise<boolean>;
-    waitForLambda(functionName: string, timeoutMs?: number, intervalMs?: number): Promise<void>;
+    waitForLambda(functionName: string, waitFor?: string, timeoutMs?: number, intervalMs?: number): Promise<void>;
 }
 declare const _default: LambdaService;
 export default _default;

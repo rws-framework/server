@@ -159,7 +159,7 @@ class AWSService extends TheService {
         const moduleDir = path.resolve(cmdDir, '..', '..', '..', '..');
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
 
-        const _UNZIP_FUNCTION_NAME: string = 'RWS_EFS_LOADER';
+        const _UNZIP_FUNCTION_NAME: string = 'RWS-efs-loader';
 
         log(`${color().green(`[RWS Clud FS Service]`)} processing EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`);
 

@@ -93,7 +93,7 @@ const lambdaAction = async (lambdaDirName: string, params: ILambdaParams) => {
     await executeLambdaLifeCycle('postArchive', lambdaDirName, params);
 
     try {
-        await LambdaService.deployLambda('RWS-artillery', lambdaPaths, vpcId);
+        await LambdaService.deployLambda('RWS-' + lambdaDirName, lambdaPaths, vpcId);
     } catch (e: Error | any) {
         error(e.message);
         log(e.stack);
