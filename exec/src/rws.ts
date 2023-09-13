@@ -13,7 +13,7 @@ const command = process.argv[2];
 const cmdParamString = process.argv[3];
 const cmdArgs = !!cmdParamString && cmdParamString.length > 2 ? cmdParamString.split(',') : [];
 
-const commandExecutionArgs: ICmdParams = { _default: null };
+const commandExecutionArgs: ICmdParams = { _default: null, _extra_args: [] };
 
 if (cmdParamString && cmdParamString.indexOf('=') > -1) {
     cmdArgs.forEach((arg) => {
@@ -66,9 +66,6 @@ const main = async () => {
         const cfgData = getConfig(configPath, cfgPathFile);        
 
         APP_CFG = cfgData;
-
-        console.log(APP_CFG);
-
     }
 
     let savedHash = null;

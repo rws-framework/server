@@ -17,6 +17,11 @@ const { log, warn, error, color, AWSProgressBar } = ConsoleService;
 
 const MIN = 60; // 1MIN = 60s
 
+interface InvokeLambdaResponse {
+  StatusCode?: number;
+  Payload: string;
+}
+
 class LambdaService extends TheService {
 
   private region: string;
@@ -255,6 +260,48 @@ class LambdaService extends TheService {
     await AWSService.getLambda().deleteFunction({
       FunctionName: functionName
     }).promise();
+  }
+
+  async invokeLambda(
+    functionName: string,
+    payload: any
+  ): Promise<{ StatusCode: number, Response: AWS.Lambda.InvocationResponse, CapturedLogs?: string[]}> {
+    // const originalConsoleLog = console.log;
+  
+    // Capture and log messages
+    // const capturedLogs = this.captureAndLogMessages();
+  
+    const params: AWS.Lambda.InvocationRequest = {
+      FunctionName: functionName,
+      InvocationType: 'RequestResponse',
+      Payload: JSON.stringify(payload),
+    };
+
+    log(color().green('[RWS Lamda Service]') + ` invoking ${functionName} with payload: '${params.Payload}'`)
+  
+    const response: AWS.Lambda.InvocationResponse = await AWSService.getLambda()
+      .invoke(params)
+      .promise();
+  
+    // Restore the original console.log function
+    // console.log = originalConsoleLog;
+  
+    // Assuming you want to return specific properties from the response
+    return {
+      StatusCode: response.StatusCode,
+      Response: response
+    };
+  }
+
+  private captureAndLogMessages() : string[]
+  {
+    const capturedLogs: string[] = [];
+        
+    console.log = (...args: any[]) => {
+      capturedLogs.push(args.join(' '));
+    };
+    
+    return capturedLogs;
   }
 }
 

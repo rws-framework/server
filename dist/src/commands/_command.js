@@ -35,6 +35,14 @@ class TheCommand {
     getName() {
         return this.name;
     }
+    static createCommand() {
+        const className = this.name;
+        if (!TheCommand._instances[className]) {
+            TheCommand._instances[className] = new this();
+        }
+        return TheCommand._instances[className];
+    }
 }
+TheCommand._instances = {};
 exports.default = TheCommand;
 //# sourceMappingURL=_command.js.map

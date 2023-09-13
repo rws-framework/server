@@ -238,21 +238,16 @@ class EFSService extends TheService {
     {
         const efsLoaderFunctionName = await this.processEFSLoader(subnetId);
 
-        const params = {
-            FunctionName: efsLoaderFunctionName,
-            InvocationType: 'RequestResponse', 
-            Payload: JSON.stringify({
-                efsId,
-                modulesS3Key,
-                s3Bucket
-            }), 
-        };
+        
     
         try {
             log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function with ${modulesS3Key} in ${s3Bucket} bucket.`);
-
-            const response = await AWSService.getLambda().invoke(params).promise();
-            return JSON.parse(response.Payload as string);
+            
+            return await LambdaService.invokeLambda(efsLoaderFunctionName, {
+                efsId,
+                modulesS3Key,
+                s3Bucket
+            });
         } catch (error) {
             console.error('Error invoking Lambda:', error);
             throw error;

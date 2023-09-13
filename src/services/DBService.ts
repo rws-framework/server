@@ -1,4 +1,3 @@
-//@ts-ignore
 import { PrismaClient } from "@prisma/client";
 import { Collection, Db, MongoClient } from 'mongodb';
 import ITimeSeries from "../models/interfaces/ITimeSeries";

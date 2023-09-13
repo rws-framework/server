@@ -36,4 +36,4 @@ class KillCommand extends Command
     
 }
 
-export default new KillCommand();
+export default KillCommand.createCommand();

@@ -51,4 +51,4 @@ class InitCommand extends Command
     
 }
 
-export default new InitCommand();
+export default InitCommand.createCommand();

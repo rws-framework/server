@@ -52,12 +52,15 @@ class LambdaCommand extends _command_1.default {
             case 'deploy':
                 await this.deploy(params);
                 return;
+            case 'invoke':
+                await this.invoke(params);
+                return;
             case 'delete':
                 await this.delete(params);
                 return;
             default:
                 error(`[RWS Lambda CLI] "${lambdaCmd}" command is not supported in RWS Lambda CLI`);
-                log(`Try: "deploy:${lambdaCmd}", "kill:${lambdaCmd}" or "list:${lambdaCmd}"`);
+                log(`Try: "deploy:${lambdaCmd}", "kill:${lambdaCmd}", invoke:${lambdaCmd} or "list:${lambdaCmd}"`);
                 return;
         }
     }
@@ -74,6 +77,19 @@ class LambdaCommand extends _command_1.default {
             vpcId,
             lambdaArg
         };
+    }
+    async invoke(params) {
+        const { lambdaDirName, lambdaArg } = await this.getLambdaParameters(params);
+        let payload = {};
+        if (lambdaArg) {
+            const payloadPath = `${executionDir}/payloads/${lambdaArg}.json`;
+            if (!fs_1.default.existsSync(payloadPath)) {
+                throw new Error(`No payload file in "${payloadPath}"`);
+            }
+            payload = JSON.parse(fs_1.default.readFileSync(payloadPath, 'utf-8'));
+        }
+        const response = await LambdaService_1.default.invokeLambda('RWS-' + lambdaDirName, payload);
+        log(response);
     }
     async deploy(params) {
         const { lambdaDirName, vpcId } = await this.getLambdaParameters(params);
@@ -108,5 +124,5 @@ class LambdaCommand extends _command_1.default {
         log(color().green(`[RWS Lambda CLI] ${lambdaDirName} lambda function has been ${color().red('deleted')}.`));
     }
 }
-exports.default = new LambdaCommand();
+exports.default = LambdaCommand.createCommand();
 //# sourceMappingURL=LambdaCommand.js.map

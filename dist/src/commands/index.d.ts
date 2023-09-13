@@ -17,6 +17,7 @@ declare const _default: ({
         postDeploy?: (params: import("./LambdaCommand").ILambdaParams) => Promise<void>;
     }, lambdaDirName: string | number, params: import("./LambdaCommand").ILambdaParams) => Promise<void>;
     getLambdaParameters(params: import("./_command").ICmdParams): Promise<import("./LambdaCommand").ILambdaParamsReturn>;
+    invoke(params: import("./_command").ICmdParams): Promise<void>;
     deploy(params: import("./_command").ICmdParams): Promise<void>;
     delete(params: import("./_command").ICmdParams): Promise<void>;
     name: string;

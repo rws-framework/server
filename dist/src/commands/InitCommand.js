@@ -42,5 +42,5 @@ class InitCommand extends _command_1.default {
         }
     }
 }
-exports.default = new InitCommand();
+exports.default = InitCommand.createCommand();
 //# sourceMappingURL=InitCommand.js.map

@@ -25,6 +25,7 @@ declare class LambdaCommand extends Command {
     execute(params?: ICmdParams): Promise<void>;
     executeLambdaLifeCycle: (lifeCycleEventName: keyof ILambdaLifeCycleEvents, lambdaDirName: keyof ILambdasLifeCycleConfig, params: ILambdaParams) => Promise<void>;
     getLambdaParameters(params: ICmdParams): Promise<ILambdaParamsReturn>;
+    invoke(params: ICmdParams): Promise<void>;
     deploy(params: ICmdParams): Promise<void>;
     delete(params: ICmdParams): Promise<void>;
 }

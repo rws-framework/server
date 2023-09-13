@@ -26,5 +26,5 @@ class KillCommand extends _command_1.default {
         return;
     }
 }
-exports.default = new KillCommand();
+exports.default = KillCommand.createCommand();
 //# sourceMappingURL=KillCommand.js.map

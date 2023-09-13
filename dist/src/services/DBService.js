@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DBService = void 0;
-//@ts-ignore
 const client_1 = require("@prisma/client");
 const mongodb_1 = require("mongodb");
 const AppConfigService_1 = __importDefault(require("./AppConfigService"));

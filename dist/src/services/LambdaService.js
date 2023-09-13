@@ -194,6 +194,34 @@ class LambdaService extends _service_1.default {
             FunctionName: functionName
         }).promise();
     }
+    async invokeLambda(functionName, payload) {
+        // const originalConsoleLog = console.log;
+        // Capture and log messages
+        // const capturedLogs = this.captureAndLogMessages();
+        const params = {
+            FunctionName: functionName,
+            InvocationType: 'RequestResponse',
+            Payload: JSON.stringify(payload),
+        };
+        log(color().green('[RWS Lamda Service]') + ` invoking ${functionName} with payload: '${params.Payload}'`);
+        const response = await AWSService_1.default.getLambda()
+            .invoke(params)
+            .promise();
+        // Restore the original console.log function
+        // console.log = originalConsoleLog;
+        // Assuming you want to return specific properties from the response
+        return {
+            StatusCode: response.StatusCode,
+            Response: response
+        };
+    }
+    captureAndLogMessages() {
+        const capturedLogs = [];
+        console.log = (...args) => {
+            capturedLogs.push(args.join(' '));
+        };
+        return capturedLogs;
+    }
 }
 exports.default = LambdaService.getSingleton();
 //# sourceMappingURL=LambdaService.js.map

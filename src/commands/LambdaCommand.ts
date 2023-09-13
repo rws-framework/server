@@ -80,12 +80,15 @@ class LambdaCommand extends Command
             case 'deploy':
                 await this.deploy(params);            
                 return;
+            case 'invoke':
+                await this.invoke(params);            
+                return;
             case 'delete':
                 await this.delete(params);
                 return;    
             default:
                 error(`[RWS Lambda CLI] "${lambdaCmd}" command is not supported in RWS Lambda CLI`);
-                log(`Try: "deploy:${lambdaCmd}", "kill:${lambdaCmd}" or "list:${lambdaCmd}"`)
+                log(`Try: "deploy:${lambdaCmd}", "kill:${lambdaCmd}", invoke:${lambdaCmd} or "list:${lambdaCmd}"`)
                 return;    
         }    
     }   
@@ -107,10 +110,10 @@ class LambdaCommand extends Command
     {
         const lambdaString: string = params.lambdaString || params._default;           
         const vpcId = params.subnetId || await AWSService.findDefaultVPC();
-        const lambdaStringArr: string[] = lambdaString.split(':');
+        const lambdaStringArr: string[] = lambdaString.split(':');        
         const lambdaCmd: ILambdaSubCommand = lambdaStringArr[0];
         const lambdaDirName = lambdaStringArr[1];    
-        const lambdaArg = lambdaStringArr.length > 2 ? lambdaStringArr[2] : null; 
+        const lambdaArg = lambdaStringArr.length > 2 ? lambdaStringArr[2] : null;         
 
         return {
             lambdaCmd,
@@ -118,6 +121,26 @@ class LambdaCommand extends Command
             vpcId,
             lambdaArg
         }
+    }
+    
+    public async invoke(params: ICmdParams)
+    {
+        const {lambdaDirName, lambdaArg} = await this.getLambdaParameters(params);
+
+        let payload = {};
+
+        if(lambdaArg){
+            const payloadPath = `${executionDir}/payloads/${lambdaArg}.json`
+
+            if(!fs.existsSync(payloadPath)){
+                throw new Error(`No payload file in "${payloadPath}"`);
+            }
+
+            payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
+        }
+      
+        const response = await LambdaService.invokeLambda('RWS-'+lambdaDirName, payload);
+        log(response);
     }
 
     public async deploy(params: ICmdParams)
@@ -169,5 +192,5 @@ class LambdaCommand extends Command
     
 }
 
-export default new LambdaCommand();
+export default LambdaCommand.createCommand();
 export {ILambdaParams, ILambdaParamsReturn}

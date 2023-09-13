@@ -1,15 +1,18 @@
 import IAppConfig from "../interfaces/IAppConfig";
 import path from 'path';
 import fs from 'fs';
-import ProcessService from "../services/ProcessService";
+
 interface ICmdParams {
     [key: string]: any
     verbose?: boolean
     _rws_config?: IAppConfig
+    _extra_args: string[]
 }
 
 export default abstract class TheCommand {
     public name: string;
+    protected static _instances: { [key: string]: TheCommand } | null = {};
+
 
     constructor(name: string, childModule: {id: string, loaded: boolean, exports: any, paths: any[], children: any[]}){
         this.name = name;
@@ -50,6 +53,16 @@ export default abstract class TheCommand {
     getName(): string
     {
         return this.name;
+    }
+
+    public static createCommand<T extends new (...args: any[]) => TheCommand>(this: T): InstanceType<T> {
+        const className = this.name;        
+
+        if (!TheCommand._instances[className]) {
+            TheCommand._instances[className] = new this();
+        }
+
+        return TheCommand._instances[className] as InstanceType<T>;
     }
 }
 
