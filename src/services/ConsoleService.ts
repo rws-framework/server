@@ -41,7 +41,7 @@ class ConsoleService extends TheService
         return;
       }
 
-      console.warn(...obj.map((txt) => chalk.yellowBright(txt)));
+      console.warn(...obj.map((txt) => chalk.yellowBright('[RWS CLI] ' + txt)));
     }
 
     error(...obj: any[]): void
@@ -49,8 +49,8 @@ class ConsoleService extends TheService
       if(!this.isEnabled){
         return;
       }
-
-      console.error(...obj.map((txt) => chalk.red(txt)));
+      
+      console.log(...obj.map((txt) => chalk.red('[RWS CLI ERROR] ' + txt)));
     }
 
     stopLogging(): void

@@ -9,7 +9,7 @@ import EFSService from "../services/EFSService";
 import LambdaService from "../services/LambdaService";
 
 
-const { log, warn, error, color } = ConsoleService;
+const { log, warn, error, color, rwsLog } = ConsoleService;
 
 const executionDir = process.cwd();
 const moduleCfgDir = `${executionDir}/node_modules/.rws`;
@@ -149,8 +149,10 @@ class LambdaCommand extends Command
             payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
         }
       
-        const response = await LambdaService.invokeLambda('RWS-'+lambdaDirName, payload);
-        
+        const response = await LambdaService.invokeLambda(lambdaDirName, payload);
+        rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response:`));
+        log(response);
+
     }
 
     public async deploy(params: ICmdParams)

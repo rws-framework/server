@@ -199,22 +199,28 @@ class LambdaService extends _service_1.default {
     }
     async invokeLambda(functionName, payload) {
         const params = {
-            FunctionName: functionName,
+            FunctionName: 'RWS-' + functionName,
             InvocationType: 'Event',
             Payload: JSON.stringify(payload),
         };
         log(color().green('[RWS Lambda Service]') + color().yellowBright(` invoking RWS-${functionName} with payload: `));
         log(payload);
-        const response = await AWSService_1.default.getLambda()
-            .invoke(params)
-            .promise();
-        // Restore the original console.log function
-        // console.log = originalConsoleLog;
-        // Assuming you want to return specific properties from the response
-        return {
-            StatusCode: response.StatusCode,
-            Response: response
-        };
+        try {
+            const response = await AWSService_1.default.getLambda()
+                .invoke(params)
+                .promise();
+            // Restore the original console.log function
+            // console.log = originalConsoleLog;
+            // Assuming you want to return specific properties from the response
+            return {
+                StatusCode: response.StatusCode,
+                Response: response
+            };
+        }
+        catch (e) {
+            error(e.message);
+            throw new Error(e);
+        }
     }
     async retrieveCloudWatchLogs(logResult, functionName) {
         const cloudWatchLogs = new aws_sdk_1.default.CloudWatchLogs();

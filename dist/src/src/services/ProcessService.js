@@ -98,7 +98,7 @@ class ProcessService extends _service_1.default {
                         });
                         bus.on('log:warn', function (packet) {
                             if (packet.process.name === processName) {
-                                console.warn(packet.data);
+                                warn(packet.data);
                             }
                         });
                     });

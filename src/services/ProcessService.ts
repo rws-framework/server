@@ -160,7 +160,7 @@ class ProcessService extends TheService {
 
             bus.on('log:warn', function (packet: PM2LogPacket) {
               if (packet.process.name === processName) {      
-                console.warn(packet.data);                          
+                warn(packet.data);                          
               }
             });
           });

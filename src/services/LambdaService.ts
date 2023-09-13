@@ -269,7 +269,7 @@ class LambdaService extends TheService {
     payload: any
   ): Promise<{ StatusCode: number, Response: AWS.Lambda.InvocationResponse, CapturedLogs?: string[]}> {
     const params: AWS.Lambda.InvocationRequest = {
-      FunctionName: functionName,
+      FunctionName: 'RWS-' + functionName,
       InvocationType: 'Event',
       Payload: JSON.stringify(payload),
     };
@@ -277,18 +277,23 @@ class LambdaService extends TheService {
     log(color().green('[RWS Lambda Service]') + color().yellowBright(` invoking RWS-${functionName} with payload: `));    
     log(payload);
   
-    const response: AWS.Lambda.InvocationResponse = await AWSService.getLambda()
-      .invoke(params)
-      .promise();
-  
-    // Restore the original console.log function
-    // console.log = originalConsoleLog;
-  
-    // Assuming you want to return specific properties from the response
-    return {
-      StatusCode: response.StatusCode,
-      Response: response
-    };
+    try {
+      const response: AWS.Lambda.InvocationResponse = await AWSService.getLambda()
+        .invoke(params)
+        .promise();
+    
+      // Restore the original console.log function
+      // console.log = originalConsoleLog;
+    
+      // Assuming you want to return specific properties from the response
+      return {
+        StatusCode: response.StatusCode,
+        Response: response
+      };
+    } catch(e: Error | any) {
+      error(e.message);
+      throw new Error(e);
+    }
   }  
 
   async retrieveCloudWatchLogs(logResult: string, functionName: string): Promise<string[]> {

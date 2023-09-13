@@ -11,7 +11,7 @@ const path_1 = __importDefault(require("path"));
 const UtilsService_1 = __importDefault(require("../services/UtilsService"));
 const EFSService_1 = __importDefault(require("../services/EFSService"));
 const LambdaService_1 = __importDefault(require("../services/LambdaService"));
-const { log, warn, error, color } = ConsoleService_1.default;
+const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 const executionDir = process.cwd();
 const moduleCfgDir = `${executionDir}/node_modules/.rws`;
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;
@@ -94,7 +94,9 @@ class LambdaCommand extends _command_1.default {
             }
             payload = JSON.parse(fs_1.default.readFileSync(payloadPath, 'utf-8'));
         }
-        const response = await LambdaService_1.default.invokeLambda('RWS-' + lambdaDirName, payload);
+        const response = await LambdaService_1.default.invokeLambda(lambdaDirName, payload);
+        rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response:`));
+        log(response);
     }
     async deploy(params) {
         const { lambdaDirName, vpcId, lambdaArg } = await this.getLambdaParameters(params);

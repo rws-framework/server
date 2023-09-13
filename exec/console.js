@@ -102,7 +102,7 @@ async function generateCliClient()
         if(forceReload){
             warn('[RWS] Forcing CLI client reload...');
         }
-        log(color().green('[RWS]') + color().yellowBright(' Detetcted CLI file changes. Generating CLI client file...'));      
+        log(color().green('[RWS]') + color().yellowBright(' Detected CLI file changes. Generating CLI client file...'));      
         await ProcessService.PM2ExecCommand(`npx webpack --config ${webpackPath}/exec/exec.webpack.config.js`);
         log(color().green('[RWS]') + ' CLI client file generated.')       
     }else{

@@ -60,7 +60,7 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
     return frameworkConfigFactory();
 }
 
-const main = async () => {
+const main = async () => { 
     const moduleCfgDir = `${executionDir}/node_modules/.rws`;
     const cfgPathFile = `_cfg_path`;
 
