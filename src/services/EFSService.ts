@@ -279,6 +279,11 @@ class EFSService extends TheService {
 
         return _UNZIP_FUNCTION_NAME;
     }    
+
+    async deleteDir(): Promise<void>
+    {
+        
+    }
 }
 
 export default EFSService.getSingleton();

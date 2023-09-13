@@ -29,7 +29,7 @@ class TheCommand {
         }
         return '';
     }
-    execute(params = null) {
+    async execute(params = null) {
         throw new Error('Implement method.');
     }
     getName() {

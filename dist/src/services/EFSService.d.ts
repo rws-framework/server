@@ -20,6 +20,7 @@ declare class EFSService extends TheService {
     createMountTarget(fileSystemId: string, subnetId: string): Promise<string>;
     uploadToEFS(efsId: string, modulesS3Key: string, s3Bucket: string, subnetId: string): Promise<any>;
     processEFSLoader(subnetId: string): Promise<string>;
+    deleteDir(): Promise<void>;
 }
 declare const _default: EFSService;
 export default _default;

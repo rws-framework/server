@@ -9,7 +9,7 @@ interface ICmdParams {
 }
 
 export default abstract class TheCommand {
-    private name: string;
+    public name: string;
 
     constructor(name: string, childModule: {id: string, loaded: boolean, exports: any, paths: any[], children: any[]}){
         this.name = name;
@@ -42,7 +42,7 @@ export default abstract class TheCommand {
         return '';
     }
 
-    execute(params: ICmdParams = null): void
+    async execute(params: ICmdParams = null): Promise<void>
     {
         throw new Error('Implement method.');
     }

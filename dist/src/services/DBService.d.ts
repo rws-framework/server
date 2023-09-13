@@ -9,6 +9,7 @@ interface IDBClientCreate {
 declare class DBService extends TheService {
     private client;
     private opts;
+    private connected;
     constructor(opts?: IDBClientCreate);
     private connectToDB;
     private createBaseMongoClient;

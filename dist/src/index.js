@@ -26,11 +26,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RWSTestSuite = exports.RWSannotations = exports.ProcessService = exports.AppDefaultConfig = exports.Socket = exports.TimeSeriesModel = exports.UtilsService = exports.TraversalService = exports.MD5Service = exports.EFSService = exports.AWSService = exports.LambdaService = exports.ConsoleService = exports.AuthService = exports.DBService = exports.RWSServer = exports.RWSModel = exports.RWSCommand = exports.RWSSocket = exports.RWSService = exports.RWSController = exports.getAppConfig = exports.SetupRWS = exports.serverInit = void 0;
+exports.RWSTestSuite = exports.RWSAppCommands = exports.RWSannotations = exports.ProcessService = exports.Socket = exports.TimeSeriesModel = exports.UtilsService = exports.TraversalService = exports.MD5Service = exports.EFSService = exports.AWSService = exports.LambdaService = exports.ConsoleService = exports.AuthService = exports.DBService = exports.RWSServer = exports.RWSModel = exports.RWSCommand = exports.RWSSocket = exports.RWSService = exports.RWSController = exports.getAppConfig = exports.SetupRWS = exports.serverInit = void 0;
 const socket_io_1 = require("socket.io");
 Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return socket_io_1.Socket; } });
-const AppConfigService_1 = __importDefault(require("./services/AppConfigService"));
-exports.getAppConfig = AppConfigService_1.default;
 const init_1 = __importDefault(require("./init"));
 exports.serverInit = init_1.default;
 const install_1 = require("./install");
@@ -61,8 +59,8 @@ const UtilsService_1 = __importDefault(require("./services/UtilsService"));
 exports.UtilsService = UtilsService_1.default;
 const index_1 = require("./models/annotations/index");
 const index_2 = require("./routing/annotations/index");
-const AppConfigService_2 = require("./services/AppConfigService");
-Object.defineProperty(exports, "AppDefaultConfig", { enumerable: true, get: function () { return AppConfigService_2.AppDefaultConfig; } });
+const AppConfigService_1 = __importDefault(require("./services/AppConfigService"));
+exports.getAppConfig = AppConfigService_1.default;
 const RWSannotations = {
     modelAnnotations: { InverseRelation: index_1.InverseRelation, InverseTimeSeries: index_1.InverseTimeSeries, Relation: index_1.Relation, TrackType: index_1.TrackType },
     routingAnnotations: { Route: index_2.Route }
@@ -78,6 +76,8 @@ const _service_1 = __importDefault(require("./services/_service"));
 exports.RWSService = _service_1.default;
 const _socket_1 = __importDefault(require("./sockets/_socket"));
 exports.RWSSocket = _socket_1.default;
+const index_3 = __importDefault(require("./commands/index"));
+exports.RWSAppCommands = index_3.default;
 const RWSTestSuite = __importStar(require("./tests/index"));
 exports.RWSTestSuite = RWSTestSuite;
 //# sourceMappingURL=index.js.map

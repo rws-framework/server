@@ -15,11 +15,10 @@ interface IDBClientCreate {
 class DBService extends TheService {
   private client: PrismaClient;
   private opts:IDBClientCreate = null;
+  private connected = false;
 
   constructor(opts: IDBClientCreate = null){
-    super();
-
-   this.connectToDB(opts);
+    super();   
   }
 
   private connectToDB(opts: IDBClientCreate = null) {
@@ -44,6 +43,8 @@ class DBService extends TheService {
           },
         },
       });     
+
+      this.connected = true;
     } catch (e){
       ConsoleService.error('PRISMA CONNECTION ERROR');
     }
@@ -204,7 +205,7 @@ class DBService extends TheService {
 
   private getCollectionHandler(collection: string): any 
   {    
-    if(!this.client){
+    if(!this.client || !this.connected){
       this.connectToDB();
     }
 

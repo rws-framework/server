@@ -2,7 +2,6 @@ import path from 'path';
 import { Socket } from 'socket.io';
 
 import { IHTTPRoute, WsRoutes, ITheSocket } from './services/ServerService';
-import getAppConfig from './services/AppConfigService';
 
 import init from './init';
 import {SetupRWS} from './install';
@@ -25,7 +24,7 @@ import UtilsService from './services/UtilsService';
 
 import { InverseRelation, InverseTimeSeries, Relation, TrackType} from './models/annotations/index';
 import { Route } from './routing/annotations/index';
-import { IAppConfig, AppDefaultConfig } from './services/AppConfigService';
+import getAppConfig, { IAppConfig } from './services/AppConfigService';
 
 const RWSannotations = {
     modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, TrackType },
@@ -39,6 +38,7 @@ import Controller, { IRequestParams} from './controllers/_controller';
 import TheService from './services/_service';
 import TheSocket, { JSONMessage } from './sockets/_socket';
 
+import RWSAppCommands from './commands/index';
 import * as RWSTestSuite from './tests/index';
 
 export {
@@ -72,13 +72,12 @@ export {
     ITimeSeries,
     IAppConfig,
             
-    Socket,
-    AppDefaultConfig,    
+    Socket,      
     ProcessService,    
     RWSannotations,
     JSONMessage as RWSJSONMessage,
     ICmdParams,      
     IHTTPRoute,
-    
+    RWSAppCommands,
     RWSTestSuite,  
 }

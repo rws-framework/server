@@ -4,10 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const _service_1 = __importDefault(require("./_service"));
-const ConsoleService_1 = __importDefault(require("./ConsoleService"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const { log, warn, error, color, AWSProgressBar } = ConsoleService_1.default;
 class TraversalService extends _service_1.default {
     getAllFilesInFolder(folderPath, ignoreFilenames = [], recursive = false) {
         const files = [];

@@ -5,11 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const _service_1 = __importDefault(require("./_service"));
 const crypto_1 = __importDefault(require("crypto"));
-const ConsoleService_1 = __importDefault(require("./ConsoleService"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const TraversalService_1 = __importDefault(require("./TraversalService"));
-const { log, warn, error, color, AWSProgressBar } = ConsoleService_1.default;
 class MD5Service extends _service_1.default {
     async calculateFileMD5(filePath) {
         return new Promise((resolve, reject) => {
@@ -38,7 +36,6 @@ class MD5Service extends _service_1.default {
     }
     async cliClientHasChanged(consoleClientHashFile, tsFilename) {
         const generatedHash = fs_1.default.readFileSync(consoleClientHashFile, 'utf-8');
-        log(color().green('[RWS]') + ' Comparing filesystem MD5 hashes to:', generatedHash);
         const cmdFiles = this.batchGenerateCommandFileMD5(path_1.default.resolve(process.cwd(), 'node_modules', '.rws'));
         const currentSumHashes = (await this.generateCliHashes([tsFilename, ...cmdFiles])).join('/');
         if (generatedHash !== currentSumHashes) {

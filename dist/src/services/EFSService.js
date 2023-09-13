@@ -227,6 +227,8 @@ class EFSService extends _service_1.default {
         }
         return _UNZIP_FUNCTION_NAME;
     }
+    async deleteDir() {
+    }
 }
 exports.default = EFSService.getSingleton();
 //# sourceMappingURL=EFSService.js.map

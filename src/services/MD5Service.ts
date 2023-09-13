@@ -1,16 +1,10 @@
 import TheService from "./_service";
 import crypto from 'crypto';
 
-import AppConfigService from "./AppConfigService";
-import ConsoleService from "./ConsoleService";
-
 
 import path from 'path';
 import fs from 'fs';
 import TraversalService from "./TraversalService";
-
-
-const { log, warn, error, color, AWSProgressBar } = ConsoleService;
 
 
 class MD5Service extends TheService {
@@ -51,8 +45,6 @@ class MD5Service extends TheService {
     async cliClientHasChanged(consoleClientHashFile: string, tsFilename: string): Promise<boolean> 
     {
         const generatedHash: string = fs.readFileSync(consoleClientHashFile, 'utf-8');
-
-        log(color().green('[RWS]') + ' Comparing filesystem MD5 hashes to:', generatedHash);
    
         const cmdFiles = this.batchGenerateCommandFileMD5(path.resolve(process.cwd(), 'node_modules', '.rws'));
 

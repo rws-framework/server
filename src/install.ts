@@ -83,7 +83,8 @@ async function main(cfg: IAppConfig)
 {   
   const AppConfigService = getConfigService(cfg);
   const dbUrl = await AppConfigService.get('mongo_url');
-  const moduleDir = path.resolve(__dirname) + '/../..';
+  const moduleDir = path.resolve(__dirname, '..', '..').replace('dist', '');
+  
   const executionDir = path.resolve(process.cwd());
 
   const dbType = 'mongodb';

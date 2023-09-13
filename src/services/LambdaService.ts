@@ -1,6 +1,7 @@
 import TheService from "./_service";
 
-import AppConfigService from "./AppConfigService";
+import getAppConfig from "./AppConfigService";
+import EFSService from "./EFSService";
 import ConsoleService from "./ConsoleService";
 import AWSService from "./AWSService";
 import ZipService from "./ZipService";
@@ -9,10 +10,7 @@ import S3Service from "./S3Service";
 import path from 'path';
 import fs from 'fs';
 import AWS from 'aws-sdk';
-import archiver from 'archiver';
-import { String } from "aws-sdk/clients/batch";
-import { getAppConfig, ProcessService } from "rws-js-server";
-import EFSService from "./EFSService";
+import UtilsService from "./UtilsService";
 
 
 const { log, warn, error, color, AWSProgressBar } = ConsoleService;
@@ -48,9 +46,9 @@ class LambdaService extends TheService {
       fs.unlinkSync(lambdaPath);
     }
 
-    if(fs.existsSync(lambdaPath + '/package.json')){
-      await ProcessService.runShellCommand(`cd ${lambdaPath} && npm install`);
-    }
+    // if(fs.existsSync(lambdaPath + '/package.json')){
+    //   await ProcessService.runShellCommand(`cd ${lambdaPath} && npm install`);
+    // }
 
     log(`${color().green('[RWS Lambda Service]')} archiving ${color().yellowBright(lambdaDirPath)} to:\n ${color().yellowBright(lambdaPath)}`);
     tasks.push(ZipService.createArchive(lambdaPath, lambdaDirPath));       
@@ -71,13 +69,13 @@ class LambdaService extends TheService {
   async deployLambda(functionName: string, appPaths: string[], subnetId?: string, noEFS: boolean = false): Promise<any> {
     const [zipPath, layerPath] = appPaths;
 
-    this.region = AppConfigService().get('aws_lambda_region');
+    this.region = getAppConfig().get('aws_lambda_region');
 
     const zipFile = fs.readFileSync(zipPath);
 
     try {
 
-      const s3BucketName = AppConfigService().get('aws_lambda_bucket');
+      const s3BucketName = getAppConfig().get('aws_lambda_bucket');
 
       await S3Service.bucketExists(s3BucketName);
 
@@ -122,7 +120,7 @@ class LambdaService extends TheService {
         const createParams: AWS.Lambda.Types.CreateFunctionRequest = {
           FunctionName: functionName,
           Runtime: 'nodejs18.x',
-          Role: AppConfigService().get('aws_lambda_role'),
+          Role: getAppConfig().get('aws_lambda_role'),
           Handler: _HANDLER,
           Code,
           VpcConfig: {
@@ -181,7 +179,7 @@ class LambdaService extends TheService {
 
   async deployModules(layerPath: string, efsId: string, subnetId: string, force: boolean = false) {
     const _RWS_MODULES_UPLOADED = '_rws_efs_modules_uploaded';
-    const savedKey = !force ? getAppConfig().getRWSVar(_RWS_MODULES_UPLOADED) : null;
+    const savedKey = !force ? UtilsService.getRWSVar(_RWS_MODULES_UPLOADED) : null;
     const S3Bucket = getAppConfig().get('aws_lambda_bucket');
     
     if(savedKey){
@@ -210,12 +208,12 @@ class LambdaService extends TheService {
 
       log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('lambda layer is uploaded to ' + this.region + ' with key:  ' + s3Path)}`);
 
-      AppConfigService().setRWSVar(_RWS_MODULES_UPLOADED, s3Path);      
+      UtilsService.setRWSVar(_RWS_MODULES_UPLOADED, s3Path);      
       await AWSService.uploadToEFS(efsId, s3Path, S3Bucket, subnetId);
     }   
   }  
 
-  async functionExists(functionName: String): Promise<boolean> {
+  async functionExists(functionName: string): Promise<boolean> {
     try {
       await AWSService.getLambda().getFunction({ FunctionName: functionName }).promise();
     } catch (e: Error | any) {
@@ -250,6 +248,13 @@ class LambdaService extends TheService {
     }
 
     throw new Error(`Lambda function ${functionName} did not become ready within ${timeoutMs}ms.`);
+  }
+
+  async deleteLambda(functionName: string): Promise<void>
+  {
+    await AWSService.getLambda().deleteFunction({
+      FunctionName: functionName
+    }).promise();
   }
 }
 

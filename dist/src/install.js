@@ -70,7 +70,7 @@ function toConfigCase(modelType) {
 async function main(cfg) {
     const AppConfigService = (0, AppConfigService_1.default)(cfg);
     const dbUrl = await AppConfigService.get('mongo_url');
-    const moduleDir = path_1.default.resolve(__dirname) + '/../..';
+    const moduleDir = path_1.default.resolve(__dirname, '..', '..').replace('dist', '');
     const executionDir = path_1.default.resolve(process.cwd());
     const dbType = 'mongodb';
     let template = `generator client {\n

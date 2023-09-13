@@ -5,7 +5,7 @@ interface ICmdParams {
     _rws_config?: IAppConfig;
 }
 export default abstract class TheCommand {
-    private name;
+    name: string;
     constructor(name: string, childModule: {
         id: string;
         loaded: boolean;
@@ -14,7 +14,7 @@ export default abstract class TheCommand {
         children: any[];
     });
     getSourceFilePath(): string;
-    execute(params?: ICmdParams): void;
+    execute(params?: ICmdParams): Promise<void>;
     getName(): string;
 }
 export { ICmdParams };

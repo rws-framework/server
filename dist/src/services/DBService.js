@@ -14,7 +14,7 @@ class DBService extends _service_1.default {
     constructor(opts = null) {
         super();
         this.opts = null;
-        this.connectToDB(opts);
+        this.connected = false;
     }
     connectToDB(opts = null) {
         if (opts) {
@@ -37,6 +37,7 @@ class DBService extends _service_1.default {
                     },
                 },
             });
+            this.connected = true;
         }
         catch (e) {
             ConsoleService_1.default.error('PRISMA CONNECTION ERROR');
@@ -152,7 +153,7 @@ class DBService extends _service_1.default {
         }
     }
     getCollectionHandler(collection) {
-        if (!this.client) {
+        if (!this.client || !this.connected) {
             this.connectToDB();
         }
         return this.client[collection];
