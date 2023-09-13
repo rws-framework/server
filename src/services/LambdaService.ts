@@ -30,9 +30,9 @@ class LambdaService extends TheService {
     super();
   }
 
-  async archiveLambda(lambdaDirPath: string, moduleCfgDir: string): Promise<[string, string]> {    
+  async archiveLambda(lambdaDirPath: string, moduleCfgDir: string): Promise<string> {    
     const lambdaDirName = lambdaDirPath.split('/').filter(Boolean).pop();
-    const [lambdaPath, modulesPath] = this.determineLambdaPackagePaths(lambdaDirName, moduleCfgDir);
+    const [lambdaPath] = this.determineLambdaPackagePaths(lambdaDirName, moduleCfgDir);
 
     
     if (!fs.existsSync(path.join(moduleCfgDir, 'lambda'))) {
@@ -41,11 +41,6 @@ class LambdaService extends TheService {
 
     // Create archives
     const tasks: Promise<string>[] = [];
-
-    if (!fs.existsSync(modulesPath)) {
-      log(`${color().green('[RWS Lambda Service]')} archiving .node_modules from ROOT_DIR to .zip`);
-      tasks.push(ZipService.createArchive(modulesPath, `${process.cwd()}/node_modules`, { ignore: [ '.rws/**', '.prisma/**' ] }));
-    }
     
     if (fs.existsSync(lambdaPath)) {
       fs.unlinkSync(lambdaPath);
@@ -62,7 +57,7 @@ class LambdaService extends TheService {
 
     log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('ZIP package complete.')}`);
 
-    return [lambdaPath, modulesPath];
+    return lambdaPath;
   }
 
   determineLambdaPackagePaths(lambdaDirName: string, moduleCfgDir: string): [string, string] {
@@ -71,9 +66,12 @@ class LambdaService extends TheService {
     return [lambdaPath, modulesPath];
   }
 
-  async deployLambda(functionName: string, appPaths: string[], subnetId?: string, noEFS: boolean = false): Promise<any> {
-    const [zipPath, layerPath] = appPaths;
+  setRegion(region: string)
+  {
+    this.region = region;
+  }
 
+  async deployLambda(functionName: string, zipPath: string, subnetId?: string, noEFS: boolean = false): Promise<any> {
     this.region = getAppConfig().get('aws_lambda_region');
 
     const zipFile = fs.readFileSync(zipPath);
@@ -87,7 +85,7 @@ class LambdaService extends TheService {
       const [efsId, accessPointArn, efsExisted] = await EFSService.getOrCreateEFS('RWS_EFS', subnetId);
 
       if(!noEFS && !efsExisted){
-        await this.deployModules(layerPath, efsId, subnetId);
+        await this.deployModules(functionName, efsId, subnetId);
       }      
 
       log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda on ' + this.region)} using ${color().red(`S3://${s3BucketName}/${functionName}.zip`)}`);
@@ -182,14 +180,19 @@ class LambdaService extends TheService {
     }
   }
 
-  async deployModules(layerPath: string, efsId: string, subnetId: string, force: boolean = false) {
+  async deployModules(functionName: string, efsId: string, subnetId: string, force: boolean = false) {
     const _RWS_MODULES_UPLOADED = '_rws_efs_modules_uploaded';
     const savedKey = !force ? UtilsService.getRWSVar(_RWS_MODULES_UPLOADED) : null;
     const S3Bucket = getAppConfig().get('aws_lambda_bucket');
-    
+    const moduleDir = path.resolve(__dirname, '..', '..').replace('dist', '');    
+
+    if(!this.region){
+      this.region = getAppConfig().get('aws_lambda_region');
+    }
+
     if(savedKey){
       log(`${color().green('[RWS Lambda Service]')} key saved. Deploying by cache.`);    
-      await AWSService.uploadToEFS(efsId, savedKey, S3Bucket, subnetId);
+      await AWSService.uploadToEFS(functionName, efsId, savedKey, S3Bucket, subnetId);
 
       return;
     }
@@ -197,24 +200,23 @@ class LambdaService extends TheService {
     log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda modules on ' + this.region)}`);    
 
     if(!savedKey){
-      const zipFile = fs.readFileSync(layerPath);
+      const packagePath = `${moduleDir}/lambda-functions/${functionName}/package.json`;
 
       const s3params = {
         Bucket: S3Bucket,
-        Key: 'RWS-modules.zip',
-        Body: zipFile
+        Key: `RWS-${functionName}-modules.json`,
+        Body: fs.readFileSync(packagePath)
       };
     
-
-      log(`${color().green('[RWS Lambda Service]')} layer uploading ${layerPath} to S3Bucket`);
+      log(`${color().green('[RWS Lambda Service]')} package file uploading ${packagePath} to S3Bucket`);
 
       const s3Data = await S3Service.upload(s3params);
       const s3Path = s3Data.Key;
 
-      log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('lambda layer is uploaded to ' + this.region + ' with key:  ' + s3Path)}`);
+      log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('NPM package file is uploaded to ' + this.region + ' with key:  ' + s3Path)}`);
 
       UtilsService.setRWSVar(_RWS_MODULES_UPLOADED, s3Path);      
-      await AWSService.uploadToEFS(efsId, s3Path, S3Bucket, subnetId);
+      await AWSService.uploadToEFS(functionName, efsId, s3Path, S3Bucket, subnetId);
     }   
   }  
 
@@ -266,18 +268,14 @@ class LambdaService extends TheService {
     functionName: string,
     payload: any
   ): Promise<{ StatusCode: number, Response: AWS.Lambda.InvocationResponse, CapturedLogs?: string[]}> {
-    // const originalConsoleLog = console.log;
-  
-    // Capture and log messages
-    // const capturedLogs = this.captureAndLogMessages();
-  
     const params: AWS.Lambda.InvocationRequest = {
       FunctionName: functionName,
-      InvocationType: 'RequestResponse',
+      InvocationType: 'Event',
       Payload: JSON.stringify(payload),
     };
 
-    log(color().green('[RWS Lambda Service]') + ` invoking ${functionName} with payload: '${params.Payload}'`)
+    log(color().green('[RWS Lambda Service]') + color().yellowBright(` invoking RWS-${functionName} with payload: `));    
+    log(payload);
   
     const response: AWS.Lambda.InvocationResponse = await AWSService.getLambda()
       .invoke(params)
@@ -291,17 +289,39 @@ class LambdaService extends TheService {
       StatusCode: response.StatusCode,
       Response: response
     };
-  }
+  }  
 
-  private captureAndLogMessages() : string[]
-  {
-    const capturedLogs: string[] = [];
-        
-    console.log = (...args: any[]) => {
-      capturedLogs.push(args.join(' '));
+  async retrieveCloudWatchLogs(logResult: string, functionName: string): Promise<string[]> {
+    const cloudWatchLogs = new AWS.CloudWatchLogs();
+  
+    const params: AWS.CloudWatchLogs.GetLogEventsRequest = {
+      logGroupName: `/aws/lambda/${functionName}`, // Update with your Lambda function name
+      logStreamName: logResult,
     };
-    
-    return capturedLogs;
+  
+    const logs: string[] = [];
+  
+    const getLogs = async (nextToken: string | undefined = undefined): Promise<void> => {
+      if (nextToken) {
+        params.nextToken = nextToken;
+      }
+  
+      const response = await cloudWatchLogs.getLogEvents(params).promise();
+  
+      if (response.events) {
+        for (const event of response.events) {
+          logs.push(event.message || '');
+        }
+      }
+  
+      // if (response.nextToken) {
+      //   await getLogs(response.nextToken);
+      // }
+    };
+  
+    await getLogs();
+  
+    return logs;
   }
 }
 

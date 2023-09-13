@@ -3,17 +3,18 @@
 const path = require('path');
 const fs = require('fs');
 
-let forceReload = false;
-
-for(let arg_key in process.argv){
-    if(process.argv[arg_key].indexOf('--reload') > -1){
-        forceReload = true;
-        process.argv[arg_key] = process.argv[arg_key].replace('--reload', '');
-    }   
+const Compile_Directives = {
+    'recompile': '--reload'
 }
+
+let forceReload = false;
 
 const command2map = process.argv[2];
 let args = process.argv[3] || '';
+
+const extraArgsAggregated = [];
+
+
 const { spawn, exec } = require('child_process');
 const crypto = require('crypto');
 const ProcessService = require('../dist/src/services/ProcessService').default;
@@ -25,6 +26,23 @@ const { filterNonEmpty } = UtilsService;
 const { log, warn, error, color } = ConsoleService;
 
 
+for(let argvKey in process.argv){
+    if(process.argv[argvKey] == '--reload'){
+        forceReload = true;
+    }      
+}
+
+if(process.argv.length > 4){
+    for(let i = 4; i <= process.argv.length-1;i++){
+        if(!Object.keys(Compile_Directives).map((key) => Compile_Directives[key]).includes(process.argv[i])){
+            extraArgsAggregated.push(process.argv[i]);
+        }else{
+            if(process.argv[i] == '--reload'){
+                forceReload = true;
+            }
+        }        
+    }
+}
 
 const pm2 = require('pm2');
 
@@ -55,12 +73,12 @@ const main = async () => {
     }
 
     
-    await generateCliClient();    
+    await generateCliClient();        
 
-    log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`);
+    log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`);  
 
     try {
-        await ProcessService.PM2ExecCommand(`${webpackPath}/exec/dist/rws.js`, { args: [command2map, ...filterNonEmpty(args.split(' '))] });
+        await ProcessService.PM2ExecCommand(`${webpackPath}/exec/dist/rws.js`, { args: [command2map, args, ...extraArgsAggregated] });
     } catch(err) {
         error(err);
     }
@@ -84,7 +102,7 @@ async function generateCliClient()
         if(forceReload){
             warn('[RWS] Forcing CLI client reload...');
         }
-        log(color().green('[RWS]') + ' generating CLI client file...')      
+        log(color().green('[RWS]') + color().yellowBright(' Detetcted CLI file changes. Generating CLI client file...'));      
         await ProcessService.PM2ExecCommand(`npx webpack --config ${webpackPath}/exec/exec.webpack.config.js`);
         log(color().green('[RWS]') + ' CLI client file generated.')       
     }else{

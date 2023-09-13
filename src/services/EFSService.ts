@@ -267,9 +267,9 @@ class EFSService extends TheService {
 
         if(!(await LambdaService.functionExists(_UNZIP_FUNCTION_NAME))){
             log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
-            const lambdaPaths = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
+            const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
 
-            await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, lambdaPaths, subnetId, true);
+            await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, subnetId, true);
         }
 
         return _UNZIP_FUNCTION_NAME;

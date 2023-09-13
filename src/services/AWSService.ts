@@ -13,7 +13,7 @@ import ZipService from "./ZipService";
 import EFSService from "./EFSService";
 
 
-const { log, warn, error, color, AWSProgressBar } = ConsoleService;
+const { log, warn, error, color, AWSProgressBar, rwsLog } = ConsoleService;
 
 
 class AWSService extends TheService {
@@ -124,25 +124,24 @@ class AWSService extends TheService {
         }
     }
 
-    async uploadToEFS(efsId: string, modulesS3Key: string, s3Bucket:string, subnetId: string): Promise<any>
+    async uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket:string, subnetId: string): Promise<any>
     {
         const efsLoaderFunctionName = await this.processEFSLoader(subnetId);
 
         const params = {
-            FunctionName: efsLoaderFunctionName,
-            InvocationType: 'RequestResponse', 
-            Payload: JSON.stringify({
-                efsId,
-                modulesS3Key,
-                s3Bucket
-            }), 
+            functionName: `RWS-${baseFunctionName}`,
+            efsId,
+            modulesS3Key,
+            s3Bucket
         };
     
         try {
-            log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function with ${modulesS3Key} in ${s3Bucket} bucket.`);
+            log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function for "${baseFunctionName}" with ${modulesS3Key} in ${s3Bucket} bucket.`);
 
-            const response = await this.getLambda().invoke(params).promise();
-            return JSON.parse(response.Payload as string);
+            const response = await LambdaService.invokeLambda(efsLoaderFunctionName, params);
+            rwsLog('RWS Lambda Service', color().yellowBright(`"${efsLoaderFunctionName}" lambda function response:`));
+            log(response);            
+            return;// JSON.parse(response.Response.Payload as string);
         } catch (error) {
             // await EFSService.deleteEFS(efsId);
             console.error('Error invoking Lambda:', error);
@@ -156,7 +155,7 @@ class AWSService extends TheService {
 
         const filePath:string = module.id;        
         const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
-        const moduleDir = path.resolve(cmdDir, '..', '..', '..', '..');
+        const moduleDir = path.resolve(__dirname, '..', '..').replace('dist', '');
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
 
         const _UNZIP_FUNCTION_NAME: string = 'RWS-efs-loader';
@@ -166,9 +165,9 @@ class AWSService extends TheService {
 
         if(!(await LambdaService.functionExists(_UNZIP_FUNCTION_NAME))){
             log(`${color().green(`[RWS Clud FS Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
-            const lambdaPaths = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
+            const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
 
-            await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, lambdaPaths, subnetId, true);
+            await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, subnetId, true);
         }
 
         return _UNZIP_FUNCTION_NAME;

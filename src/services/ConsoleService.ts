@@ -116,6 +116,14 @@ class ConsoleService extends TheService
 
     updateLogLine(message: string) {
       process.stdout.write('\r' + message);
+    }    
+
+    rwsLog(logCat: string | any[], logString: string | null = null): void
+    {    
+      const logName = logString ? logCat : '[RWS CLI]';
+      const logData =logString ? logString : logCat;
+
+      console.log(chalk.green(logName) + ' ' + logData)
     }
 }
 

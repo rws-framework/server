@@ -26,50 +26,62 @@ async function runShell(cmd) {
   });
 }
 
-async function unzipRecursive(destPath, entry) {
-  if (entry.type === 'Directory') {
-    fs.mkdirSync(`${destPath}/${entry.path}`, { recursive: true });
-  } else if (entry.type === 'File') {
-    entry.pipe(fs.createWriteStream(`${destPath}/${entry.path}`));
-  }
-}
+/**
+ *  functionName: `RWS-${baseFunctionName}`,
+                efsId,
+                modulesS3Key,
+                s3Bucket
+ * @param {*} event 
+ * @param {*} context 
+ * @returns 
+ */
 
 export const handler = async (event, context) => {
-  try {
-    const { efsId, S3Bucket, modulesS3Key } = event;
+    console.log('EVENT_PAYLOAD ||| ', event)
 
-    // 1. Stream zip from S3 bucket
-    const downloadParams = {
-      Bucket: S3Bucket,
-      Key: modulesS3Key,
-    };
+    const { functionName, efsId, modulesS3Key, s3Bucket } = event;
 
-    console.log('[S3 Download Start]', `S3://${S3Bucket}/${modulesS3Key}`);
+    const resPath = '/mnt/efs/res';
 
-    const s3Stream = S3.getObject(downloadParams).createReadStream();
-
-    // 2. Unzip the zip to EFS ROOT/node_modules
-    const destPath = '/mnt/efs/node_modules';
-
-    if (fs.existsSync(destPath)) {
-      console.log('[EFS Remove modules]');
-      await runShell(`rm -rf ${destPath}`);
+    if (!fs.existsSync(resPath)) {
+      fs.mkdirSync(resPath, { recursive: true });
     }
 
-    fs.mkdirSync(destPath, { recursive: true });
+    const destPath = `${resPath}/node_modules`;
+    const destFunctionPath = `${destPath}/${functionName}`;
 
-    await s3Stream
-      .pipe(Extract({ path: destPath }))
-      .on('entry', (entry) => {
-        console.log(`Extracting: ${entry.path}`);
-        unzipRecursive(destPath, entry);
-      })
-      .promise();
+    if (!fs.existsSync(destPath)) {
+      fs.mkdirSync(destPath, { recursive: true });
+    }
 
-    console.log('[EFS Unzip Complete]', fs.readdirSync(destPath));
+    if (!fs.existsSync(destFunctionPath)) {
+      fs.mkdirSync(destFunctionPath, { recursive: true });
+    }
 
-    return 'Upload completed.';
-  } catch (error) {
-    throw new Error(error);
-  }
+    console.log('[S3 Download Start]', `S3://${s3Bucket}/${modulesS3Key}`);
+
+    try{
+      const s3File = await S3.getObject({
+        Bucket: s3Bucket,
+        Key: modulesS3Key
+      }).promise();
+
+      const destFilePath = `${destFunctionPath}/package.json`;
+
+      console.log('[S3 Download Complete]', destFilePath);
+
+      try {
+      await fs.writeFile(destFilePath, s3File.Body);
+
+      const res = await runShell(`cd ${destFunctionPath} && npm install`);
+      
+      console.log('RESULT', res);
+
+      return { success: true, path: destFilePath };
+      } catch(FSFileErr){
+        onsole.error('[FS write error]', FSFileErr)
+      }
+    } catch(s3FileErr){
+      console.error('[FS read error]', s3FileErr)
+    }    
 };

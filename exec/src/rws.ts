@@ -2,7 +2,7 @@
 
 import { RWSAppCommands, getAppConfig, IAppConfig, RWSCommand, ICmdParams, ProcessService, ConsoleService, MD5Service, UtilsService } from '../../src/index';
 
-const { log, warn, error, color } = ConsoleService;
+const { log, warn, error, color, rwsLog } = ConsoleService;
 
 
 const fs = require('fs');
@@ -12,13 +12,12 @@ const command = process.argv[2];
 // process.argv[3] will be the parameter args for commands
 const cmdParamString = process.argv[3];
 const cmdArgs = !!cmdParamString && cmdParamString.length > 2 ? cmdParamString.split(',') : [];
-
-const commandExecutionArgs: ICmdParams = { _default: null, _extra_args: [] };
+const commandExecutionArgs: ICmdParams = { _default: null, _extra_args: {} };
 
 if (cmdParamString && cmdParamString.indexOf('=') > -1) {
     cmdArgs.forEach((arg) => {
         const argData = arg.split('=');
-        commandExecutionArgs[argData[0]] = argData[1];
+        commandExecutionArgs[argData[0].replace('--', '')] = argData[1];
 
         if (!commandExecutionArgs._default) {
             commandExecutionArgs._default = argData[1];
@@ -28,6 +27,15 @@ if (cmdParamString && cmdParamString.indexOf('=') > -1) {
     commandExecutionArgs._default = null;
 } else {
     commandExecutionArgs._default = cmdParamString;
+}
+
+if(process.argv.length > 4){
+    for(let i =  4; i <= process.argv.length-1;i++){
+        const parameter: string = process.argv[i].replace('--', '').replace('-', '_');
+        const valuePair: string[] = parameter.split('=');
+
+        commandExecutionArgs._extra_args[valuePair[0]] = valuePair.length > 1 ? valuePair[1] : true;
+    }
 }
 
 const executionDir = process.cwd();
@@ -55,7 +63,6 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
 const main = async () => {
     const moduleCfgDir = `${executionDir}/node_modules/.rws`;
     const cfgPathFile = `_cfg_path`;
-
 
     const tsFile = path.resolve(__dirname, '..', 'src') + '/rws.ts';
     let APP_CFG: IAppConfig | null = null;
@@ -92,7 +99,6 @@ const main = async () => {
     
     commandExecutionArgs._rws_config = APP_CFG;
 
-
     const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);
     const currentSumHashes = (await MD5Service.generateCliHashes([tsFile, ...cmdFiles])).join('/');
 
@@ -102,31 +108,16 @@ const main = async () => {
 
     if (theCommand) {        
         await theCommand.execute(commandExecutionArgs);
-
         return;
     }
 
-    switch (command) {
-        case 'run':
-            const scriptPath: string = commandExecutionArgs.path || commandExecutionArgs._default
-            const scriptArgs: string[] = commandExecutionArgs.args || [];
-            await ProcessService.PM2ExecCommand(scriptPath, { args: scriptArgs });
-            break;
-
-        case 'watch':
-            await ProcessService.PM2RunCommandsInParallel([
-                `webpack --config ${executionDir}/webpack.config.js --watch`,
-                `nodemon \"${executionDir}/build/rws.server.js\" --watch \"./build\"`
-            ]);
-            break;
-
-        default:
-            if (!fs.existsSync(`${moduleCfgDir}/${cfgPathFile}`)) {
-                throw new Error('No config path generated for CLI. Try to initialize with "npx rws init config=path/to/config.ts"');
-            }
-
-            ConsoleService.error(`Unknown command: ${command}.`);
+    if (!fs.existsSync(`${moduleCfgDir}/${cfgPathFile}`)) {
+        throw new Error('No config path generated for CLI. Try to initialize with "npx rws init config=path/to/config.ts"');
     }
+
+    error(`Unknown command: ${command}.`);
+
+    return;
 }
 
 main().then(() => {

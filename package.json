@@ -6,7 +6,7 @@
   "types": "dist/src/index.d.ts",
   "scripts": {
     "dev": "tsc-watch --noClear -p ./tsconfig.json",
-    "docs": "typedoc",
+    "docs": "typedoc --tsconfig ./tsconfig.json",
     "build": "npx tsc"
   },
   "author": "papablack",

@@ -64,6 +64,9 @@ interface ILambdaParamsReturn {
     lambdaDirName: string
     vpcId: string
     lambdaArg: string
+    extraParams: {
+        [key: string]: any
+    }
 }
 
 class LambdaCommand extends Command 
@@ -74,7 +77,12 @@ class LambdaCommand extends Command
 
     async execute(params?: ICmdParams): Promise<void>
     {
-        const { lambdaCmd } = await this.getLambdaParameters(params);
+        const { lambdaCmd, extraParams, vpcId } = await this.getLambdaParameters(params);
+
+        if(!!extraParams){            
+            const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
+            await LambdaService.deployLambda('RWS-efs-loader', zipPath, vpcId, true);
+        }
         
         switch(lambdaCmd){
             case 'deploy':
@@ -113,13 +121,15 @@ class LambdaCommand extends Command
         const lambdaStringArr: string[] = lambdaString.split(':');        
         const lambdaCmd: ILambdaSubCommand = lambdaStringArr[0];
         const lambdaDirName = lambdaStringArr[1];    
-        const lambdaArg = lambdaStringArr.length > 2 ? lambdaStringArr[2] : null;         
+        const lambdaArg = lambdaStringArr.length > 2 ? lambdaStringArr[2] : null;    
+        const extraParams = params._extra_args.deploy_loader;
 
         return {
             lambdaCmd,
             lambdaDirName,
             vpcId,
-            lambdaArg
+            lambdaArg,
+            extraParams
         }
     }
     
@@ -140,18 +150,18 @@ class LambdaCommand extends Command
         }
       
         const response = await LambdaService.invokeLambda('RWS-'+lambdaDirName, payload);
-        log(response);
+        
     }
 
     public async deploy(params: ICmdParams)
     {
-        const {lambdaDirName, vpcId, lambdaArg} = await this.getLambdaParameters(params);
+        const {lambdaDirName, vpcId, lambdaArg} = await this.getLambdaParameters(params);        
 
         if (lambdaDirName === 'modules') {
             const modulesPath = path.join(moduleCfgDir, 'lambda', `RWS-modules.zip`);
             const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId);
-    
-            await LambdaService.deployModules(modulesPath, efsId, vpcId, true);        
+            LambdaService.setRegion(params._rws_config.aws_lambda_region);
+            await LambdaService.deployModules(lambdaArg, efsId, vpcId, true);        
             return;
         }
 
@@ -164,17 +174,19 @@ class LambdaCommand extends Command
 
         await this.executeLambdaLifeCycle('preArchive', lambdaDirName, lambdaParams);
 
-        const lambdaPaths = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/${lambdaDirName}`, moduleCfgDir);
+        const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/${lambdaDirName}`, moduleCfgDir);
 
         await this.executeLambdaLifeCycle('postArchive', lambdaDirName, lambdaParams);
 
         await this.executeLambdaLifeCycle('preDeploy', lambdaDirName, lambdaParams);
 
         try {
-            await LambdaService.deployLambda('RWS-' + lambdaDirName, lambdaPaths, vpcId);
+            await LambdaService.deployLambda('RWS-' + lambdaDirName, zipPath, vpcId);
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
             if(lambdaArg){
-                await this.invoke(params);
+                const response = await this.invoke(params);
+
+                log(response);
             }
         } catch (e: Error | any) {
             error(e.message);

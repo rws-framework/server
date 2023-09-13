@@ -13,13 +13,11 @@
       "strictNullChecks": false,
       "allowSyntheticDefaultImports": true,  
       "sourceMap": true,    
-      "declaration": true,
-      "paths": {        
-        "rws-js-server": ["./src/index"]
-      }
+      "declaration": true,     
     },
     "include": [
-      "src"    
+      "src",
+      "exec"    
     ],
     "exclude": []
   }

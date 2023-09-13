@@ -6,7 +6,9 @@ interface ICmdParams {
     [key: string]: any
     verbose?: boolean
     _rws_config?: IAppConfig
-    _extra_args: string[]
+    _extra_args: {
+        [key: string]: any
+    }
 }
 
 export default abstract class TheCommand {

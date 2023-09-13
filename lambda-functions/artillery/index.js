@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 
 const runModule = (name) => {
-  const binPath = '/mnt/efs/node_modules/.bin';
+  const binPath = '/mnt/efs/res/node_modules/.bin';
   return `${binPath}/${name}`;
 }
 
