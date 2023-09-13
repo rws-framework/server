@@ -203,7 +203,7 @@ class LambdaService extends _service_1.default {
             InvocationType: 'RequestResponse',
             Payload: JSON.stringify(payload),
         };
-        log(color().green('[RWS Lamda Service]') + ` invoking ${functionName} with payload: '${params.Payload}'`);
+        log(color().green('[RWS Lambda Service]') + ` invoking ${functionName} with payload: '${params.Payload}'`);
         const response = await AWSService_1.default.getLambda()
             .invoke(params)
             .promise();

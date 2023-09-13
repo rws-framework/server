@@ -277,7 +277,7 @@ class LambdaService extends TheService {
       Payload: JSON.stringify(payload),
     };
 
-    log(color().green('[RWS Lamda Service]') + ` invoking ${functionName} with payload: '${params.Payload}'`)
+    log(color().green('[RWS Lambda Service]') + ` invoking ${functionName} with payload: '${params.Payload}'`)
   
     const response: AWS.Lambda.InvocationResponse = await AWSService.getLambda()
       .invoke(params)
