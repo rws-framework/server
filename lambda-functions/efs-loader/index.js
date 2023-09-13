@@ -26,23 +26,12 @@ async function runShell(cmd) {
   });
 }
 
-async function unzipStuff(destPath, s3Stream)
-{
-    return new Promise((resolve, reject) => {
-        const unzipStream = s3Stream.pipe(Extract({ path: destPath }));
-
-        unzipStream.on('entry', (entry) => {
-            console.log(`Extracting: ${entry.path}`);
-          });
-          
-        unzipStream.on('error', (error) => {
-            console.error('Error extracting zip:', error);
-            reject(error);
-        });        
-
-        unzipStream.on('finish', () => resolve);
-    });
-
+async function unzipRecursive(destPath, entry) {
+  if (entry.type === 'Directory') {
+    fs.mkdirSync(`${destPath}/${entry.path}`, { recursive: true });
+  } else if (entry.type === 'File') {
+    entry.pipe(fs.createWriteStream(`${destPath}/${entry.path}`));
+  }
 }
 
 export const handler = async (event, context) => {
@@ -64,11 +53,18 @@ export const handler = async (event, context) => {
 
     if (fs.existsSync(destPath)) {
       console.log('[EFS Remove modules]');
-      await runShell('rm -rf ' + destPath);
+      await runShell(`rm -rf ${destPath}`);
     }
 
     fs.mkdirSync(destPath, { recursive: true });
-    await unzipStuff(destPath, s3Stream);
+
+    await s3Stream
+      .pipe(Extract({ path: destPath }))
+      .on('entry', (entry) => {
+        console.log(`Extracting: ${entry.path}`);
+        unzipRecursive(destPath, entry);
+      })
+      .promise();
 
     console.log('[EFS Unzip Complete]', fs.readdirSync(destPath));
 

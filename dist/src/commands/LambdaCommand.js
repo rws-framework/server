@@ -92,7 +92,7 @@ class LambdaCommand extends _command_1.default {
         log(response);
     }
     async deploy(params) {
-        const { lambdaDirName, vpcId } = await this.getLambdaParameters(params);
+        const { lambdaDirName, vpcId, lambdaArg } = await this.getLambdaParameters(params);
         if (lambdaDirName === 'modules') {
             const modulesPath = path_1.default.join(moduleCfgDir, 'lambda', `RWS-modules.zip`);
             const [efsId] = await EFSService_1.default.getOrCreateEFS('RWS_EFS', vpcId);
@@ -111,6 +111,9 @@ class LambdaCommand extends _command_1.default {
         try {
             await LambdaService_1.default.deployLambda('RWS-' + lambdaDirName, lambdaPaths, vpcId);
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
+            if (lambdaArg) {
+                await this.invoke(params);
+            }
         }
         catch (e) {
             error(e.message);

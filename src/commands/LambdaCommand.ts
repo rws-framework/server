@@ -145,14 +145,13 @@ class LambdaCommand extends Command
 
     public async deploy(params: ICmdParams)
     {
-        const {lambdaDirName, vpcId} = await this.getLambdaParameters(params);
+        const {lambdaDirName, vpcId, lambdaArg} = await this.getLambdaParameters(params);
 
         if (lambdaDirName === 'modules') {
             const modulesPath = path.join(moduleCfgDir, 'lambda', `RWS-modules.zip`);
             const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId);
     
-            await LambdaService.deployModules(modulesPath, efsId, vpcId, true);
-    
+            await LambdaService.deployModules(modulesPath, efsId, vpcId, true);        
             return;
         }
 
@@ -174,6 +173,9 @@ class LambdaCommand extends Command
         try {
             await LambdaService.deployLambda('RWS-' + lambdaDirName, lambdaPaths, vpcId);
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
+            if(lambdaArg){
+                await this.invoke(params);
+            }
         } catch (e: Error | any) {
             error(e.message);
             log(e.stack);
