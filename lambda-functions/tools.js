@@ -1,10 +1,13 @@
 import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { promisify } from 'util';
 
-const runModule = (name, functionName) => {
-    const binPath = `/mnt/efs/res/modules/${functionName}/.bin`;
-    return `${binPath}/${name}`;
+const execPromise = promisify(exec);
+
+const runModule = (name, execFile) => {
+    const binPath = `/mnt/efs/res/modules/${name}`;
+    return `${binPath}/${execFile}`;
 }
 
 const printFolderStructure = (dirPath, indent = '') => {

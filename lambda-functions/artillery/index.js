@@ -1,4 +1,4 @@
-import { runShellParallel, runModule, chmod } from './tools.js';
+import { runShellParallel, runShell, runModule, chmod } from './tools.js';
 import fs from 'fs';
 const ArtilleryDirectory = '/mnt/efs/res/modules/artillery';
 
@@ -7,8 +7,12 @@ export const handler = async (event, context) => {
     console.log('Starting chmod')
     chmod(ArtilleryDirectory);
 
+    const artilleryPath = `${ArtilleryDirectory}/artillery/bin/run`;
+    const command = `NODE_PATH=${ArtilleryDirectory} ${artilleryPath} ${configPath}`;
+
+    // await runShell(command);
     console.log('Starting artillery')
-    await runShellParallel(`${runModule('artillery', 'artillery')} run artillery-config.yml`, context);
+    await runShellParallel(command, context);
     return { success: true }
   }else{
     return { success: false, error: 'NO ACCESS TO EFS MODULES' }
