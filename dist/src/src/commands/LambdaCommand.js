@@ -15,7 +15,7 @@ const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 const executionDir = process.cwd();
 const moduleCfgDir = `${executionDir}/node_modules/.rws`;
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;
-const moduleDir = path_1.default.resolve(path_1.default.dirname(module.id), '..', '..').replace('dist', '');
+const moduleDir = path_1.default.resolve(path_1.default.dirname(module.id), '..', '..').replace('dist/', '');
 const lambdasCfg = {
     artillery: {
         preArchive: async (params) => {
@@ -134,10 +134,7 @@ class LambdaCommand extends _command_1.default {
         const { lambdaDirName, lambdaArg } = await this.getLambdaParameters(params);
         let payload = {};
         if (lambdaArg) {
-            const payloadPath = `${executionDir}/payloads/${lambdaArg}.json`;
-            if (!fs_1.default.existsSync(payloadPath)) {
-                throw new Error(`No payload file in "${payloadPath}"`);
-            }
+            const payloadPath = LambdaService_1.default.findPayload(lambdaArg);
             payload = JSON.parse(fs_1.default.readFileSync(payloadPath, 'utf-8'));
         }
         const response = await LambdaService_1.default.invokeLambda(lambdaDirName, payload, lambdaDirName === 'efs-loader' ? 'Event' : 'RequestResponse');
@@ -194,10 +191,7 @@ class LambdaCommand extends _command_1.default {
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
             let payload = {};
             if (lambdaArg) {
-                const payloadPath = `${executionDir}/payloads/${lambdaArg}.json`;
-                if (!fs_1.default.existsSync(payloadPath)) {
-                    throw new Error(`No payload file in "${payloadPath}"`);
-                }
+                let payloadPath = LambdaService_1.default.findPayload(lambdaArg);
                 payload = JSON.parse(fs_1.default.readFileSync(payloadPath, 'utf-8'));
                 const response = await LambdaService_1.default.invokeLambda(lambdaDirName, payload);
                 rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));

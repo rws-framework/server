@@ -18,6 +18,7 @@ declare class LambdaService extends TheService {
         CapturedLogs?: string[];
     }>;
     retrieveCloudWatchLogs(logResult: string, functionName: string): Promise<string[]>;
+    findPayload(lambdaArg: string): string;
 }
 declare const _default: LambdaService;
 export default _default;

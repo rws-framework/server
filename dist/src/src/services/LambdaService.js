@@ -147,7 +147,7 @@ class LambdaService extends _service_1.default {
         const _RWS_MODULES_UPLOADED = '_rws_efs_modules_uploaded';
         const savedKey = !force ? UtilsService_1.default.getRWSVar(_RWS_MODULES_UPLOADED) : null;
         const S3Bucket = (0, AppConfigService_1.default)().get('aws_lambda_bucket');
-        const moduleDir = path_1.default.resolve(__dirname, '..', '..').replace('dist', '');
+        const moduleDir = path_1.default.resolve(__dirname, '..', '..').replace('dist/', '');
         if (!this.region) {
             this.region = (0, AppConfigService_1.default)().get('aws_lambda_region');
         }
@@ -269,6 +269,26 @@ class LambdaService extends _service_1.default {
         };
         await getLogs();
         return logs;
+    }
+    findPayload(lambdaArg) {
+        const executionDir = process.cwd();
+        const filePath = module.id;
+        const moduleDir = path_1.default.resolve(__dirname, '..', '..').replace('dist/', '');
+        const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+        let payloadPath = `${executionDir}/payloads/${lambdaArg}.json`;
+        if (!fs_1.default.existsSync(payloadPath)) {
+            rwsLog(color().yellowBright(`No payload file in "${payloadPath}"`));
+            const rwsPayloadPath = `${moduleDir}/payloads/${lambdaArg}.json`;
+            if (!fs_1.default.existsSync(rwsPayloadPath)) {
+                rwsLog(color().red(`Found the payload file in "${rwsPayloadPath}"`));
+                throw new Error(`No payload`);
+            }
+            else {
+                rwsLog(color().green(`No payload file in "${payloadPath}"`));
+                payloadPath = rwsPayloadPath;
+            }
+        }
+        return payloadPath;
     }
 }
 exports.default = LambdaService.getSingleton();

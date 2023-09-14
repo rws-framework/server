@@ -15,7 +15,7 @@ const executionDir = process.cwd();
 const moduleCfgDir = `${executionDir}/node_modules/.rws`;
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
 
-const moduleDir = path.resolve(path.dirname(module.id), '..', '..').replace('dist', '');
+const moduleDir = path.resolve(path.dirname(module.id), '..', '..').replace('dist/', '');
 
 interface ILambdaParams {
     rwsConfig?: any
@@ -198,12 +198,8 @@ class LambdaCommand extends Command
         let payload = {};
 
         if(lambdaArg){
-            const payloadPath = `${executionDir}/payloads/${lambdaArg}.json`
-
-            if(!fs.existsSync(payloadPath)){
-                throw new Error(`No payload file in "${payloadPath}"`);
-            }
-
+            const payloadPath = LambdaService.findPayload(lambdaArg); 
+    
             payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
         }
     
@@ -282,12 +278,8 @@ class LambdaCommand extends Command
             let payload = {};
 
             if(lambdaArg){                       
-                const payloadPath = `${executionDir}/payloads/${lambdaArg}.json`
-    
-                if(!fs.existsSync(payloadPath)){
-                    throw new Error(`No payload file in "${payloadPath}"`);
-                }
-    
+                let payloadPath = LambdaService.findPayload(lambdaArg);             
+
                 payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
                 
                 const response = await LambdaService.invokeLambda(lambdaDirName, payload);
