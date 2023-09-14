@@ -87,12 +87,13 @@ class AWSService extends TheService {
         }
     }        
 
-    async findDefaultVPC() {
+    async findDefaultSubnetForVPC(): Promise<[string, string]> 
+    {
         try {
             const response = await this.getEC2().describeVpcs({ Filters: [{ Name: 'isDefault', Values: ['true'] }] }).promise();
 
             if (response.Vpcs && response.Vpcs.length > 0) {                
-                return await this.getSubnetIdForVpc(response.Vpcs[0].VpcId);
+                return [await this.getSubnetIdForVpc(response.Vpcs[0].VpcId), response.Vpcs[0].VpcId];
             } else {
                 console.log('No default VPC found.');
             }
@@ -101,7 +102,7 @@ class AWSService extends TheService {
         }
     }
 
-    async getSubnetIdForVpc(vpcId: string): Promise<string> {
+    private async getSubnetIdForVpc(vpcId: string): Promise<string> {
         const params = {
             Filters: [{
                 Name: 'vpc-id',
@@ -134,9 +135,9 @@ class AWSService extends TheService {
         }
     }
 
-    async uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket:string, subnetId: string): Promise<any>
+    async uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket:string, vpcId: string, subnetId: string): Promise<any>
     {
-        const efsLoaderFunctionName = await this.processEFSLoader(subnetId);
+        const efsLoaderFunctionName = await this.processEFSLoader(vpcId, subnetId);
 
         const params = {
             functionName: `RWS-${baseFunctionName}`,
@@ -159,7 +160,7 @@ class AWSService extends TheService {
         }
     }
 
-    async processEFSLoader(subnetId: string): Promise<string>
+    async processEFSLoader(vpcId: string, subnetId: string): Promise<string>
     {
         const executionDir = process.cwd();
 
@@ -177,7 +178,7 @@ class AWSService extends TheService {
             log(`${color().green(`[RWS Clud FS Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
             const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
 
-            await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, subnetId, true);
+            await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, vpcId, subnetId, true);
         }
 
         return _UNZIP_FUNCTION_NAME;
@@ -221,6 +222,110 @@ class AWSService extends TheService {
             OK: allowed,
             policies: policies
         };
+    }
+
+    private async getDefaultRouteTable(vpcId: string): Promise<AWS.EC2.RouteTable>
+    {
+        const routeTablesResponse = await this.ec2.describeRouteTables({
+            Filters: [
+                {
+                    Name: "vpc-id",
+                    Values: [vpcId]  // Provide the VPC ID here, not the VPC Endpoint ID
+                }
+            ]
+        }).promise();        
+
+        return routeTablesResponse.RouteTables?.find(rt => {
+            // A default route table won't have explicit subnet associations
+            return !rt.Associations || rt.Associations.every(assoc => !assoc.SubnetId);
+        });
+    }
+
+    async createVPCEndpointIfNotExist(vpcId: string): Promise<string> {
+        const endpointName = "RWS-S3-GATE";
+        const serviceName = `com.amazonaws.${this.region}.s3`;        
+    
+        // Describe VPC Endpoints
+        const existingEndpoints = await this.getEC2().describeVpcEndpoints({
+            Filters: [
+                {
+                    Name: "tag:Name",
+                    Values: [endpointName]
+                }
+            ]
+        }).promise();
+
+        const defaultRouteTable = await this.getDefaultRouteTable(vpcId);
+
+        // Check if the endpoint already exists
+        const endpointExists = existingEndpoints.VpcEndpoints && existingEndpoints.VpcEndpoints.length > 0;
+    
+        if (!endpointExists) {
+            // Create VPC Endpoint for S3
+            
+            const endpointResponse = await this.getEC2().createVpcEndpoint({
+                VpcId: vpcId,
+                ServiceName: serviceName,
+                VpcEndpointType: "Gateway",
+                RouteTableIds: [defaultRouteTable.RouteTableId], // Add your route table IDs here
+                TagSpecifications: [
+                    {
+                        ResourceType: "vpc-endpoint",
+                        Tags: [
+                            {
+                                Key: "Name",
+                                Value: endpointName
+                            }
+                        ]
+                    }
+                ]
+            }).promise();
+            
+    
+            if (endpointResponse.VpcEndpoint) {
+                log(`VPC Endpoint "${endpointName}" created with ID: ${endpointResponse.VpcEndpoint.VpcEndpointId}`);
+                return endpointResponse.VpcEndpoint.VpcEndpointId;
+            } else {
+                error("Failed to create VPC Endpoint");
+                throw new Error("Failed to create VPC Endpoint");
+            }
+        } else {
+            log(`VPC Endpoint "${endpointName}" already exists.`);
+            return existingEndpoints.VpcEndpoints[0].VpcEndpointId;
+
+        }
+    }
+
+    async ensureRouteToVPCEndpoint(vpcId: string, vpcEndpointId: string): Promise<void> {
+    
+        try {
+            const routeTable = await this.getDefaultRouteTable(vpcId);
+
+            const routes = routeTable.Routes || [];
+            const hasS3EndpointRoute = routes.some((route: AWS.EC2.Route) => route.GatewayId === vpcEndpointId);    
+
+            if (!hasS3EndpointRoute) {
+                // Get the prefix list associated with the S3 VPC endpoint
+                const vpcEndpointDescription  = (await this.ec2.describeVpcEndpoints({
+                    VpcEndpointIds: [vpcEndpointId]
+                }).promise()).VpcEndpoints;
+
+                rwsLog('Creating VPC Endpoint route')
+                // Add a route to the route table
+                await this.ec2.createRoute({
+                    RouteTableId: routeTable.RouteTableId,
+                    DestinationCidrBlock: '0.0.0.0/0',
+                    VpcEndpointId: vpcEndpointDescription[0].VpcEndpointId
+                }).promise();
+
+                log(`Added route to VPC Endpoint ${vpcEndpointId} in Route Table ${routeTable.RouteTableId}`);
+            } else {
+                log(`Route to VPC Endpoint ${vpcEndpointId} already exists in Route Table ${routeTable.RouteTableId}`);
+            }
+            
+        } catch (error) {
+            console.error('Error ensuring route to VPC Endpoint:', error);
+        }
     }
 
     getS3(): AWS.S3 

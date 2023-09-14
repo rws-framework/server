@@ -42,7 +42,7 @@ class ConsoleService extends _service_1.default {
         if (!this.isEnabled) {
             return;
         }
-        console.log(...obj);
+        console.log(...obj.filter((logElem) => !!logElem));
     }
     warn(...obj) {
         if (!this.isEnabled) {
@@ -89,7 +89,7 @@ class ConsoleService extends _service_1.default {
         process.stdout.write('\r' + message);
     }
     rwsLog(logCat, logString = null) {
-        const logName = logString ? logCat : '[RWS CLI]';
+        const logName = logString ? `[${logCat}]` : '[RWS CLI]';
         const logData = logString ? logString : logCat;
         console.log(chalk_1.default.green(logName) + ' ' + logData);
     }

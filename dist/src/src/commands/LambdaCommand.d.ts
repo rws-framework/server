@@ -17,6 +17,7 @@ type ILambdaSubCommand = 'deploy' | 'delete' | string;
 interface ILambdaParamsReturn {
     lambdaCmd: ILambdaSubCommand;
     lambdaDirName: string;
+    subnetId: string;
     vpcId: string;
     lambdaArg: string;
     extraParams: {

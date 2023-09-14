@@ -15,7 +15,7 @@ class EFSService extends _service_1.default {
     constructor() {
         super();
     }
-    async getOrCreateEFS(functionName, subnetId) {
+    async getOrCreateEFS(functionName, vpcId, subnetId) {
         const response = await AWSService_1.default.getEFS().describeFileSystems({ CreationToken: functionName }).promise();
         if (response.FileSystems && response.FileSystems.length > 0) {
             const fileSystemId = response.FileSystems[0].FileSystemId;
@@ -41,6 +41,8 @@ class EFSService extends _service_1.default {
                 await this.waitForFileSystemMount(response.FileSystemId);
                 const [accessPointId, accessPointArn] = await this.createAccessPoint(response.FileSystemId);
                 await this.waitForAccessPoint(accessPointId);
+                const endpointId = await AWSService_1.default.createVPCEndpointIfNotExist(vpcId);
+                await AWSService_1.default.ensureRouteToVPCEndpoint(vpcId, endpointId);
                 log(`${color().green('[RWS Cloud FS Service]')} EFS Created:`, response);
                 return [response.FileSystemId, accessPointArn, false];
             }
@@ -192,8 +194,8 @@ class EFSService extends _service_1.default {
             console.error('Error creating Mount Target:', error);
         }
     }
-    async uploadToEFS(efsId, modulesS3Key, s3Bucket, subnetId) {
-        const efsLoaderFunctionName = await this.processEFSLoader(subnetId);
+    async uploadToEFS(efsId, modulesS3Key, s3Bucket, vpcId, subnetId) {
+        const efsLoaderFunctionName = await this.processEFSLoader(vpcId, subnetId);
         try {
             log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function with ${modulesS3Key} in ${s3Bucket} bucket.`);
             return await LambdaService_1.default.invokeLambda(efsLoaderFunctionName, {
@@ -207,7 +209,7 @@ class EFSService extends _service_1.default {
             throw error;
         }
     }
-    async processEFSLoader(subnetId) {
+    async processEFSLoader(vpcId, subnetId) {
         const executionDir = process.cwd();
         const filePath = module.id;
         const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
@@ -217,7 +219,7 @@ class EFSService extends _service_1.default {
         if (!(await LambdaService_1.default.functionExists(_UNZIP_FUNCTION_NAME))) {
             log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
             const zipPath = await LambdaService_1.default.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
-            await LambdaService_1.default.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, subnetId, true);
+            await LambdaService_1.default.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, vpcId, subnetId, true);
         }
         return _UNZIP_FUNCTION_NAME;
     }

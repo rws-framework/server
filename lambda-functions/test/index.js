@@ -25,6 +25,8 @@ export const handler = async (event) => {
                 console.log('Content Length:', data.ContentLength);
                 console.log('Last Modified:', data.LastModified);
 
+                console.log(`Saving file to: /mnt/efs/test/${modulesS3Key}`);
+
                 fs.writeFileSync(`/mnt/efs/test/${modulesS3Key}`, data.Body);
 
                 resolve({

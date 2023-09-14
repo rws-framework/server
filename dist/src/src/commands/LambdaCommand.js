@@ -47,10 +47,46 @@ class LambdaCommand extends _command_1.default {
         };
     }
     async execute(params) {
-        const { lambdaCmd, extraParams, vpcId } = await this.getLambdaParameters(params);
+        const { lambdaCmd, extraParams, subnetId, vpcId } = await this.getLambdaParameters(params);
+        const PermissionCheck = await AWSService_1.default.checkForRolePermissions(params._rws_config.aws_lambda_role, [
+            'lambda:CreateFunction',
+            'lambda:UpdateFunctionCode',
+            'lambda:UpdateFunctionConfiguration',
+            'lambda:InvokeFunction',
+            'lambda:ListFunctions',
+            's3:GetObject',
+            's3:PutObject',
+            'elasticfilesystem:CreateFileSystem',
+            'elasticfilesystem:DeleteFileSystem',
+            "elasticfilesystem:DescribeFileSystems",
+            'elasticfilesystem:CreateAccessPoint',
+            'elasticfilesystem:DeleteAccessPoint',
+            "elasticfilesystem:DescribeAccessPoints",
+            'elasticfilesystem:CreateMountTarget',
+            "elasticfilesystem:DeleteMountTarget",
+            'elasticfilesystem:DescribeMountTargets',
+            "ec2:CreateSecurityGroup",
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeVpcs",
+            "ec2:CreateVpcEndpoint",
+            "ec2:DescribeVpcEndpoints",
+            "ec2:ModifyVpcEndpoint",
+            "ec2:DeleteVpcEndpoint",
+            'cloudwatch:PutMetricData',
+            'cloudwatch:GetMetricData'
+        ]);
+        if (!PermissionCheck.OK) {
+            error('Lambda role has not enough permissions. Add following actions to your IAM role permissions policies:');
+            log(PermissionCheck.policies);
+            return;
+        }
+        else {
+            rwsLog(color().green('AWS IAM Role is eligible for operations.'));
+        }
         if (!!extraParams) {
             const zipPath = await LambdaService_1.default.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
-            await LambdaService_1.default.deployLambda('RWS-efs-loader', zipPath, vpcId, true);
+            await LambdaService_1.default.deployLambda('RWS-efs-loader', zipPath, vpcId, subnetId, true);
         }
         switch (lambdaCmd) {
             case 'deploy':
@@ -70,7 +106,7 @@ class LambdaCommand extends _command_1.default {
     }
     async getLambdaParameters(params) {
         const lambdaString = params.lambdaString || params._default;
-        const vpcId = params.subnetId || await AWSService_1.default.findDefaultVPC();
+        const [subnetId, vpcId] = params.subnetId || await AWSService_1.default.findDefaultSubnetForVPC();
         const lambdaStringArr = lambdaString.split(':');
         const lambdaCmd = lambdaStringArr[0];
         const lambdaDirName = lambdaStringArr[1];
@@ -79,6 +115,7 @@ class LambdaCommand extends _command_1.default {
         return {
             lambdaCmd,
             lambdaDirName,
+            subnetId,
             vpcId,
             lambdaArg,
             extraParams
@@ -96,20 +133,20 @@ class LambdaCommand extends _command_1.default {
         }
         const response = await LambdaService_1.default.invokeLambda(lambdaDirName, payload);
         rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response:`));
-        // log(response);
+        log(response);
     }
     async deploy(params) {
-        const { lambdaDirName, vpcId, lambdaArg } = await this.getLambdaParameters(params);
+        const { lambdaDirName, vpcId, subnetId, lambdaArg } = await this.getLambdaParameters(params);
         if (lambdaDirName === 'modules') {
             const modulesPath = path_1.default.join(moduleCfgDir, 'lambda', `RWS-modules.zip`);
-            const [efsId] = await EFSService_1.default.getOrCreateEFS('RWS_EFS', vpcId);
+            const [efsId] = await EFSService_1.default.getOrCreateEFS('RWS_EFS', vpcId, subnetId);
             LambdaService_1.default.setRegion(params._rws_config.aws_lambda_region);
-            await LambdaService_1.default.deployModules(lambdaArg, efsId, vpcId, true);
+            await LambdaService_1.default.deployModules(lambdaArg, efsId, vpcId, subnetId, true);
             return;
         }
         const lambdaParams = {
             rwsConfig: params._rws_config,
-            subnetId: vpcId
+            subnetId: subnetId
         };
         log(color().green('[RWS Lambda CLI]') + ' preparing artillery lambda function...');
         await this.executeLambdaLifeCycle('preArchive', lambdaDirName, lambdaParams);
@@ -117,7 +154,7 @@ class LambdaCommand extends _command_1.default {
         await this.executeLambdaLifeCycle('postArchive', lambdaDirName, lambdaParams);
         await this.executeLambdaLifeCycle('preDeploy', lambdaDirName, lambdaParams);
         try {
-            await LambdaService_1.default.deployLambda('RWS-' + lambdaDirName, zipPath, vpcId);
+            await LambdaService_1.default.deployLambda('RWS-' + lambdaDirName, zipPath, vpcId, subnetId);
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
             if (lambdaArg) {
                 const response = await this.invoke(params);

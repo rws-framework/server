@@ -27,6 +27,15 @@ class AWSService extends _service_1.default {
                 }
             });
         }
+        if (!this.iam) {
+            this.iam = new aws_sdk_1.default.IAM({
+                region: this.region,
+                credentials: {
+                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+                }
+            });
+        }
         if (!this.efs) {
             this.efs = new aws_sdk_1.default.EFS({
                 region: this.region,
@@ -55,11 +64,11 @@ class AWSService extends _service_1.default {
             });
         }
     }
-    async findDefaultVPC() {
+    async findDefaultSubnetForVPC() {
         try {
             const response = await this.getEC2().describeVpcs({ Filters: [{ Name: 'isDefault', Values: ['true'] }] }).promise();
             if (response.Vpcs && response.Vpcs.length > 0) {
-                return await this.getSubnetIdForVpc(response.Vpcs[0].VpcId);
+                return [await this.getSubnetIdForVpc(response.Vpcs[0].VpcId), response.Vpcs[0].VpcId];
             }
             else {
                 console.log('No default VPC found.');
@@ -96,8 +105,8 @@ class AWSService extends _service_1.default {
             return [];
         }
     }
-    async uploadToEFS(baseFunctionName, efsId, modulesS3Key, s3Bucket, subnetId) {
-        const efsLoaderFunctionName = await this.processEFSLoader(subnetId);
+    async uploadToEFS(baseFunctionName, efsId, modulesS3Key, s3Bucket, vpcId, subnetId) {
+        const efsLoaderFunctionName = await this.processEFSLoader(vpcId, subnetId);
         const params = {
             functionName: `RWS-${baseFunctionName}`,
             efsId,
@@ -117,7 +126,7 @@ class AWSService extends _service_1.default {
             throw error;
         }
     }
-    async processEFSLoader(subnetId) {
+    async processEFSLoader(vpcId, subnetId) {
         const executionDir = process.cwd();
         const filePath = module.id;
         const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
@@ -128,9 +137,132 @@ class AWSService extends _service_1.default {
         if (!(await LambdaService_1.default.functionExists(_UNZIP_FUNCTION_NAME))) {
             log(`${color().green(`[RWS Clud FS Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
             const zipPath = await LambdaService_1.default.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
-            await LambdaService_1.default.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, subnetId, true);
+            await LambdaService_1.default.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, vpcId, subnetId, true);
         }
         return _UNZIP_FUNCTION_NAME;
+    }
+    async checkForRolePermissions(roleARN, permissions) {
+        const { OK, policies } = await this.firePermissionCheck(roleARN, permissions);
+        return {
+            OK,
+            policies
+        };
+    }
+    async firePermissionCheck(roleARN, permissions) {
+        const params = {
+            PolicySourceArn: roleARN,
+            ActionNames: permissions
+        };
+        const policies = [];
+        let allowed = true;
+        try {
+            const data = await this.getIAM().simulatePrincipalPolicy(params).promise();
+            for (let result of data.EvaluationResults) {
+                if (result.EvalDecision !== 'allowed') {
+                    allowed = false;
+                    policies.push(result.EvalActionName);
+                }
+            }
+        }
+        catch (err) {
+            error('Permission check error:');
+            log(err);
+            allowed = false;
+        }
+        return {
+            OK: allowed,
+            policies: policies
+        };
+    }
+    async getDefaultRouteTable(vpcId) {
+        var _a;
+        const routeTablesResponse = await this.ec2.describeRouteTables({
+            Filters: [
+                {
+                    Name: "vpc-id",
+                    Values: [vpcId] // Provide the VPC ID here, not the VPC Endpoint ID
+                }
+            ]
+        }).promise();
+        return (_a = routeTablesResponse.RouteTables) === null || _a === void 0 ? void 0 : _a.find(rt => {
+            // A default route table won't have explicit subnet associations
+            return !rt.Associations || rt.Associations.every(assoc => !assoc.SubnetId);
+        });
+    }
+    async createVPCEndpointIfNotExist(vpcId) {
+        const endpointName = "RWS-S3-GATE";
+        const serviceName = `com.amazonaws.${this.region}.s3`;
+        // Describe VPC Endpoints
+        const existingEndpoints = await this.getEC2().describeVpcEndpoints({
+            Filters: [
+                {
+                    Name: "tag:Name",
+                    Values: [endpointName]
+                }
+            ]
+        }).promise();
+        const defaultRouteTable = await this.getDefaultRouteTable(vpcId);
+        // Check if the endpoint already exists
+        const endpointExists = existingEndpoints.VpcEndpoints && existingEndpoints.VpcEndpoints.length > 0;
+        if (!endpointExists) {
+            // Create VPC Endpoint for S3
+            const endpointResponse = await this.getEC2().createVpcEndpoint({
+                VpcId: vpcId,
+                ServiceName: serviceName,
+                VpcEndpointType: "Gateway",
+                RouteTableIds: [defaultRouteTable.RouteTableId],
+                TagSpecifications: [
+                    {
+                        ResourceType: "vpc-endpoint",
+                        Tags: [
+                            {
+                                Key: "Name",
+                                Value: endpointName
+                            }
+                        ]
+                    }
+                ]
+            }).promise();
+            if (endpointResponse.VpcEndpoint) {
+                log(`VPC Endpoint "${endpointName}" created with ID: ${endpointResponse.VpcEndpoint.VpcEndpointId}`);
+                return endpointResponse.VpcEndpoint.VpcEndpointId;
+            }
+            else {
+                error("Failed to create VPC Endpoint");
+                throw new Error("Failed to create VPC Endpoint");
+            }
+        }
+        else {
+            log(`VPC Endpoint "${endpointName}" already exists.`);
+            return existingEndpoints.VpcEndpoints[0].VpcEndpointId;
+        }
+    }
+    async ensureRouteToVPCEndpoint(vpcId, vpcEndpointId) {
+        try {
+            const routeTable = await this.getDefaultRouteTable(vpcId);
+            const routes = routeTable.Routes || [];
+            const hasS3EndpointRoute = routes.some((route) => route.GatewayId === vpcEndpointId);
+            if (!hasS3EndpointRoute) {
+                // Get the prefix list associated with the S3 VPC endpoint
+                const vpcEndpointDescription = (await this.ec2.describeVpcEndpoints({
+                    VpcEndpointIds: [vpcEndpointId]
+                }).promise()).VpcEndpoints;
+                rwsLog('Creating VPC Endpoint route');
+                // Add a route to the route table
+                await this.ec2.createRoute({
+                    RouteTableId: routeTable.RouteTableId,
+                    DestinationCidrBlock: '0.0.0.0/0',
+                    VpcEndpointId: vpcEndpointDescription[0].VpcEndpointId
+                }).promise();
+                log(`Added route to VPC Endpoint ${vpcEndpointId} in Route Table ${routeTable.RouteTableId}`);
+            }
+            else {
+                log(`Route to VPC Endpoint ${vpcEndpointId} already exists in Route Table ${routeTable.RouteTableId}`);
+            }
+        }
+        catch (error) {
+            console.error('Error ensuring route to VPC Endpoint:', error);
+        }
     }
     getS3() {
         this._initApis();
@@ -151,6 +283,10 @@ class AWSService extends _service_1.default {
     getRegion() {
         this._initApis();
         return this.region;
+    }
+    getIAM() {
+        this._initApis();
+        return this.iam;
     }
 }
 exports.default = AWSService.getSingleton();

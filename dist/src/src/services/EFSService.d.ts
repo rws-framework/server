@@ -7,7 +7,7 @@ declare class EFSService extends TheService {
     private lambda;
     private ec2;
     constructor();
-    getOrCreateEFS(functionName: string, subnetId: string): Promise<[string, string, boolean]>;
+    getOrCreateEFS(functionName: string, vpcId: string, subnetId: string): Promise<[string, string, boolean]>;
     deleteEFS(fileSystemId: string): Promise<void>;
     waitForEFS(fileSystemId: string): Promise<void>;
     sleep(ms: number): Promise<void>;
@@ -18,8 +18,8 @@ declare class EFSService extends TheService {
     getAccessPoints(fileSystemId: string): Promise<AWS.EFS.AccessPointDescriptions | null>;
     createAccessPoint(fileSystemId: string): Promise<[string, string]>;
     createMountTarget(fileSystemId: string, subnetId: string): Promise<string>;
-    uploadToEFS(efsId: string, modulesS3Key: string, s3Bucket: string, subnetId: string): Promise<any>;
-    processEFSLoader(subnetId: string): Promise<string>;
+    uploadToEFS(efsId: string, modulesS3Key: string, s3Bucket: string, vpcId: string, subnetId: string): Promise<any>;
+    processEFSLoader(vpcId: string, subnetId: string): Promise<string>;
     deleteDir(): Promise<void>;
 }
 declare const _default: EFSService;

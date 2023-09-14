@@ -25,7 +25,7 @@ class EFSService extends TheService {
         super();        
     }
 
-    async getOrCreateEFS(functionName: string, subnetId: string): Promise<[string, string, boolean]> 
+    async getOrCreateEFS(functionName: string, vpcId: string, subnetId: string): Promise<[string, string, boolean]> 
     {      
         const response = await AWSService.getEFS().describeFileSystems({ CreationToken: functionName }).promise();
     
@@ -56,6 +56,10 @@ class EFSService extends TheService {
                 await this.waitForFileSystemMount(response.FileSystemId);                           
                 const [accessPointId, accessPointArn] = await this.createAccessPoint(response.FileSystemId);
                 await this.waitForAccessPoint(accessPointId);
+
+                const endpointId = await AWSService.createVPCEndpointIfNotExist(vpcId);
+                await AWSService.ensureRouteToVPCEndpoint(vpcId, endpointId);
+
                 log(`${color().green('[RWS Cloud FS Service]')} EFS Created:`, response);
                 return [response.FileSystemId, accessPointArn, false];
             } catch (err) {
@@ -234,9 +238,9 @@ class EFSService extends TheService {
         }
     }   
 
-    async uploadToEFS(efsId: string, modulesS3Key: string, s3Bucket:string, subnetId: string): Promise<any>
+    async uploadToEFS(efsId: string, modulesS3Key: string, s3Bucket:string, vpcId: string, subnetId: string): Promise<any>
     {
-        const efsLoaderFunctionName = await this.processEFSLoader(subnetId);
+        const efsLoaderFunctionName = await this.processEFSLoader(vpcId, subnetId);
 
         
     
@@ -254,7 +258,7 @@ class EFSService extends TheService {
         }
     }
 
-    async processEFSLoader(subnetId: string): Promise<string>
+    async processEFSLoader(vpcId:string, subnetId: string): Promise<string>
     {
         const executionDir = process.cwd();
 
@@ -269,7 +273,7 @@ class EFSService extends TheService {
             log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
             const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
 
-            await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, subnetId, true);
+            await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, vpcId, subnetId, true);
         }
 
         return _UNZIP_FUNCTION_NAME;

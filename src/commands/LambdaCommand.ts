@@ -62,6 +62,7 @@ type ILambdaSubCommand = 'deploy' | 'delete' | string;
 interface ILambdaParamsReturn {
     lambdaCmd: ILambdaSubCommand
     lambdaDirName: string
+    subnetId: string
     vpcId: string
     lambdaArg: string
     extraParams: {
@@ -77,7 +78,7 @@ class LambdaCommand extends Command
 
     async execute(params?: ICmdParams): Promise<void>
     {
-        const { lambdaCmd, extraParams, vpcId } = await this.getLambdaParameters(params);
+        const { lambdaCmd, extraParams, subnetId, vpcId } = await this.getLambdaParameters(params);
 
         const PermissionCheck = await AWSService.checkForRolePermissions(params._rws_config.aws_lambda_role, [
             'lambda:CreateFunction',
@@ -104,7 +105,13 @@ class LambdaCommand extends Command
             "ec2:CreateSecurityGroup",    
             "ec2:DescribeSecurityGroups",
             "ec2:DescribeSubnets",
-            "ec2:DescribeVpcs",        
+
+            "ec2:DescribeVpcs",   
+            
+            "ec2:CreateVpcEndpoint",
+            "ec2:DescribeVpcEndpoints",
+            "ec2:ModifyVpcEndpoint",
+            "ec2:DeleteVpcEndpoint",
 
             'cloudwatch:PutMetricData',
             'cloudwatch:GetMetricData'
@@ -120,7 +127,7 @@ class LambdaCommand extends Command
 
         if(!!extraParams){            
             const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
-            await LambdaService.deployLambda('RWS-efs-loader', zipPath, vpcId, true);
+            await LambdaService.deployLambda('RWS-efs-loader', zipPath, vpcId, subnetId, true);
         }
         
         switch(lambdaCmd){
@@ -156,7 +163,7 @@ class LambdaCommand extends Command
     public async getLambdaParameters(params: ICmdParams): Promise<ILambdaParamsReturn>
     {
         const lambdaString: string = params.lambdaString || params._default;           
-        const vpcId = params.subnetId || await AWSService.findDefaultVPC();
+        const [subnetId, vpcId] = params.subnetId || await AWSService.findDefaultSubnetForVPC();
         const lambdaStringArr: string[] = lambdaString.split(':');        
         const lambdaCmd: ILambdaSubCommand = lambdaStringArr[0];
         const lambdaDirName = lambdaStringArr[1];    
@@ -166,6 +173,7 @@ class LambdaCommand extends Command
         return {
             lambdaCmd,
             lambdaDirName,
+            subnetId,
             vpcId,
             lambdaArg,
             extraParams
@@ -196,19 +204,19 @@ class LambdaCommand extends Command
 
     public async deploy(params: ICmdParams)
     {
-        const {lambdaDirName, vpcId, lambdaArg} = await this.getLambdaParameters(params);        
+        const {lambdaDirName, vpcId, subnetId, lambdaArg} = await this.getLambdaParameters(params);        
 
         if (lambdaDirName === 'modules') {
             const modulesPath = path.join(moduleCfgDir, 'lambda', `RWS-modules.zip`);
-            const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId);
+            const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId, subnetId);
             LambdaService.setRegion(params._rws_config.aws_lambda_region);
-            await LambdaService.deployModules(lambdaArg, efsId, vpcId, true);        
+            await LambdaService.deployModules(lambdaArg, efsId, vpcId,subnetId, true);        
             return;
         }
 
         const lambdaParams: ILambdaParams = {
             rwsConfig: params._rws_config,
-            subnetId: vpcId
+            subnetId: subnetId
         };
 
         log(color().green('[RWS Lambda CLI]') + ' preparing artillery lambda function...');
@@ -222,7 +230,7 @@ class LambdaCommand extends Command
         await this.executeLambdaLifeCycle('preDeploy', lambdaDirName, lambdaParams);
 
         try {
-            await LambdaService.deployLambda('RWS-' + lambdaDirName, zipPath, vpcId);
+            await LambdaService.deployLambda('RWS-' + lambdaDirName, zipPath, vpcId, subnetId);
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
             if(lambdaArg){
                 const response = await this.invoke(params);

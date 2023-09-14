@@ -14,12 +14,12 @@ declare const _default: ({
     getSourceFilePath(): string;
     getName(): string;
 } | {
-    execute(params?: import("./_command").ICmdParams): Promise<void>;
+    execute(params: import("./_command").ICmdParams): Promise<void>;
     name: string;
     getSourceFilePath(): string;
     getName(): string;
 } | {
-    execute(params: import("./_command").ICmdParams): Promise<void>;
+    execute(params?: import("./_command").ICmdParams): Promise<void>;
     name: string;
     getSourceFilePath(): string;
     getName(): string;
