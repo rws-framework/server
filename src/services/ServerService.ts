@@ -125,9 +125,11 @@ class ServerService extends ServerBase{
         });
           
     }
+
     disconnectClient = (clientSocket: Socket) => {
         clientSocket.disconnect(true);
     }
+    
     setJWTToken(socketId: string, token: string): void {
         if(token.indexOf('Bearer') > -1){
             this.tokens[socketId] = token.split(' ')[1];

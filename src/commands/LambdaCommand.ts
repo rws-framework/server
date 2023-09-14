@@ -79,6 +79,45 @@ class LambdaCommand extends Command
     {
         const { lambdaCmd, extraParams, vpcId } = await this.getLambdaParameters(params);
 
+        const PermissionCheck = await AWSService.checkForRolePermissions(params._rws_config.aws_lambda_role, [
+            'lambda:CreateFunction',
+            'lambda:UpdateFunctionCode',
+            'lambda:UpdateFunctionConfiguration',
+            'lambda:InvokeFunction',
+            'lambda:ListFunctions',
+            
+            's3:GetObject',
+            's3:PutObject',
+
+            'elasticfilesystem:CreateFileSystem',
+            'elasticfilesystem:DeleteFileSystem',
+            "elasticfilesystem:DescribeFileSystems",
+
+            'elasticfilesystem:CreateAccessPoint',
+            'elasticfilesystem:DeleteAccessPoint',
+            "elasticfilesystem:DescribeAccessPoints",
+
+            'elasticfilesystem:CreateMountTarget',            
+            "elasticfilesystem:DeleteMountTarget",
+            'elasticfilesystem:DescribeMountTargets',
+
+            "ec2:CreateSecurityGroup",    
+            "ec2:DescribeSecurityGroups",
+            "ec2:DescribeSubnets",
+            "ec2:DescribeVpcs",        
+
+            'cloudwatch:PutMetricData',
+            'cloudwatch:GetMetricData'
+        ]);
+
+        if(!PermissionCheck.OK){
+            error('Lambda role has not enough permissions. Add following actions to your IAM role permissions policies:');
+            log(PermissionCheck.policies);
+            return;
+        }else{
+            rwsLog(color().green('AWS IAM Role is eligible for operations.'));
+        }
+
         if(!!extraParams){            
             const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
             await LambdaService.deployLambda('RWS-efs-loader', zipPath, vpcId, true);

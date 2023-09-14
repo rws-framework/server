@@ -96,7 +96,7 @@ class LambdaCommand extends _command_1.default {
         }
         const response = await LambdaService_1.default.invokeLambda(lambdaDirName, payload);
         rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response:`));
-        log(response);
+        // log(response);
     }
     async deploy(params) {
         const { lambdaDirName, vpcId, lambdaArg } = await this.getLambdaParameters(params);

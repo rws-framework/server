@@ -32,7 +32,7 @@ class ConsoleService extends TheService
         return;
       }
 
-      console.log(...obj);
+      console.log(...obj.filter((logElem) => !!logElem));
     }
 
     warn(...obj: any[]): void
@@ -120,7 +120,7 @@ class ConsoleService extends TheService
 
     rwsLog(logCat: string | any[], logString: string | null = null): void
     {    
-      const logName = logString ? logCat : '[RWS CLI]';
+      const logName = logString ? `[${logCat}]` : '[RWS CLI]';
       const logData =logString ? logString : logCat;
 
       console.log(chalk.green(logName) + ' ' + logData)

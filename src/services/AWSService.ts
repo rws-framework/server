@@ -8,7 +8,6 @@ import path from 'path';
 import fs from 'fs';
 import AWS from 'aws-sdk';
 import archiver from 'archiver';
-import { String } from "aws-sdk/clients/batch";
 import ZipService from "./ZipService";
 import EFSService from "./EFSService";
 
@@ -23,6 +22,7 @@ class AWSService extends TheService {
     private efs: AWS.EFS;
     private lambda: AWS.Lambda;
     private ec2: AWS.EC2;
+    private iam: AWS.IAM;
 
     constructor() {
         super();        
@@ -37,6 +37,16 @@ class AWSService extends TheService {
 
         if(!this.s3){
             this.s3 = new AWS.S3({
+                region: this.region,
+                credentials: {
+                    accessKeyId: AppConfigService().get('aws_access_key'),
+                    secretAccessKey: AppConfigService().get('aws_secret_key'),
+                }
+            });
+        }
+
+        if(!this.iam){
+            this.iam = new AWS.IAM({
                 region: this.region,
                 credentials: {
                     accessKeyId: AppConfigService().get('aws_access_key'),
@@ -173,6 +183,46 @@ class AWSService extends TheService {
         return _UNZIP_FUNCTION_NAME;
     }    
 
+    async checkForRolePermissions(roleARN: string, permissions: string[]): Promise<{ OK: boolean, policies: string[] }>
+    {            
+        const {OK, policies} = await this.firePermissionCheck(roleARN, permissions);
+
+        return {
+            OK,
+            policies
+        };
+    }
+
+    private async firePermissionCheck(roleARN: string, permissions: string[])
+    {
+        const params = {
+            PolicySourceArn: roleARN, // Replace with your IAM role ARN
+            ActionNames: permissions
+        };
+
+        const policies: string[] = [];
+        let allowed = true;
+
+        try {
+            const data = await this.getIAM().simulatePrincipalPolicy(params).promise();
+            for (let result of data.EvaluationResults) {
+                if(result.EvalDecision !== 'allowed'){
+                    allowed = false;
+                    policies.push(result.EvalActionName);
+                }
+            }        
+        } catch (err) {
+            error('Permission check error:');
+            log(err);
+            allowed = false;
+        }
+
+        return {
+            OK: allowed,
+            policies: policies
+        };
+    }
+
     getS3(): AWS.S3 
     {
         this._initApis();
@@ -207,6 +257,13 @@ class AWSService extends TheService {
 
         return this.region;
     }
+
+    getIAM(): AWS.IAM 
+    {   
+        this._initApis();
+
+        return this.iam;
+    }    
 }
 
 export default AWSService.getSingleton();
