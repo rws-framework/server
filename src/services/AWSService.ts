@@ -7,6 +7,10 @@ import LambdaService from "./LambdaService";
 import path from 'path';
 import fs from 'fs';
 import AWS from 'aws-sdk';
+import { IAMClient, SimulatePrincipalPolicyCommand } from "@aws-sdk/client-iam";
+import { EFSClient } from "@aws-sdk/client-efs";
+import { EC2Client, DescribeVpcsCommand, DescribeSubnetsCommand, DescribeSecurityGroupsCommand, DescribeVpcEndpointsCommand, CreateVpcEndpointCommand } from "@aws-sdk/client-ec2";
+import { LambdaClient } from "@aws-sdk/client-lambda";
 import archiver from 'archiver';
 import ZipService from "./ZipService";
 import EFSService from "./EFSService";
@@ -28,64 +32,52 @@ class AWSService extends TheService {
         super();        
     }
 
-    _initApis(): void
-    {
-
+    _initApis(): void {
         if(!this.region){
             this.region = AppConfigService().get('aws_lambda_region');
         }
 
+        const credentials = {
+            accessKeyId: AppConfigService().get('aws_access_key'),
+            secretAccessKey: AppConfigService().get('aws_secret_key'),
+        };
+
         if(!this.s3){
-            this.s3 = new AWS.S3({
+            this.s3 = new S3Client({
                 region: this.region,
-                credentials: {
-                    accessKeyId: AppConfigService().get('aws_access_key'),
-                    secretAccessKey: AppConfigService().get('aws_secret_key'),
-                }
+                credentials
             });
         }
 
         if(!this.iam){
-            this.iam = new AWS.IAM({
+            this.iam = new IAMClient({
                 region: this.region,
-                credentials: {
-                    accessKeyId: AppConfigService().get('aws_access_key'),
-                    secretAccessKey: AppConfigService().get('aws_secret_key'),
-                }
+                credentials
             });
         }
 
         if(!this.efs){
-            this.efs = new AWS.EFS({
+            this.efs = new EFSClient({
                 region: this.region,
-                credentials: {
-                    accessKeyId: AppConfigService().get('aws_access_key'),
-                    secretAccessKey: AppConfigService().get('aws_secret_key'),
-                }
+                credentials
             });
         }
 
         if(!this.ec2){
-            this.ec2 = new AWS.EC2({
+            this.ec2 = new EC2Client({
                 region: this.region,
-                credentials: {
-                    accessKeyId: AppConfigService().get('aws_access_key'),
-                    secretAccessKey: AppConfigService().get('aws_secret_key'),
-                }
+                credentials
             });
         }
 
-        
         if(!this.lambda){
-            this.lambda = new AWS.Lambda({
+            this.lambda = new LambdaClient({
                 region: this.region,
-                credentials: {
-                    accessKeyId: AppConfigService().get('aws_access_key'),
-                    secretAccessKey: AppConfigService().get('aws_secret_key'),
-                }
+                credentials
             });
         }
-    }        
+    }
+    
 
     async findDefaultSubnetForVPC(): Promise<[string, string]> 
     {

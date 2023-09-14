@@ -1,5 +1,4 @@
 import TheService from "./_service";
-import AWS from 'aws-sdk';
 declare class AWSService extends TheService {
     private region;
     private s3;

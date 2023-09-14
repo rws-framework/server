@@ -6,7 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _service_1 = __importDefault(require("./_service"));
 const AppConfigService_1 = __importDefault(require("./AppConfigService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
-const aws_sdk_1 = __importDefault(require("aws-sdk"));
+const client_iam_1 = require("@aws-sdk/client-iam");
+const client_efs_1 = require("@aws-sdk/client-efs");
+const client_ec2_1 = require("@aws-sdk/client-ec2");
+const client_lambda_1 = require("@aws-sdk/client-lambda");
 const { log, warn, error, color, AWSProgressBar, rwsLog } = ConsoleService_1.default;
 class AWSService extends _service_1.default {
     constructor() {
@@ -16,49 +19,38 @@ class AWSService extends _service_1.default {
         if (!this.region) {
             this.region = (0, AppConfigService_1.default)().get('aws_lambda_region');
         }
+        const credentials = {
+            accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+            secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+        };
         if (!this.s3) {
-            this.s3 = new aws_sdk_1.default.S3({
+            this.s3 = new S3Client({
                 region: this.region,
-                credentials: {
-                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
-                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
-                }
+                credentials
             });
         }
         if (!this.iam) {
-            this.iam = new aws_sdk_1.default.IAM({
+            this.iam = new client_iam_1.IAMClient({
                 region: this.region,
-                credentials: {
-                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
-                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
-                }
+                credentials
             });
         }
         if (!this.efs) {
-            this.efs = new aws_sdk_1.default.EFS({
+            this.efs = new client_efs_1.EFSClient({
                 region: this.region,
-                credentials: {
-                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
-                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
-                }
+                credentials
             });
         }
         if (!this.ec2) {
-            this.ec2 = new aws_sdk_1.default.EC2({
+            this.ec2 = new client_ec2_1.EC2Client({
                 region: this.region,
-                credentials: {
-                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
-                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
-                }
+                credentials
             });
         }
         if (!this.lambda) {
-            this.lambda = new aws_sdk_1.default.Lambda({
+            this.lambda = new client_lambda_1.LambdaClient({
                 region: this.region,
-                credentials: {
-                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
-                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
-                }
+                credentials
             });
         }
     }
