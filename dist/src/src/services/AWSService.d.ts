@@ -12,8 +12,6 @@ declare class AWSService extends TheService {
     findDefaultSubnetForVPC(): Promise<[string, string]>;
     private getSubnetIdForVpc;
     listSecurityGroups(): Promise<string[]>;
-    uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket: string, vpcId: string, subnetId: string): Promise<any>;
-    processEFSLoader(vpcId: string, subnetId: string): Promise<string>;
     checkForRolePermissions(roleARN: string, permissions: string[]): Promise<{
         OK: boolean;
         policies: string[];

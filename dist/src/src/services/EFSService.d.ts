@@ -18,7 +18,7 @@ declare class EFSService extends TheService {
     getAccessPoints(fileSystemId: string): Promise<AWS.EFS.AccessPointDescriptions | null>;
     createAccessPoint(fileSystemId: string): Promise<[string, string]>;
     createMountTarget(fileSystemId: string, subnetId: string): Promise<string>;
-    uploadToEFS(efsId: string, modulesS3Key: string, s3Bucket: string, vpcId: string, subnetId: string): Promise<any>;
+    uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket: string, vpcId: string, subnetId: string): Promise<any>;
     processEFSLoader(vpcId: string, subnetId: string): Promise<string>;
     deleteDir(): Promise<void>;
 }

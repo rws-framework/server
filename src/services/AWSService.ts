@@ -133,56 +133,7 @@ class AWSService extends TheService {
             console.error('Error fetching security groups:', error);
             return [];
         }
-    }
-
-    async uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket:string, vpcId: string, subnetId: string): Promise<any>
-    {
-        const efsLoaderFunctionName = await this.processEFSLoader(vpcId, subnetId);
-
-        const params = {
-            functionName: `RWS-${baseFunctionName}`,
-            efsId,
-            modulesS3Key,
-            s3Bucket
-        };
-    
-        try {
-            log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function for "${baseFunctionName}" with ${modulesS3Key} in ${s3Bucket} bucket.`);
-
-            const response = await LambdaService.invokeLambda(efsLoaderFunctionName, params);
-            rwsLog('RWS Lambda Service', color().yellowBright(`"${efsLoaderFunctionName}" lambda function response:`));
-            log(response);            
-            return;// JSON.parse(response.Response.Payload as string);
-        } catch (error) {
-            // await EFSService.deleteEFS(efsId);
-            console.error('Error invoking Lambda:', error);
-            throw error;
-        }
-    }
-
-    async processEFSLoader(vpcId: string, subnetId: string): Promise<string>
-    {
-        const executionDir = process.cwd();
-
-        const filePath:string = module.id;        
-        const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
-        const moduleDir = path.resolve(__dirname, '..', '..').replace('dist', '');
-        const moduleCfgDir = `${executionDir}/node_modules/.rws`;
-
-        const _UNZIP_FUNCTION_NAME: string = 'RWS-efs-loader';
-
-        log(`${color().green(`[RWS Clud FS Service]`)} processing EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`);
-
-
-        if(!(await LambdaService.functionExists(_UNZIP_FUNCTION_NAME))){
-            log(`${color().green(`[RWS Clud FS Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
-            const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
-
-            await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, vpcId, subnetId, true);
-        }
-
-        return _UNZIP_FUNCTION_NAME;
-    }    
+    }        
 
     async checkForRolePermissions(roleARN: string, permissions: string[]): Promise<{ OK: boolean, policies: string[] }>
     {            

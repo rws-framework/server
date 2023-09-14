@@ -125,9 +125,9 @@ class LambdaCommand extends Command
             rwsLog(color().green('AWS IAM Role is eligible for operations.'));
         }
 
-        if(!!extraParams){            
-            const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
-            await LambdaService.deployLambda('RWS-efs-loader', zipPath, vpcId, subnetId, true);
+        if(!!extraParams && !!extraParams.redeploy_loader){            
+            const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir, true);
+            await LambdaService.deployLambda('efs-loader', zipPath, vpcId, subnetId, true);
         }
         
         switch(lambdaCmd){
@@ -140,9 +140,12 @@ class LambdaCommand extends Command
             case 'delete':
                 await this.delete(params);
                 return;    
+            case 'list':
+                await this.list(params);
+                return;    
             default:
                 error(`[RWS Lambda CLI] "${lambdaCmd}" command is not supported in RWS Lambda CLI`);
-                log(`Try: "deploy:${lambdaCmd}", "kill:${lambdaCmd}", invoke:${lambdaCmd} or "list:${lambdaCmd}"`)
+                log(`Try: "deploy:${lambdaCmd}", "delete:${lambdaCmd}", invoke:${lambdaCmd} or "list:${lambdaCmd}"`)
                 return;    
         }    
     }   
@@ -195,19 +198,54 @@ class LambdaCommand extends Command
 
             payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
         }
-      
+    
         const response = await LambdaService.invokeLambda(lambdaDirName, payload);
-        rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response:`));
-        log(response);
+        rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));            
 
+        const responseData = JSON.parse(response.Response.Payload.toString());
+                
+        log(responseData);
+
+        if(!responseData.success){
+            log(responseData.errorMessage);
+        }
+    }
+
+    public async list(params: ICmdParams)
+    {
+        const listFunctionsParams: AWS.Lambda.ListFunctionsRequest = {
+            MaxItems: 100,
+          };
+        
+        const rwsLambdaFunctions: AWS.Lambda.FunctionConfiguration[] = [];
+
+        try {
+            const functionsResponse = await AWSService.getLambda().listFunctions(listFunctionsParams).promise();
+        
+            if (functionsResponse.Functions) {
+              for (const functionConfig of functionsResponse.Functions) {
+                if (functionConfig.FunctionName && functionConfig.FunctionName.startsWith('RWS-')) {
+                  rwsLambdaFunctions.push(functionConfig);
+                }
+              }
+            }
+        } catch (error) {
+            throw new Error(`Error listing Lambda functions: ${(error as AWS.AWSError).message}`);
+        }
+
+        rwsLog('RWS Lambda Service', color().yellowBright(`RWS lambda functions list:`));    
+        rwsLog('RWS Lambda Service', color().yellowBright(`ARN  |  NAME`));  
+
+        rwsLambdaFunctions.map((funct: AWS.Lambda.FunctionConfiguration) => funct.FunctionArn + '  |  ' +funct.FunctionName).forEach((msg) => {
+            log(msg);
+        })
     }
 
     public async deploy(params: ICmdParams)
     {
         const {lambdaDirName, vpcId, subnetId, lambdaArg} = await this.getLambdaParameters(params);        
 
-        if (lambdaDirName === 'modules') {
-            const modulesPath = path.join(moduleCfgDir, 'lambda', `RWS-modules.zip`);
+        if (lambdaDirName === 'modules') {        
             const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId, subnetId);
             LambdaService.setRegion(params._rws_config.aws_lambda_region);
             await LambdaService.deployModules(lambdaArg, efsId, vpcId,subnetId, true);        
@@ -223,19 +261,38 @@ class LambdaCommand extends Command
 
         await this.executeLambdaLifeCycle('preArchive', lambdaDirName, lambdaParams);
 
-        const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/${lambdaDirName}`, moduleCfgDir);
+        const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/${lambdaDirName}`, moduleCfgDir, lambdaDirName === 'efs-loader');
 
         await this.executeLambdaLifeCycle('postArchive', lambdaDirName, lambdaParams);
 
         await this.executeLambdaLifeCycle('preDeploy', lambdaDirName, lambdaParams);
 
         try {
-            await LambdaService.deployLambda('RWS-' + lambdaDirName, zipPath, vpcId, subnetId);
+            await LambdaService.deployLambda(lambdaDirName, zipPath, vpcId, subnetId);
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
-            if(lambdaArg){
-                const response = await this.invoke(params);
 
-                log(response);
+            let payload = {};
+
+            if(lambdaArg){                       
+                const payloadPath = `${executionDir}/payloads/${lambdaArg}.json`
+    
+                if(!fs.existsSync(payloadPath)){
+                    throw new Error(`No payload file in "${payloadPath}"`);
+                }
+    
+                payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
+                
+                const response = await LambdaService.invokeLambda(lambdaDirName, payload);
+
+                rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));    
+
+                const responseData = JSON.parse(response.Response.Payload.toString());
+                
+                log(responseData);
+
+                if(!responseData.success){
+                    log(responseData.errorMessage);
+                }
             }
         } catch (e: Error | any) {
             error(e.message);

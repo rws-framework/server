@@ -9,7 +9,7 @@ const LambdaService_1 = __importDefault(require("./LambdaService"));
 const AWSService_1 = __importDefault(require("./AWSService"));
 const ProcessService_1 = __importDefault(require("./ProcessService"));
 const path_1 = __importDefault(require("path"));
-const { log, warn, error, color, AWSProgressBar } = ConsoleService_1.default;
+const { log, warn, error, color, AWSProgressBar, rwsLog } = ConsoleService_1.default;
 const __STATE_WAIT_TIME = 3000; //ms
 class EFSService extends _service_1.default {
     constructor() {
@@ -194,17 +194,23 @@ class EFSService extends _service_1.default {
             console.error('Error creating Mount Target:', error);
         }
     }
-    async uploadToEFS(efsId, modulesS3Key, s3Bucket, vpcId, subnetId) {
+    async uploadToEFS(baseFunctionName, efsId, modulesS3Key, s3Bucket, vpcId, subnetId) {
         const efsLoaderFunctionName = await this.processEFSLoader(vpcId, subnetId);
+        const params = {
+            functionName: `${baseFunctionName}`,
+            efsId,
+            modulesS3Key,
+            s3Bucket
+        };
         try {
-            log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function with ${modulesS3Key} in ${s3Bucket} bucket.`);
-            return await LambdaService_1.default.invokeLambda(efsLoaderFunctionName, {
-                efsId,
-                modulesS3Key,
-                s3Bucket
-            });
+            log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function for "${baseFunctionName}" with ${modulesS3Key} in ${s3Bucket} bucket.`);
+            const response = await LambdaService_1.default.invokeLambda(efsLoaderFunctionName, params);
+            rwsLog('RWS Lambda Service', color().yellowBright(`"${efsLoaderFunctionName}" lambda function response:`));
+            log(response);
+            return; // JSON.parse(response.Response.Payload as string);
         }
         catch (error) {
+            // await EFSService.deleteEFS(efsId);
             console.error('Error invoking Lambda:', error);
             throw error;
         }
@@ -215,7 +221,7 @@ class EFSService extends _service_1.default {
         const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
         const moduleDir = path_1.default.resolve(cmdDir, '..', '..', '..', '..');
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
-        const _UNZIP_FUNCTION_NAME = 'RWS_EFS_LOADER';
+        const _UNZIP_FUNCTION_NAME = 'efs-loader';
         if (!(await LambdaService_1.default.functionExists(_UNZIP_FUNCTION_NAME))) {
             log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
             const zipPath = await LambdaService_1.default.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);

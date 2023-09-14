@@ -24,6 +24,13 @@ class S3Service extends TheService {
         return AWSService.getS3().upload(params).promise()
     }
 
+    async delete(params: AWS.S3.Types.DeleteObjectRequest): Promise<void>
+    {
+        await this.deleteObject({ Bucket: params.Bucket, Key: params.Key });
+
+        return;
+    }
+
     async objectExists(params: AWS.S3.Types.HeadObjectRequest): Promise<boolean> {
         try {
             await AWSService.getS3().headObject(params).promise();
