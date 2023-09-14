@@ -17,6 +17,9 @@ const extraArgsAggregated = [];
 
 const { spawn, exec } = require('child_process');
 const crypto = require('crypto');
+
+process.chdir(path.resolve(`${__dirname}`, '..').replace('dist/',''));
+
 const ProcessService = require('../dist/src/services/ProcessService').default;
 const ConsoleService = require('../dist/src/services/ConsoleService').default;
 const MD5Service = require('../dist/src/services/MD5Service').default;
@@ -71,7 +74,6 @@ const main = async () => {
         await ProcessService.runShellCommand(`cd ${process.cwd()} && npm install ts-loader`);    
         log('[RWS Console] install done')
     }
-
     
     await generateCliClient();        
 
@@ -94,10 +96,10 @@ async function generateCliClient()
         fs.mkdirSync(moduleCfgDir);
     }
 
-    const tsFile = path.resolve(__dirname, 'src') + '/rws.ts';
-
+    const tsFile = path.resolve(__dirname, 'src') + '/rws.ts';    
+    
     const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);       
-
+        
     if((!fs.existsSync(consoleClientHashFile) || await MD5Service.cliClientHasChanged(consoleClientHashFile, tsFile, cmdFiles)) || forceReload){
         if(forceReload){
             warn('[RWS] Forcing CLI client reload...');

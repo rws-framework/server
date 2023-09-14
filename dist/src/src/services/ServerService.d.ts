@@ -1,7 +1,10 @@
-import { Server as ServerBase } from "socket.io";
+/// <reference types="node" />
+/// <reference types="node" />
+import { Server as ServerBase, Socket } from "socket.io";
 import https from "https";
 import http from "http";
 import ITheSocket from "../interfaces/ITheSocket";
+import { AxiosRequestHeaders } from 'axios';
 import Controller from "../controllers/_controller";
 import { IHTTPRoute } from "../routing/routes";
 type WsRoutes = {

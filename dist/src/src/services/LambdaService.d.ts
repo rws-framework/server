@@ -1,6 +1,5 @@
 import TheService from "./_service";
-import AWS from 'aws-sdk';
-type InvocationTypeType = 'RequestResponse' | 'Event' | 'DryDrun';
+import { InvocationType } from "@aws-sdk/client-lambda";
 declare class LambdaService extends TheService {
     private region;
     constructor();
@@ -12,12 +11,11 @@ declare class LambdaService extends TheService {
     functionExists(lambdaFunctionName: string): Promise<boolean>;
     waitForLambda(functionName: string, waitFor?: string, timeoutMs?: number, intervalMs?: number): Promise<void>;
     deleteLambda(functionName: string): Promise<void>;
-    invokeLambda(functionName: string, payload: any, invocationType?: InvocationTypeType): Promise<{
+    invokeLambda(functionName: string, payload: any, invocationType?: InvocationType): Promise<{
         StatusCode: number;
-        Response: AWS.Lambda.InvocationResponse;
+        Response: any;
         CapturedLogs?: string[];
     }>;
-    retrieveCloudWatchLogs(logResult: string, functionName: string): Promise<string[]>;
     findPayload(lambdaArg: string): string;
 }
 declare const _default: LambdaService;

@@ -7,6 +7,7 @@ import path from 'path';
 import UtilsService from "../services/UtilsService";
 import EFSService from "../services/EFSService";
 import LambdaService from "../services/LambdaService";
+import { ListFunctionsCommand } from "@aws-sdk/client-lambda";
 
 
 const { log, warn, error, color, rwsLog } = ConsoleService;
@@ -215,35 +216,35 @@ class LambdaCommand extends Command
         }
     }
 
-    public async list(params: ICmdParams)
-    {
-        const listFunctionsParams: AWS.Lambda.ListFunctionsRequest = {
-            MaxItems: 100,
-          };
-        
-        const rwsLambdaFunctions: AWS.Lambda.FunctionConfiguration[] = [];
-
+    public async list(params: ICmdParams) {        
+        const listFunctionsParams = {
+          MaxItems: 100,
+        };
+      
+        const rwsLambdaFunctions: any[] = []; // Use any[] to avoid AWS v3 types
+      
         try {
-            const functionsResponse = await AWSService.getLambda().listFunctions(listFunctionsParams).promise();
-        
-            if (functionsResponse.Functions) {
-              for (const functionConfig of functionsResponse.Functions) {
-                if (functionConfig.FunctionName && functionConfig.FunctionName.startsWith('RWS-')) {
-                  rwsLambdaFunctions.push(functionConfig);
-                }
+          const functionsResponse = await AWSService.getLambda().send(new ListFunctionsCommand(listFunctionsParams));
+      
+          if (functionsResponse.Functions) {
+            for (const functionConfig of functionsResponse.Functions) {
+              if (functionConfig.FunctionName && functionConfig.FunctionName.startsWith('RWS-')) {
+                rwsLambdaFunctions.push(functionConfig);
               }
             }
+          }
         } catch (error) {
-            throw new Error(`Error listing Lambda functions: ${(error as AWS.AWSError).message}`);
+          throw new Error(`Error listing Lambda functions: ${(error as Error).message}`);
         }
-
-        rwsLog('RWS Lambda Service', color().yellowBright(`RWS lambda functions list:`));    
-        rwsLog('RWS Lambda Service', color().yellowBright(`ARN  |  NAME`));  
-
-        rwsLambdaFunctions.map((funct: AWS.Lambda.FunctionConfiguration) => funct.FunctionArn + '  |  ' +funct.FunctionName).forEach((msg) => {
-            log(msg);
-        })
+      
+        rwsLog('RWS Lambda Service', color().yellowBright(`RWS lambda functions list:`));
+        rwsLog('RWS Lambda Service', color().yellowBright(`ARN  |  NAME`));
+      
+        rwsLambdaFunctions.map((funct: any) => funct.FunctionArn + '  |  ' + funct.FunctionName).forEach((msg) => {
+          log(msg);
+        });
     }
+      
 
     public async deploy(params: ICmdParams)
     {

@@ -25,7 +25,7 @@ declare class ProcessService extends TheService {
     PM2RunCommandsInParallel(commands: string[]): Promise<void>;
     killProcess(scriptPath: string): Promise<void>;
     killRWS(): Promise<void>;
-    runShellCommand(command: string): Promise<void>;
+    runShellCommand(command: string, silent?: boolean): Promise<void>;
     sleep(ms: number): Promise<void>;
 }
 declare const _default_1: ProcessService;

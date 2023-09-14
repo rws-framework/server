@@ -1,4 +1,5 @@
-node_modules/
+./node_modules/
 exec/dist/
 
 !lambda-functions/efs_loader/node_modules
+node_modules

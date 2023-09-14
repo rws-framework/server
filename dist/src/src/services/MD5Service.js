@@ -44,6 +44,7 @@ class MD5Service extends _service_1.default {
         return false;
     }
     batchGenerateCommandFileMD5(moduleCfgDir) {
+        console.log('YOOOO', moduleCfgDir);
         if (!fs_1.default.existsSync(moduleCfgDir)) {
             fs_1.default.mkdirSync(moduleCfgDir);
         }

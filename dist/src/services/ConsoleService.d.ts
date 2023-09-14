@@ -16,6 +16,7 @@ declare class ConsoleService extends TheService {
     private disableOriginalLogFunctions;
     private restoreOriginalLogFunctions;
     updateLogLine(message: string): void;
+    rwsLog(logCat: string | any[], logString?: string | null): void;
 }
 declare const _default: ConsoleService;
 export default _default;

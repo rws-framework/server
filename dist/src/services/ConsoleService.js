@@ -42,19 +42,19 @@ class ConsoleService extends _service_1.default {
         if (!this.isEnabled) {
             return;
         }
-        console.log(...obj);
+        console.log(...obj.filter((logElem) => !!logElem));
     }
     warn(...obj) {
         if (!this.isEnabled) {
             return;
         }
-        console.warn(...obj.map((txt) => chalk_1.default.yellowBright(txt)));
+        console.warn(...obj.map((txt) => chalk_1.default.yellowBright('[RWS CLI] ' + txt)));
     }
     error(...obj) {
         if (!this.isEnabled) {
             return;
         }
-        console.error(...obj.map((txt) => chalk_1.default.red(txt)));
+        console.log(...obj.map((txt) => chalk_1.default.red('[RWS CLI ERROR] ' + txt)));
     }
     stopLogging() {
         this.isEnabled = false;
@@ -87,6 +87,11 @@ class ConsoleService extends _service_1.default {
     }
     updateLogLine(message) {
         process.stdout.write('\r' + message);
+    }
+    rwsLog(logCat, logString = null) {
+        const logName = logString ? `[${logCat}]` : '[RWS CLI]';
+        const logData = logString ? logString : logCat;
+        console.log(chalk_1.default.green(logName), logData);
     }
 }
 exports.default = ConsoleService.getSingleton();

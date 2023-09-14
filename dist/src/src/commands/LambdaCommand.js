@@ -11,6 +11,7 @@ const path_1 = __importDefault(require("path"));
 const UtilsService_1 = __importDefault(require("../services/UtilsService"));
 const EFSService_1 = __importDefault(require("../services/EFSService"));
 const LambdaService_1 = __importDefault(require("../services/LambdaService"));
+const client_lambda_1 = require("@aws-sdk/client-lambda");
 const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 const executionDir = process.cwd();
 const moduleCfgDir = `${executionDir}/node_modules/.rws`;
@@ -149,9 +150,9 @@ class LambdaCommand extends _command_1.default {
         const listFunctionsParams = {
             MaxItems: 100,
         };
-        const rwsLambdaFunctions = [];
+        const rwsLambdaFunctions = []; // Use any[] to avoid AWS v3 types
         try {
-            const functionsResponse = await AWSService_1.default.getLambda().listFunctions(listFunctionsParams).promise();
+            const functionsResponse = await AWSService_1.default.getLambda().send(new client_lambda_1.ListFunctionsCommand(listFunctionsParams));
             if (functionsResponse.Functions) {
                 for (const functionConfig of functionsResponse.Functions) {
                     if (functionConfig.FunctionName && functionConfig.FunctionName.startsWith('RWS-')) {

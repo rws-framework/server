@@ -15,6 +15,11 @@
     "rws": "./exec/console.js"
   },
   "dependencies": {
+    "@aws-sdk/client-ec2": "^3.50.0",
+    "@aws-sdk/client-efs": "^3.413.0",
+    "@aws-sdk/client-iam": "^3.413.0",
+    "@aws-sdk/client-lambda": "^3.50.0",
+    "@aws-sdk/client-s3": "^3.413.0",
     "@aws-sdk/credential-providers": "^3.363.0",
     "@mongodb-js/zstd": "^1.1.0",
     "@prisma/client": "^5.1.1",
@@ -25,7 +30,6 @@
     "@types/socket.io-client": "^3.0.0",
     "archiver": "^6.0.0",
     "aws-crt": "^1.15.20",
-    "@aws-sdk/client-s3": "^3.50.0",
     "aws4": "^1.12.0",
     "axios": "^1.4.0",
     "bufferutil": "^4.0.7",
@@ -80,7 +84,7 @@
     "tough-cookie": "^4.1.3",
     "ts-mocha": "^10.0.0",
     "tsconfig-paths": "^4.2.0",
-    "typedoc": "^0.24.8",    
+    "typedoc": "^0.24.8",
     "typedoc-plugin-mermaid": "^1.10.0",
     "typedoc-plugin-not-exported": "^0.1.6",
     "typedoc-plugin-rename-defaults": "^0.6.5",

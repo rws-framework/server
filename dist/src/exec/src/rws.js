@@ -75,6 +75,7 @@ const main = async () => {
     const commands = [...index_1.RWSAppCommands, ...APP.get('commands')];
     const theCommand = commands.find((cmd) => cmd.getName() == command);
     commandExecutionArgs._rws_config = APP_CFG;
+    console.log('ssss');
     const cmdFiles = index_1.MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);
     const currentSumHashes = (await index_1.MD5Service.generateCliHashes([tsFile, ...cmdFiles])).join('/');
     if (!savedHash || currentSumHashes !== savedHash) {

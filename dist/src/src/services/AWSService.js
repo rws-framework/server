@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _service_1 = __importDefault(require("./_service"));
 const AppConfigService_1 = __importDefault(require("./AppConfigService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
+const client_s3_1 = require("@aws-sdk/client-s3");
 const client_iam_1 = require("@aws-sdk/client-iam");
 const client_efs_1 = require("@aws-sdk/client-efs");
 const client_ec2_1 = require("@aws-sdk/client-ec2");
@@ -24,7 +25,7 @@ class AWSService extends _service_1.default {
             secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
         };
         if (!this.s3) {
-            this.s3 = new S3Client({
+            this.s3 = new client_s3_1.S3Client({
                 region: this.region,
                 credentials
             });
@@ -56,7 +57,8 @@ class AWSService extends _service_1.default {
     }
     async findDefaultSubnetForVPC() {
         try {
-            const response = await this.getEC2().describeVpcs({ Filters: [{ Name: 'isDefault', Values: ['true'] }] }).promise();
+            const command = new client_ec2_1.DescribeVpcsCommand({ Filters: [{ Name: 'isDefault', Values: ['true'] }] });
+            const response = await this.getEC2().send(command);
             if (response.Vpcs && response.Vpcs.length > 0) {
                 return [await this.getSubnetIdForVpc(response.Vpcs[0].VpcId), response.Vpcs[0].VpcId];
             }
@@ -69,13 +71,13 @@ class AWSService extends _service_1.default {
         }
     }
     async getSubnetIdForVpc(vpcId) {
-        const params = {
+        const command = new client_ec2_1.DescribeSubnetsCommand({
             Filters: [{
                     Name: 'vpc-id',
                     Values: [vpcId]
                 }]
-        };
-        const result = await this.getEC2().describeSubnets(params).promise();
+        });
+        const result = await this.getEC2().send(command);
         if (result.Subnets && result.Subnets.length > 0) {
             return result.Subnets.map(subnet => subnet.SubnetId)[0];
         }
@@ -85,7 +87,8 @@ class AWSService extends _service_1.default {
     }
     async listSecurityGroups() {
         try {
-            const result = await this.getEC2().describeSecurityGroups().promise();
+            const command = new client_ec2_1.DescribeSecurityGroupsCommand({});
+            const result = await this.getEC2().send(command);
             const securityGroups = result.SecurityGroups || [];
             const securityGroupIds = securityGroups.map(sg => sg.GroupId);
             return securityGroupIds;
@@ -107,10 +110,11 @@ class AWSService extends _service_1.default {
             PolicySourceArn: roleARN,
             ActionNames: permissions
         };
+        const command = new client_iam_1.SimulatePrincipalPolicyCommand(params);
         const policies = [];
         let allowed = true;
         try {
-            const data = await this.getIAM().simulatePrincipalPolicy(params).promise();
+            const data = await this.getIAM().send(command);
             for (let result of data.EvaluationResults) {
                 if (result.EvalDecision !== 'allowed') {
                     allowed = false;
@@ -130,15 +134,16 @@ class AWSService extends _service_1.default {
     }
     async getDefaultRouteTable(vpcId) {
         var _a;
-        const routeTablesResponse = await this.ec2.describeRouteTables({
+        const command = new client_ec2_1.DescribeRouteTablesCommand({
             Filters: [
                 {
                     Name: "vpc-id",
-                    Values: [vpcId] // Provide the VPC ID here, not the VPC Endpoint ID
+                    Values: [vpcId]
                 }
             ]
-        }).promise();
-        return (_a = routeTablesResponse.RouteTables) === null || _a === void 0 ? void 0 : _a.find(rt => {
+        });
+        const response = await this.getEC2().send(command);
+        return (_a = response.RouteTables) === null || _a === void 0 ? void 0 : _a.find(rt => {
             // A default route table won't have explicit subnet associations
             return !rt.Associations || rt.Associations.every(assoc => !assoc.SubnetId);
         });
@@ -147,20 +152,21 @@ class AWSService extends _service_1.default {
         const endpointName = "RWS-S3-GATE";
         const serviceName = `com.amazonaws.${this.region}.s3`;
         // Describe VPC Endpoints
-        const existingEndpoints = await this.getEC2().describeVpcEndpoints({
+        const describeCommand = new client_ec2_1.DescribeVpcEndpointsCommand({
             Filters: [
                 {
                     Name: "tag:Name",
                     Values: [endpointName]
                 }
             ]
-        }).promise();
+        });
+        const existingEndpoints = await this.getEC2().send(describeCommand);
         const defaultRouteTable = await this.getDefaultRouteTable(vpcId);
         // Check if the endpoint already exists
         const endpointExists = existingEndpoints.VpcEndpoints && existingEndpoints.VpcEndpoints.length > 0;
         if (!endpointExists) {
             // Create VPC Endpoint for S3
-            const endpointResponse = await this.getEC2().createVpcEndpoint({
+            const createEndpointCommand = new client_ec2_1.CreateVpcEndpointCommand({
                 VpcId: vpcId,
                 ServiceName: serviceName,
                 VpcEndpointType: "Gateway",
@@ -176,7 +182,8 @@ class AWSService extends _service_1.default {
                         ]
                     }
                 ]
-            }).promise();
+            });
+            const endpointResponse = await this.getEC2().send(createEndpointCommand);
             if (endpointResponse.VpcEndpoint) {
                 log(`VPC Endpoint "${endpointName}" created with ID: ${endpointResponse.VpcEndpoint.VpcEndpointId}`);
                 return endpointResponse.VpcEndpoint.VpcEndpointId;
@@ -198,16 +205,19 @@ class AWSService extends _service_1.default {
             const hasS3EndpointRoute = routes.some((route) => route.GatewayId === vpcEndpointId);
             if (!hasS3EndpointRoute) {
                 // Get the prefix list associated with the S3 VPC endpoint
-                const vpcEndpointDescription = (await this.ec2.describeVpcEndpoints({
+                const command = new client_ec2_1.DescribeVpcEndpointsCommand({
                     VpcEndpointIds: [vpcEndpointId]
-                }).promise()).VpcEndpoints;
+                });
+                const vpcEndpointDescription = await this.getEC2().send(command);
                 rwsLog('Creating VPC Endpoint route');
                 // Add a route to the route table
-                await this.ec2.createRoute({
+                // Add a route to the route table
+                const createRouteCommand = new client_ec2_1.CreateRouteCommand({
                     RouteTableId: routeTable.RouteTableId,
                     DestinationCidrBlock: '0.0.0.0/0',
-                    VpcEndpointId: vpcEndpointDescription[0].VpcEndpointId
-                }).promise();
+                    VpcEndpointId: vpcEndpointDescription.VpcEndpoints[0].VpcEndpointId
+                });
+                await this.getEC2().send(createRouteCommand);
                 log(`Added route to VPC Endpoint ${vpcEndpointId} in Route Table ${routeTable.RouteTableId}`);
             }
             else {

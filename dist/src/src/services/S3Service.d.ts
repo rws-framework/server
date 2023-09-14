@@ -1,10 +1,11 @@
 import TheService from "./_service";
+import { PutObjectCommandInput, PutObjectCommandOutput, HeadObjectCommandInput, DeleteObjectCommandInput } from "@aws-sdk/client-s3";
 declare class S3Service extends TheService {
     constructor();
-    upload(params: AWS.S3.Types.PutObjectRequest, override?: boolean): Promise<AWS.S3.ManagedUpload.SendData>;
-    delete(params: AWS.S3.Types.DeleteObjectRequest): Promise<void>;
-    objectExists(params: AWS.S3.Types.HeadObjectRequest): Promise<boolean>;
-    deleteObject(params: AWS.S3.Types.DeleteObjectRequest): Promise<void>;
+    upload(params: PutObjectCommandInput, override?: boolean): Promise<PutObjectCommandOutput>;
+    delete(params: DeleteObjectCommandInput): Promise<void>;
+    objectExists(params: HeadObjectCommandInput): Promise<boolean>;
+    deleteObject(params: DeleteObjectCommandInput): Promise<void>;
     bucketExists(bucketName: string): Promise<string>;
 }
 declare const _default: S3Service;
