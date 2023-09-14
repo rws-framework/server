@@ -376,7 +376,7 @@ class LambdaService extends TheService {
     const moduleDir = path.resolve(__dirname, '..', '..').replace('dist/', '');
     const moduleCfgDir = `${executionDir}/node_modules/.rws`;    
 
-    let payloadPath = `${executionDir}/payloads/${lambdaArg}.json`
+    let payloadPath = `${executionDir}/payloads/${lambdaArg}.json`;
     
     if(!fs.existsSync(payloadPath)){
         rwsLog(color().yellowBright(`No payload file in "${payloadPath}"`));      
