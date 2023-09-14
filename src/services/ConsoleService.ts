@@ -121,9 +121,9 @@ class ConsoleService extends TheService
     rwsLog(logCat: string | any[], logString: string | null = null): void
     {    
       const logName = logString ? `[${logCat}]` : '[RWS CLI]';
-      const logData =logString ? logString : logCat;
+      const logData = logString ? logString : logCat;
 
-      console.log(chalk.green(logName) + ' ' + logData)
+      console.log(chalk.green(logName), logData);
     }
 }
 

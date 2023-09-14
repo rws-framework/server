@@ -91,7 +91,7 @@ class ConsoleService extends _service_1.default {
     rwsLog(logCat, logString = null) {
         const logName = logString ? `[${logCat}]` : '[RWS CLI]';
         const logData = logString ? logString : logCat;
-        console.log(chalk_1.default.green(logName) + ' ' + logData);
+        console.log(chalk_1.default.green(logName), logData);
     }
 }
 exports.default = ConsoleService.getSingleton();

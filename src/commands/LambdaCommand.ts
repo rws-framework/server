@@ -50,9 +50,18 @@ const lambdasCfg: ILambdasLifeCycleConfig = {
             if (!fs.existsSync(sourceArtilleryCfg)) {
                 throw `Create "artillery-config.yml" in your project root directory.`;
             }
+            
+            rwsLog('RWS Lambda CLI | artillery | preDeploy', ' copying artillery config.');
 
-            log(color().green('[RWS Lambda CLI]') + ' copying artillery config.');
             fs.copyFileSync(sourceArtilleryCfg, targetArtilleryCfg);
+        },
+        postDeploy: async (params: ILambdaParams): Promise<void> => {        
+            const targetArtilleryCfg = `${moduleDir}/lambda-functions/artillery/artillery-config.yml`;
+
+            if (fs.existsSync(targetArtilleryCfg)) {
+                fs.unlinkSync(targetArtilleryCfg);
+                rwsLog('RWS Lambda CLI | artillery | postDeploy', 'artillery config cleaned up');
+            }
         }
     }
 }
@@ -157,8 +166,7 @@ class LambdaCommand extends Command
     
         const theAction = lambdasCfg[lambdaDirName][lifeCycleEventName];
     
-        if (theAction && UtilsService.isInterface<ILambdasLifeCycleConfig>(theAction)) {
-            log('executing action')
+        if (theAction && UtilsService.isInterface<ILambdasLifeCycleConfig>(theAction)) {            
             await theAction(params);
         }
     }
@@ -199,7 +207,7 @@ class LambdaCommand extends Command
             payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
         }
     
-        const response = await LambdaService.invokeLambda(lambdaDirName, payload);
+        const response = await LambdaService.invokeLambda(lambdaDirName, payload, lambdaDirName === 'efs-loader' ? 'Event': 'RequestResponse');
         rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));            
 
         const responseData = JSON.parse(response.Response.Payload.toString());
@@ -299,7 +307,7 @@ class LambdaCommand extends Command
             log(e.stack);
         }
 
-        log(color().green(`[RWS Lambda CLI] ${lambdaDirName} lambda function is deployed`));
+        log(color().green(`[RWS Lambda CLI] "${moduleDir}/lambda-functions/${lambdaDirName}" function directory has been deployed to "RWS-${lambdaDirName}" named AWS Lambda function.`));
     }
 
     public async delete(params: ICmdParams)

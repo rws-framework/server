@@ -1,3 +1,4 @@
+/// <reference types="chai" />
 import { IAppConfig } from '../../services/AppConfigService';
 import { Server } from "socket.io";
 import ServerService from "../../services/ServerService";

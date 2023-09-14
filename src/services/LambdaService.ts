@@ -51,6 +51,10 @@ class LambdaService extends TheService {
     // if(fs.existsSync(lambdaPath + '/package.json')){
     //   await ProcessService.runShellCommand(`cd ${lambdaPath} && npm install`);
     // }
+    const toolsFile = `${path.resolve(lambdaDirPath, '..')}/tools.js`;
+    const targetToolsFile = `${lambdaDirPath}/tools.js`;
+    
+    fs.copyFileSync(toolsFile, targetToolsFile);    
 
     log(`${color().green('[RWS Lambda Service]')} archiving ${color().yellowBright(lambdaDirPath)} to:\n ${color().yellowBright(lambdaPath)}`);
     tasks.push(ZipService.createArchive(lambdaPath, lambdaDirPath, fullZip ? null : {
@@ -58,6 +62,8 @@ class LambdaService extends TheService {
     }));       
 
     await Promise.all(tasks);
+
+    fs.unlinkSync(targetToolsFile);
 
     log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('ZIP package complete.')}`);
 
@@ -75,7 +81,7 @@ class LambdaService extends TheService {
     this.region = region;
   }
 
-  async deployLambda(functionName: string, zipPath: string, vpcId: string, subnetId?: string, noEFS: boolean = false): Promise<any> {
+  async deployLambda(functionDirName: string, zipPath: string, vpcId: string, subnetId?: string, noEFS: boolean = false): Promise<any> {
     this.region = getAppConfig().get('aws_lambda_region');
 
     const zipFile = fs.readFileSync(zipPath);
@@ -88,18 +94,18 @@ class LambdaService extends TheService {
 
       const [efsId, accessPointArn, efsExisted] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId, subnetId);   
 
-      log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda on ' + this.region)} using ${color().red(`S3://${s3BucketName}/${functionName}.zip`)}`);
+      log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda on ' + this.region)} using ${color().red(`S3://${s3BucketName}/${functionDirName}.zip`)}`);
 
       log(`${color().green('[RWS Lambda Service]')} uploading ${color().yellowBright(zipPath)}...`);
 
       const s3params = {
         Bucket: s3BucketName,
-        Key: 'RWS-' + functionName + '.zip', // File name you want to save as in S3
+        Key: 'RWS-' + functionDirName + '.zip', // File name you want to save as in S3
         Body: zipFile
       };
            
       const s3Data = await S3Service.upload(s3params, true);      
-      log(`${color().green('[RWS Lambda Service]')} uploaded ${color().yellowBright(zipPath)} to ${color().red(`S3://${s3BucketName}/RWS-${functionName}.zip`)}`);
+      log(`${color().green('[RWS Lambda Service]')} uploaded ${color().yellowBright(zipPath)} to ${color().red(`S3://${s3BucketName}/RWS-${functionDirName}.zip`)}`);
       
 
       const s3Path = s3Data.Key;
@@ -110,7 +116,7 @@ class LambdaService extends TheService {
 
       let data = null;
 
-      const lambdaFunctionName= 'RWS-' + functionName
+      const lambdaFunctionName= 'RWS-' + functionDirName
 
       const _HANDLER = 'index.handler';
       const functionDidExist: boolean = await this.functionExists(lambdaFunctionName);
@@ -146,7 +152,7 @@ class LambdaService extends TheService {
         data = await AWSService.getLambda().createFunction(createParams).promise()
       }
 
-      await this.waitForLambda(functionName, functionDidExist ? 'creation' : 'update');      
+      await this.waitForLambda(functionDirName, functionDidExist ? 'creation' : 'update');      
       
       if(functionDidExist){
         const functionInfo = await AWSService.getLambda().getFunction({
@@ -168,7 +174,7 @@ class LambdaService extends TheService {
             }
           }).promise();
 
-          await this.waitForLambda(functionName, 'handler update');
+          await this.waitForLambda(functionDirName, 'handler update');
 
           // await S3Service.delete({
           //   Bucket: s3params.Bucket,
@@ -179,7 +185,7 @@ class LambdaService extends TheService {
         }
       }
       
-      log(`${color().green(`[RWS Lambda Service] lambda function "${lambdaFunctionName}" deployed`)}`);
+      rwsLog('RWS Lambda Service', `lambda function "${lambdaFunctionName}" has been ${functionDidExist ? 'created' : 'updated'}`);
     } catch (err: Error | any) {
       error(err.message);
       log(err.stack)
@@ -192,7 +198,8 @@ class LambdaService extends TheService {
     const savedKey = !force ? UtilsService.getRWSVar(_RWS_MODULES_UPLOADED) : null;
     const S3Bucket = getAppConfig().get('aws_lambda_bucket');
     const moduleDir = path.resolve(__dirname, '..', '..').replace('dist', '');    
-
+    
+   
     if(!this.region){
       this.region = getAppConfig().get('aws_lambda_region');
     }
@@ -233,7 +240,7 @@ class LambdaService extends TheService {
       const s3Data = await S3Service.upload(s3params);
       const s3Path = s3Data.Key;
 
-      // fs.unlinkSync(zipPath);
+      // fs.unlinkSync(packagePath);      
 
       log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('NPM package file is uploaded to ' + this.region + ' with key:  ' + s3Path)}`);
 
@@ -249,9 +256,9 @@ class LambdaService extends TheService {
     }   
   }  
 
-  async functionExists(functionName: string): Promise<boolean> {
+  async functionExists(lambdaFunctionName: string): Promise<boolean> {
     try {
-      await AWSService.getLambda().getFunction({ FunctionName: functionName }).promise();
+      await AWSService.getLambda().getFunction({ FunctionName: lambdaFunctionName }).promise();
     } catch (e: Error | any) {
       if (e.code === 'ResourceNotFoundException') {
         log(e.message)

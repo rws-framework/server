@@ -204,7 +204,7 @@ class EFSService extends _service_1.default {
         };
         try {
             log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function for "${baseFunctionName}" with ${modulesS3Key} in ${s3Bucket} bucket.`);
-            const response = await LambdaService_1.default.invokeLambda(efsLoaderFunctionName, params);
+            const response = await LambdaService_1.default.invokeLambda(efsLoaderFunctionName, params, 'Event');
             rwsLog('RWS Lambda Service', color().yellowBright(`"${efsLoaderFunctionName}" lambda function response:`));
             log(response);
             return; // JSON.parse(response.Response.Payload as string);
@@ -222,7 +222,7 @@ class EFSService extends _service_1.default {
         const moduleDir = path_1.default.resolve(cmdDir, '..', '..', '..', '..');
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
         const _UNZIP_FUNCTION_NAME = 'efs-loader';
-        if (!(await LambdaService_1.default.functionExists(_UNZIP_FUNCTION_NAME))) {
+        if (!(await LambdaService_1.default.functionExists('RWS-' + _UNZIP_FUNCTION_NAME))) {
             log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
             const zipPath = await LambdaService_1.default.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
             await LambdaService_1.default.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, vpcId, subnetId, true);

@@ -252,7 +252,7 @@ class EFSService extends TheService {
         try {
             log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function for "${baseFunctionName}" with ${modulesS3Key} in ${s3Bucket} bucket.`);
 
-            const response = await LambdaService.invokeLambda(efsLoaderFunctionName, params);
+            const response = await LambdaService.invokeLambda(efsLoaderFunctionName, params, 'Event');
             rwsLog('RWS Lambda Service', color().yellowBright(`"${efsLoaderFunctionName}" lambda function response:`));
             log(response);            
             return;// JSON.parse(response.Response.Payload as string);
@@ -274,7 +274,7 @@ class EFSService extends TheService {
 
         const _UNZIP_FUNCTION_NAME: string = 'efs-loader';
 
-        if(!(await LambdaService.functionExists(_UNZIP_FUNCTION_NAME))){
+        if(!(await LambdaService.functionExists('RWS-' + _UNZIP_FUNCTION_NAME))){
             log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
             const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
 
