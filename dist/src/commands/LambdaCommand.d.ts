@@ -17,8 +17,12 @@ type ILambdaSubCommand = 'deploy' | 'delete' | string;
 interface ILambdaParamsReturn {
     lambdaCmd: ILambdaSubCommand;
     lambdaDirName: string;
+    subnetId: string;
     vpcId: string;
     lambdaArg: string;
+    extraParams: {
+        [key: string]: any;
+    };
 }
 declare class LambdaCommand extends Command {
     constructor();
@@ -26,6 +30,7 @@ declare class LambdaCommand extends Command {
     executeLambdaLifeCycle: (lifeCycleEventName: keyof ILambdaLifeCycleEvents, lambdaDirName: keyof ILambdasLifeCycleConfig, params: ILambdaParams) => Promise<void>;
     getLambdaParameters(params: ICmdParams): Promise<ILambdaParamsReturn>;
     invoke(params: ICmdParams): Promise<void>;
+    list(params: ICmdParams): Promise<void>;
     deploy(params: ICmdParams): Promise<void>;
     delete(params: ICmdParams): Promise<void>;
 }

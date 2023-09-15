@@ -98,7 +98,7 @@ class ProcessService extends _service_1.default {
                         });
                         bus.on('log:warn', function (packet) {
                             if (packet.process.name === processName) {
-                                console.warn(packet.data);
+                                warn(packet.data);
                             }
                         });
                     });
@@ -211,10 +211,10 @@ class ProcessService extends _service_1.default {
             });
         });
     }
-    async runShellCommand(command) {
+    async runShellCommand(command, silent = false) {
         return new Promise((resolve, reject) => {
             const [cmd, ...args] = command.split(' ');
-            const spawned = (0, child_process_2.spawn)(cmd, args, { stdio: 'inherit' }); // stdio: 'inherit' allows you to see real-time output
+            const spawned = (0, child_process_2.spawn)(cmd, args, { stdio: silent ? 'ignore' : 'inherit' });
             spawned.on('exit', (code) => {
                 if (code !== 0) {
                     return reject(new Error(`Command failed with exit code ${code}`));

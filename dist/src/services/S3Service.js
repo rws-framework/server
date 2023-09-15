@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _service_1 = __importDefault(require("./_service"));
 const AWSService_1 = __importDefault(require("./AWSService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
+const client_s3_1 = require("@aws-sdk/client-s3");
 const { log, warn, error, color, AWSProgressBar } = ConsoleService_1.default;
 class S3Service extends _service_1.default {
     constructor() {
@@ -19,11 +20,16 @@ class S3Service extends _service_1.default {
                 await this.deleteObject({ Bucket: params.Bucket, Key: params.Key });
             }
         }
-        return AWSService_1.default.getS3().upload(params).promise();
+        const command = new client_s3_1.PutObjectCommand(params);
+        return AWSService_1.default.getS3().send(command);
+    }
+    async delete(params) {
+        await this.deleteObject({ Bucket: params.Bucket, Key: params.Key });
     }
     async objectExists(params) {
         try {
-            await AWSService_1.default.getS3().headObject(params).promise();
+            const command = new client_s3_1.HeadObjectCommand(params);
+            await AWSService_1.default.getS3().send(command);
             return true;
         }
         catch (error) {
@@ -34,11 +40,13 @@ class S3Service extends _service_1.default {
         }
     }
     async deleteObject(params) {
-        await AWSService_1.default.getS3().deleteObject(params).promise();
+        const command = new client_s3_1.DeleteObjectCommand(params);
+        await AWSService_1.default.getS3().send(command);
     }
     async bucketExists(bucketName) {
         try {
-            await AWSService_1.default.getS3().headBucket({ Bucket: bucketName }).promise();
+            const command = new client_s3_1.HeadBucketCommand({ Bucket: bucketName });
+            await AWSService_1.default.getS3().send(command);
             return bucketName;
         }
         catch (err) {
@@ -47,7 +55,8 @@ class S3Service extends _service_1.default {
                 const params = {
                     Bucket: bucketName,
                 };
-                await AWSService_1.default.getS3().createBucket(params).promise();
+                const createBucketCommand = new client_s3_1.CreateBucketCommand(params);
+                await AWSService_1.default.getS3().send(createBucketCommand);
                 log(`${color().green(`[RWS Lambda Service]`)} s3 bucket ${bucketName} created.`);
                 return bucketName;
             }
