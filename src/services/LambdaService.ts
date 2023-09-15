@@ -26,6 +26,25 @@ interface InvokeLambdaResponse {
 
 type InvocationTypeType = 'RequestResponse' | 'Event' | 'DryDrun';
 
+interface INPMPackage {
+  name: string
+  version: string
+  description?: string
+  author?: string
+  license?: string
+  type?: string
+
+  dependencies?: {    
+    [packageName: string]: string
+  }
+
+  deployConfig?: {
+    webLambda?: boolean
+    invocationType?: InvocationTypeType
+  }
+}
+
+
 class LambdaService extends TheService {
 
   private region: string;
@@ -182,11 +201,29 @@ class LambdaService extends TheService {
       }
       
       rwsLog('RWS Lambda Service', `lambda function "${lambdaFunctionName}" has been ${functionDidExist ? 'created' : 'updated'}`);
+
+      const npmPackage = this.getNPMPackage(functionDirName);
+
+      if((!!npmPackage.deployConfig) && npmPackage.deployConfig.webLambda === true && (await APIGatewayService.findApiGateway(lambdaFunctionName)) === null){                
+        await this.setupGatewayForWebLambda(lambdaFunctionName);
+      }      
     } catch (err: Error | any) {
       error(err.message);
       log(err.stack)
       throw err;
     }
+  }
+
+  getNPMPackage(lambdaDirName: string): INPMPackage
+  {
+    const moduleDir = path.resolve(__dirname, '..', '..').replace('dist/', '');
+    const npmPackagePath = `${moduleDir}/lambda-functions/${lambdaDirName}/package.json`;
+
+    if(!fs.existsSync(npmPackagePath)){
+        throw new Error(`The lambda folder "${lambdaDirName}" has no package.json inside.`)
+    }
+
+    return JSON.parse(fs.readFileSync(npmPackagePath, 'utf-8'));
   }
 
   async deployModules(functionName: string, efsId: string, vpcId: string, subnetId: string, force: boolean = false) {
@@ -290,25 +327,38 @@ class LambdaService extends TheService {
     throw new Error(`Lambda function ${lambdaFunctionName} did not become ready within ${timeoutMs}ms.`);
   }
 
-  async deleteLambda(functionName: string): Promise<void>
+  async deleteLambda(lambdaFunctionName: string): Promise<void>
   {
+
+    const restApi = await APIGatewayService.findApiGateway(lambdaFunctionName);
+
+    await APIGatewayService.deleteApiGateway(restApi.id);
+
     await AWSService.getLambda().deleteFunction({
-      FunctionName: functionName
+      FunctionName: lambdaFunctionName
     }).promise();
   }
 
   async invokeLambda(
-    functionName: string,
-    payload: any,
-    invocationType: InvocationTypeType = 'RequestResponse'
+    functionDirName: string,
+    payload: any,    
   ): Promise<{ StatusCode: number, Response: AWS.Lambda.InvocationResponse, CapturedLogs?: string[]}> {
+
+    let invocationType: InvocationTypeType = 'RequestResponse';
+
+    const npmPackage = this.getNPMPackage(functionDirName);
+
+    if(!!npmPackage.deployConfig && npmPackage.deployConfig.invocationType){
+      invocationType = npmPackage.deployConfig.invocationType;
+    }
+
     const params: AWS.Lambda.InvocationRequest = {
-      FunctionName: 'RWS-' + functionName,
+      FunctionName: 'RWS-' + functionDirName,
       InvocationType: invocationType,
       Payload: JSON.stringify(payload),
     };
 
-    log(color().green('[RWS Lambda Service]') + color().yellowBright(` invoking RWS-${functionName} with payload: `));    
+    log(color().green('[RWS Lambda Service]') + color().yellowBright(` invoking (with ${invocationType} type) "RWS-${functionDirName}" with payload: `));    
     log(payload);
   
     try {

@@ -16,7 +16,7 @@ class APIGatewayService extends TheService {
     }
 
     async findApiGateway(gatewayName: string): Promise<AWS.APIGateway.RestApi | null> {
-        let theApi: AWS.APIGateway.RestApi;
+        let theApi: AWS.APIGateway.RestApi = null;
         const apis = await AWSService.getAPIGateway().getRestApis().promise();
         for (const api of apis.items) {
             if (api.name === gatewayName + '-API') {
@@ -26,6 +26,11 @@ class APIGatewayService extends TheService {
         }
 
         return theApi;
+    }
+
+    async deleteApiGateway(apiId: string): Promise<void> {        
+        await AWSService.getAPIGateway().deleteRestApi({ restApiId: apiId }).promise()        
+        error('Deleted API Gateway: '+ apiId);
     }
 
     async createApiGateway(gatewayName: string): Promise<string> {

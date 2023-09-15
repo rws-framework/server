@@ -8,5 +8,8 @@
   "dependencies": {    
     "aws-sdk": "^2.1450.0",
     "unzipper": "^0.10.14"
+  },
+  "deployConfig": {   
+    "invocationType": "Event"
   }
 }

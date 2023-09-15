@@ -2,6 +2,10 @@ import TheService from "./_service";
 import chalk from 'chalk';
 import AWS from 'aws-sdk';
 
+interface IJSONColors {
+  [codeLement: string]: string
+}
+
 class ConsoleService extends TheService
 {
     private isEnabled: boolean = true;
@@ -40,7 +44,27 @@ class ConsoleService extends TheService
         return;
       }
 
-      console.warn(...obj.map((txt) => chalk.yellowBright('[RWS CLI] ' + txt)));
+      console.warn(...obj.map((elem) => '[RWS CLI] ' + (typeof elem === 'object' && elem !== null ? this.prettyPrintObject(elem) : elem)));
+    }
+
+    prettyPrintObject(obj: object): void {
+      const _JSON_COLORS: IJSONColors = {
+        'keys': 'green'
+      }
+
+      const objString = JSON.stringify(obj, null, 2);
+      const lines = objString.split('\n');
+  
+      for (const line of lines) {
+          if (line.includes('{') || line.includes('}')) {
+              console.log(chalk.blue(line));  // Colorize braces in blue
+          } else if (line.includes(':')) {
+              const [key, value] = line.split(':');
+              console.log(chalk[_JSON_COLORS.keys](key) + ':' + chalk.yellow(value));  // Colorize keys in green and values in yellow
+          } else {
+              console.log(line);  // Log other lines without colorization
+          }
+      }
     }
 
     error(...obj: any[]): void
