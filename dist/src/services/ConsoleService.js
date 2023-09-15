@@ -47,7 +47,26 @@ class ConsoleService extends _service_1.default {
         if (!this.isEnabled) {
             return;
         }
-        console.warn(...obj.map((txt) => chalk_1.default.yellowBright('[RWS CLI] ' + txt)));
+        console.warn(...obj.map((elem) => '[RWS CLI] ' + (typeof elem === 'object' && elem !== null ? this.prettyPrintObject(elem) : elem)));
+    }
+    prettyPrintObject(obj) {
+        const _JSON_COLORS = {
+            'keys': 'green'
+        };
+        const objString = JSON.stringify(obj, null, 2);
+        const lines = objString.split('\n');
+        for (const line of lines) {
+            if (line.includes('{') || line.includes('}')) {
+                console.log(chalk_1.default.blue(line)); // Colorize braces in blue
+            }
+            else if (line.includes(':')) {
+                const [key, value] = line.split(':');
+                console.log(chalk_1.default[_JSON_COLORS.keys](key) + ':' + chalk_1.default.yellow(value)); // Colorize keys in green and values in yellow
+            }
+            else {
+                console.log(line); // Log other lines without colorization
+            }
+        }
     }
     error(...obj) {
         if (!this.isEnabled) {

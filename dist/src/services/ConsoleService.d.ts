@@ -6,6 +6,7 @@ declare class ConsoleService extends TheService {
     color(): any;
     log(...obj: any[]): void;
     warn(...obj: any[]): void;
+    prettyPrintObject(obj: object): void;
     error(...obj: any[]): void;
     stopLogging(): void;
     startLogging(): void;

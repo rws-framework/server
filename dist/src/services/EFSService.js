@@ -204,7 +204,7 @@ class EFSService extends _service_1.default {
         };
         try {
             log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function for "${baseFunctionName}" with ${modulesS3Key} in ${s3Bucket} bucket.`);
-            const response = await LambdaService_1.default.invokeLambda(efsLoaderFunctionName, params, 'Event');
+            const response = await LambdaService_1.default.invokeLambda(efsLoaderFunctionName, params);
             rwsLog('RWS Lambda Service', color().yellowBright(`"${efsLoaderFunctionName}" lambda function response:`));
             log(response);
             return; // JSON.parse(response.Response.Payload as string);

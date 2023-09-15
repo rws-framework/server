@@ -11,7 +11,6 @@ const path_1 = __importDefault(require("path"));
 const UtilsService_1 = __importDefault(require("../services/UtilsService"));
 const EFSService_1 = __importDefault(require("../services/EFSService"));
 const LambdaService_1 = __importDefault(require("../services/LambdaService"));
-const APIGatewayService_1 = __importDefault(require("../services/APIGatewayService"));
 const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 const executionDir = process.cwd();
 const moduleCfgDir = `${executionDir}/node_modules/.rws`;
@@ -139,13 +138,9 @@ class LambdaCommand extends _command_1.default {
             const payloadPath = LambdaService_1.default.findPayload(lambdaArg);
             payload = JSON.parse(fs_1.default.readFileSync(payloadPath, 'utf-8'));
         }
-        const response = await LambdaService_1.default.invokeLambda(lambdaDirName, payload, lambdaDirName === 'efs-loader' ? 'Event' : 'RequestResponse');
+        const response = await LambdaService_1.default.invokeLambda(lambdaDirName, payload);
         rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));
-        const responseData = JSON.parse(response.Response.Payload.toString());
-        log(responseData);
-        if (!responseData.success) {
-            log(responseData.errorMessage);
-        }
+        log(response.Response.Payload.toString());
     }
     async list(params) {
         const listFunctionsParams = {
@@ -179,11 +174,6 @@ class LambdaCommand extends _command_1.default {
             await LambdaService_1.default.deployModules(lambdaArg, efsId, vpcId, subnetId, true);
             return;
         }
-        const npmPackagePath = `${moduleDir}/lambda-functions/${lambdaDirName}/package.json`;
-        if (!fs_1.default.existsSync(npmPackagePath)) {
-            throw new Error('The lambda folder has no package.json inside.');
-        }
-        const packageJson = JSON.parse(fs_1.default.readFileSync(npmPackagePath, 'utf-8'));
         const lambdaParams = {
             rwsConfig: params._rws_config,
             subnetId: subnetId
@@ -195,10 +185,6 @@ class LambdaCommand extends _command_1.default {
         await this.executeLambdaLifeCycle('preDeploy', lambdaDirName, lambdaParams);
         try {
             await LambdaService_1.default.deployLambda(lambdaDirName, zipPath, vpcId, subnetId);
-            log(packageJson.deployConfig, typeof packageJson.deployConfig, APIGatewayService_1.default.findApiGateway('RWS-' + lambdaDirName));
-            if (packageJson.deployConfig && packageJson.deployConfig.webLambda && !APIGatewayService_1.default.findApiGateway('RWS-' + lambdaDirName)) {
-                await LambdaService_1.default.setupGatewayForWebLambda('RWS-' + lambdaDirName);
-            }
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
             let payload = {};
             if (lambdaArg) {
@@ -217,7 +203,7 @@ class LambdaCommand extends _command_1.default {
             error(e.message);
             log(e.stack);
         }
-        log(color().green(`[RWS Lambda CLI] "${moduleDir}/lambda-functions/${lambdaDirName}" function directory has been deployed to "RWS-${lambdaDirName}" named AWS Lambda function.`));
+        log(color().green(`[RWS Lambda CLI] "${moduleDir}/lambda-functions/${lambdaDirName}" function directory\nhas been deployed to "RWS-${lambdaDirName}" named AWS Lambda function.`));
     }
     async delete(params) {
         const { lambdaDirName } = await this.getLambdaParameters(params);

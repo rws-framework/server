@@ -13,7 +13,7 @@ class APIGatewayService extends _service_1.default {
         this.region = AWSService_1.default.getRegion();
     }
     async findApiGateway(gatewayName) {
-        let theApi;
+        let theApi = null;
         const apis = await AWSService_1.default.getAPIGateway().getRestApis().promise();
         for (const api of apis.items) {
             if (api.name === gatewayName + '-API') {
@@ -22,6 +22,10 @@ class APIGatewayService extends _service_1.default {
             }
         }
         return theApi;
+    }
+    async deleteApiGateway(apiId) {
+        await AWSService_1.default.getAPIGateway().deleteRestApi({ restApiId: apiId }).promise();
+        error('Deleted API Gateway: ' + apiId);
     }
     async createApiGateway(gatewayName) {
         const currentGateway = await this.findApiGateway(gatewayName);
