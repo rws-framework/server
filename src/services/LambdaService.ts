@@ -6,6 +6,7 @@ import ConsoleService from "./ConsoleService";
 import AWSService from "./AWSService";
 import ZipService from "./ZipService";
 import S3Service from "./S3Service";
+import APIGatewayService from "./APIGatewayService";
 
 import path from 'path';
 import fs from 'fs';
@@ -14,7 +15,7 @@ import UtilsService from "./UtilsService";
 import ProcessService from "./ProcessService";
 
 
-const { log, warn, error, color, AWSProgressBar, rwsLog } = ConsoleService;
+const { log, warn, error, color, rwsLog } = ConsoleService;
 
 const MIN = 60; // 1MIN = 60s
 
@@ -114,15 +115,13 @@ class LambdaService extends TheService {
         S3Key: s3Path
       }
 
-      let data = null;
-
       const lambdaFunctionName= 'RWS-' + functionDirName
 
       const _HANDLER = 'index.handler';
-      const functionDidExist: boolean = await this.functionExists(lambdaFunctionName);
+      const functionDidExist: boolean = await this.functionExists(lambdaFunctionName);      
 
       if (functionDidExist) {
-        data = await AWSService.getLambda().updateFunctionCode({
+        await AWSService.getLambda().updateFunctionCode({
           FunctionName: lambdaFunctionName,
           ...Code
         }).promise();                  
@@ -147,18 +146,15 @@ class LambdaService extends TheService {
           Timeout: 15 * MIN
         };     
         
-        log(color().green('[RWS Lambda Service] is creating Lambda function named: ') + color().yellowBright(lambdaFunctionName));
+        log(color().green('[RWS Lambda Service] is ' + (functionDidExist ? 'updating' : 'creating') + ' lambda function named: ') + color().yellowBright(lambdaFunctionName));
 
-        data = await AWSService.getLambda().createFunction(createParams).promise()
-      }
+        await AWSService.getLambda().createFunction(createParams).promise()
+      }    
 
-      await this.waitForLambda(functionDirName, functionDidExist ? 'creation' : 'update');      
+      await this.waitForLambda(functionDirName, functionDidExist ? 'update' : 'creation');      
       
       if(functionDidExist){
-        const functionInfo = await AWSService.getLambda().getFunction({
-          FunctionName: lambdaFunctionName
-        }).promise();
-
+        const functionInfo = await this.getLambdaFunction(lambdaFunctionName);
 
         if(functionInfo.Configuration.Handler !== _HANDLER){
           log(color().green('[RWS Lambda Service]') + ' is changing handler for Lambda function named: ' + color().yellowBright(lambdaFunctionName));
@@ -256,27 +252,27 @@ class LambdaService extends TheService {
     }   
   }  
 
-  async functionExists(lambdaFunctionName: string): Promise<boolean> {
+  async getLambdaFunction(lambdaFunctionName: string): Promise<AWS.Lambda.GetFunctionResponse | null>
+  {
     try {
-      await AWSService.getLambda().getFunction({ FunctionName: lambdaFunctionName }).promise();
+      return await AWSService.getLambda().getFunction({ FunctionName: lambdaFunctionName }).promise();
     } catch (e: Error | any) {
-      if (e.code === 'ResourceNotFoundException') {
-        log(e.message)
-        return false;
-      }
-    }
+      return null;
+    }    
+  }
 
-    return true;
+  async functionExists(lambdaFunctionName: string): Promise<boolean> {
+    return !!(await this.getLambdaFunction(lambdaFunctionName)); 
   }
 
   async waitForLambda(functionName: string, waitFor: string = null,timeoutMs: number = 300000, intervalMs: number = 5000): Promise<void> {
     const lambdaFunctionName = 'RWS-' + functionName;
     const startTime = Date.now();
-    log(`${color().yellowBright('[Lambda Listener] awaiting Lambda ' + (waitFor !== null ? ' (' + waitFor + ')' : '') +' state change')}`);        
+    log(`${color().yellowBright('[Lambda Listener] awaiting Lambda' + (waitFor !== null ? ' (' + waitFor + ')' : '') +' state change')}`);        
 
     while (Date.now() - startTime < timeoutMs) {
       log(`${color().yellowBright('[Lambda Listener] .')}`);      
-      const { Configuration } = await AWSService.getLambda().getFunction({ FunctionName: lambdaFunctionName }).promise();
+      const { Configuration } = await this.getLambdaFunction(lambdaFunctionName);
 
       if (Configuration.State === 'Active') {
         return; // Lambda is active and ready
@@ -393,6 +389,54 @@ class LambdaService extends TheService {
     }
 
     return payloadPath;
+  }
+
+  async integrateGatewayResource(lambdaFunctionName: string, restApiId: string, resource: AWS.APIGateway.Resource, httpMethod = 'GET')
+  {
+
+    const lambdaInfo = await this.getLambdaFunction(lambdaFunctionName);
+    const lambdaArn =  lambdaInfo.Configuration.FunctionArn;
+
+    await AWSService.getAPIGateway().putIntegration({
+      restApiId: restApiId,
+      resourceId: resource.id,
+      httpMethod: httpMethod,
+      type: "AWS_PROXY",
+      integrationHttpMethod: "POST",
+      uri: `arn:aws:apigateway:${AWSService.getRegion()}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations`
+    }).promise();    
+  }
+
+  async setupGatewayForWebLambda(lambdaFunctionName: string): Promise<void>
+  {
+
+    rwsLog('Creating API Gateway for Web Lambda...')
+    const restApiId = await APIGatewayService.createApiGateway(lambdaFunctionName);
+    const resource = await APIGatewayService.createResource(restApiId, lambdaFunctionName);
+
+    const httpMethods = ['GET', 'POST', 'PUT', 'DELETE'];
+    const apiMethods = [];
+
+    rwsLog('Pushing methods to API Gateway resource.')
+
+    for (let methodKey in httpMethods){
+      apiMethods.push(await APIGatewayService.createMethod(restApiId, resource, httpMethods[methodKey]));
+    }    
+
+    rwsLog(`Integrating API Gateway resource with "${color().yellowBright(lambdaFunctionName)}" lambda function.`);
+
+    for (let apiMethodKey in apiMethods){
+      const apiMethod: AWS.APIGateway.Method = apiMethods[apiMethodKey];
+      await this.integrateGatewayResource(lambdaFunctionName, restApiId, resource, apiMethod.httpMethod);
+    }    
+
+    await AWSService.getAPIGateway().createDeployment({
+      restApiId: restApiId,
+      stageName: "prod"
+    }).promise();    
+
+    rwsLog(`API Gateway "${color().yellowBright(lambdaFunctionName+'-API')}" deployed.`);
+
   }
 }
 

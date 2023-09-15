@@ -1,9 +1,9 @@
 import TheService from "./_service";
 import { execSync } from 'child_process';
-import { exec, spawn } from 'child_process';
+import { spawn } from 'child_process';
 import ConsoleService from "./ConsoleService";
 import pm2 from 'pm2';
-import fs from 'fs';
+import readline from 'readline';
 import path from 'path';
 import os from 'os';
 import UtilsService from "./UtilsService";
@@ -312,6 +312,20 @@ class ProcessService extends TheService {
 
   sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async getInput(prompt: string): Promise<string> {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    return new Promise((resolve) => {
+        rl.question(color().red('[RWS CLI Input Prompt] ' + prompt), (answer) => {
+            resolve(answer);
+            rl.close();
+        });
+    });
   }
 }
 

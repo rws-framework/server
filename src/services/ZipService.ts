@@ -6,7 +6,7 @@ import fs from 'fs';
 import archiver, {Format as ArchiveFormat} from 'archiver';
 
 
-const { log, warn, error, color, AWSProgressBar } = ConsoleService;
+const { log, warn, error, color } = ConsoleService;
 
 interface IZipParams {
     recursive?: boolean

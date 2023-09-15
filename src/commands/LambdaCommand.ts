@@ -7,6 +7,8 @@ import path from 'path';
 import UtilsService from "../services/UtilsService";
 import EFSService from "../services/EFSService";
 import LambdaService from "../services/LambdaService";
+import APIGatewayService from "../services/APIGatewayService";
+import ProcessService from "../services/ProcessService";
 
 
 const { log, warn, error, color, rwsLog } = ConsoleService;
@@ -24,7 +26,6 @@ interface ILambdaParams {
 
 type ILifeCycleMethod = (params: ILambdaParams) => Promise<void> | null;
 
-
 type ILambdaLifeCycleEvents = {
     preArchive?: ILifeCycleMethod;
     postArchive?: ILifeCycleMethod;
@@ -36,6 +37,20 @@ interface ILambdasLifeCycleConfig {
     [key: string]: ILambdaLifeCycleEvents
 }
 
+interface INPMPackage {
+    name: string,
+    version: string,
+    description?: string,  
+    author?: string,
+    license?: string,
+    type?: string,
+    dependencies?: {    
+      [packageName: string]: string
+    },
+    deployConfig?: {
+      webLambda?: boolean
+    }
+}
 
 const lambdasCfg: ILambdasLifeCycleConfig = {
     artillery: {
@@ -61,7 +76,7 @@ const lambdasCfg: ILambdasLifeCycleConfig = {
             if (fs.existsSync(targetArtilleryCfg)) {
                 fs.unlinkSync(targetArtilleryCfg);
                 rwsLog('RWS Lambda CLI | artillery | postDeploy', 'artillery config cleaned up');
-            }
+            }            
         }
     }
 }
@@ -87,6 +102,8 @@ class LambdaCommand extends Command
 
     async execute(params?: ICmdParams): Promise<void>
     {
+        AWSService._initApis();
+        
         const { lambdaCmd, extraParams, subnetId, vpcId } = await this.getLambdaParameters(params);
 
         const PermissionCheck = await AWSService.checkForRolePermissions(params._rws_config.aws_lambda_role, [
@@ -173,7 +190,7 @@ class LambdaCommand extends Command
 
     public async getLambdaParameters(params: ICmdParams): Promise<ILambdaParamsReturn>
     {
-        const lambdaString: string = params.lambdaString || params._default;           
+        const lambdaString: string = params.lambdaString || params._default;    
         const [subnetId, vpcId] = params.subnetId || await AWSService.findDefaultSubnetForVPC();
         const lambdaStringArr: string[] = lambdaString.split(':');        
         const lambdaCmd: ILambdaSubCommand = lambdaStringArr[0];
@@ -247,7 +264,7 @@ class LambdaCommand extends Command
 
     public async deploy(params: ICmdParams)
     {
-        const {lambdaDirName, vpcId, subnetId, lambdaArg} = await this.getLambdaParameters(params);        
+        const {lambdaDirName, vpcId, subnetId, lambdaArg} = await this.getLambdaParameters(params);            
 
         if (lambdaDirName === 'modules') {        
             const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId, subnetId);
@@ -255,6 +272,14 @@ class LambdaCommand extends Command
             await LambdaService.deployModules(lambdaArg, efsId, vpcId,subnetId, true);        
             return;
         }
+
+        const npmPackagePath = `${moduleDir}/lambda-functions/${lambdaDirName}/package.json`;
+
+        if(!fs.existsSync(npmPackagePath)){
+            throw new Error('The lambda folder has no package.json inside.')
+        }
+
+        const packageJson: INPMPackage = JSON.parse(fs.readFileSync(npmPackagePath, 'utf-8'));
 
         const lambdaParams: ILambdaParams = {
             rwsConfig: params._rws_config,
@@ -273,6 +298,13 @@ class LambdaCommand extends Command
 
         try {
             await LambdaService.deployLambda(lambdaDirName, zipPath, vpcId, subnetId);
+                        
+            log(packageJson.deployConfig, typeof packageJson.deployConfig, APIGatewayService.findApiGateway('RWS-' + lambdaDirName));
+
+            if(packageJson.deployConfig && packageJson.deployConfig.webLambda && !APIGatewayService.findApiGateway('RWS-' + lambdaDirName)){
+                await LambdaService.setupGatewayForWebLambda('RWS-' + lambdaDirName);
+            }
+
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
 
             let payload = {};
@@ -304,12 +336,16 @@ class LambdaCommand extends Command
 
     public async delete(params: ICmdParams)
     {
-        const {lambdaDirName} = await this.getLambdaParameters(params);
-        await LambdaService.deleteLambda('RWS-' + lambdaDirName);
-        log(color().green(`[RWS Lambda CLI] ${lambdaDirName} lambda function has been ${color().red('deleted')}.`));
-    }
+        const {lambdaDirName} = await this.getLambdaParameters(params);  
+                
+        if(!(await LambdaService.functionExists('RWS-' + lambdaDirName))){
+            error(`There is no lambda function named "RWS-${lambdaDirName}" in AWS region "${AWSService.getRegion()}"`);
+            return;
+        }    
 
-    
+        await LambdaService.deleteLambda('RWS-' + lambdaDirName);
+        log(color().green(`[RWS Lambda CLI] "RWS-${lambdaDirName}" lambda function has been ${color().red('deleted')} from AWS region "${AWSService.getRegion()}"`));
+    }    
 }
 
 export default LambdaCommand.createCommand();

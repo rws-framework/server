@@ -1,6 +1,5 @@
 import TheService from "./_service";
 import chalk from 'chalk';
-import ProgressBar from 'progress';
 import AWS from 'aws-sdk';
 
 class ConsoleService extends TheService
@@ -32,7 +31,7 @@ class ConsoleService extends TheService
         return;
       }
 
-      console.log(...obj.filter((logElem) => !!logElem));
+      console.log(...obj);
     }
 
     warn(...obj: any[]): void
@@ -63,33 +62,6 @@ class ConsoleService extends TheService
     {
       this.isEnabled = true;
       this.restoreOriginalLogFunctions();
-    }
-
-    AWSProgressBar(managedUpload: AWS.S3.ManagedUpload): ProgressBar
-    {
-
-      const _self = this;
-
-      try {        
-        const bar = new ProgressBar('Uploading [:bar] :percent :etas', {
-          complete: '=',
-          incomplete: ' ',
-          width: 40,
-          total: 100
-        });                   
-      
-        managedUpload.on('httpUploadProgress', function (event) {          
-          const percent = Math.floor((event.loaded / event.total) * 100);
-           console.log(percent + '%');
-
-          bar.update(percent / 100);
-          bar.render();
-        });           
-        
-        return bar;
-      } catch (err: Error | any) {
-        throw err;
-      }
     }
 
     private getOriginalLogFunctions = () => {

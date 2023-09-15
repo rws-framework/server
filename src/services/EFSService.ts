@@ -9,7 +9,7 @@ import ProcessService from "./ProcessService";
 import path from 'path';
 import AWS from 'aws-sdk';
 
-const { log, warn, error, color, AWSProgressBar, rwsLog } = ConsoleService;
+const { log, warn, error, color, rwsLog } = ConsoleService;
 
 const __STATE_WAIT_TIME = 3000; //ms
 
@@ -215,9 +215,9 @@ class EFSService extends TheService {
             log(`${color().green('[RWS Cloud FS Service]')} EFS AP created:`, response);
 
             return [response.AccessPointId, response.AccessPointArn];
-        } catch (error) {
-            console.log('Error creating EFS access point:', error);
-            throw error;
+        } catch (err) {
+            error('Error creating EFS access point:', err);
+            throw err;
         }
     }
 

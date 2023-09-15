@@ -12,7 +12,7 @@ import ZipService from "./ZipService";
 import EFSService from "./EFSService";
 
 
-const { log, warn, error, color, AWSProgressBar, rwsLog } = ConsoleService;
+const { log, warn, error, color, rwsLog } = ConsoleService;
 
 
 class AWSService extends TheService {
@@ -23,6 +23,7 @@ class AWSService extends TheService {
     private lambda: AWS.Lambda;
     private ec2: AWS.EC2;
     private iam: AWS.IAM;
+    private apiGateway: AWS.APIGateway;
 
     constructor() {
         super();        
@@ -35,7 +36,7 @@ class AWSService extends TheService {
             this.region = AppConfigService().get('aws_lambda_region');
         }
 
-        if(!this.s3){
+        if(!this.s3 && this.region){
             this.s3 = new AWS.S3({
                 region: this.region,
                 credentials: {
@@ -45,7 +46,17 @@ class AWSService extends TheService {
             });
         }
 
-        if(!this.iam){
+        if (!this.apiGateway && this.region) {
+            this.apiGateway = new AWS.APIGateway({
+                region: this.region,
+                credentials: {
+                    accessKeyId: AppConfigService().get('aws_access_key'),
+                    secretAccessKey: AppConfigService().get('aws_secret_key'),
+                }
+            });
+        }
+
+        if(!this.iam && this.region){
             this.iam = new AWS.IAM({
                 region: this.region,
                 credentials: {
@@ -55,7 +66,7 @@ class AWSService extends TheService {
             });
         }
 
-        if(!this.efs){
+        if(!this.efs && this.region){
             this.efs = new AWS.EFS({
                 region: this.region,
                 credentials: {
@@ -65,9 +76,9 @@ class AWSService extends TheService {
             });
         }
 
-        if(!this.ec2){
+        if(!this.ec2 && this.region){
             this.ec2 = new AWS.EC2({
-                region: this.region,
+                region: AppConfigService().get('aws_lambda_region'),
                 credentials: {
                     accessKeyId: AppConfigService().get('aws_access_key'),
                     secretAccessKey: AppConfigService().get('aws_secret_key'),
@@ -76,7 +87,7 @@ class AWSService extends TheService {
         }
 
         
-        if(!this.lambda){
+        if(!this.lambda && this.region){
             this.lambda = new AWS.Lambda({
                 region: this.region,
                 credentials: {
@@ -319,7 +330,14 @@ class AWSService extends TheService {
         this._initApis();
 
         return this.iam;
-    }    
+    }  
+    
+    getAPIGateway(): AWS.APIGateway 
+    {   
+        this._initApis();
+
+        return this.apiGateway;
+    }  
 }
 
 export default AWSService.getSingleton();
