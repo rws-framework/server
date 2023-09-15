@@ -2,5 +2,8 @@
   "functionName": "artillery",
   "efsId": "fs-0c8e769dd2c8a8d4a",
   "modulesS3Key": "RWS-artillery-modules.zip",
-  "s3Bucket": "junction-lambda-workbucket"
+  "s3Bucket": "junction-lambda-workbucket",
+  "_invocationConfig": {
+    "invocationType": "Event"
+  }
 }

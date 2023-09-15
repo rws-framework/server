@@ -238,6 +238,14 @@ class LambdaService extends _service_1.default {
         if (!!npmPackage.deployConfig && npmPackage.deployConfig.invocationType) {
             invocationType = npmPackage.deployConfig.invocationType;
         }
+        if (!!payload._invocationConfig) {
+            error('HEEEEEEREEEEEEE');
+            const invocationConfig = payload._invocationConfig;
+            invocationType = invocationConfig.invocationType;
+            console.log(payload._invocationConfig);
+            delete payload['_invocationConfig'];
+            console.log(payload._invocationConfig);
+        }
         const params = {
             FunctionName: 'RWS-' + functionDirName,
             InvocationType: invocationType,

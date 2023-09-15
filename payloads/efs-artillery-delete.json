@@ -5,5 +5,8 @@
   "s3Bucket": "junction-lambda-workbucket",
   "params": {
     "command": "remove_modules"
+  },
+  "_invocationConfig": {
+    "invocationType": "RequestResponse"
   }
 }

@@ -1,12 +1,16 @@
 import TheService from "./_service";
+import { Logger as PinoLogger } from 'pino';
 declare class ConsoleService extends TheService {
     private isEnabled;
     private originalLogMethods?;
     constructor();
     color(): any;
     log(...obj: any[]): void;
+    colorObject(obj: any): string;
     warn(...obj: any[]): void;
-    prettyPrintObject(obj: object): void;
+    sanitizeObject(obj: any): any;
+    getPino(): PinoLogger;
+    prettyPrintObject(obj: any): void;
     error(...obj: any[]): void;
     stopLogging(): void;
     startLogging(): void;

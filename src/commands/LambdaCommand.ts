@@ -281,7 +281,7 @@ class LambdaCommand extends Command
                 
                 const response = await LambdaService.invokeLambda(lambdaDirName, payload);
 
-                rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));    
+                rwsLog('RWS Lambda Deploy Invoke', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));    
 
                 const responseData = JSON.parse(response.Response.Payload.toString());
                 

@@ -352,6 +352,15 @@ class LambdaService extends TheService {
       invocationType = npmPackage.deployConfig.invocationType;
     }
 
+    if(!!payload._invocationConfig){
+      error('HEEEEEEREEEEEEE')
+      const invocationConfig = payload._invocationConfig;
+      invocationType = invocationConfig.invocationType;
+      console.log(payload._invocationConfig);
+      delete payload['_invocationConfig'];
+      console.log(payload._invocationConfig);
+    }
+
     const params: AWS.Lambda.InvocationRequest = {
       FunctionName: 'RWS-' + functionDirName,
       InvocationType: invocationType,
