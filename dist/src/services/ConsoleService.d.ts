@@ -1,6 +1,4 @@
 import TheService from "./_service";
-import ProgressBar from 'progress';
-import AWS from 'aws-sdk';
 declare class ConsoleService extends TheService {
     private isEnabled;
     private originalLogMethods?;
@@ -11,7 +9,6 @@ declare class ConsoleService extends TheService {
     error(...obj: any[]): void;
     stopLogging(): void;
     startLogging(): void;
-    AWSProgressBar(managedUpload: AWS.S3.ManagedUpload): ProgressBar;
     private getOriginalLogFunctions;
     private disableOriginalLogFunctions;
     private restoreOriginalLogFunctions;

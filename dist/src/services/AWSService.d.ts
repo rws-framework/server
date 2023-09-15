@@ -1,9 +1,5 @@
 import TheService from "./_service";
-import { S3Client } from "@aws-sdk/client-s3";
-import { IAMClient } from "@aws-sdk/client-iam";
-import { EFSClient } from "@aws-sdk/client-efs";
-import { EC2Client } from "@aws-sdk/client-ec2";
-import { LambdaClient } from "@aws-sdk/client-lambda";
+import AWS from 'aws-sdk';
 declare class AWSService extends TheService {
     private region;
     private s3;
@@ -11,6 +7,7 @@ declare class AWSService extends TheService {
     private lambda;
     private ec2;
     private iam;
+    private apiGateway;
     constructor();
     _initApis(): void;
     findDefaultSubnetForVPC(): Promise<[string, string]>;
@@ -24,12 +21,13 @@ declare class AWSService extends TheService {
     private getDefaultRouteTable;
     createVPCEndpointIfNotExist(vpcId: string): Promise<string>;
     ensureRouteToVPCEndpoint(vpcId: string, vpcEndpointId: string): Promise<void>;
-    getS3(): S3Client;
-    getEC2(): EC2Client;
-    getEFS(): EFSClient;
-    getLambda(): LambdaClient;
+    getS3(): AWS.S3;
+    getEC2(): AWS.EC2;
+    getEFS(): AWS.EFS;
+    getLambda(): AWS.Lambda;
     getRegion(): string;
-    getIAM(): IAMClient;
+    getIAM(): AWS.IAM;
+    getAPIGateway(): AWS.APIGateway;
 }
 declare const _default: AWSService;
 export default _default;

@@ -8,6 +8,7 @@ const child_process_1 = require("child_process");
 const child_process_2 = require("child_process");
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
 const pm2_1 = __importDefault(require("pm2"));
+const readline_1 = __importDefault(require("readline"));
 const path_1 = __importDefault(require("path"));
 const os_1 = __importDefault(require("os"));
 const UtilsService_1 = __importDefault(require("./UtilsService"));
@@ -228,6 +229,18 @@ class ProcessService extends _service_1.default {
     }
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    async getInput(prompt) {
+        const rl = readline_1.default.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+        return new Promise((resolve) => {
+            rl.question(color().red('[RWS CLI Input Prompt] ' + prompt), (answer) => {
+                resolve(answer);
+                rl.close();
+            });
+        });
     }
 }
 exports.default = ProcessService.getSingleton();

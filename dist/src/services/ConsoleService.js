@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const _service_1 = __importDefault(require("./_service"));
 const chalk_1 = __importDefault(require("chalk"));
-const progress_1 = __importDefault(require("progress"));
 class ConsoleService extends _service_1.default {
     constructor() {
         super();
@@ -42,7 +41,7 @@ class ConsoleService extends _service_1.default {
         if (!this.isEnabled) {
             return;
         }
-        console.log(...obj.filter((logElem) => !!logElem));
+        console.log(...obj);
     }
     warn(...obj) {
         if (!this.isEnabled) {
@@ -63,27 +62,6 @@ class ConsoleService extends _service_1.default {
     startLogging() {
         this.isEnabled = true;
         this.restoreOriginalLogFunctions();
-    }
-    AWSProgressBar(managedUpload) {
-        const _self = this;
-        try {
-            const bar = new progress_1.default('Uploading [:bar] :percent :etas', {
-                complete: '=',
-                incomplete: ' ',
-                width: 40,
-                total: 100
-            });
-            managedUpload.on('httpUploadProgress', function (event) {
-                const percent = Math.floor((event.loaded / event.total) * 100);
-                console.log(percent + '%');
-                bar.update(percent / 100);
-                bar.render();
-            });
-            return bar;
-        }
-        catch (err) {
-            throw err;
-        }
     }
     updateLogLine(message) {
         process.stdout.write('\r' + message);

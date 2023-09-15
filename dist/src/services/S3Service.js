@@ -6,8 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _service_1 = __importDefault(require("./_service"));
 const AWSService_1 = __importDefault(require("./AWSService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
-const client_s3_1 = require("@aws-sdk/client-s3");
-const { log, warn, error, color, AWSProgressBar } = ConsoleService_1.default;
+const { log, warn, error, color } = ConsoleService_1.default;
 class S3Service extends _service_1.default {
     constructor() {
         super();
@@ -20,16 +19,15 @@ class S3Service extends _service_1.default {
                 await this.deleteObject({ Bucket: params.Bucket, Key: params.Key });
             }
         }
-        const command = new client_s3_1.PutObjectCommand(params);
-        return AWSService_1.default.getS3().send(command);
+        return AWSService_1.default.getS3().upload(params).promise();
     }
     async delete(params) {
         await this.deleteObject({ Bucket: params.Bucket, Key: params.Key });
+        return;
     }
     async objectExists(params) {
         try {
-            const command = new client_s3_1.HeadObjectCommand(params);
-            await AWSService_1.default.getS3().send(command);
+            await AWSService_1.default.getS3().headObject(params).promise();
             return true;
         }
         catch (error) {
@@ -40,13 +38,11 @@ class S3Service extends _service_1.default {
         }
     }
     async deleteObject(params) {
-        const command = new client_s3_1.DeleteObjectCommand(params);
-        await AWSService_1.default.getS3().send(command);
+        await AWSService_1.default.getS3().deleteObject(params).promise();
     }
     async bucketExists(bucketName) {
         try {
-            const command = new client_s3_1.HeadBucketCommand({ Bucket: bucketName });
-            await AWSService_1.default.getS3().send(command);
+            await AWSService_1.default.getS3().headBucket({ Bucket: bucketName }).promise();
             return bucketName;
         }
         catch (err) {
@@ -55,8 +51,7 @@ class S3Service extends _service_1.default {
                 const params = {
                     Bucket: bucketName,
                 };
-                const createBucketCommand = new client_s3_1.CreateBucketCommand(params);
-                await AWSService_1.default.getS3().send(createBucketCommand);
+                await AWSService_1.default.getS3().createBucket(params).promise();
                 log(`${color().green(`[RWS Lambda Service]`)} s3 bucket ${bucketName} created.`);
                 return bucketName;
             }

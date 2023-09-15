@@ -11,7 +11,7 @@ const path_1 = __importDefault(require("path"));
 const UtilsService_1 = __importDefault(require("../services/UtilsService"));
 const EFSService_1 = __importDefault(require("../services/EFSService"));
 const LambdaService_1 = __importDefault(require("../services/LambdaService"));
-const client_lambda_1 = require("@aws-sdk/client-lambda");
+const APIGatewayService_1 = __importDefault(require("../services/APIGatewayService"));
 const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 const executionDir = process.cwd();
 const moduleCfgDir = `${executionDir}/node_modules/.rws`;
@@ -54,6 +54,7 @@ class LambdaCommand extends _command_1.default {
         };
     }
     async execute(params) {
+        AWSService_1.default._initApis();
         const { lambdaCmd, extraParams, subnetId, vpcId } = await this.getLambdaParameters(params);
         const PermissionCheck = await AWSService_1.default.checkForRolePermissions(params._rws_config.aws_lambda_role, [
             'lambda:CreateFunction',
@@ -150,9 +151,9 @@ class LambdaCommand extends _command_1.default {
         const listFunctionsParams = {
             MaxItems: 100,
         };
-        const rwsLambdaFunctions = []; // Use any[] to avoid AWS v3 types
+        const rwsLambdaFunctions = [];
         try {
-            const functionsResponse = await AWSService_1.default.getLambda().send(new client_lambda_1.ListFunctionsCommand(listFunctionsParams));
+            const functionsResponse = await AWSService_1.default.getLambda().listFunctions(listFunctionsParams).promise();
             if (functionsResponse.Functions) {
                 for (const functionConfig of functionsResponse.Functions) {
                     if (functionConfig.FunctionName && functionConfig.FunctionName.startsWith('RWS-')) {
@@ -178,6 +179,11 @@ class LambdaCommand extends _command_1.default {
             await LambdaService_1.default.deployModules(lambdaArg, efsId, vpcId, subnetId, true);
             return;
         }
+        const npmPackagePath = `${moduleDir}/lambda-functions/${lambdaDirName}/package.json`;
+        if (!fs_1.default.existsSync(npmPackagePath)) {
+            throw new Error('The lambda folder has no package.json inside.');
+        }
+        const packageJson = JSON.parse(fs_1.default.readFileSync(npmPackagePath, 'utf-8'));
         const lambdaParams = {
             rwsConfig: params._rws_config,
             subnetId: subnetId
@@ -189,6 +195,10 @@ class LambdaCommand extends _command_1.default {
         await this.executeLambdaLifeCycle('preDeploy', lambdaDirName, lambdaParams);
         try {
             await LambdaService_1.default.deployLambda(lambdaDirName, zipPath, vpcId, subnetId);
+            log(packageJson.deployConfig, typeof packageJson.deployConfig, APIGatewayService_1.default.findApiGateway('RWS-' + lambdaDirName));
+            if (packageJson.deployConfig && packageJson.deployConfig.webLambda && !APIGatewayService_1.default.findApiGateway('RWS-' + lambdaDirName)) {
+                await LambdaService_1.default.setupGatewayForWebLambda('RWS-' + lambdaDirName);
+            }
             await this.executeLambdaLifeCycle('postDeploy', lambdaDirName, lambdaParams);
             let payload = {};
             if (lambdaArg) {
@@ -211,8 +221,12 @@ class LambdaCommand extends _command_1.default {
     }
     async delete(params) {
         const { lambdaDirName } = await this.getLambdaParameters(params);
+        if (!(await LambdaService_1.default.functionExists('RWS-' + lambdaDirName))) {
+            error(`There is no lambda function named "RWS-${lambdaDirName}" in AWS region "${AWSService_1.default.getRegion()}"`);
+            return;
+        }
         await LambdaService_1.default.deleteLambda('RWS-' + lambdaDirName);
-        log(color().green(`[RWS Lambda CLI] ${lambdaDirName} lambda function has been ${color().red('deleted')}.`));
+        log(color().green(`[RWS Lambda CLI] "RWS-${lambdaDirName}" lambda function has been ${color().red('deleted')} from AWS region "${AWSService_1.default.getRegion()}"`));
     }
 }
 exports.default = LambdaCommand.createCommand();

@@ -8,7 +8,7 @@ const ConsoleService_1 = __importDefault(require("./ConsoleService"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const archiver_1 = __importDefault(require("archiver"));
-const { log, warn, error, color, AWSProgressBar } = ConsoleService_1.default;
+const { log, warn, error, color } = ConsoleService_1.default;
 const defaultZipParams = {
     recursive: true,
     format: 'zip',

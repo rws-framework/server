@@ -6,12 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _service_1 = __importDefault(require("./_service"));
 const AppConfigService_1 = __importDefault(require("./AppConfigService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
-const client_s3_1 = require("@aws-sdk/client-s3");
-const client_iam_1 = require("@aws-sdk/client-iam");
-const client_efs_1 = require("@aws-sdk/client-efs");
-const client_ec2_1 = require("@aws-sdk/client-ec2");
-const client_lambda_1 = require("@aws-sdk/client-lambda");
-const { log, warn, error, color, AWSProgressBar, rwsLog } = ConsoleService_1.default;
+const aws_sdk_1 = __importDefault(require("aws-sdk"));
+const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 class AWSService extends _service_1.default {
     constructor() {
         super();
@@ -20,45 +16,64 @@ class AWSService extends _service_1.default {
         if (!this.region) {
             this.region = (0, AppConfigService_1.default)().get('aws_lambda_region');
         }
-        const credentials = {
-            accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
-            secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
-        };
-        if (!this.s3) {
-            this.s3 = new client_s3_1.S3Client({
+        if (!this.s3 && this.region) {
+            this.s3 = new aws_sdk_1.default.S3({
                 region: this.region,
-                credentials
+                credentials: {
+                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+                }
             });
         }
-        if (!this.iam) {
-            this.iam = new client_iam_1.IAMClient({
+        if (!this.apiGateway && this.region) {
+            this.apiGateway = new aws_sdk_1.default.APIGateway({
                 region: this.region,
-                credentials
+                credentials: {
+                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+                }
             });
         }
-        if (!this.efs) {
-            this.efs = new client_efs_1.EFSClient({
+        if (!this.iam && this.region) {
+            this.iam = new aws_sdk_1.default.IAM({
                 region: this.region,
-                credentials
+                credentials: {
+                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+                }
             });
         }
-        if (!this.ec2) {
-            this.ec2 = new client_ec2_1.EC2Client({
+        if (!this.efs && this.region) {
+            this.efs = new aws_sdk_1.default.EFS({
                 region: this.region,
-                credentials
+                credentials: {
+                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+                }
             });
         }
-        if (!this.lambda) {
-            this.lambda = new client_lambda_1.LambdaClient({
+        if (!this.ec2 && this.region) {
+            this.ec2 = new aws_sdk_1.default.EC2({
+                region: (0, AppConfigService_1.default)().get('aws_lambda_region'),
+                credentials: {
+                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+                }
+            });
+        }
+        if (!this.lambda && this.region) {
+            this.lambda = new aws_sdk_1.default.Lambda({
                 region: this.region,
-                credentials
+                credentials: {
+                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+                }
             });
         }
     }
     async findDefaultSubnetForVPC() {
         try {
-            const command = new client_ec2_1.DescribeVpcsCommand({ Filters: [{ Name: 'isDefault', Values: ['true'] }] });
-            const response = await this.getEC2().send(command);
+            const response = await this.getEC2().describeVpcs({ Filters: [{ Name: 'isDefault', Values: ['true'] }] }).promise();
             if (response.Vpcs && response.Vpcs.length > 0) {
                 return [await this.getSubnetIdForVpc(response.Vpcs[0].VpcId), response.Vpcs[0].VpcId];
             }
@@ -71,13 +86,13 @@ class AWSService extends _service_1.default {
         }
     }
     async getSubnetIdForVpc(vpcId) {
-        const command = new client_ec2_1.DescribeSubnetsCommand({
+        const params = {
             Filters: [{
                     Name: 'vpc-id',
                     Values: [vpcId]
                 }]
-        });
-        const result = await this.getEC2().send(command);
+        };
+        const result = await this.getEC2().describeSubnets(params).promise();
         if (result.Subnets && result.Subnets.length > 0) {
             return result.Subnets.map(subnet => subnet.SubnetId)[0];
         }
@@ -87,8 +102,7 @@ class AWSService extends _service_1.default {
     }
     async listSecurityGroups() {
         try {
-            const command = new client_ec2_1.DescribeSecurityGroupsCommand({});
-            const result = await this.getEC2().send(command);
+            const result = await this.getEC2().describeSecurityGroups().promise();
             const securityGroups = result.SecurityGroups || [];
             const securityGroupIds = securityGroups.map(sg => sg.GroupId);
             return securityGroupIds;
@@ -110,11 +124,10 @@ class AWSService extends _service_1.default {
             PolicySourceArn: roleARN,
             ActionNames: permissions
         };
-        const command = new client_iam_1.SimulatePrincipalPolicyCommand(params);
         const policies = [];
         let allowed = true;
         try {
-            const data = await this.getIAM().send(command);
+            const data = await this.getIAM().simulatePrincipalPolicy(params).promise();
             for (let result of data.EvaluationResults) {
                 if (result.EvalDecision !== 'allowed') {
                     allowed = false;
@@ -134,16 +147,15 @@ class AWSService extends _service_1.default {
     }
     async getDefaultRouteTable(vpcId) {
         var _a;
-        const command = new client_ec2_1.DescribeRouteTablesCommand({
+        const routeTablesResponse = await this.ec2.describeRouteTables({
             Filters: [
                 {
                     Name: "vpc-id",
-                    Values: [vpcId]
+                    Values: [vpcId] // Provide the VPC ID here, not the VPC Endpoint ID
                 }
             ]
-        });
-        const response = await this.getEC2().send(command);
-        return (_a = response.RouteTables) === null || _a === void 0 ? void 0 : _a.find(rt => {
+        }).promise();
+        return (_a = routeTablesResponse.RouteTables) === null || _a === void 0 ? void 0 : _a.find(rt => {
             // A default route table won't have explicit subnet associations
             return !rt.Associations || rt.Associations.every(assoc => !assoc.SubnetId);
         });
@@ -152,21 +164,20 @@ class AWSService extends _service_1.default {
         const endpointName = "RWS-S3-GATE";
         const serviceName = `com.amazonaws.${this.region}.s3`;
         // Describe VPC Endpoints
-        const describeCommand = new client_ec2_1.DescribeVpcEndpointsCommand({
+        const existingEndpoints = await this.getEC2().describeVpcEndpoints({
             Filters: [
                 {
                     Name: "tag:Name",
                     Values: [endpointName]
                 }
             ]
-        });
-        const existingEndpoints = await this.getEC2().send(describeCommand);
+        }).promise();
         const defaultRouteTable = await this.getDefaultRouteTable(vpcId);
         // Check if the endpoint already exists
         const endpointExists = existingEndpoints.VpcEndpoints && existingEndpoints.VpcEndpoints.length > 0;
         if (!endpointExists) {
             // Create VPC Endpoint for S3
-            const createEndpointCommand = new client_ec2_1.CreateVpcEndpointCommand({
+            const endpointResponse = await this.getEC2().createVpcEndpoint({
                 VpcId: vpcId,
                 ServiceName: serviceName,
                 VpcEndpointType: "Gateway",
@@ -182,8 +193,7 @@ class AWSService extends _service_1.default {
                         ]
                     }
                 ]
-            });
-            const endpointResponse = await this.getEC2().send(createEndpointCommand);
+            }).promise();
             if (endpointResponse.VpcEndpoint) {
                 log(`VPC Endpoint "${endpointName}" created with ID: ${endpointResponse.VpcEndpoint.VpcEndpointId}`);
                 return endpointResponse.VpcEndpoint.VpcEndpointId;
@@ -205,19 +215,16 @@ class AWSService extends _service_1.default {
             const hasS3EndpointRoute = routes.some((route) => route.GatewayId === vpcEndpointId);
             if (!hasS3EndpointRoute) {
                 // Get the prefix list associated with the S3 VPC endpoint
-                const command = new client_ec2_1.DescribeVpcEndpointsCommand({
+                const vpcEndpointDescription = (await this.ec2.describeVpcEndpoints({
                     VpcEndpointIds: [vpcEndpointId]
-                });
-                const vpcEndpointDescription = await this.getEC2().send(command);
+                }).promise()).VpcEndpoints;
                 rwsLog('Creating VPC Endpoint route');
                 // Add a route to the route table
-                // Add a route to the route table
-                const createRouteCommand = new client_ec2_1.CreateRouteCommand({
+                await this.ec2.createRoute({
                     RouteTableId: routeTable.RouteTableId,
                     DestinationCidrBlock: '0.0.0.0/0',
-                    VpcEndpointId: vpcEndpointDescription.VpcEndpoints[0].VpcEndpointId
-                });
-                await this.getEC2().send(createRouteCommand);
+                    VpcEndpointId: vpcEndpointDescription[0].VpcEndpointId
+                }).promise();
                 log(`Added route to VPC Endpoint ${vpcEndpointId} in Route Table ${routeTable.RouteTableId}`);
             }
             else {
@@ -251,6 +258,10 @@ class AWSService extends _service_1.default {
     getIAM() {
         this._initApis();
         return this.iam;
+    }
+    getAPIGateway() {
+        this._initApis();
+        return this.apiGateway;
     }
 }
 exports.default = AWSService.getSingleton();

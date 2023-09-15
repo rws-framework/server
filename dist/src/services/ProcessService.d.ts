@@ -27,6 +27,7 @@ declare class ProcessService extends TheService {
     killRWS(): Promise<void>;
     runShellCommand(command: string, silent?: boolean): Promise<void>;
     sleep(ms: number): Promise<void>;
+    getInput(prompt: string): Promise<string>;
 }
 declare const _default_1: ProcessService;
 export default _default_1;

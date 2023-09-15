@@ -16,8 +16,7 @@
       "declaration": true,     
     },
     "include": [
-      "src",
-      "exec"    
+      "src",      
     ],
     "exclude": []
   }
