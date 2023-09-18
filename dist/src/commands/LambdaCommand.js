@@ -11,6 +11,7 @@ const path_1 = __importDefault(require("path"));
 const UtilsService_1 = __importDefault(require("../services/UtilsService"));
 const EFSService_1 = __importDefault(require("../services/EFSService"));
 const LambdaService_1 = __importDefault(require("../services/LambdaService"));
+const VPCService_1 = __importDefault(require("../services/VPCService"));
 const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 const executionDir = process.cwd();
 const moduleCfgDir = `${executionDir}/node_modules/.rws`;
@@ -108,6 +109,9 @@ class LambdaCommand extends _command_1.default {
             case 'list':
                 await this.list(params);
                 return;
+            case 'open-to-web':
+                await this.openToWeb(params);
+                return;
             default:
                 error(`[RWS Lambda CLI] "${lambdaCmd}" command is not supported in RWS Lambda CLI`);
                 log(`Try: "deploy:${lambdaCmd}", "delete:${lambdaCmd}", invoke:${lambdaCmd} or "list:${lambdaCmd}"`);
@@ -116,7 +120,7 @@ class LambdaCommand extends _command_1.default {
     }
     async getLambdaParameters(params) {
         const lambdaString = params.lambdaString || params._default;
-        const [subnetId, vpcId] = params.subnetId || await AWSService_1.default.findDefaultSubnetForVPC();
+        const [subnetId, vpcId] = params.subnetId || await VPCService_1.default.findDefaultSubnetForVPC();
         const lambdaStringArr = lambdaString.split(':');
         const lambdaCmd = lambdaStringArr[0];
         const lambdaDirName = lambdaStringArr[1];
@@ -204,6 +208,10 @@ class LambdaCommand extends _command_1.default {
             log(e.stack);
         }
         log(color().green(`[RWS Lambda CLI] "${moduleDir}/lambda-functions/${lambdaDirName}" function directory\nhas been deployed to "RWS-${lambdaDirName}" named AWS Lambda function.`));
+    }
+    async openToWeb(params) {
+        const { lambdaDirName } = await this.getLambdaParameters(params);
+        // await APIGatewayService.associateNATGatewayWithLambda('RWS-' + lambdaDirName);        
     }
     async delete(params) {
         const { lambdaDirName } = await this.getLambdaParameters(params);

@@ -89,39 +89,35 @@ const main = async () => {
 
     if(!APP_CFG){
         throw new Error('No config for CLI. Try to initialize with "npx rws init config=path/to/config.ts"');
-    }
+    }    
+
+    const APP = getAppConfig(APP_CFG);
+
+    const commands: RWSCommand[] = [...RWSAppCommands, ...APP.get('commands')];
+
+    const theCommand = commands.find((cmd: RWSCommand) => cmd.getName() == command);
     
-    log('xx', color().red('ssss'), APP_CFG, 'zzz');    
+    commandExecutionArgs._rws_config = APP_CFG;
+
+    const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);
+    const currentSumHashes = (await MD5Service.generateCliHashes([tsFile, ...cmdFiles])).join('/');
+
+    if (!savedHash || currentSumHashes !== savedHash) {
+        fs.writeFileSync(consoleClientHashFile, currentSumHashes);
+    }
+
+    if (theCommand) {        
+        await theCommand.execute(commandExecutionArgs);
+        return;
+    }
+
+    if (!fs.existsSync(`${moduleCfgDir}/${cfgPathFile}`)) {
+        throw new Error('No config path generated for CLI. Try to initialize with "npx rws init config=path/to/config.ts"');
+    }
+
+    error(`Unknown command: ${command}.`);
 
     return;
-
-    // const APP = getAppConfig(APP_CFG);
-
-    // const commands: RWSCommand[] = [...RWSAppCommands, ...APP.get('commands')];
-
-    // const theCommand = commands.find((cmd: RWSCommand) => cmd.getName() == command);
-    
-    // commandExecutionArgs._rws_config = APP_CFG;
-
-    // const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);
-    // const currentSumHashes = (await MD5Service.generateCliHashes([tsFile, ...cmdFiles])).join('/');
-
-    // if (!savedHash || currentSumHashes !== savedHash) {
-    //     fs.writeFileSync(consoleClientHashFile, currentSumHashes);
-    // }
-
-    // if (theCommand) {        
-    //     await theCommand.execute(commandExecutionArgs);
-    //     return;
-    // }
-
-    // if (!fs.existsSync(`${moduleCfgDir}/${cfgPathFile}`)) {
-    //     throw new Error('No config path generated for CLI. Try to initialize with "npx rws init config=path/to/config.ts"');
-    // }
-
-    // error(`Unknown command: ${command}.`);
-
-    // return;
 }
 
 main().then(() => {

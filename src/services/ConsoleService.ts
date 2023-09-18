@@ -207,7 +207,7 @@ class ConsoleService extends TheService {
     process.stdout.write('\r' + message);
   }
 
-  rwsLog(logCat: string | any[], logString: string | null = null): void {
+  rwsLog(logCat: string | any[], logString: string | null | any = null): void {
     const logName = logString ? `[${logCat}]` : '[RWS CLI]';
     const logData = logString ? logString : logCat;
 

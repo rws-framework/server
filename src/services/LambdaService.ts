@@ -13,6 +13,7 @@ import fs from 'fs';
 import AWS from 'aws-sdk';
 import UtilsService from "./UtilsService";
 import ProcessService from "./ProcessService";
+import VPCService from "./VPCService";
 
 
 const { log, warn, error, color, rwsLog } = ConsoleService;
@@ -153,7 +154,7 @@ class LambdaService extends TheService {
           Code,
           VpcConfig: {
             SubnetIds: [subnetId],  // Add your subnet IDs
-            SecurityGroupIds: await AWSService.listSecurityGroups(),  // Add your security group ID
+            SecurityGroupIds: await VPCService.listSecurityGroups(),  // Add your security group ID
           },
           FileSystemConfigs: [
             {
@@ -204,8 +205,15 @@ class LambdaService extends TheService {
 
       const npmPackage = this.getNPMPackage(functionDirName);
 
-      if((!!npmPackage.deployConfig) && npmPackage.deployConfig.webLambda === true && (await APIGatewayService.findApiGateway(lambdaFunctionName)) === null){                
-        await this.setupGatewayForWebLambda(lambdaFunctionName);
+      if((!!npmPackage.deployConfig) && npmPackage.deployConfig.webLambda === true){                
+
+        if((await APIGatewayService.findApiGateway(lambdaFunctionName)) === null){
+          await this.setupGatewayForWebLambda(lambdaFunctionName, vpcId);
+        }
+
+        if(!(await VPCService.findPublicSubnetInVPC(vpcId))){                   
+          await APIGatewayService.associateNATGatewayWithLambda(lambdaFunctionName);
+        }
       }      
     } catch (err: Error | any) {
       error(err.message);
@@ -466,7 +474,7 @@ class LambdaService extends TheService {
     }).promise();    
   }
 
-  async setupGatewayForWebLambda(lambdaFunctionName: string): Promise<void>
+  async setupGatewayForWebLambda(lambdaFunctionName: string, vpcId: string): Promise<void>
   {
 
     rwsLog('Creating API Gateway for Web Lambda...')

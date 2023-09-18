@@ -37,7 +37,7 @@ declare class LambdaService extends TheService {
     retrieveCloudWatchLogs(logResult: string, functionName: string): Promise<string[]>;
     findPayload(lambdaArg: string): string;
     integrateGatewayResource(lambdaFunctionName: string, restApiId: string, resource: AWS.APIGateway.Resource, httpMethod?: string): Promise<void>;
-    setupGatewayForWebLambda(lambdaFunctionName: string): Promise<void>;
+    setupGatewayForWebLambda(lambdaFunctionName: string, vpcId: string): Promise<void>;
 }
 declare const _default: LambdaService;
 export default _default;

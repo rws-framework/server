@@ -9,6 +9,7 @@ const LambdaService_1 = __importDefault(require("./LambdaService"));
 const AWSService_1 = __importDefault(require("./AWSService"));
 const ProcessService_1 = __importDefault(require("./ProcessService"));
 const path_1 = __importDefault(require("path"));
+const VPCService_1 = __importDefault(require("./VPCService"));
 const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 const __STATE_WAIT_TIME = 3000; //ms
 class EFSService extends _service_1.default {
@@ -41,8 +42,8 @@ class EFSService extends _service_1.default {
                 await this.waitForFileSystemMount(response.FileSystemId);
                 const [accessPointId, accessPointArn] = await this.createAccessPoint(response.FileSystemId);
                 await this.waitForAccessPoint(accessPointId);
-                const endpointId = await AWSService_1.default.createVPCEndpointIfNotExist(vpcId);
-                await AWSService_1.default.ensureRouteToVPCEndpoint(vpcId, endpointId);
+                const endpointId = await VPCService_1.default.createVPCEndpointIfNotExist(vpcId);
+                await VPCService_1.default.ensureRouteToVPCEndpoint(vpcId, endpointId);
                 log(`${color().green('[RWS Cloud FS Service]')} EFS Created:`, response);
                 return [response.FileSystemId, accessPointArn, false];
             }

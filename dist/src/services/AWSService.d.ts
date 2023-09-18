@@ -10,17 +10,11 @@ declare class AWSService extends TheService {
     private apiGateway;
     constructor();
     _initApis(): void;
-    findDefaultSubnetForVPC(): Promise<[string, string]>;
-    private getSubnetIdForVpc;
-    listSecurityGroups(): Promise<string[]>;
     checkForRolePermissions(roleARN: string, permissions: string[]): Promise<{
         OK: boolean;
         policies: string[];
     }>;
     private firePermissionCheck;
-    private getDefaultRouteTable;
-    createVPCEndpointIfNotExist(vpcId: string): Promise<string>;
-    ensureRouteToVPCEndpoint(vpcId: string, vpcEndpointId: string): Promise<void>;
     getS3(): AWS.S3;
     getEC2(): AWS.EC2;
     getEFS(): AWS.EFS;

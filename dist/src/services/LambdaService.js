@@ -16,6 +16,7 @@ const fs_1 = __importDefault(require("fs"));
 const aws_sdk_1 = __importDefault(require("aws-sdk"));
 const UtilsService_1 = __importDefault(require("./UtilsService"));
 const ProcessService_1 = __importDefault(require("./ProcessService"));
+const VPCService_1 = __importDefault(require("./VPCService"));
 const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 const MIN = 60; // 1MIN = 60s
 class LambdaService extends _service_1.default {
@@ -95,7 +96,7 @@ class LambdaService extends _service_1.default {
                     Code,
                     VpcConfig: {
                         SubnetIds: [subnetId],
-                        SecurityGroupIds: await AWSService_1.default.listSecurityGroups(), // Add your security group ID
+                        SecurityGroupIds: await VPCService_1.default.listSecurityGroups(), // Add your security group ID
                     },
                     FileSystemConfigs: [
                         {
@@ -135,8 +136,13 @@ class LambdaService extends _service_1.default {
             }
             rwsLog('RWS Lambda Service', `lambda function "${lambdaFunctionName}" has been ${functionDidExist ? 'created' : 'updated'}`);
             const npmPackage = this.getNPMPackage(functionDirName);
-            if ((!!npmPackage.deployConfig) && npmPackage.deployConfig.webLambda === true && (await APIGatewayService_1.default.findApiGateway(lambdaFunctionName)) === null) {
-                await this.setupGatewayForWebLambda(lambdaFunctionName);
+            if ((!!npmPackage.deployConfig) && npmPackage.deployConfig.webLambda === true) {
+                if ((await APIGatewayService_1.default.findApiGateway(lambdaFunctionName)) === null) {
+                    await this.setupGatewayForWebLambda(lambdaFunctionName, vpcId);
+                }
+                if (!(await VPCService_1.default.findPublicSubnetInVPC(vpcId))) {
+                    await APIGatewayService_1.default.associateNATGatewayWithLambda(lambdaFunctionName);
+                }
             }
         }
         catch (err) {
@@ -326,7 +332,7 @@ class LambdaService extends _service_1.default {
             uri: `arn:aws:apigateway:${AWSService_1.default.getRegion()}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations`
         }).promise();
     }
-    async setupGatewayForWebLambda(lambdaFunctionName) {
+    async setupGatewayForWebLambda(lambdaFunctionName, vpcId) {
         rwsLog('Creating API Gateway for Web Lambda...');
         const restApiId = await APIGatewayService_1.default.createApiGateway(lambdaFunctionName);
         const resource = await APIGatewayService_1.default.createResource(restApiId, lambdaFunctionName);

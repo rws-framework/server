@@ -8,6 +8,7 @@ import ProcessService from "./ProcessService";
 
 import path from 'path';
 import AWS from 'aws-sdk';
+import VPCService from "./VPCService";
 
 const { log, warn, error, color, rwsLog } = ConsoleService;
 
@@ -57,8 +58,8 @@ class EFSService extends TheService {
                 const [accessPointId, accessPointArn] = await this.createAccessPoint(response.FileSystemId);
                 await this.waitForAccessPoint(accessPointId);
 
-                const endpointId = await AWSService.createVPCEndpointIfNotExist(vpcId);
-                await AWSService.ensureRouteToVPCEndpoint(vpcId, endpointId);
+                const endpointId = await VPCService.createVPCEndpointIfNotExist(vpcId);
+                await VPCService.ensureRouteToVPCEndpoint(vpcId, endpointId);
 
                 log(`${color().green('[RWS Cloud FS Service]')} EFS Created:`, response);
                 return [response.FileSystemId, accessPointArn, false];

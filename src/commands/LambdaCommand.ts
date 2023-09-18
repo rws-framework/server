@@ -7,8 +7,8 @@ import path from 'path';
 import UtilsService from "../services/UtilsService";
 import EFSService from "../services/EFSService";
 import LambdaService from "../services/LambdaService";
+import VPCService from "../services/VPCService";
 import APIGatewayService from "../services/APIGatewayService";
-import ProcessService from "../services/ProcessService";
 
 
 const { log, warn, error, color, rwsLog } = ConsoleService;
@@ -154,6 +154,9 @@ class LambdaCommand extends Command
             case 'list':
                 await this.list(params);
                 return;    
+            case 'open-to-web':
+                await this.openToWeb(params);
+                return;        
             default:
                 error(`[RWS Lambda CLI] "${lambdaCmd}" command is not supported in RWS Lambda CLI`);
                 log(`Try: "deploy:${lambdaCmd}", "delete:${lambdaCmd}", invoke:${lambdaCmd} or "list:${lambdaCmd}"`)
@@ -176,7 +179,7 @@ class LambdaCommand extends Command
     public async getLambdaParameters(params: ICmdParams): Promise<ILambdaParamsReturn>
     {
         const lambdaString: string = params.lambdaString || params._default;    
-        const [subnetId, vpcId] = params.subnetId || await AWSService.findDefaultSubnetForVPC();
+        const [subnetId, vpcId] = params.subnetId || await VPCService.findDefaultSubnetForVPC();
         const lambdaStringArr: string[] = lambdaString.split(':');        
         const lambdaCmd: ILambdaSubCommand = lambdaStringArr[0];
         const lambdaDirName = lambdaStringArr[1];    
@@ -298,6 +301,13 @@ class LambdaCommand extends Command
 
         log(color().green(`[RWS Lambda CLI] "${moduleDir}/lambda-functions/${lambdaDirName}" function directory\nhas been deployed to "RWS-${lambdaDirName}" named AWS Lambda function.`));
     }
+
+    public async openToWeb(params: ICmdParams)
+    {
+        const {lambdaDirName} = await this.getLambdaParameters(params);                  
+
+        // await APIGatewayService.associateNATGatewayWithLambda('RWS-' + lambdaDirName);        
+    }    
 
     public async delete(params: ICmdParams)
     {

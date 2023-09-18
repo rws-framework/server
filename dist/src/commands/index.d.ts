@@ -20,6 +20,7 @@ declare const _default: ({
     invoke(params: import("./_command").ICmdParams): Promise<void>;
     list(params: import("./_command").ICmdParams): Promise<void>;
     deploy(params: import("./_command").ICmdParams): Promise<void>;
+    openToWeb(params: import("./_command").ICmdParams): Promise<void>;
     delete(params: import("./_command").ICmdParams): Promise<void>;
     name: string;
     getSourceFilePath(): string;

@@ -6,7 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _service_1 = __importDefault(require("./_service"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
 const AWSService_1 = __importDefault(require("./AWSService"));
-const { log, error } = ConsoleService_1.default;
+const LambdaService_1 = __importDefault(require("./LambdaService"));
+const VPCService_1 = __importDefault(require("./VPCService"));
+const { log, error, rwsLog } = ConsoleService_1.default;
 class APIGatewayService extends _service_1.default {
     constructor() {
         super();
@@ -81,6 +83,37 @@ class APIGatewayService extends _service_1.default {
             authorizationType: "NONE",
             apiKeyRequired: false
         }).promise();
+    }
+    async associateNATGatewayWithLambda(lambdaFunctionName) {
+        rwsLog(`Creating NAT Gateway for "${lambdaFunctionName}" lambda function`);
+        const lambdaConfig = { ...(await LambdaService_1.default.getLambdaFunction(lambdaFunctionName)).Configuration };
+        const privateSubnetId = lambdaConfig.VpcConfig.SubnetIds[0];
+        // const publicSubnet = await VPCService.createPublicSubnet(lambdaConfig.VpcConfig.VpcId, 20);    
+        // const publicSubnetId = publicSubnet.Subnet.SubnetId;
+        try {
+            const eip = await AWSService_1.default.getEC2().allocateAddress({}).promise();
+            if (!eip.AllocationId) {
+                throw new Error('Failed to allocate Elastic IP.');
+            }
+            const natGateway = await AWSService_1.default.getEC2().createNatGateway({
+                SubnetId: privateSubnetId,
+                AllocationId: eip.AllocationId
+            }).promise();
+            const routeTable = await VPCService_1.default.getDefaultRouteTable(lambdaConfig.VpcConfig.VpcId);
+            if (!routeTable) {
+                throw new Error('No route table exists.');
+            }
+            await VPCService_1.default.waitForNatGatewayAvailable(natGateway.NatGateway.NatGatewayId);
+            await AWSService_1.default.getEC2().createRoute({
+                RouteTableId: routeTable.RouteTableId,
+                DestinationCidrBlock: '0.0.0.0/0',
+                NatGatewayId: natGateway.NatGateway.NatGatewayId
+            }).promise();
+            rwsLog('Lambda function associated with NAT Gateway successfully.');
+        }
+        catch (e) {
+            error(e.code, e.message);
+        }
     }
 }
 exports.default = APIGatewayService.getSingleton();
