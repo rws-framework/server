@@ -6,12 +6,6 @@ const configFile = 'artillery-config.yml';
 
 export const handler = async (event, context) => {
   if (fs.existsSync(ArtilleryDirectory)) {
-    console.log('Starting chmod')
-    chmod(ArtilleryDirectory);
-
-    const artilleryPath = `${ArtilleryDirectory}/.bin/artillery`;
-    const command = `NODE_PATH=${ArtilleryDirectory}`;
-
     // await runShell(command);
     console.log('Starting artillery')
     await runShell(command);

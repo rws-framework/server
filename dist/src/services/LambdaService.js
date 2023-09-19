@@ -105,7 +105,13 @@ class LambdaService extends _service_1.default {
                         }
                     ],
                     MemorySize: 2048,
-                    Timeout: 15 * MIN
+                    Timeout: 15 * MIN,
+                    Environment: {
+                        Variables: {
+                            NODE_PATH: '/mnt/efs/res/modules/' + functionDirName,
+                            HOME: '/mnt/efs/res/tmp/' + functionDirName
+                        }
+                    }
                 };
                 log(color().green('[RWS Lambda Service] is ' + (functionDidExist ? 'updating' : 'creating') + ' lambda function named: ') + color().yellowBright(lambdaFunctionName));
                 await AWSService_1.default.getLambda().createFunction(createParams).promise();
