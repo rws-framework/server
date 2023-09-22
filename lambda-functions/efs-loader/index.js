@@ -1,9 +1,7 @@
 import AWS from 'aws-sdk';
-import {Extract} from 'unzipper';
+import AdmZip   from 'adm-zip';
 import fs from 'fs';
-import { exec } from 'child_process';
-import path from 'path';
-import { runShell, chmod, printFolderStructure } from './tools.js';
+import { runShell, chmod, printFolderStructure, deleteDirectoryRecursive } from './tools.js';
 
 
 const S3 = new AWS.S3();
@@ -50,19 +48,24 @@ export const handler = async (event, context) => {
 
   if(params && !!params.command){
     if(allowedCommands.includes(params.command)){
-      switch(params.command){
-        case 'chmod': 
-          await chmod(destFunctionDirPath);
+      try {
+        switch(params.command){
+          case 'chmod': 
+            await chmod(destFunctionDirPath);
 
-          return { success: true, path: `${destFunctionDirPath}` };   
-        case 'modules_exist':           
-          return { success: fs.existsSync(destFunctionDirPath), path: `${destFunctionDirPath}` };       
-        case 'remove_modules':
-          await runShell(`rm -rf ${destFunctionDirPath}`);
-          return { success: true, path: `${destFunctionDirPath}` };
-        case 'list_modules':          
-          return { success: true, path: `${destFunctionDirPath}`, structure: printFolderStructure(destFunctionDirPath) };
-
+            return { success: true, path: `${destFunctionDirPath}` };   
+          case 'modules_exist':           
+            return { success: fs.existsSync(destFunctionDirPath), path: `${destFunctionDirPath}` };       
+          case 'remove_modules':
+            deleteDirectoryRecursive(destFunctionDirPath);
+            return { success: !fs.existsSync(destFunctionDirPath), path: `${destFunctionDirPath}` };
+          case 'list_modules':          
+            return { success: true, path: `${destFunctionDirPath}`, structure: printFolderStructure(destFunctionDirPath) };
+        }
+      } catch(e) {
+        console.error(e.message)
+        console.log(e)
+        throw new Error(e);
       }      
     }else{
       return { success: false, error: 'Command unavailable' }
@@ -78,28 +81,24 @@ export const handler = async (event, context) => {
         Key: modulesS3Key,
       }).promise();
 
-      fs.writeFileSync(`${destDownloadsDirPath}/${modulesS3Key}`, s3Stream.Body, 'binary')
-  
-      console.log('[S3 Download Finished]', `${destDownloadsDirPath}/${modulesS3Key}`);
+      const zipPath = `${destDownloadsDirPath}/${modulesS3Key}`;
+      fs.writeFileSync(zipPath, s3Stream.Body, 'binary');
 
-      const readStream = fs.createReadStream(`${destDownloadsDirPath}/${modulesS3Key}`);
+      console.log('[S3 Download Finished]', zipPath);
 
-      // Pipe the S3 stream directly into the unzipper
-      readStream.pipe(Extract({ path: destFunctionDirPath }))
-        .on('finish', () => {          
-          chmod(destFunctionDirPath);
-          
-          console.log('[Extraction complete]');          
-          resolve({ success: true, path: destFunctionDirPath, structure: printFolderStructure(destFunctionDirPath) })
-        })
-        .on('error', (archiveErr) => {
-          console.error('[Extraction error]:', archiveErr);
-          reject({ success: false, errorCategory: 'UNZIP_ERROR', error: archiveErr })
-        });    
-    
-    } catch (s3FileErr) {
-      console.error('[S3 Read Error]', s3FileErr);
-      reject({ success: false, errorCategory: 'S3_READ_ERROR', error: s3FileErr });
+      const zip = new AdmZip(zipPath);
+      zip.extractAllTo(destFunctionDirPath, true);  // true means overwrite existing files
+
+      await runShell(`unzip -o ${zipPath} -d ${destFunctionDirPath}`);
+      await runShell(`ls ${destFunctionDirPath}`);
+
+      await chmod(destFunctionDirPath);
+      console.log('[Extraction complete]');
+      resolve({ success: true, path: destFunctionDirPath, structure: printFolderStructure(destFunctionDirPath) });
+
+    } catch (error) {
+      console.error('[Error]', error);
+      reject({ success: false, errorCategory: 'GENERAL_ERROR', error });
     }
-  });  
+  });
 };

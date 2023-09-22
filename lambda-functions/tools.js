@@ -47,9 +47,14 @@ const runShell = async (command, context = null) => {
     }
 };
 
-const runShellParallel = (command, context) => {
+const runShellParallel = (command, context, workingDir = null) => {
     return new Promise((resolve, reject) => {
-        const childProcess = exec(command, (error, stdout, stderr) => {
+        const options = {};
+        if (workingDir) {
+            options.cwd = workingDir;
+        }
+
+        const childProcess = exec(command, options, (error, stdout, stderr) => {
             if (stdout) {
                 console.log('Shell Output:', stdout);
             }
@@ -80,12 +85,36 @@ const runShellParallel = (command, context) => {
             }
         });
     });
-}
+};
+
+const deleteDirectoryRecursive = (dirPath) => {
+    try {
+      const files = fs.readdirSync(dirPath);
+  
+      for (const file of files) {
+        const filePath = `${dirPath}/${file}`;
+        const stat = fs.statSync(filePath);
+  
+        if (stat.isDirectory()) {
+          deleteDirectoryRecursive(filePath);
+        } else {
+          fs.unlinkSync(filePath);
+        }
+      }
+  
+      fs.rmdirSync(dirPath);
+      console.log(`Successfully deleted directory: ${dirPath}`);
+    } catch (error) {
+      console.error(`Failed to delete directory: ${error}`);
+      console.log(error);
+    }
+  };
 
 export {
     runShell,
     runShellParallel,
     runModule,
     chmod,
-    printFolderStructure
+    printFolderStructure,
+    deleteDirectoryRecursive
 }

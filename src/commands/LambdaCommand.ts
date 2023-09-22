@@ -145,6 +145,9 @@ class LambdaCommand extends Command
             case 'deploy':
                 await this.deploy(params);            
                 return;
+            case 'undeploy':
+                await this.undeploy(params);            
+                return;    
             case 'invoke':
                 await this.invoke(params);            
                 return;
@@ -300,6 +303,23 @@ class LambdaCommand extends Command
         }
 
         log(color().green(`[RWS Lambda CLI] "${moduleDir}/lambda-functions/${lambdaDirName}" function directory\nhas been deployed to "RWS-${lambdaDirName}" named AWS Lambda function.`));
+    }
+
+    public async undeploy(params: ICmdParams)
+    {
+        const {lambdaDirName, vpcId, subnetId, lambdaArg} = await this.getLambdaParameters(params);            
+
+        if (lambdaDirName === 'modules') {        
+            const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId, subnetId);
+            LambdaService.setRegion(params._rws_config.aws_lambda_region);
+            await LambdaService.deployModules(lambdaArg, efsId, vpcId,subnetId, true);        
+            return;
+        }        
+
+        const lambdaParams: ILambdaParams = {
+            rwsConfig: params._rws_config,
+            subnetId: subnetId
+        };
     }
 
     public async openToWeb(params: ICmdParams)
