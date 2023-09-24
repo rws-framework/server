@@ -1,11 +1,17 @@
 import AWS from 'aws-sdk';
-import AdmZip   from 'adm-zip';
+import AdmZip from 'adm-zip';
 import fs from 'fs';
+import path from 'path';
 import { runShell, chmod, printFolderStructure, deleteDirectoryRecursive } from './tools.js';
 
 
 const S3 = new AWS.S3();
 
+const unzipAndMoveFiles = (zipFilePath, destFolder) => {
+  const zip = new AdmZip(zipFilePath);
+  zip.extractAllTo(destFolder, true);
+  console.log('[EXTRACTION COMPLETE]');
+};
 
 export const handler = async (event, context) => {
   console.log('EVENT_PAYLOAD ||| ', event);
@@ -74,7 +80,7 @@ export const handler = async (event, context) => {
 
   console.log('[S3 Download Start]', `S3://${s3Bucket}/${modulesS3Key}`);
 
-  return new Promise(async (resolve, reject) => {
+  return await new Promise(async (resolve, reject) => {
     try {
       const s3Stream = await S3.getObject({
         Bucket: s3Bucket,
@@ -86,14 +92,8 @@ export const handler = async (event, context) => {
 
       console.log('[S3 Download Finished]', zipPath);
 
-      const zip = new AdmZip(zipPath);
-      zip.extractAllTo(destFunctionDirPath, true);  // true means overwrite existing files
-
-      await runShell(`unzip -o ${zipPath} -d ${destFunctionDirPath}`);
-      await runShell(`ls ${destFunctionDirPath}`);
-
+      unzipAndMoveFiles(zipPath, destFunctionDirPath);
       await chmod(destFunctionDirPath);
-      console.log('[Extraction complete]');
       resolve({ success: true, path: destFunctionDirPath, structure: printFolderStructure(destFunctionDirPath) });
 
     } catch (error) {
