@@ -24,6 +24,7 @@ class AWSService extends TheService {
     private ec2: AWS.EC2;
     private iam: AWS.IAM;
     private apiGateway: AWS.APIGateway;
+    private cloudWatch: AWS.CloudWatchLogs;
 
     constructor() {
         super();        
@@ -89,6 +90,16 @@ class AWSService extends TheService {
         
         if(!this.lambda && this.region){
             this.lambda = new AWS.Lambda({
+                region: this.region,
+                credentials: {
+                    accessKeyId: AppConfigService().get('aws_access_key'),
+                    secretAccessKey: AppConfigService().get('aws_secret_key'),
+                }
+            });
+        }
+
+        if(!this.cloudWatch && this.region){
+            this.cloudWatch = new AWS.CloudWatchLogs({
                 region: this.region,
                 credentials: {
                     accessKeyId: AppConfigService().get('aws_access_key'),
@@ -186,6 +197,13 @@ class AWSService extends TheService {
 
         return this.apiGateway;
     }  
+
+    getCloudWatch(): AWS.CloudWatchLogs
+    {
+        this._initApis();
+
+        return this.cloudWatch;
+    }
 }
 
 export default AWSService.getSingleton();

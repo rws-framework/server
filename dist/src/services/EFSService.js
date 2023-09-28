@@ -103,20 +103,6 @@ class EFSService extends _service_1.default {
             }
         }
     }
-    async waitForAccessPoint2(fileSystemId, accessPointId) {
-        let isAvailable = false;
-        log(`${color().yellowBright('[EFS AP Listener] awaiting EFS access point change')}`, fileSystemId, accessPointId);
-        while (!isAvailable) {
-            const accessPointResponse = await AWSService_1.default.getEFS().describeAccessPoints({ FileSystemId: fileSystemId, AccessPointId: accessPointId }).promise();
-            if (accessPointResponse.AccessPoints && accessPointResponse.AccessPoints.length && accessPointResponse.AccessPoints[0].LifeCycleState === 'available') {
-                isAvailable = true;
-            }
-            else {
-                log(`${color().yellowBright('[EFS AP Listener] .')}`);
-                await new Promise(resolve => setTimeout(resolve, 5000)); // wait for 5 seconds before checking again                
-            }
-        }
-    }
     async waitForAccessPoint(accessPointId) {
         let isAvailable = false;
         log(`${color().yellowBright('[EFS AP Listener] awaiting EFS access point change')}`, accessPointId);

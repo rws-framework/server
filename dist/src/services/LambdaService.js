@@ -13,7 +13,6 @@ const S3Service_1 = __importDefault(require("./S3Service"));
 const APIGatewayService_1 = __importDefault(require("./APIGatewayService"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const aws_sdk_1 = __importDefault(require("aws-sdk"));
 const UtilsService_1 = __importDefault(require("./UtilsService"));
 const ProcessService_1 = __importDefault(require("./ProcessService"));
 const VPCService_1 = __importDefault(require("./VPCService"));
@@ -251,12 +250,9 @@ class LambdaService extends _service_1.default {
             invocationType = npmPackage.deployConfig.invocationType;
         }
         if (!!payload._invocationConfig) {
-            error('HEEEEEEREEEEEEE');
             const invocationConfig = payload._invocationConfig;
             invocationType = invocationConfig.invocationType;
-            console.log(payload._invocationConfig);
             delete payload['_invocationConfig'];
-            console.log(payload._invocationConfig);
         }
         const params = {
             FunctionName: 'RWS-' + functionDirName,
@@ -269,42 +265,16 @@ class LambdaService extends _service_1.default {
             const response = await AWSService_1.default.getLambda()
                 .invoke(params)
                 .promise();
-            // Restore the original console.log function
-            // console.log = originalConsoleLog;
-            // Assuming you want to return specific properties from the response
             return {
                 StatusCode: response.StatusCode,
-                Response: response
+                Response: response,
+                InvocationType: invocationType
             };
         }
         catch (e) {
             error(e.message);
             throw new Error(e);
         }
-    }
-    async retrieveCloudWatchLogs(logResult, functionName) {
-        const cloudWatchLogs = new aws_sdk_1.default.CloudWatchLogs();
-        const params = {
-            logGroupName: `/aws/lambda/${functionName}`,
-            logStreamName: logResult,
-        };
-        const logs = [];
-        const getLogs = async (nextToken = undefined) => {
-            if (nextToken) {
-                params.nextToken = nextToken;
-            }
-            const response = await cloudWatchLogs.getLogEvents(params).promise();
-            if (response.events) {
-                for (const event of response.events) {
-                    logs.push(event.message || '');
-                }
-            }
-            // if (response.nextToken) {
-            //   await getLogs(response.nextToken);
-            // }
-        };
-        await getLogs();
-        return logs;
     }
     findPayload(lambdaArg) {
         const executionDir = process.cwd();

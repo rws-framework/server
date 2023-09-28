@@ -12,6 +12,7 @@ const UtilsService_1 = __importDefault(require("../services/UtilsService"));
 const EFSService_1 = __importDefault(require("../services/EFSService"));
 const LambdaService_1 = __importDefault(require("../services/LambdaService"));
 const VPCService_1 = __importDefault(require("../services/VPCService"));
+const CloudWatchService_1 = __importDefault(require("../services/CloudWatchService"));
 const { log, warn, error, color, rwsLog } = ConsoleService_1.default;
 const executionDir = process.cwd();
 const moduleCfgDir = `${executionDir}/node_modules/.rws`;
@@ -100,6 +101,9 @@ class LambdaCommand extends _command_1.default {
             case 'deploy':
                 await this.deploy(params);
                 return;
+            case 'undeploy':
+                await this.undeploy(params);
+                return;
             case 'invoke':
                 await this.invoke(params);
                 return;
@@ -143,8 +147,12 @@ class LambdaCommand extends _command_1.default {
             payload = JSON.parse(fs_1.default.readFileSync(payloadPath, 'utf-8'));
         }
         const response = await LambdaService_1.default.invokeLambda(lambdaDirName, payload);
+        const logsTimeout = await CloudWatchService_1.default.printLogsForLambda(`RWS-${lambdaDirName}`);
         rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));
-        log(response.Response.Payload.toString());
+        if (response.InvocationType === 'RequestResponse') {
+            log(response.Response.Payload);
+            clearTimeout(logsTimeout.core);
+        }
     }
     async list(params) {
         const listFunctionsParams = {
@@ -195,11 +203,13 @@ class LambdaCommand extends _command_1.default {
                 let payloadPath = LambdaService_1.default.findPayload(lambdaArg);
                 payload = JSON.parse(fs_1.default.readFileSync(payloadPath, 'utf-8'));
                 const response = await LambdaService_1.default.invokeLambda(lambdaDirName, payload);
-                rwsLog('RWS Lambda Deploy Invoke', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));
-                const responseData = JSON.parse(response.Response.Payload.toString());
-                log(responseData);
-                if (!responseData.success) {
-                    log(responseData.errorMessage);
+                rwsLog('RWS Lambda Deploy Invoke', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode})`));
+                if (response.Response.Payload.toString()) {
+                    const responseData = JSON.parse(response.Response.Payload.toString());
+                    log(response.Response.Payload.toString());
+                    if (!responseData.success) {
+                        error(responseData.errorMessage);
+                    }
                 }
             }
         }
@@ -208,6 +218,19 @@ class LambdaCommand extends _command_1.default {
             log(e.stack);
         }
         log(color().green(`[RWS Lambda CLI] "${moduleDir}/lambda-functions/${lambdaDirName}" function directory\nhas been deployed to "RWS-${lambdaDirName}" named AWS Lambda function.`));
+    }
+    async undeploy(params) {
+        const { lambdaDirName, vpcId, subnetId, lambdaArg } = await this.getLambdaParameters(params);
+        if (lambdaDirName === 'modules') {
+            const [efsId] = await EFSService_1.default.getOrCreateEFS('RWS_EFS', vpcId, subnetId);
+            LambdaService_1.default.setRegion(params._rws_config.aws_lambda_region);
+            await LambdaService_1.default.deployModules(lambdaArg, efsId, vpcId, subnetId, true);
+            return;
+        }
+        const lambdaParams = {
+            rwsConfig: params._rws_config,
+            subnetId: subnetId
+        };
     }
     async openToWeb(params) {
         const { lambdaDirName } = await this.getLambdaParameters(params);

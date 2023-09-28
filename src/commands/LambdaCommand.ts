@@ -8,7 +8,7 @@ import UtilsService from "../services/UtilsService";
 import EFSService from "../services/EFSService";
 import LambdaService from "../services/LambdaService";
 import VPCService from "../services/VPCService";
-import APIGatewayService from "../services/APIGatewayService";
+import CloudWatchService from "../services/CloudWatchService";
 
 
 const { log, warn, error, color, rwsLog } = ConsoleService;
@@ -212,9 +212,15 @@ class LambdaCommand extends Command
         }
     
         const response = await LambdaService.invokeLambda(lambdaDirName, payload);
+
+        const logsTimeout = await CloudWatchService.printLogsForLambda(`RWS-${lambdaDirName}`);
+
         rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));            
 
-        log(response.Response.Payload.toString());
+        if(response.InvocationType === 'RequestResponse'){
+            log(response.Response.Payload);
+            clearTimeout(logsTimeout.core);
+        }
     }
 
     public async list(params: ICmdParams)
@@ -287,14 +293,16 @@ class LambdaCommand extends Command
                 
                 const response = await LambdaService.invokeLambda(lambdaDirName, payload);
 
-                rwsLog('RWS Lambda Deploy Invoke', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));    
+                rwsLog('RWS Lambda Deploy Invoke', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode})`));    
 
-                const responseData = JSON.parse(response.Response.Payload.toString());
-                
-                log(responseData);
+                if(response.Response.Payload.toString()){
+                    const responseData = JSON.parse(response.Response.Payload.toString());
+                    
+                    log(response.Response.Payload.toString());
 
-                if(!responseData.success){
-                    log(responseData.errorMessage);
+                    if(!responseData.success){
+                        error(responseData.errorMessage);
+                    }
                 }
             }
         } catch (e: Error | any) {

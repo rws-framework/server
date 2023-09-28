@@ -80,8 +80,8 @@ const runShellParallel = (command, context, workingDir = null) => {
         // Listen for the child process exit event
         childProcess.on('exit', (code) => {
             if (code !== 0) {
-                console.error(`Artillery process exited with code ${code}`);
-                reject(new Error(`Artillery process exited with code ${code}`));
+                console.error(`Process exited with code ${code}`);
+                reject(new Error(`Process exited with code ${code}`));
             }
         });
     });

@@ -356,7 +356,7 @@ class LambdaService extends TheService {
   async invokeLambda(
     functionDirName: string,
     payload: any,    
-  ): Promise<{ StatusCode: number, Response: AWS.Lambda.InvocationResponse, CapturedLogs?: string[]}> {
+  ): Promise<{ StatusCode: number, Response: AWS.Lambda.InvocationResponse, CapturedLogs?: string[], InvocationType: string}> {
 
     let invocationType: InvocationTypeType = 'RequestResponse';
 
@@ -366,13 +366,10 @@ class LambdaService extends TheService {
       invocationType = npmPackage.deployConfig.invocationType;
     }
 
-    if(!!payload._invocationConfig){
-      error('HEEEEEEREEEEEEE')
+    if(!!payload._invocationConfig){      
       const invocationConfig = payload._invocationConfig;
-      invocationType = invocationConfig.invocationType;
-      console.log(payload._invocationConfig);
-      delete payload['_invocationConfig'];
-      console.log(payload._invocationConfig);
+      invocationType = invocationConfig.invocationType;    
+      delete payload['_invocationConfig'];      
     }
 
     const params: AWS.Lambda.InvocationRequest = {
@@ -387,54 +384,18 @@ class LambdaService extends TheService {
     try {
       const response: AWS.Lambda.InvocationResponse = await AWSService.getLambda()
         .invoke(params)
-        .promise();
-    
-      // Restore the original console.log function
-      // console.log = originalConsoleLog;
-    
-      // Assuming you want to return specific properties from the response
+        .promise();      
+        
       return {
         StatusCode: response.StatusCode,
-        Response: response
+        Response: response,
+        InvocationType: invocationType
       };
     } catch(e: Error | any) {
       error(e.message);
       throw new Error(e);
     }
   }  
-
-  async retrieveCloudWatchLogs(logResult: string, functionName: string): Promise<string[]> {
-    const cloudWatchLogs = new AWS.CloudWatchLogs();
-  
-    const params: AWS.CloudWatchLogs.GetLogEventsRequest = {
-      logGroupName: `/aws/lambda/${functionName}`, // Update with your Lambda function name
-      logStreamName: logResult,
-    };
-  
-    const logs: string[] = [];
-  
-    const getLogs = async (nextToken: string | undefined = undefined): Promise<void> => {
-      if (nextToken) {
-        params.nextToken = nextToken;
-      }
-  
-      const response = await cloudWatchLogs.getLogEvents(params).promise();
-  
-      if (response.events) {
-        for (const event of response.events) {
-          logs.push(event.message || '');
-        }
-      }
-  
-      // if (response.nextToken) {
-      //   await getLogs(response.nextToken);
-      // }
-    };
-  
-    await getLogs();
-  
-    return logs;
-  }
 
   findPayload(lambdaArg: string): string
   {

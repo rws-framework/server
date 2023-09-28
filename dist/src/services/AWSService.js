@@ -70,6 +70,15 @@ class AWSService extends _service_1.default {
                 }
             });
         }
+        if (!this.cloudWatch && this.region) {
+            this.cloudWatch = new aws_sdk_1.default.CloudWatchLogs({
+                region: this.region,
+                credentials: {
+                    accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+                    secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+                }
+            });
+        }
     }
     async checkForRolePermissions(roleARN, permissions) {
         const { OK, policies } = await this.firePermissionCheck(roleARN, permissions);
@@ -131,6 +140,10 @@ class AWSService extends _service_1.default {
     getAPIGateway() {
         this._initApis();
         return this.apiGateway;
+    }
+    getCloudWatch() {
+        this._initApis();
+        return this.cloudWatch;
     }
 }
 exports.default = AWSService.getSingleton();

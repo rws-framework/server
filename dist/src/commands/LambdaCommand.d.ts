@@ -32,6 +32,7 @@ declare class LambdaCommand extends Command {
     invoke(params: ICmdParams): Promise<void>;
     list(params: ICmdParams): Promise<void>;
     deploy(params: ICmdParams): Promise<void>;
+    undeploy(params: ICmdParams): Promise<void>;
     openToWeb(params: ICmdParams): Promise<void>;
     delete(params: ICmdParams): Promise<void>;
 }

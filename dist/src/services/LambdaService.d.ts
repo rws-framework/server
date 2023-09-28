@@ -33,8 +33,8 @@ declare class LambdaService extends TheService {
         StatusCode: number;
         Response: AWS.Lambda.InvocationResponse;
         CapturedLogs?: string[];
+        InvocationType: string;
     }>;
-    retrieveCloudWatchLogs(logResult: string, functionName: string): Promise<string[]>;
     findPayload(lambdaArg: string): string;
     integrateGatewayResource(lambdaFunctionName: string, restApiId: string, resource: AWS.APIGateway.Resource, httpMethod?: string): Promise<void>;
     setupGatewayForWebLambda(lambdaFunctionName: string, vpcId: string): Promise<void>;

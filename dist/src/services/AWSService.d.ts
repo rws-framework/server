@@ -8,6 +8,7 @@ declare class AWSService extends TheService {
     private ec2;
     private iam;
     private apiGateway;
+    private cloudWatch;
     constructor();
     _initApis(): void;
     checkForRolePermissions(roleARN: string, permissions: string[]): Promise<{
@@ -22,6 +23,7 @@ declare class AWSService extends TheService {
     getRegion(): string;
     getIAM(): AWS.IAM;
     getAPIGateway(): AWS.APIGateway;
+    getCloudWatch(): AWS.CloudWatchLogs;
 }
 declare const _default: AWSService;
 export default _default;

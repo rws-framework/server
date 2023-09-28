@@ -12,7 +12,6 @@ declare class EFSService extends TheService {
     waitForEFS(fileSystemId: string): Promise<void>;
     sleep(ms: number): Promise<void>;
     waitForFileSystemMount(fileSystemId: string): Promise<boolean>;
-    waitForAccessPoint2(fileSystemId: string, accessPointId: string): Promise<void>;
     waitForAccessPoint(accessPointId: string): Promise<void>;
     generateClientToken(): string;
     getAccessPoints(fileSystemId: string): Promise<AWS.EFS.AccessPointDescriptions | null>;
