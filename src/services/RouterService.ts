@@ -1,10 +1,10 @@
 import 'reflect-metadata'
 import express, { Request, Response } from 'express';
 import TheService from "./_service";
-import Controller, { IRequestParams, IHTTPRouteMethod } from "../controllers/_controller";
-import { IHTTPRoute } from "../routing/routes";
+import Controller, { IRequestParams, IHTTProuteMethod } from "../controllers/_controller";
+import { IHTTProute } from "../routing/routes";
 
-type RouteEntry = {[key: string]: [IHTTPRouteMethod, CallableFunction]};
+type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction]};
 
 interface IControllerRoutes {
   get: RouteEntry;
@@ -43,7 +43,7 @@ class RouterService extends TheService{
         return annotationsData;
     }
 
-    async assignRoutes(app: express.Express, routes: IHTTPRoute[], controllerList: Controller[])
+    async assignRoutes(app: express.Express, routes: IHTTProute[], controllerList: Controller[])
     {                
         const controllerRoutes: IControllerRoutes = {
           get: {}, post: {}, put: {}, delete: {}
@@ -58,7 +58,7 @@ class RouterService extends TheService{
                 return;    
               }
 
-              const action: IHTTPRouteMethod = (controllerInstance as any)[key];
+              const action: IHTTProuteMethod = (controllerInstance as any)[key];
               const meta = controllerMetadata[key].metadata;                                        
               switch(meta.method) {
                 case 'GET':
@@ -81,8 +81,7 @@ class RouterService extends TheService{
           }
         });      
 
-        routes.forEach((route: IHTTPRoute) => {
-          
+        routes.forEach((route: IHTTProute) => {          
             Object.keys(controllerRoutes).forEach((_method: string) => {
               const actions = controllerRoutes[_method as keyof IControllerRoutes];              
               if(!actions[route.name]){

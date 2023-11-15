@@ -1,5 +1,5 @@
-interface IHTTPRoute {
+interface IHTTProute {
     name: string;
     path: string;
 }
-export { IHTTPRoute };
+export { IHTTProute };

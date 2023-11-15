@@ -1,6 +1,6 @@
 import { Response } from "express";
 import RWSService from "../services/_service";
-type IHTTPRouteMethod = (params: IRequestParams) => Object;
+type IHTTProuteMethod = (params: IRequestParams) => Object;
 interface IRequestParams {
     query: {
         [key: string]: any;
@@ -13,7 +13,7 @@ interface IRequestParams {
     };
     res: Response;
 }
-export { IRequestParams, IHTTPRouteMethod };
+export { IRequestParams, IHTTProuteMethod };
 /**
  * @category Core extendable objects
  */

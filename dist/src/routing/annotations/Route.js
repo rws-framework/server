@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
-function Route(name, method = 'GET') {
-    let metaOpts = { name, method };
+function Route(name, method = 'GET', params = { responseFormat: 'json' }) {
+    let metaOpts = { name, method, params };
     return function (target, key) {
         Reflect.defineMetadata(`Route:${key}`, metaOpts, target);
     };

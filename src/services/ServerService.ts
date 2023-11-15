@@ -10,7 +10,7 @@ import express from "express";
 import RouterService from "./RouterService";
 import { AxiosRequestHeaders } from 'axios';
 import Controller from "../controllers/_controller";
-import { IHTTPRoute } from "../routing/routes";
+import { IHTTProute } from "../routing/routes";
 import ProcessService from "./ProcessService";
 import ConsoleService from "./ConsoleService";
 
@@ -41,7 +41,7 @@ interface IInitOpts {
     port: number
     controllerList: Controller[];
     wsRoutes: WsRoutes,
-    httpRoutes: IHTTPRoute[],
+    httpRoutes: IHTTProute[],
 }
 
 class ServerService extends ServerBase{    
@@ -227,4 +227,4 @@ class ServerService extends ServerBase{
 }
 
 export default ServerService
-export { WsRoutes, IHTTPRoute, IInitOpts, ITheSocket }
+export { WsRoutes, IHTTProute, IInitOpts, ITheSocket }
