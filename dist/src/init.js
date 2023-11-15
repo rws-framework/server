@@ -18,7 +18,7 @@ async function init(cfg) {
         httpRoutes: httpRoutes,
         controllerList: controler_list
     })).webServer().listen(port, () => {
-        ConsoleService_1.default.log(ConsoleService_1.default.color().green('Server' + ` is working in port ${port}`));
+        ConsoleService_1.default.log(ConsoleService_1.default.color().green('Server' + ` is working on port ${port}`));
     });
 }
 exports.default = init;

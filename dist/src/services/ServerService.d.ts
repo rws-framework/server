@@ -1,8 +1,8 @@
 /// <reference types="node" />
 /// <reference types="node" />
 import { Server as ServerBase, Socket } from "socket.io";
-import https from "https";
-import http from "http";
+import HTTPS from "https";
+import HTTP from "http";
 import ITheSocket from "../interfaces/ITheSocket";
 import { AxiosRequestHeaders } from 'axios';
 import Controller from "../controllers/_controller";
@@ -24,11 +24,11 @@ declare class ServerService extends ServerBase {
     private srv;
     private tokens;
     private users;
-    constructor(webServer: http.Server | https.Server, opts: IInitOpts);
+    constructor(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts);
     disconnectClient: (clientSocket: Socket) => void;
     setJWTToken(socketId: string, token: string): void;
-    static init(webServer: http.Server | https.Server, opts: IInitOpts): ServerService;
-    webServer(): http.Server | https.Server;
+    static init(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts): ServerService;
+    webServer(): HTTP.Server | HTTPS.Server;
     static initializeApp(opts: IInitOpts): Promise<ServerService>;
     static cookies: {
         getCookies: (headers: AxiosRequestHeaders) => Promise<CookieType>;

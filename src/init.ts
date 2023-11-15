@@ -20,7 +20,7 @@ async function init(cfg: IAppConfig){
         httpRoutes: httpRoutes,
         controllerList: controler_list    
     })).webServer().listen(port, () => {    
-        ConsoleService.log(ConsoleService.color().green('Server' + ` is working in port ${port}`));
+        ConsoleService.log(ConsoleService.color().green('Server' + ` is working on port ${port}`));
     });
 }
 

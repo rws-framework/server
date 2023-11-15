@@ -1,12 +1,11 @@
 import { Server as ServerBase, Socket } from "socket.io";
-import https from "https";
+import HTTPS from "https";
 import getConfigService from "./AppConfigService";
 import cors from 'cors';
-import http, { IncomingMessage, ServerResponse } from "http";
+import HTTP, { IncomingMessage, ServerResponse } from "http";
 import ITheSocket from "../interfaces/ITheSocket";
 import AuthService from "./AuthService";
 import fs from 'fs';
-import { createServer, Server } from 'https';
 import express from "express";
 import RouterService from "./RouterService";
 import { AxiosRequestHeaders } from 'axios';
@@ -47,11 +46,11 @@ interface IInitOpts {
 
 class ServerService extends ServerBase{    
     private static io: ServerService;
-    private srv: http.Server | https.Server;
+    private srv: HTTP.Server | HTTPS.Server;
     private tokens: UserTokens = {};
     private users: JWTUsers<any> = {};
 
-    constructor(webServer: http.Server | https.Server, opts: IInitOpts){ 
+    constructor(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts){ 
         super(webServer, {
             cors: WEBSOCKET_CORS
         }); 
@@ -88,7 +87,7 @@ class ServerService extends ServerBase{
 
         this.use(async (socket, next) => {
             const AppConfigService = getConfigService();
-            const request: http.IncomingMessage = socket.request;
+            const request: HTTP.IncomingMessage = socket.request;
             const response: ServerResponse = new ServerResponse(request);
             const authHeader = request.headers.authorization;            
 
@@ -138,7 +137,7 @@ class ServerService extends ServerBase{
         }
     }
 
-    static init(webServer: http.Server | https.Server, opts: IInitOpts): ServerService {
+    static init(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts): ServerService {
         if (!ServerService.io) {
             ServerService.io = new ServerService(webServer, opts);                
         }
@@ -160,10 +159,10 @@ class ServerService extends ServerBase{
             }
         });
  
-        return ServerService.io;        
+        return ServerService.io;
     }
 
-    public webServer(): http.Server | https.Server
+    public webServer(): HTTP.Server | HTTPS.Server
     { 
         return this.srv 
     }  
@@ -188,7 +187,7 @@ class ServerService extends ServerBase{
         const options: {key?: Buffer, cert?: Buffer} = {}
 
         if(!sslCert || !sslKey){
-            https = false;
+            https = false;            
         }else{
             options.key = fs.readFileSync(sslKey);
             options.cert = fs.readFileSync(sslCert);
@@ -196,9 +195,9 @@ class ServerService extends ServerBase{
 
         await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
 
-        const webServer = createServer(options, app);    
+        const webServer = https ? HTTPS.createServer(options, app) : HTTP.createServer(app);    
 
-        return ServerService.init(webServer, opts);
+        return ServerService.init(webServer, opts);         
     }
 
     static cookies = {                
