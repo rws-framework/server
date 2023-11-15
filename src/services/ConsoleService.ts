@@ -3,8 +3,6 @@ import chalk, { Chalk } from 'chalk';
 import pino, { Logger as PinoLogger } from 'pino';
 import pinoPretty from 'pino-pretty'; // Import pino-pretty
 
-import AWS from 'aws-sdk';
-
 interface IJSONColors {
   [codeLement: string]: keyof Chalk
 }
@@ -168,7 +166,7 @@ class ConsoleService extends TheService {
       return;
     }
 
-    console.log(...obj.map((txt) => chalk.red('[RWS CLI ERROR] ' + txt)));
+    console.log(...obj.map((txt) => chalk.red('[RWS CLI ERROR] ' + txt)));  
   }
 
   stopLogging(): void {

@@ -160,7 +160,7 @@ class ServerService extends ServerBase{
             }
         });
  
-        return ServerService.io;
+        return ServerService.io;        
     }
 
     public webServer(): http.Server | https.Server
@@ -173,6 +173,8 @@ class ServerService extends ServerBase{
         const AppConfigService = getConfigService();
         const app = express();
 
+        let https: boolean = true;
+
         app.use((req, res, next) => {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
@@ -182,17 +184,21 @@ class ServerService extends ServerBase{
 
         const sslCert = await AppConfigService.get('ssl_cert');
         const sslKey = await AppConfigService.get('ssl_key');
-        
-        const options = {
-            key: fs.readFileSync(sslKey),
-            cert: fs.readFileSync(sslCert)
-        };      
+
+        const options: {key?: Buffer, cert?: Buffer} = {}
+
+        if(!sslCert || !sslKey){
+            https = false;
+        }else{
+            options.key = fs.readFileSync(sslKey);
+            options.cert = fs.readFileSync(sslCert);
+        }        
 
         await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
 
         const webServer = createServer(options, app);    
 
-        return ServerService.init(webServer, opts);         
+        return ServerService.init(webServer, opts);
     }
 
     static cookies = {                
