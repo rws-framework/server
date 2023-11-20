@@ -20,4 +20,5 @@ export default interface IAppConfig {
     aws_secret_key?: string
     aws_lambda_role?: string
     aws_lambda_bucket?: string
+    pub_dir?: string
 }

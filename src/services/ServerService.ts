@@ -42,9 +42,11 @@ interface IInitOpts {
     controllerList: Controller[];
     wsRoutes: WsRoutes,
     httpRoutes: IHTTProute[],
+    pub_dir?: string,
+    authorization?: boolean
 }
 
-class ServerService extends ServerBase{    
+class ServerService extends ServerBase {    
     private static io: ServerService;
     private srv: HTTP.Server | HTTPS.Server;
     private tokens: UserTokens = {};
@@ -70,10 +72,11 @@ class ServerService extends ServerBase{
         const corsMiddleware = cors({
             origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
             methods: ['GET', 'POST'],
-        });
-
+        });        
+    
         this.sockets.on('connection', (socket: Socket) => {            
             ConsoleService.log('[WS] connection recieved');
+            
 
             socket.on('__PING__', () => {
                 socket.emit('__PONG__', '__PONG__');
@@ -85,43 +88,45 @@ class ServerService extends ServerBase{
             });
         });
 
-        this.use(async (socket, next) => {
-            const AppConfigService = getConfigService();
-            const request: HTTP.IncomingMessage = socket.request;
-            const response: ServerResponse = new ServerResponse(request);
-            const authHeader = request.headers.authorization;            
+        if(opts.authorization){
+            this.use(async (socket, next) => {
+                const AppConfigService = getConfigService();
+                const request: HTTP.IncomingMessage = socket.request;
+                const response: ServerResponse = new ServerResponse(request);
+                const authHeader = request.headers.authorization;            
 
-            const UserClass = await AppConfigService.get('user_class');    
+                const UserClass = await AppConfigService.get('user_class');    
 
-            if(!authHeader){
-                response.writeHead(400, 'No token provided');
-                response.end();
-                return;
-            }
-
-            if(!_self.tokens[socket.id]){
-                _self.setJWTToken(socket.id, authHeader);
-            }
-
-            if(!_self.users[socket.id]){
-                try{
-                    _self.users[socket.id] = await AuthService.authorize<typeof UserClass>(_self.tokens[socket.id], UserClass);                    
-                } catch(e: Error | any){
-                    ConsoleService.error('Token authorization error: ', e.message)
+                if(!authHeader){
+                    response.writeHead(400, 'No token provided');
+                    response.end();
+                    return;
                 }
-            }
 
-            if(!_self.users[socket.id]){
+                if(!_self.tokens[socket.id]){
+                    _self.setJWTToken(socket.id, authHeader);
+                }
 
-                _self.disconnectClient(socket);
-                ConsoleService.error('Token unauthorized')
-                response.writeHead(403, 'Token unauthorized');
-                response.end();
-                return;
-            }
+                if(!_self.users[socket.id]){
+                    try{
+                        _self.users[socket.id] = await AuthService.authorize<typeof UserClass>(_self.tokens[socket.id], UserClass);                    
+                    } catch(e: Error | any){
+                        ConsoleService.error('Token authorization error: ', e.message)
+                    }
+                }
 
-            corsMiddleware(request, response, next);            
-        });
+                if(!_self.users[socket.id]){
+
+                    _self.disconnectClient(socket);
+                    ConsoleService.error('Token unauthorized')
+                    response.writeHead(403, 'Token unauthorized');
+                    response.end();
+                    return;
+                }
+
+                corsMiddleware(request, response, next);            
+            });
+        }
           
     }
 
@@ -171,7 +176,7 @@ class ServerService extends ServerBase{
     {
         const AppConfigService = getConfigService();
         const app = express();
-
+             
         let https: boolean = true;
 
         app.use((req, res, next) => {
@@ -193,6 +198,9 @@ class ServerService extends ServerBase{
             options.cert = fs.readFileSync(sslCert);
         }        
 
+        app.set('view engine', 'ejs');         
+        app.use(express.static(opts.pub_dir));
+        
         await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
 
         const webServer = https ? HTTPS.createServer(options, app) : HTTP.createServer(app);    

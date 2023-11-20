@@ -3,7 +3,7 @@ import 'reflect-metadata';
 type RequestMethodType = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 interface IHTTProuteParams {
-    responseFormat: string
+    responseType: string
 }
 
 interface IHTTProuteOpts {
@@ -11,10 +11,8 @@ interface IHTTProuteOpts {
     method: RequestMethodType;
     params?: IHTTProuteParams
 }
-
-
   
-function Route(name: string, method: RequestMethodType = 'GET', params: IHTTProuteParams = { responseFormat: 'json' }) {
+function Route(name: string, method: RequestMethodType = 'GET', params: IHTTProuteParams = { responseType: 'json' }) {
     let metaOpts: IHTTProuteOpts = {name, method, params};
 
     return function(target: any, key: string) {          
@@ -23,4 +21,4 @@ function Route(name: string, method: RequestMethodType = 'GET', params: IHTTProu
 }
 
 export default Route;
-export {IHTTProuteOpts, RequestMethodType}
+export {IHTTProuteOpts, RequestMethodType, IHTTProuteParams}

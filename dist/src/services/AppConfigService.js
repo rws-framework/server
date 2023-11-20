@@ -23,7 +23,8 @@ const AppDefaultConfig = {
     aws_access_key: null,
     aws_secret_key: null,
     aws_lambda_role: null,
-    aws_lambda_bucket: null
+    aws_lambda_bucket: null,
+    pub_dir: null
 };
 class AppConfigService extends _service_1.default {
     constructor(cfg) {

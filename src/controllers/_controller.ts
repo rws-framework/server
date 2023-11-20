@@ -1,7 +1,7 @@
 import { Response } from "express";
 import RWSService from "../services/_service";
 
-type IHTTProuteMethod  = (params: IRequestParams) => Object
+type IHTTProuteMethod  = (params: IRequestParams) => any
 interface IRequestParams{
     query: {
         [key: string]: any
@@ -25,7 +25,7 @@ export default class Controller extends RWSService {
         super();        
     }
 
-    public static prepareResponse(data: any): string
+    public static toJSON(data: any): string
     {
         return JSON.stringify(data);
     }

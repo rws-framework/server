@@ -18,6 +18,8 @@ interface IInitOpts {
     controllerList: Controller[];
     wsRoutes: WsRoutes;
     httpRoutes: IHTTProute[];
+    pub_dir?: string;
+    authorization?: boolean;
 }
 declare class ServerService extends ServerBase {
     private static io;

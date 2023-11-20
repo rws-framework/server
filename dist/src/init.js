@@ -12,11 +12,13 @@ async function init(cfg) {
     const wsRoutes = await AppConfigService.get('ws_routes');
     const httpRoutes = await AppConfigService.get('http_routes');
     const controler_list = await AppConfigService.get('controller_list');
+    const pub_dir = await AppConfigService.get('pub_dir');
     (await ServerService_1.default.initializeApp({
         port: port,
         wsRoutes: wsRoutes,
         httpRoutes: httpRoutes,
-        controllerList: controler_list
+        controllerList: controler_list,
+        pub_dir: pub_dir
     })).webServer().listen(port, () => {
         ConsoleService_1.default.log(ConsoleService_1.default.color().green('Server' + ` is working on port ${port}`));
     });

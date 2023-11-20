@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 type RequestMethodType = 'GET' | 'POST' | 'PUT' | 'DELETE';
 interface IHTTProuteParams {
-    responseFormat: string;
+    responseType: string;
 }
 interface IHTTProuteOpts {
     name: string;
@@ -10,4 +10,4 @@ interface IHTTProuteOpts {
 }
 declare function Route(name: string, method?: RequestMethodType, params?: IHTTProuteParams): (target: any, key: string) => void;
 export default Route;
-export { IHTTProuteOpts, RequestMethodType };
+export { IHTTProuteOpts, RequestMethodType, IHTTProuteParams };

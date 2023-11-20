@@ -11,7 +11,7 @@ class Controller extends _service_1.default {
     constructor() {
         super();
     }
-    static prepareResponse(data) {
+    static toJSON(data) {
         return JSON.stringify(data);
     }
 }

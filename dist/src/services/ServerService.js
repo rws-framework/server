@@ -77,37 +77,39 @@ class ServerService extends socket_io_1.Server {
                 new SocketClass(ServerService.io).handleConnection(socket, eventName);
             });
         });
-        this.use(async (socket, next) => {
-            const AppConfigService = (0, AppConfigService_1.default)();
-            const request = socket.request;
-            const response = new http_1.ServerResponse(request);
-            const authHeader = request.headers.authorization;
-            const UserClass = await AppConfigService.get('user_class');
-            if (!authHeader) {
-                response.writeHead(400, 'No token provided');
-                response.end();
-                return;
-            }
-            if (!_self.tokens[socket.id]) {
-                _self.setJWTToken(socket.id, authHeader);
-            }
-            if (!_self.users[socket.id]) {
-                try {
-                    _self.users[socket.id] = await AuthService_1.default.authorize(_self.tokens[socket.id], UserClass);
+        if (opts.authorization) {
+            this.use(async (socket, next) => {
+                const AppConfigService = (0, AppConfigService_1.default)();
+                const request = socket.request;
+                const response = new http_1.ServerResponse(request);
+                const authHeader = request.headers.authorization;
+                const UserClass = await AppConfigService.get('user_class');
+                if (!authHeader) {
+                    response.writeHead(400, 'No token provided');
+                    response.end();
+                    return;
                 }
-                catch (e) {
-                    ConsoleService_1.default.error('Token authorization error: ', e.message);
+                if (!_self.tokens[socket.id]) {
+                    _self.setJWTToken(socket.id, authHeader);
                 }
-            }
-            if (!_self.users[socket.id]) {
-                _self.disconnectClient(socket);
-                ConsoleService_1.default.error('Token unauthorized');
-                response.writeHead(403, 'Token unauthorized');
-                response.end();
-                return;
-            }
-            corsMiddleware(request, response, next);
-        });
+                if (!_self.users[socket.id]) {
+                    try {
+                        _self.users[socket.id] = await AuthService_1.default.authorize(_self.tokens[socket.id], UserClass);
+                    }
+                    catch (e) {
+                        ConsoleService_1.default.error('Token authorization error: ', e.message);
+                    }
+                }
+                if (!_self.users[socket.id]) {
+                    _self.disconnectClient(socket);
+                    ConsoleService_1.default.error('Token unauthorized');
+                    response.writeHead(403, 'Token unauthorized');
+                    response.end();
+                    return;
+                }
+                corsMiddleware(request, response, next);
+            });
+        }
     }
     setJWTToken(socketId, token) {
         if (token.indexOf('Bearer') > -1) {
@@ -158,6 +160,8 @@ class ServerService extends socket_io_1.Server {
             options.key = fs_1.default.readFileSync(sslKey);
             options.cert = fs_1.default.readFileSync(sslCert);
         }
+        app.set('view engine', 'ejs');
+        app.use(express_1.default.static(opts.pub_dir));
         await RouterService_1.default.assignRoutes(app, opts.httpRoutes, opts.controllerList);
         const webServer = https ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
         return ServerService.init(webServer, opts);
