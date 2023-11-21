@@ -11,6 +11,15 @@ interface ICmdParams {
     }
 }
 
+interface ICmdParamsReturn {
+    subCmd: string;
+    apiCmd: string;
+    apiArg: string;
+    extraParams: {
+        [key: string]: any
+    };
+}
+
 export default abstract class TheCommand {
     public name: string;
     protected static _instances: { [key: string]: TheCommand } | null = {};
@@ -65,6 +74,23 @@ export default abstract class TheCommand {
         }
 
         return TheCommand._instances[className] as InstanceType<T>;
+    }
+
+    getCommandParameters(params: ICmdParams): ICmdParamsReturn
+    {
+        const cmdString: string = params.cmdString || params._default;
+        const cmdStringArr: string[] = cmdString.split(':');        
+        const subCmd: string = cmdStringArr[0];
+        const apiCmd = cmdStringArr[1];    
+        const apiArg = cmdStringArr.length > 2 ? cmdStringArr[2] : null;    
+        const extraParams = params._extra_args.deploy_loader;
+
+        return {
+            subCmd,
+            apiCmd,
+            apiArg,
+            extraParams
+        }
     }
 }
 

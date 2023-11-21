@@ -7,6 +7,14 @@ interface ICmdParams {
         [key: string]: any;
     };
 }
+interface ICmdParamsReturn {
+    subCmd: string;
+    apiCmd: string;
+    apiArg: string;
+    extraParams: {
+        [key: string]: any;
+    };
+}
 export default abstract class TheCommand {
     name: string;
     protected static _instances: {
@@ -23,5 +31,6 @@ export default abstract class TheCommand {
     execute(params?: ICmdParams): Promise<void>;
     getName(): string;
     static createCommand<T extends new (...args: any[]) => TheCommand>(this: T): InstanceType<T>;
+    getCommandParameters(params: ICmdParams): ICmdParamsReturn;
 }
 export { ICmdParams };

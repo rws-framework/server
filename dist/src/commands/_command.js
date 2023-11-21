@@ -42,6 +42,20 @@ class TheCommand {
         }
         return TheCommand._instances[className];
     }
+    getCommandParameters(params) {
+        const cmdString = params.cmdString || params._default;
+        const cmdStringArr = cmdString.split(':');
+        const subCmd = cmdStringArr[0];
+        const apiCmd = cmdStringArr[1];
+        const apiArg = cmdStringArr.length > 2 ? cmdStringArr[2] : null;
+        const extraParams = params._extra_args.deploy_loader;
+        return {
+            subCmd,
+            apiCmd,
+            apiArg,
+            extraParams
+        };
+    }
 }
 TheCommand._instances = {};
 exports.default = TheCommand;
