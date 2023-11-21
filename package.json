@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@aws-sdk/credential-providers": "^3.363.0",
+    "@google-cloud/compute": "^4.0.1",
     "@mongodb-js/zstd": "^1.1.0",
     "@prisma/client": "^5.1.1",
     "archiver": "^6.0.0",
