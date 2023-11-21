@@ -94,4 +94,4 @@ export default abstract class TheCommand {
     }
 }
 
-export {ICmdParams}
+export {ICmdParams, ICmdParamsReturn}

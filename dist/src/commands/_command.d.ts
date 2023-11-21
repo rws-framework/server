@@ -33,4 +33,4 @@ export default abstract class TheCommand {
     static createCommand<T extends new (...args: any[]) => TheCommand>(this: T): InstanceType<T>;
     getCommandParameters(params: ICmdParams): ICmdParamsReturn;
 }
-export { ICmdParams };
+export { ICmdParams, ICmdParamsReturn };

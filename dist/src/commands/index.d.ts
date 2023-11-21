@@ -3,11 +3,13 @@ declare const _default: ({
     name: string;
     getSourceFilePath(): string;
     getName(): string;
+    getCommandParameters(params: import("./_command").ICmdParams): import("./_command").ICmdParamsReturn;
 } | {
     execute(params: import("./_command").ICmdParams): Promise<void>;
     name: string;
     getSourceFilePath(): string;
     getName(): string;
+    getCommandParameters(params: import("./_command").ICmdParams): import("./_command").ICmdParamsReturn;
 } | {
     execute(params?: import("./_command").ICmdParams): Promise<void>;
     executeLambdaLifeCycle: (lifeCycleEventName: keyof {
@@ -26,5 +28,6 @@ declare const _default: ({
     name: string;
     getSourceFilePath(): string;
     getName(): string;
+    getCommandParameters(params: import("./_command").ICmdParams): import("./_command").ICmdParamsReturn;
 })[];
 export default _default;
