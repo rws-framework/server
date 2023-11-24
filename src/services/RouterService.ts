@@ -15,6 +15,9 @@ interface IControllerRoutes {
 }
 
 
+/**
+ * 
+ */
 class RouterService extends TheService{
     constructor() {
         super();
@@ -66,67 +69,80 @@ class RouterService extends TheService{
                 return;    
               }
 
-              const action: IHTTProuteMethod = (controllerInstance as any)[key];
-              const meta = controllerMetadata[key].metadata;                                        
-              switch(meta.method) {
-                case 'GET':
-                  controllerRoutes.get[meta.name] = [action, app.get.bind(app), meta.params]; 
-                  break;
-
-                case 'POST':
-                  controllerRoutes.post[meta.name] = [action, app.post.bind(app), meta.params]; 
-                  break;
-
-                case 'PUT':
-                  controllerRoutes.put[meta.name] = [action, app.put.bind(app), meta.params]; 
-                  break;
-
-                case 'DELETE':
-                  controllerRoutes.delete[meta.name] = [action, app.delete.bind(app), meta.params]; 
-                  break;  
-              }              
+              this.setControllerRoutes(controllerInstance, controllerMetadata, controllerRoutes, key, app);
             });
           }
         });      
 
         routes.forEach((route: IHTTProute) => {          
             Object.keys(controllerRoutes).forEach((_method: string) => {
-              const actions = controllerRoutes[_method as keyof IControllerRoutes];              
+              const actions = controllerRoutes[_method as keyof IControllerRoutes];                           
+
               if(!actions[route.name]){
                 return;
-              }
-        
-              const [routeMethod, appMethod, routeParams] = actions[route.name];                                
-
-              if(!appMethod){
-                return;
-              }                                        
-
-              appMethod(route.path, async (req: Request, res: Response) => {
-                const controllerMethodReturn = await routeMethod({
-                  query: req.query,
-                  params: req.params,
-                  data: req.body,
-                  res: res
-                });      
-
-                res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));        
-
-                if(routeParams.responseType === 'json' || !routeParams.responseType){                
-                  res.send(Controller.toJSON(controllerMethodReturn));
-                  return;
-                }                                
-                
-                if(routeParams.responseType === 'html'){
-                  res.render(controllerMethodReturn.template_name, controllerMethodReturn.template_params);
-                  return;
-                }
-
-                res.send(controllerMethodReturn);
-                return;
-              });              
+              }        
+                                          
+              this.addRouteToServer(actions, route);
             });
         });
+    }
+
+    private addRouteToServer(actions: RouteEntry, route: IHTTProute){
+      const [routeMethod, appMethod, routeParams] = actions[route.name];                                
+
+      if(!appMethod){
+        return;
+      }        
+          
+      appMethod(route.path, async (req: Request, res: Response) => {
+        const controllerMethodReturn = await routeMethod({
+          query: req.query,
+          params: req.params,
+          data: req.body,
+          res: res
+        });      
+
+        res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  
+
+        if(routeParams.responseType === 'json' || !routeParams.responseType){                
+          res.send(controllerMethodReturn);
+          return;
+        }                                
+        
+        if(routeParams.responseType === 'html'){
+          res.render(controllerMethodReturn.template_name, controllerMethodReturn.template_params);
+          return;
+        }
+
+        res.send(controllerMethodReturn);
+        return;
+      });     
+    }
+
+    private setControllerRoutes(
+      controllerInstance: Controller, 
+      controllerMetadata: Record<string, {annotationType: string, metadata: any}>, 
+      controllerRoutes: IControllerRoutes, key: string, app: express.Express): void
+      {
+      const action: IHTTProuteMethod = (controllerInstance as any)[key];
+        const meta = controllerMetadata[key].metadata;                                        
+        switch(meta.method) {
+          case 'GET':
+            controllerRoutes.get[meta.name] = [action, app.get.bind(app), meta.params]; 
+            break;
+
+          case 'POST':
+            controllerRoutes.post[meta.name] = [action, app.post.bind(app), meta.params];
+            break;
+
+          case 'PUT':
+            controllerRoutes.put[meta.name] = [action, app.put.bind(app), meta.params]; 
+            break;
+
+          case 'DELETE':
+            controllerRoutes.delete[meta.name] = [action, app.delete.bind(app), meta.params]; 
+            break;  
+        }
     }
 }
 

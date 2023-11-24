@@ -186,6 +186,8 @@ class ServerService extends ServerBase {
             next();
         });
 
+        app.use(express.json());
+
         const sslCert = await AppConfigService.get('ssl_cert');
         const sslKey = await AppConfigService.get('ssl_key');
 

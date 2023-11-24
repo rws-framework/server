@@ -11,9 +11,6 @@ class Controller extends _service_1.default {
     constructor() {
         super();
     }
-    static toJSON(data) {
-        return JSON.stringify(data);
-    }
 }
 exports.default = Controller;
 //# sourceMappingURL=_controller.js.map

@@ -19,5 +19,4 @@ export { IRequestParams, IHTTProuteMethod };
  */
 export default class Controller extends RWSService {
     constructor();
-    static toJSON(data: any): string;
 }

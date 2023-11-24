@@ -150,6 +150,7 @@ class ServerService extends socket_io_1.Server {
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
             next();
         });
+        app.use(express_1.default.json());
         const sslCert = await AppConfigService.get('ssl_cert');
         const sslKey = await AppConfigService.get('ssl_key');
         const options = {};

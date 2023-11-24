@@ -24,9 +24,4 @@ export default class Controller extends RWSService {
     constructor() {
         super();        
     }
-
-    public static toJSON(data: any): string
-    {
-        return JSON.stringify(data);
-    }
 }
