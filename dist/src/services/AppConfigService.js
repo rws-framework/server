@@ -29,10 +29,20 @@ const AppDefaultConfig = {
 class AppConfigService extends _service_1.default {
     constructor(cfg) {
         super();
+        this._custom_data = {};
         this.data = cfg;
     }
     get(key) {
-        return this.data[key];
+        if (key in this.data) {
+            return this.data[key];
+        }
+        if (key in this._custom_data) {
+            return this._custom_data[key];
+        }
+        return null;
+    }
+    set(key, val) {
+        this._custom_data[key] = val;
     }
     reloadConfig(cfgString) {
         const cfg = (require(cfgString)).defaults;

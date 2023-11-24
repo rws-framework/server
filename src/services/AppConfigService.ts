@@ -27,6 +27,10 @@ const AppDefaultConfig: IAppConfig = {
 };
 
 class AppConfigService extends TheService{
+  private _custom_data: {
+    [key: string]: any
+  } = {};
+  
   private data: IAppConfig; // Add type assertion here  
   private cfgString: string;
 
@@ -35,9 +39,22 @@ class AppConfigService extends TheService{
     this.data = cfg;
   }    
 
-  public get(key: keyof IAppConfig): any
+  public get(key: keyof IAppConfig | string): any
   {     
-    return this.data[key as keyof IAppConfig];
+    if(key in this.data){
+      return this.data[key as keyof IAppConfig];
+    }
+    
+    if(key in this._custom_data){
+      return this._custom_data[key];
+    }
+
+    return null;
+  }
+
+  public set(key: string, val: any): void
+  {
+    this._custom_data[key] = val;
   }
 
   public reloadConfig(cfgString: string): AppConfigService 

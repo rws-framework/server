@@ -96,14 +96,14 @@ class RouterService extends TheService{
                 return;
               }
         
-              const [routeMethod, appMethod, routeParams] = actions[route.name];                                          
+              const [routeMethod, appMethod, routeParams] = actions[route.name];                                
 
               if(!appMethod){
                 return;
               }                                        
 
-              appMethod(route.path, (req: Request, res: Response) => {
-                const controllerMethodReturn = routeMethod({
+              appMethod(route.path, async (req: Request, res: Response) => {
+                const controllerMethodReturn = await routeMethod({
                   query: req.query,
                   params: req.params,
                   data: req.body,

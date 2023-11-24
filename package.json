@@ -53,6 +53,7 @@
     "ts-loader": "^9.4.4",
     "ts-node": "^10.9.1",
     "tsc-watch": "^6.0.4",
+    "url-router": "^13.0.0",
     "utf-8-validate": "^5.0.10",
     "uuid": "^9.0.0"
   },
