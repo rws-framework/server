@@ -28,7 +28,10 @@ class RWSPrompt {
     readOutput() {
         return this.output;
     }
-    getHyperParameters() {
+    getHyperParameters(override = null) {
+        if (override) {
+            this.hyperParameters = { ...this.hyperParameters, ...override };
+        }
         return this.hyperParameters;
     }
     getModelMetadata() {
@@ -38,12 +41,17 @@ class RWSPrompt {
         await promptSender(this);
     }
     async readStream(stream) {
+        let first = true;
         const chunks = []; // Replace 'any' with the actual type of your chunks
         for await (const event of stream) {
             // Assuming 'event' has a specific structure. Adjust according to actual event structure.
             if ('chunk' in event && event.chunk.bytes) {
                 const chunk = JSON.parse(Buffer.from(event.chunk.bytes).toString("utf-8"));
-                chunks.push(chunk.completion); // Use the actual property of 'chunk' you're interested in
+                if (first) {
+                    console.log('chunk', chunk);
+                    first = false;
+                }
+                chunks.push(chunk.completion || chunk.generation); // Use the actual property of 'chunk' you're interested in
             }
             else if ('internalServerException' in event ||
                 'modelStreamErrorException' in event ||

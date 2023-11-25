@@ -2,12 +2,9 @@
 import { Readable } from 'stream';
 interface IPromptHyperParameters {
     temperature: number;
-    top_k?: 250;
-    top_p?: 1;
-    max_tokens_to_sample?: 300;
-    extra?: {
-        [key: string]: string | number | boolean | null;
-    };
+    top_k?: number;
+    top_p?: number;
+    [key: string]: string | number | boolean | null;
 }
 interface IPromptParams {
     hyperParameters?: IPromptHyperParameters;
@@ -38,7 +35,7 @@ declare class RWSPrompt {
     readSentInput(): string;
     readInput(): string;
     readOutput(): string;
-    getHyperParameters(): IPromptHyperParameters;
+    getHyperParameters(override?: any): IPromptHyperParameters;
     getModelMetadata(): [string, string];
     sendWith(promptSender: IPromptSender): Promise<void>;
     readStream(stream: Readable): Promise<string>;

@@ -3,12 +3,9 @@ import { Readable } from 'stream';
 
 interface IPromptHyperParameters {
     temperature: number,
-    top_k?: 250,
-    top_p?: 1,
-    max_tokens_to_sample?: 300
-    extra?: {
-        [key: string]: string | number | boolean | null
-    }
+    top_k?: number,
+    top_p?: number,
+    [key: string]: string | number | boolean | null
 }
 
 interface IPromptParams {
@@ -78,8 +75,12 @@ class RWSPrompt {
         return this.output;
     }
 
-    getHyperParameters(): IPromptHyperParameters
+    getHyperParameters(override: any = null): IPromptHyperParameters
     {        
+        if(override){
+            this.hyperParameters = {...this.hyperParameters, ...override};
+        }
+
         return this.hyperParameters;
     }
 
@@ -93,15 +94,20 @@ class RWSPrompt {
         await promptSender(this);
     }
 
-    async readStream(stream: Readable): Promise<string>
-    {
+    async readStream(stream: Readable): Promise<string>    
+    {        
+        let first = true;
         const chunks: string[] = []; // Replace 'any' with the actual type of your chunks
-
-        for await (const event of stream) {
+       
+        for await (const event of stream) {            
             // Assuming 'event' has a specific structure. Adjust according to actual event structure.
             if ('chunk' in event && event.chunk.bytes) {
                 const chunk = JSON.parse(Buffer.from(event.chunk.bytes).toString("utf-8"));
-                chunks.push(chunk.completion); // Use the actual property of 'chunk' you're interested in
+                if(first){
+                    console.log('chunk', chunk);
+                    first = false;
+                }
+                chunks.push(chunk.completion || chunk.generation ); // Use the actual property of 'chunk' you're interested in
             } else if (
                 'internalServerException' in event ||
                 'modelStreamErrorException' in event ||
@@ -112,9 +118,8 @@ class RWSPrompt {
                 break;
             }
         }
-
         return chunks.join('');
-   }
+    }
 }
 
 export default RWSPrompt;
