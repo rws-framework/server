@@ -8,7 +8,7 @@ import { IHTTProute } from "../routing/routes";
  */
 declare class RouterService extends TheService {
     constructor();
-    static responseTypeToMIME(responseType: string): "text/html" | "application/json";
+    static responseTypeToMIME(responseType: string): "application/json" | "text/html";
     getRouterAnnotations(constructor: typeof Controller): Record<string, {
         annotationType: string;
         metadata: any;

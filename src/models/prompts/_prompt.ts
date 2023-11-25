@@ -1,0 +1,122 @@
+import { Readable } from 'stream';
+
+
+interface IPromptHyperParameters {
+    temperature: number,
+    top_k?: 250,
+    top_p?: 1,
+    max_tokens_to_sample?: 300
+    extra?: {
+        [key: string]: string | number | boolean | null
+    }
+}
+
+interface IPromptParams {
+    hyperParameters?: IPromptHyperParameters;
+    input: string;
+    modelId: string;
+    modelType: string;
+}
+
+interface IPromptEnchantment {
+    enhancementId: string,
+    enhancementName: string,
+    enhancementParams: any,
+    input: string
+    output: string
+}
+
+type IPromptSender = (prompt: RWSPrompt) => Promise<void>;
+
+class RWSPrompt {
+    private input: string;
+    private enhancedInput: IPromptEnchantment[];
+    private sentInput: string;
+    private output: string;
+    private modelId: string;
+    private modelType: string;
+
+    private hyperParameters: IPromptHyperParameters;
+
+    constructor(params: IPromptParams){
+        this.input = params.input;
+        this.hyperParameters = params.hyperParameters;
+        this.modelId = params.modelId;
+        this.modelType = params.modelType;
+    }
+
+    async listen(source: string | ReadableStream): Promise<void>
+    {
+        if(typeof source == 'string'){
+            this.output = source;
+            return;
+        }
+    }
+
+    addEnchantment(enchantment: IPromptEnchantment): void
+    {
+        this.enhancedInput.push(enchantment);        
+    }
+
+    getEnchantedInput(): string | null
+    {
+        return this.enhancedInput[this.enhancedInput.length - 1].output;
+    }
+
+    readSentInput(): string
+    {
+        return this.sentInput;
+    }
+
+    readInput(): string
+    {
+        return this.input;
+    }
+
+    readOutput(): string
+    {
+        return this.output;
+    }
+
+    getHyperParameters(): IPromptHyperParameters
+    {        
+        return this.hyperParameters;
+    }
+
+    getModelMetadata(): [string, string]
+    {
+        return [this.modelType, this.modelId];
+    }
+
+    async sendWith(promptSender: IPromptSender): Promise<void>
+    {
+        await promptSender(this);
+    }
+
+    async readStream(stream: Readable): Promise<string>
+    {
+        const chunks: string[] = []; // Replace 'any' with the actual type of your chunks
+
+        for await (const event of stream) {
+            // Assuming 'event' has a specific structure. Adjust according to actual event structure.
+            if ('chunk' in event && event.chunk.bytes) {
+                const chunk = JSON.parse(Buffer.from(event.chunk.bytes).toString("utf-8"));
+                chunks.push(chunk.completion); // Use the actual property of 'chunk' you're interested in
+            } else if (
+                'internalServerException' in event ||
+                'modelStreamErrorException' in event ||
+                'throttlingException' in event ||
+                'validationException' in event
+            ) {
+                console.error(event);
+                break;
+            }
+        }
+
+        return chunks.join('');
+   }
+}
+
+export default RWSPrompt;
+
+export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters }

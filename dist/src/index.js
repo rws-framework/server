@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RWSTestSuite = exports.RWSAppCommands = exports.RWSannotations = exports.ProcessService = exports.Socket = exports.TimeSeriesModel = exports.UtilsService = exports.TraversalService = exports.MD5Service = exports.EFSService = exports.AWSService = exports.LambdaService = exports.ConsoleService = exports.AuthService = exports.DBService = exports.RWSServer = exports.RWSModel = exports.RWSCommand = exports.RWSSocket = exports.RWSService = exports.RWSController = exports.getAppConfig = exports.SetupRWS = exports.serverInit = void 0;
+exports.RWSPrompt = exports.RWSTestSuite = exports.RWSAppCommands = exports.RWSannotations = exports.ProcessService = exports.Socket = exports.TimeSeriesModel = exports.UtilsService = exports.TraversalService = exports.MD5Service = exports.EFSService = exports.AWSService = exports.LambdaService = exports.ConsoleService = exports.AuthService = exports.DBService = exports.RWSServer = exports.RWSModel = exports.RWSCommand = exports.RWSSocket = exports.RWSService = exports.RWSController = exports.getAppConfig = exports.SetupRWS = exports.serverInit = void 0;
 const socket_io_1 = require("socket.io");
 Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return socket_io_1.Socket; } });
 const init_1 = __importDefault(require("./init"));
@@ -57,6 +57,8 @@ const TraversalService_1 = __importDefault(require("./services/TraversalService"
 exports.TraversalService = TraversalService_1.default;
 const UtilsService_1 = __importDefault(require("./services/UtilsService"));
 exports.UtilsService = UtilsService_1.default;
+const _prompt_1 = __importDefault(require("./models/prompts/_prompt"));
+exports.RWSPrompt = _prompt_1.default;
 const index_1 = require("./models/annotations/index");
 const index_2 = require("./routing/annotations/index");
 const AppConfigService_1 = __importDefault(require("./services/AppConfigService"));

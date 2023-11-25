@@ -21,7 +21,7 @@ import EFSService from './services/EFSService';
 import MD5Service from './services/MD5Service';
 import TraversalService from './services/TraversalService';
 import UtilsService from './services/UtilsService';
-
+import RWSPrompt from './models/prompts/_prompt';
 import { InverseRelation, InverseTimeSeries, Relation, TrackType} from './models/annotations/index';
 import { Route } from './routing/annotations/index';
 import getAppConfig, { IAppConfig } from './services/AppConfigService';
@@ -80,4 +80,6 @@ export {
     IHTTProute,
     RWSAppCommands,
     RWSTestSuite,  
+    
+    RWSPrompt
 }

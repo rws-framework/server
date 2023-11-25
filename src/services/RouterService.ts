@@ -93,7 +93,7 @@ class RouterService extends TheService{
       if(!appMethod){
         return;
       }        
-          
+
       appMethod(route.path, async (req: Request, res: Response) => {
         const controllerMethodReturn = await routeMethod({
           query: req.query,
@@ -140,7 +140,7 @@ class RouterService extends TheService{
             break;
 
           case 'DELETE':
-            controllerRoutes.delete[meta.name] = [action, app.delete.bind(app), meta.params]; 
+            controllerRoutes.delete[meta.name] = [action, app.delete.bind(app), meta.params];
             break;  
         }
     }

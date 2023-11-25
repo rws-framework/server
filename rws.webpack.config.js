@@ -15,7 +15,7 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js', '.node'],  
     alias: {
-      '@App': path.resolve(process.cwd(), 'src'),
+      
     }
   },
   module: {
