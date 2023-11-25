@@ -29,7 +29,7 @@ declare class RWSPrompt {
     private modelType;
     private hyperParameters;
     constructor(params: IPromptParams);
-    listen(source: string | Readable): Promise<void>;
+    listen(source: string | Readable): Promise<RWSPrompt>;
     addEnchantment(enchantment: IPromptEnchantment): void;
     getEnchantedInput(): string | null;
     readSentInput(): string;
@@ -38,7 +38,7 @@ declare class RWSPrompt {
     getHyperParameters(override?: any): IPromptHyperParameters;
     getModelMetadata(): [string, string];
     sendWith(promptSender: IPromptSender): Promise<void>;
-    readStream(stream: Readable): Promise<string>;
+    readStream(stream: Readable, react: (chunk: string) => void): Promise<void>;
 }
 export default RWSPrompt;
 export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters };

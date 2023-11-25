@@ -42,12 +42,20 @@ class RWSPrompt {
         this.modelType = params.modelType;
     }
 
-    async listen(source: string | Readable): Promise<void>
+    async listen(source: string | Readable): Promise<RWSPrompt>
     {
-        if(typeof source == 'string'){
+        if (typeof source === 'string') {
             this.output = source;
-            return;
+        } else if (source instanceof Readable) {
+            this.output = ''; // Or any default value
+    
+            this.readStream(source, (chunk: string) => {
+                this.output += source;
+            });
         }
+        
+
+        return this;
     }
 
     addEnchantment(enchantment: IPromptEnchantment): void
@@ -94,7 +102,7 @@ class RWSPrompt {
         await promptSender(this);
     }
 
-    async readStream(stream: Readable): Promise<string>    
+    async readStream(stream: Readable, react: (chunk: string) => void): Promise<void>    
     {        
         let first = true;
         const chunks: string[] = []; // Replace 'any' with the actual type of your chunks
@@ -107,6 +115,9 @@ class RWSPrompt {
                     console.log('chunk', chunk);
                     first = false;
                 }
+
+                react(chunk.completion);
+
                 chunks.push(chunk.completion || chunk.generation ); // Use the actual property of 'chunk' you're interested in
             } else if (
                 'internalServerException' in event ||
@@ -116,9 +127,8 @@ class RWSPrompt {
             ) {
                 console.error(event);
                 break;
-            }
-        }
-        return chunks.join('');
+            }            
+        }        
     }
 }
 

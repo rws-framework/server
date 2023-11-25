@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const stream_1 = require("stream");
 class RWSPrompt {
     constructor(params) {
         this.input = params.input;
@@ -8,10 +9,16 @@ class RWSPrompt {
         this.modelType = params.modelType;
     }
     async listen(source) {
-        if (typeof source == 'string') {
+        if (typeof source === 'string') {
             this.output = source;
-            return;
         }
+        else if (source instanceof stream_1.Readable) {
+            this.output = ''; // Or any default value
+            this.readStream(source, (chunk) => {
+                this.output += source;
+            });
+        }
+        return this;
     }
     addEnchantment(enchantment) {
         this.enhancedInput.push(enchantment);
@@ -40,7 +47,7 @@ class RWSPrompt {
     async sendWith(promptSender) {
         await promptSender(this);
     }
-    async readStream(stream) {
+    async readStream(stream, react) {
         let first = true;
         const chunks = []; // Replace 'any' with the actual type of your chunks
         for await (const event of stream) {
@@ -51,6 +58,7 @@ class RWSPrompt {
                     console.log('chunk', chunk);
                     first = false;
                 }
+                react(chunk.completion);
                 chunks.push(chunk.completion || chunk.generation); // Use the actual property of 'chunk' you're interested in
             }
             else if ('internalServerException' in event ||
@@ -61,7 +69,6 @@ class RWSPrompt {
                 break;
             }
         }
-        return chunks.join('');
     }
 }
 exports.default = RWSPrompt;
