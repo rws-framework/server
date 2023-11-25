@@ -29,7 +29,7 @@ declare class RWSPrompt {
     private modelType;
     private hyperParameters;
     constructor(params: IPromptParams);
-    listen(source: string | ReadableStream): Promise<void>;
+    listen(source: string | Readable): Promise<void>;
     addEnchantment(enchantment: IPromptEnchantment): void;
     getEnchantedInput(): string | null;
     readSentInput(): string;

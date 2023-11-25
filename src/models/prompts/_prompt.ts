@@ -42,7 +42,7 @@ class RWSPrompt {
         this.modelType = params.modelType;
     }
 
-    async listen(source: string | ReadableStream): Promise<void>
+    async listen(source: string | Readable): Promise<void>
     {
         if(typeof source == 'string'){
             this.output = source;
