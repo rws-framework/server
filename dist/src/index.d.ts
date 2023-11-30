@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import { IHTTProute, WsRoutes, ITheSocket } from './services/ServerService';
+import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './services/ServerService';
 import init from './init';
 import { SetupRWS } from './install';
 import ITimeSeries from './models/interfaces/ITimeSeries';
@@ -37,4 +37,4 @@ import TheService from './services/_service';
 import TheSocket, { JSONMessage } from './sockets/_socket';
 import RWSAppCommands from './commands/index';
 import * as RWSTestSuite from './tests/index';
-export { init as serverInit, SetupRWS, getAppConfig, Controller as RWSController, TheService as RWSService, TheSocket as RWSSocket, TheCommand as RWSCommand, Model as RWSModel, IModel as IRWSModel, ServerService as RWSServer, DBService, AuthService, ConsoleService, LambdaService, AWSService, EFSService, MD5Service, TraversalService, UtilsService, TimeSeriesModel, WsRoutes, IRequestParams, ITheSocket, ITimeSeries, IAppConfig, Socket, ProcessService, RWSannotations, JSONMessage as RWSJSONMessage, ICmdParams, IHTTProute, RWSAppCommands, RWSTestSuite, RWSPrompt };
+export { init as serverInit, SetupRWS, getAppConfig, Controller as RWSController, TheService as RWSService, TheSocket as RWSSocket, TheCommand as RWSCommand, Model as RWSModel, IModel as IRWSModel, ServerService as RWSServer, DBService, AuthService, ConsoleService, LambdaService, AWSService, EFSService, MD5Service, TraversalService, UtilsService, TimeSeriesModel, WsRoutes, IRequestParams, ITheSocket, ITimeSeries, IAppConfig, Socket, ProcessService, RWSannotations, JSONMessage as RWSJSONMessage, ICmdParams, IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry, RWSAppCommands, RWSTestSuite, RWSPrompt };

@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("reflect-metadata");
 const _service_1 = __importDefault(require("./_service"));
+const AppConfigService_1 = __importDefault(require("./AppConfigService"));
+const path_1 = __importDefault(require("path"));
 /**
  *
  */
@@ -35,7 +37,7 @@ class RouterService extends _service_1.default {
         });
         return annotationsData;
     }
-    async assignRoutes(app, routes, controllerList) {
+    async assignRoutes(app, routesPackage, controllerList) {
         const controllerRoutes = {
             get: {}, post: {}, put: {}, delete: {}
         };
@@ -48,6 +50,23 @@ class RouterService extends _service_1.default {
                     }
                     this.setControllerRoutes(controllerInstance, controllerMetadata, controllerRoutes, key, app);
                 });
+            }
+        });
+        let routes = [];
+        routesPackage.forEach((item) => {
+            if ('prefix' in item && 'routes' in item && Array.isArray(item.routes)) {
+                // Handle the case where item is of type IPrefixedHTTProutes
+                routes = [...routes, ...item.routes.map((subRouteItem) => {
+                        const subRoute = {
+                            path: item.prefix + subRouteItem.path,
+                            name: subRouteItem.name
+                        };
+                        return subRoute;
+                    })];
+            }
+            else {
+                // Handle the case where item is of type IHTTProute
+                routes.push(item);
             }
         });
         routes.forEach((route) => {
@@ -78,7 +97,7 @@ class RouterService extends _service_1.default {
                 return;
             }
             if (routeParams.responseType === 'html') {
-                res.render(controllerMethodReturn.template_name, controllerMethodReturn.template_params);
+                res.sendFile(path_1.default.join((0, AppConfigService_1.default)().get('pub_dir'), controllerMethodReturn.template_name + '.html'));
                 return;
             }
             res.send(controllerMethodReturn);

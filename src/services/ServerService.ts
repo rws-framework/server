@@ -10,9 +10,10 @@ import express from "express";
 import RouterService from "./RouterService";
 import { AxiosRequestHeaders } from 'axios';
 import Controller from "../controllers/_controller";
-import { IHTTProute } from "../routing/routes";
+import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from "../routing/routes";
 import ProcessService from "./ProcessService";
 import ConsoleService from "./ConsoleService";
+import path from 'path';
 
 const _DOMAIN: string =  '*';//'https://' + AppConfigService.get('nginx', 'domain');
 
@@ -199,9 +200,12 @@ class ServerService extends ServerBase {
             options.key = fs.readFileSync(sslKey);
             options.cert = fs.readFileSync(sslCert);
         }        
-
-        app.set('view engine', 'ejs');         
+        
+        
         app.use(express.static(opts.pub_dir));
+
+        app.set('view engine', 'ejs');        
+        
         
         await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
 
@@ -237,4 +241,4 @@ class ServerService extends ServerBase {
 }
 
 export default ServerService
-export { WsRoutes, IHTTProute, IInitOpts, ITheSocket }
+export { WsRoutes, IHTTProute, IInitOpts, ITheSocket, IPrefixedHTTProutes, RWSHTTPRoutingEntry }

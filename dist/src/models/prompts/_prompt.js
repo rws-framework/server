@@ -4,6 +4,7 @@ const stream_1 = require("stream");
 class RWSPrompt {
     constructor(params) {
         this.input = params.input;
+        this.originalInput = params.input;
         this.hyperParameters = params.hyperParameters;
         this.modelId = params.modelId;
         this.modelType = params.modelType;
@@ -22,6 +23,7 @@ class RWSPrompt {
     }
     addEnchantment(enchantment) {
         this.enhancedInput.push(enchantment);
+        this.input = enchantment.input;
     }
     getEnchantedInput() {
         return this.enhancedInput[this.enhancedInput.length - 1].output;
@@ -45,6 +47,7 @@ class RWSPrompt {
         return [this.modelType, this.modelId];
     }
     async sendWith(promptSender) {
+        this.sentInput = this.input;
         await promptSender(this);
     }
     async readStream(stream, react) {

@@ -1,7 +1,7 @@
 import path from 'path';
 import { Socket } from 'socket.io';
 
-import { IHTTProute, WsRoutes, ITheSocket } from './services/ServerService';
+import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './services/ServerService';
 
 import init from './init';
 import {SetupRWS} from './install';
@@ -78,6 +78,8 @@ export {
     JSONMessage as RWSJSONMessage,
     ICmdParams,      
     IHTTProute,
+    IPrefixedHTTProutes,
+    RWSHTTPRoutingEntry,
     RWSAppCommands,
     RWSTestSuite,  
     

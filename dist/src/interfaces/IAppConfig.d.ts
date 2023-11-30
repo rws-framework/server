@@ -1,4 +1,4 @@
-import { IHTTProute, WsRoutes, RWSController, RWSCommand } from "../index";
+import { RWSHTTPRoutingEntry, WsRoutes, RWSController, RWSCommand } from "../index";
 export default interface IAppConfig {
     mongo_url: string;
     mongo_db: string;
@@ -12,7 +12,7 @@ export default interface IAppConfig {
     user_models: any[];
     controller_list: RWSController[];
     ws_routes: WsRoutes;
-    http_routes: IHTTProute[];
+    http_routes: RWSHTTPRoutingEntry[];
     commands?: RWSCommand[];
     aws_lambda_region?: string;
     aws_access_key?: string;

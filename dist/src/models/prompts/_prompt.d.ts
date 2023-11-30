@@ -24,6 +24,7 @@ declare class RWSPrompt {
     private input;
     private enhancedInput;
     private sentInput;
+    private originalInput;
     private output;
     private modelId;
     private modelType;

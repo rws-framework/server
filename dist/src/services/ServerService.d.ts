@@ -6,7 +6,7 @@ import HTTP from "http";
 import ITheSocket from "../interfaces/ITheSocket";
 import { AxiosRequestHeaders } from 'axios';
 import Controller from "../controllers/_controller";
-import { IHTTProute } from "../routing/routes";
+import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from "../routing/routes";
 type WsRoutes = {
     [eventName: string]: new (data: any) => ITheSocket;
 };
@@ -38,4 +38,4 @@ declare class ServerService extends ServerBase {
     };
 }
 export default ServerService;
-export { WsRoutes, IHTTProute, IInitOpts, ITheSocket };
+export { WsRoutes, IHTTProute, IInitOpts, ITheSocket, IPrefixedHTTProutes, RWSHTTPRoutingEntry };

@@ -30,6 +30,7 @@ class UtilsService extends TheService {
 
     fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
   }
+
 }
 
 export default UtilsService.getSingleton();

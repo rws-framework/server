@@ -2,8 +2,11 @@ import 'reflect-metadata'
 import express, { Request, Response } from 'express';
 import TheService from "./_service";
 import Controller, { IRequestParams, IHTTProuteMethod } from "../controllers/_controller";
-import { IHTTProute } from "../routing/routes";
+import { IHTTProute, RWSHTTPRoutingEntry, IPrefixedHTTProutes } from "../routing/routes";
 import { IHTTProuteParams } from "../routing/annotations/Route";
+import UtilsService from './UtilsService';
+import appConfig from './AppConfigService';
+import path from 'path';
 
 type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction, IHTTProuteParams]};
 
@@ -54,11 +57,11 @@ class RouterService extends TheService{
         return annotationsData;
     }
 
-    async assignRoutes(app: express.Express, routes: IHTTProute[], controllerList: Controller[]): Promise<void>
+    async assignRoutes(app: express.Express, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<void>
     {                
         const controllerRoutes: IControllerRoutes = {
           get: {}, post: {}, put: {}, delete: {}
-        }
+        }        
 
         controllerList.forEach((controllerInstance: Controller) => {          
           const controllerMetadata: Record<string, {annotationType: string, metadata: any}> = this.getRouterAnnotations(controllerInstance.constructor as typeof Controller); // Pass the class constructor      
@@ -73,6 +76,26 @@ class RouterService extends TheService{
             });
           }
         });      
+
+        let routes: IHTTProute[] = [];
+
+         routesPackage.forEach((item: RWSHTTPRoutingEntry) => {   
+            if ('prefix' in item && 'routes' in item && Array.isArray(item.routes)) {
+              // Handle the case where item is of type IPrefixedHTTProutes
+              routes = [...routes, ...item.routes.map((subRouteItem: IHTTProute): IHTTProute => {
+                  const subRoute: IHTTProute = {
+                      path: item.prefix + subRouteItem.path,
+                      name: subRouteItem.name
+                  };
+          
+                  return subRoute;
+              })];
+          } else {
+              // Handle the case where item is of type IHTTProute
+              routes.push(item as IHTTProute);
+          }        
+        });  
+       
 
         routes.forEach((route: IHTTProute) => {          
             Object.keys(controllerRoutes).forEach((_method: string) => {
@@ -95,6 +118,7 @@ class RouterService extends TheService{
       }        
 
       appMethod(route.path, async (req: Request, res: Response) => {
+        
         const controllerMethodReturn = await routeMethod({
           query: req.query,
           params: req.params,
@@ -107,10 +131,10 @@ class RouterService extends TheService{
         if(routeParams.responseType === 'json' || !routeParams.responseType){                
           res.send(controllerMethodReturn);
           return;
-        }                                
-        
-        if(routeParams.responseType === 'html'){
-          res.render(controllerMethodReturn.template_name, controllerMethodReturn.template_params);
+        }                                              
+
+        if(routeParams.responseType === 'html'){          
+          res.sendFile(path.join(appConfig().get('pub_dir'),  controllerMethodReturn.template_name + '.html'));
           return;
         }
 

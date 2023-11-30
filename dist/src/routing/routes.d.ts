@@ -2,4 +2,9 @@ interface IHTTProute {
     name: string;
     path: string;
 }
-export { IHTTProute };
+interface IPrefixedHTTProutes {
+    prefix: string;
+    routes: IHTTProute[];
+}
+type RWSHTTPRoutingEntry = IHTTProute | IPrefixedHTTProutes;
+export { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry };

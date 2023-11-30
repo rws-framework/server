@@ -29,6 +29,7 @@ class RWSPrompt {
     private input: string;
     private enhancedInput: IPromptEnchantment[];
     private sentInput: string;
+    private originalInput: string;
     private output: string;
     private modelId: string;
     private modelType: string;
@@ -37,6 +38,7 @@ class RWSPrompt {
 
     constructor(params: IPromptParams){
         this.input = params.input;
+        this.originalInput = params.input;
         this.hyperParameters = params.hyperParameters;
         this.modelId = params.modelId;
         this.modelType = params.modelType;
@@ -60,7 +62,8 @@ class RWSPrompt {
 
     addEnchantment(enchantment: IPromptEnchantment): void
     {
-        this.enhancedInput.push(enchantment);        
+        this.enhancedInput.push(enchantment);
+        this.input = enchantment.input;        
     }
 
     getEnchantedInput(): string | null
@@ -99,6 +102,7 @@ class RWSPrompt {
 
     async sendWith(promptSender: IPromptSender): Promise<void>
     {
+        this.sentInput = this.input;
         await promptSender(this);
     }
 
