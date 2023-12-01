@@ -86,6 +86,7 @@ class RouterService extends _service_1.default {
         }
         appMethod(route.path, async (req, res) => {
             const controllerMethodReturn = await routeMethod({
+                req: req,
                 query: req.query,
                 params: req.params,
                 data: req.body,

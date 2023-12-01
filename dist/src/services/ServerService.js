@@ -38,6 +38,7 @@ const express_1 = __importDefault(require("express"));
 const RouterService_1 = __importDefault(require("./RouterService"));
 const ProcessService_1 = __importDefault(require("./ProcessService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
+const fileUpload = require('express-fileupload');
 const _DOMAIN = '*'; //'https://' + AppConfigService.get('nginx', 'domain');
 const WEBSOCKET_CORS = {
     origin: _DOMAIN,
@@ -144,6 +145,9 @@ class ServerService extends socket_io_1.Server {
         const AppConfigService = (0, AppConfigService_1.default)();
         const app = (0, express_1.default)();
         let https = true;
+        app.use(express_1.default.static(opts.pub_dir));
+        app.set('view engine', 'ejs');
+        app.use(fileUpload());
         app.use((req, res, next) => {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
@@ -161,8 +165,6 @@ class ServerService extends socket_io_1.Server {
             options.key = fs_1.default.readFileSync(sslKey);
             options.cert = fs_1.default.readFileSync(sslCert);
         }
-        app.use(express_1.default.static(opts.pub_dir));
-        app.set('view engine', 'ejs');
         await RouterService_1.default.assignRoutes(app, opts.httpRoutes, opts.controllerList);
         const webServer = https ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
         return ServerService.init(webServer, opts);

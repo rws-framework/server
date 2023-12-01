@@ -8,6 +8,7 @@ import UtilsService from './UtilsService';
 import appConfig from './AppConfigService';
 import path from 'path';
 
+
 type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction, IHTTProuteParams]};
 
 interface IControllerRoutes {
@@ -118,12 +119,12 @@ class RouterService extends TheService{
       }        
 
       appMethod(route.path, async (req: Request, res: Response) => {
-        
         const controllerMethodReturn = await routeMethod({
+          req: req,
           query: req.query,
           params: req.params,
           data: req.body,
-          res: res
+          res: res       
         });      
 
         res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  

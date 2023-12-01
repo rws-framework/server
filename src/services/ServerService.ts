@@ -14,6 +14,7 @@ import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from "../routing
 import ProcessService from "./ProcessService";
 import ConsoleService from "./ConsoleService";
 import path from 'path';
+const fileUpload = require('express-fileupload');
 
 const _DOMAIN: string =  '*';//'https://' + AppConfigService.get('nginx', 'domain');
 
@@ -180,6 +181,12 @@ class ServerService extends ServerBase {
              
         let https: boolean = true;
 
+        app.use(express.static(opts.pub_dir));
+
+        app.set('view engine', 'ejs');                             
+        
+        app.use(fileUpload());
+
         app.use((req, res, next) => {
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
@@ -201,12 +208,8 @@ class ServerService extends ServerBase {
             options.cert = fs.readFileSync(sslCert);
         }        
         
-        
-        app.use(express.static(opts.pub_dir));
+          
 
-        app.set('view engine', 'ejs');        
-        
-        
         await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
 
         const webServer = https ? HTTPS.createServer(options, app) : HTTP.createServer(app);    

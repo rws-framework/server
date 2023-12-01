@@ -1,5 +1,6 @@
-import { Response } from "express";
+import { Response, Request } from "express";
 import RWSService from "../services/_service";
+
 
 type IHTTProuteMethod  = (params: IRequestParams) => any
 interface IRequestParams{
@@ -12,7 +13,8 @@ interface IRequestParams{
     params: {
         [key: string]: any
     },
-    res: Response
+    res: Response,
+    req: Request
 }
 
 export {IRequestParams, IHTTProuteMethod}
