@@ -38,6 +38,7 @@ const express_1 = __importDefault(require("express"));
 const RouterService_1 = __importDefault(require("./RouterService"));
 const ProcessService_1 = __importDefault(require("./ProcessService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
+const body_parser_1 = __importDefault(require("body-parser"));
 const fileUpload = require('express-fileupload');
 const _DOMAIN = '*'; //'https://' + AppConfigService.get('nginx', 'domain');
 const WEBSOCKET_CORS = {
@@ -154,7 +155,8 @@ class ServerService extends socket_io_1.Server {
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
             next();
         });
-        app.use(express_1.default.json());
+        // app.use(express.json({ limit: '200mb' }));
+        app.use(body_parser_1.default.json({ limit: '200mb' }));
         const sslCert = await AppConfigService.get('ssl_cert');
         const sslKey = await AppConfigService.get('ssl_key');
         const options = {};

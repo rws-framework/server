@@ -14,6 +14,9 @@ import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from "../routing
 import ProcessService from "./ProcessService";
 import ConsoleService from "./ConsoleService";
 import path from 'path';
+import bodyParser from 'body-parser';
+
+
 const fileUpload = require('express-fileupload');
 
 const _DOMAIN: string =  '*';//'https://' + AppConfigService.get('nginx', 'domain');
@@ -194,7 +197,9 @@ class ServerService extends ServerBase {
             next();
         });
 
-        app.use(express.json());
+        // app.use(express.json({ limit: '200mb' }));
+        app.use(bodyParser.json({ limit: '200mb' }));
+
 
         const sslCert = await AppConfigService.get('ssl_cert');
         const sslKey = await AppConfigService.get('ssl_key');
