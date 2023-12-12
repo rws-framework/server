@@ -51,6 +51,7 @@ class MD5Service extends _service_1.default {
             return [];
         }
         const cmdDirPath = fs_1.default.readFileSync(`${moduleCfgDir}/_cli_cmd_dir`, 'utf-8');
+        console.log(cmdDirPath);
         return TraversalService_1.default.getAllFilesInFolder(path_1.default.resolve(process.cwd()) + '/' + cmdDirPath, [
             process.cwd() + '/' + cmdDirPath + '/index.ts'
         ]);

@@ -12,7 +12,7 @@ import TimeSeriesModel from './models/types/TimeSeriesModel';
 import ServerService from './services/ServerService';
 import DBService from './services/DBService';
 import AuthService from './services/AuthService';
-
+import S3Service from './services/S3Service';
 import ConsoleService from './services/ConsoleService';
 import ProcessService from './services/ProcessService';
 import LambdaService from './services/LambdaService';
@@ -56,6 +56,7 @@ export {
     ServerService as RWSServer,
     DBService,
     AuthService,
+    S3Service,
     ConsoleService,
     LambdaService,
     AWSService,

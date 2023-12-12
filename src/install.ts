@@ -95,7 +95,7 @@ async function main(cfg: IAppConfig)
 
   template += `\ndatasource db {\n
     provider = "${dbType}"\n
-    url = env("DATABASE_URL")\n
+    url = env("DATABASE_URL")\n    
   }\n\n`;
 
   const usermodels = await AppConfigService.get('user_models');

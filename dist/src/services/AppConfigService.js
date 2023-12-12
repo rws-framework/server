@@ -33,7 +33,7 @@ class AppConfigService extends _service_1.default {
         this.data = cfg;
     }
     get(key) {
-        if (key in this.data) {
+        if (key in this.data && this.data[key] !== null) {
             return this.data[key];
         }
         if (key in this._custom_data) {

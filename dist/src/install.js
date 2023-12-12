@@ -78,7 +78,7 @@ async function main(cfg) {
   }\n\n`;
     template += `\ndatasource db {\n
     provider = "${dbType}"\n
-    url = env("DATABASE_URL")\n
+    url = env("DATABASE_URL")\n    
   }\n\n`;
     const usermodels = await AppConfigService.get('user_models');
     usermodels.forEach((model) => {

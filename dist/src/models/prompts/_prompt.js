@@ -37,9 +37,9 @@ class RWSPrompt {
     readOutput() {
         return this.output;
     }
-    getHyperParameters(override = null) {
-        if (override) {
-            this.hyperParameters = { ...this.hyperParameters, ...override };
+    getHyperParameters(base = null) {
+        if (base) {
+            this.hyperParameters = { ...base, ...this.hyperParameters };
         }
         return this.hyperParameters;
     }

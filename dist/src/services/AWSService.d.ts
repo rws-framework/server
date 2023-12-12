@@ -10,20 +10,20 @@ declare class AWSService extends TheService {
     private apiGateway;
     private cloudWatch;
     constructor();
-    _initApis(): void;
+    _initApis(region?: string): void;
     checkForRolePermissions(roleARN: string, permissions: string[]): Promise<{
         OK: boolean;
         policies: string[];
     }>;
     private firePermissionCheck;
-    getS3(): AWS.S3;
-    getEC2(): AWS.EC2;
-    getEFS(): AWS.EFS;
-    getLambda(): AWS.Lambda;
-    getRegion(): string;
-    getIAM(): AWS.IAM;
-    getAPIGateway(): AWS.APIGateway;
-    getCloudWatch(): AWS.CloudWatchLogs;
+    getS3(region?: string): AWS.S3;
+    getEC2(region?: string): AWS.EC2;
+    getEFS(region?: string): AWS.EFS;
+    getLambda(region?: string): AWS.Lambda;
+    getRegion(region?: string): string;
+    getIAM(region?: string): AWS.IAM;
+    getAPIGateway(region?: string): AWS.APIGateway;
+    getCloudWatch(region?: string): AWS.CloudWatchLogs;
 }
 declare const _default: AWSService;
 export default _default;

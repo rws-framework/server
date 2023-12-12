@@ -68,6 +68,8 @@ class MD5Service extends TheService {
         }        
 
         const cmdDirPath = fs.readFileSync(`${moduleCfgDir}/_cli_cmd_dir`, 'utf-8');
+
+        console.log(cmdDirPath);
     
         return TraversalService.getAllFilesInFolder(path.resolve(process.cwd()) + '/' + cmdDirPath, [
             process.cwd() + '/' + cmdDirPath + '/index.ts'

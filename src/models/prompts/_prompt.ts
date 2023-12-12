@@ -86,10 +86,10 @@ class RWSPrompt {
         return this.output;
     }
 
-    getHyperParameters(override: any = null): IPromptHyperParameters
+    getHyperParameters(base: any = null): IPromptHyperParameters
     {        
-        if(override){
-            this.hyperParameters = {...this.hyperParameters, ...override};
+        if(base){
+            this.hyperParameters = {...base, ...this.hyperParameters};
         }
 
         return this.hyperParameters;

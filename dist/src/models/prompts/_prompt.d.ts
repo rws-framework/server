@@ -36,7 +36,7 @@ declare class RWSPrompt {
     readSentInput(): string;
     readInput(): string;
     readOutput(): string;
-    getHyperParameters(override?: any): IPromptHyperParameters;
+    getHyperParameters(base?: any): IPromptHyperParameters;
     getModelMetadata(): [string, string];
     sendWith(promptSender: IPromptSender): Promise<void>;
     readStream(stream: Readable, react: (chunk: string) => void): Promise<void>;

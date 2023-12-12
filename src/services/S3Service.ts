@@ -10,30 +10,36 @@ class S3Service extends TheService {
         super();
     }
 
-    async upload(params: AWS.S3.Types.PutObjectRequest, override = true): Promise<AWS.S3.ManagedUpload.SendData>
+    async upload(params: AWS.S3.Types.PutObjectRequest, override: boolean = true, region: string = null): Promise<AWS.S3.ManagedUpload.SendData | null>
     {
+     
         if (override) {
-            const exists = await this.objectExists({ Bucket: params.Bucket, Key: params.Key });
+            const exists = await this.objectExists({ Bucket: params.Bucket, Key: params.Key }, region);
             if (exists) {
 
                 log(`${color().green('[RWS Lambda Service]')} ${color().red('Deleting existing S3 object:')} ${params.Key}`);
                 await this.deleteObject({ Bucket: params.Bucket, Key: params.Key });
             }
+        }else{
+            const exists = await this.objectExists({ Bucket: params.Bucket, Key: params.Key }, region);
+            if (exists) {
+                return null;
+            }
         }
-
-        return AWSService.getS3().upload(params).promise()
+        
+        return AWSService.getS3(region).upload(params).promise()
     }
 
-    async delete(params: AWS.S3.Types.DeleteObjectRequest): Promise<void>
+    async delete(params: AWS.S3.Types.DeleteObjectRequest, region: string = null): Promise<void>
     {
-        await this.deleteObject({ Bucket: params.Bucket, Key: params.Key });
+        await this.deleteObject({ Bucket: params.Bucket, Key: params.Key }, region);
 
         return;
     }
 
-    async objectExists(params: AWS.S3.Types.HeadObjectRequest): Promise<boolean> {
+    async objectExists(params: AWS.S3.Types.HeadObjectRequest, region: string = null): Promise<boolean> {
         try {
-            await AWSService.getS3().headObject(params).promise();
+            await AWSService.getS3(region).headObject(params).promise();
             return true;
         } catch (error: Error | any) {
             if (error.code === 'NotFound') {
@@ -43,13 +49,13 @@ class S3Service extends TheService {
         }
     }
 
-    async deleteObject(params: AWS.S3.Types.DeleteObjectRequest): Promise<void> {
-        await AWSService.getS3().deleteObject(params).promise();
+    async deleteObject(params: AWS.S3.Types.DeleteObjectRequest, region: string = null): Promise<void> {
+        await AWSService.getS3(region).deleteObject(params).promise();
     }
 
-    async bucketExists(bucketName: string): Promise<string> { 
+    async bucketExists(bucketName: string, region: string = null): Promise<string> { 
         try {            
-            await AWSService.getS3().headBucket({ Bucket: bucketName }).promise();
+            await AWSService.getS3(region).headBucket({ Bucket: bucketName }).promise();
 
             return bucketName;
         } catch (err: Error | any) {
@@ -59,7 +65,7 @@ class S3Service extends TheService {
                     Bucket: bucketName,
                 };                
 
-                await AWSService.getS3().createBucket(params).promise();
+                await AWSService.getS3(region).createBucket(params).promise();
                 log(`${color().green(`[RWS Lambda Service]`)} s3 bucket ${bucketName} created.`);
                 return bucketName;
             } else {

@@ -30,12 +30,15 @@ class AWSService extends TheService {
         super();        
     }
 
-    _initApis(): void
-    {
-
-        if(!this.region){
+    _initApis(region?: string): void
+    {        
+        if(!region){
             this.region = AppConfigService().get('aws_lambda_region');
+        }else{
+            this.region = region
         }
+
+        // console.log(region,this.s3, this.region)
 
         if(!this.s3 && this.region){
             this.s3 = new AWS.S3({
@@ -149,58 +152,58 @@ class AWSService extends TheService {
         };
     }
 
-    getS3(): AWS.S3 
-    {
-        this._initApis();
+    getS3(region?: string): AWS.S3 
+    {        
+        this._initApis(region);
 
         return this.s3;
     }
 
-    getEC2(): AWS.EC2 
+    getEC2(region?: string): AWS.EC2 
     {
-        this._initApis();
+        this._initApis(region);
 
         return this.ec2;
     }
 
-    getEFS(): AWS.EFS 
+    getEFS(region?: string): AWS.EFS 
     {   
-        this._initApis();
+        this._initApis(region);
 
         return this.efs;
     }
 
-    getLambda(): AWS.Lambda
+    getLambda(region?: string): AWS.Lambda
     {   
-        this._initApis();
+        this._initApis(region);
 
         return this.lambda;
     }
 
-    getRegion(): string 
+    getRegion(region?: string): string 
     {   
-        this._initApis();
+        this._initApis(region);
 
         return this.region;
     }
 
-    getIAM(): AWS.IAM 
+    getIAM(region?: string): AWS.IAM 
     {   
-        this._initApis();
+        this._initApis(region);
 
         return this.iam;
     }  
     
-    getAPIGateway(): AWS.APIGateway 
+    getAPIGateway(region?: string): AWS.APIGateway 
     {   
-        this._initApis();
+        this._initApis(region);
 
         return this.apiGateway;
     }  
 
-    getCloudWatch(): AWS.CloudWatchLogs
+    getCloudWatch(region?: string): AWS.CloudWatchLogs
     {
-        this._initApis();
+        this._initApis(region);
 
         return this.cloudWatch;
     }

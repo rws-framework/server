@@ -11,23 +11,29 @@ class S3Service extends _service_1.default {
     constructor() {
         super();
     }
-    async upload(params, override = true) {
+    async upload(params, override = true, region = null) {
         if (override) {
-            const exists = await this.objectExists({ Bucket: params.Bucket, Key: params.Key });
+            const exists = await this.objectExists({ Bucket: params.Bucket, Key: params.Key }, region);
             if (exists) {
                 log(`${color().green('[RWS Lambda Service]')} ${color().red('Deleting existing S3 object:')} ${params.Key}`);
                 await this.deleteObject({ Bucket: params.Bucket, Key: params.Key });
             }
         }
-        return AWSService_1.default.getS3().upload(params).promise();
+        else {
+            const exists = await this.objectExists({ Bucket: params.Bucket, Key: params.Key }, region);
+            if (exists) {
+                return null;
+            }
+        }
+        return AWSService_1.default.getS3(region).upload(params).promise();
     }
-    async delete(params) {
-        await this.deleteObject({ Bucket: params.Bucket, Key: params.Key });
+    async delete(params, region = null) {
+        await this.deleteObject({ Bucket: params.Bucket, Key: params.Key }, region);
         return;
     }
-    async objectExists(params) {
+    async objectExists(params, region = null) {
         try {
-            await AWSService_1.default.getS3().headObject(params).promise();
+            await AWSService_1.default.getS3(region).headObject(params).promise();
             return true;
         }
         catch (error) {
@@ -37,12 +43,12 @@ class S3Service extends _service_1.default {
             throw error;
         }
     }
-    async deleteObject(params) {
-        await AWSService_1.default.getS3().deleteObject(params).promise();
+    async deleteObject(params, region = null) {
+        await AWSService_1.default.getS3(region).deleteObject(params).promise();
     }
-    async bucketExists(bucketName) {
+    async bucketExists(bucketName, region = null) {
         try {
-            await AWSService_1.default.getS3().headBucket({ Bucket: bucketName }).promise();
+            await AWSService_1.default.getS3(region).headBucket({ Bucket: bucketName }).promise();
             return bucketName;
         }
         catch (err) {
@@ -51,7 +57,7 @@ class S3Service extends _service_1.default {
                 const params = {
                     Bucket: bucketName,
                 };
-                await AWSService_1.default.getS3().createBucket(params).promise();
+                await AWSService_1.default.getS3(region).createBucket(params).promise();
                 log(`${color().green(`[RWS Lambda Service]`)} s3 bucket ${bucketName} created.`);
                 return bucketName;
             }

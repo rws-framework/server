@@ -41,7 +41,7 @@ class AppConfigService extends TheService{
 
   public get(key: keyof IAppConfig | string): any
   {     
-    if(key in this.data){
+    if(key in this.data && this.data[key as keyof IAppConfig] !== null){
       return this.data[key as keyof IAppConfig];
     }
     

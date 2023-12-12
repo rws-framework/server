@@ -12,10 +12,14 @@ class AWSService extends _service_1.default {
     constructor() {
         super();
     }
-    _initApis() {
-        if (!this.region) {
+    _initApis(region) {
+        if (!region) {
             this.region = (0, AppConfigService_1.default)().get('aws_lambda_region');
         }
+        else {
+            this.region = region;
+        }
+        // console.log(region,this.s3, this.region)
         if (!this.s3 && this.region) {
             this.s3 = new aws_sdk_1.default.S3({
                 region: this.region,
@@ -113,36 +117,36 @@ class AWSService extends _service_1.default {
             policies: policies
         };
     }
-    getS3() {
-        this._initApis();
+    getS3(region) {
+        this._initApis(region);
         return this.s3;
     }
-    getEC2() {
-        this._initApis();
+    getEC2(region) {
+        this._initApis(region);
         return this.ec2;
     }
-    getEFS() {
-        this._initApis();
+    getEFS(region) {
+        this._initApis(region);
         return this.efs;
     }
-    getLambda() {
-        this._initApis();
+    getLambda(region) {
+        this._initApis(region);
         return this.lambda;
     }
-    getRegion() {
-        this._initApis();
+    getRegion(region) {
+        this._initApis(region);
         return this.region;
     }
-    getIAM() {
-        this._initApis();
+    getIAM(region) {
+        this._initApis(region);
         return this.iam;
     }
-    getAPIGateway() {
-        this._initApis();
+    getAPIGateway(region) {
+        this._initApis(region);
         return this.apiGateway;
     }
-    getCloudWatch() {
-        this._initApis();
+    getCloudWatch(region) {
+        this._initApis(region);
         return this.cloudWatch;
     }
 }
