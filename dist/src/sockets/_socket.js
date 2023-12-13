@@ -16,6 +16,9 @@ class TheSocket {
     sendJson(input) {
         return JSON.stringify(input);
     }
+    emitMessage(method, socket, data = null) {
+        socket.emit(method, this.sendJson({ success: true, data, method }));
+    }
 }
 exports.default = TheSocket;
 //# sourceMappingURL=_socket.js.map

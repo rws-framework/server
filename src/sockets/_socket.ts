@@ -34,6 +34,11 @@ abstract class TheSocket implements ITheSocket{
         return JSON.stringify(input);
     }
 
+    emitMessage(method: string, socket: Socket, data: any = null) : void
+    {
+        socket.emit(method, this.sendJson({ success: true, data, method }));               
+    }
+
 }
 
 export default TheSocket;

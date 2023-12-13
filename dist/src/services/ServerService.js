@@ -69,6 +69,7 @@ class ServerService extends socket_io_1.Server {
             origin: _DOMAIN,
             methods: ['GET', 'POST'],
         });
+        //socket stuff
         this.sockets.on('connection', (socket) => {
             ConsoleService_1.default.log('[WS] connection recieved');
             socket.on('__PING__', () => {
@@ -76,6 +77,7 @@ class ServerService extends socket_io_1.Server {
             });
             Object.keys(opts.wsRoutes).forEach((eventName) => {
                 const SocketClass = opts.wsRoutes[eventName];
+                ConsoleService_1.default.log(`[WS] assigning "${eventName}" RWSSocket to user: ${socket.id}`);
                 new SocketClass(ServerService.io).handleConnection(socket, eventName);
             });
         });

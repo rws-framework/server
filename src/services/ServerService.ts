@@ -79,6 +79,8 @@ class ServerService extends ServerBase {
             methods: ['GET', 'POST'],
         });        
     
+        //socket stuff
+
         this.sockets.on('connection', (socket: Socket) => {            
             ConsoleService.log('[WS] connection recieved');
             
@@ -89,6 +91,7 @@ class ServerService extends ServerBase {
 
             Object.keys(opts.wsRoutes).forEach((eventName) => {                
                 const SocketClass = opts.wsRoutes[eventName];
+                ConsoleService.log(`[WS] assigning "${eventName}" RWSSocket to user: ${socket.id}`);
                 new SocketClass(ServerService.io).handleConnection(socket, eventName);
             });
         });
