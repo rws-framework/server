@@ -69,6 +69,7 @@ class RouterService extends _service_1.default {
                 routes.push(item);
             }
         });
+        console.log('ROUTES IN ASSIGNMENT', routes);
         routes.forEach((route) => {
             Object.keys(controllerRoutes).forEach((_method) => {
                 const actions = controllerRoutes[_method];
@@ -88,10 +89,11 @@ class RouterService extends _service_1.default {
             const controllerMethodReturn = await routeMethod({
                 req: req,
                 query: req.query,
-                params: req.params,
+                params: route.noParams ? [] : req.params,
                 data: req.body,
                 res: res
             });
+            console.log('AFTER ROUTE METHOD', route);
             res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));
             if (routeParams.responseType === 'json' || !routeParams.responseType) {
                 res.send(controllerMethodReturn);

@@ -1,6 +1,7 @@
 interface IHTTProute {
     name: string;
-    path: string;    
+    path: string;  
+    noParams?: boolean;  
 }
 
 

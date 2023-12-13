@@ -96,6 +96,8 @@ class RouterService extends TheService{
               routes.push(item as IHTTProute);
           }        
         });  
+
+        console.log('ROUTES IN ASSIGNMENT', routes);
        
 
         routes.forEach((route: IHTTProute) => {          
@@ -122,10 +124,12 @@ class RouterService extends TheService{
         const controllerMethodReturn = await routeMethod({
           req: req,
           query: req.query,
-          params: req.params,
+          params: route.noParams ? [] : req.params,
           data: req.body,
           res: res       
         });      
+
+        console.log('AFTER ROUTE METHOD', route);
 
         res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  
 
