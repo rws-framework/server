@@ -60,7 +60,7 @@ class ServerService extends ServerBase {
     constructor(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts){ 
         super(webServer, {
             cors: WEBSOCKET_CORS,
-            transports: ['websocket']
+            //transports: ['websocket']
         }); 
         const _self: ServerService = this;
 
