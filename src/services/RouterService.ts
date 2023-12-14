@@ -127,9 +127,7 @@ class RouterService extends TheService{
           params: route.noParams ? [] : req.params,
           data: req.body,
           res: res       
-        });      
-
-        console.log('AFTER ROUTE METHOD', route);
+        });              
 
         res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  
 

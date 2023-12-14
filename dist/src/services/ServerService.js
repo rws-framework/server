@@ -77,7 +77,6 @@ class ServerService extends socket_io_1.Server {
             });
             Object.keys(opts.wsRoutes).forEach((eventName) => {
                 const SocketClass = opts.wsRoutes[eventName];
-                ConsoleService_1.default.log(`[WS] assigning "${eventName}" RWSSocket to user: ${socket.id}`);
                 new SocketClass(ServerService.io).handleConnection(socket, eventName);
             });
         });

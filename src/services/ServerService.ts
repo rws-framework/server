@@ -90,8 +90,7 @@ class ServerService extends ServerBase {
             });
 
             Object.keys(opts.wsRoutes).forEach((eventName) => {                
-                const SocketClass = opts.wsRoutes[eventName];
-                ConsoleService.log(`[WS] assigning "${eventName}" RWSSocket to user: ${socket.id}`);
+                const SocketClass = opts.wsRoutes[eventName];                
                 new SocketClass(ServerService.io).handleConnection(socket, eventName);
             });
         });

@@ -93,7 +93,6 @@ class RouterService extends _service_1.default {
                 data: req.body,
                 res: res
             });
-            console.log('AFTER ROUTE METHOD', route);
             res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));
             if (routeParams.responseType === 'json' || !routeParams.responseType) {
                 res.send(controllerMethodReturn);
