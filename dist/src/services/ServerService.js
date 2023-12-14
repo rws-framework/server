@@ -48,7 +48,8 @@ const WEBSOCKET_CORS = {
 class ServerService extends socket_io_1.Server {
     constructor(webServer, opts) {
         super(webServer, {
-            cors: WEBSOCKET_CORS
+            cors: WEBSOCKET_CORS,
+            transports: ['websocket']
         });
         this.tokens = {};
         this.users = {};
