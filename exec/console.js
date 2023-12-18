@@ -63,7 +63,7 @@ const main = async () => {
     if(fs.existsSync(cfgPathFile)){
         process.env.WEBPACK_CFG_FILE = fs.readFileSync(cfgPathFile, 'utf-8');
     }else{
-        process.env.WEBPACK_CFG_FILE = args?.config;    
+        process.env.WEBPACK_CFG_FILE = args?.config || 'config/config';    
     }
 
     if(!fs.existsSync(`${process.cwd()}/node_modules/ts-loader`)){

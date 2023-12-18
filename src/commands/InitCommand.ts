@@ -24,10 +24,10 @@ class InitCommand extends Command
     {
         ConsoleService.log(color().green('[RWS]') + ' starting systems...');              
     
-        const configPath: string = params.config || params._default 
+        const configPath: string = params.config || params._default || 'config/config'; 
 
         if(!configPath){
-            ConsoleService.error('[RWS] No config path provided! Use "npx rws init path/to/config/file"');
+            ConsoleService.error('[RWS] No config path provided! Use "npx rws init path/to/config/file (from ./src)"');
             return;
         }
 

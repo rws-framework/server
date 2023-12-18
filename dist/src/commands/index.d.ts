@@ -29,5 +29,12 @@ declare const _default: ({
     getSourceFilePath(): string;
     getName(): string;
     getCommandParameters(params: import("./_command").ICmdParams): import("./_command").ICmdParamsReturn;
+} | {
+    removeDirRecursively(path: string): Promise<void>;
+    execute(params?: import("./_command").ICmdParams): Promise<void>;
+    name: string;
+    getSourceFilePath(): string;
+    getName(): string;
+    getCommandParameters(params: import("./_command").ICmdParams): import("./_command").ICmdParamsReturn;
 })[];
 export default _default;

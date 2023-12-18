@@ -19,9 +19,9 @@ class InitCommand extends _command_1.default {
     }
     async execute(params) {
         ConsoleService_1.default.log(color().green('[RWS]') + ' starting systems...');
-        const configPath = params.config || params._default || 'config/config';
+        const configPath = params.config || params._default;
         if (!configPath) {
-            ConsoleService_1.default.error('[RWS] No config path provided! Use "npx rws init path/to/config/file (from ./src)"');
+            ConsoleService_1.default.error('[RWS] No config path provided! Use "npx rws init path/to/config/file"');
             return;
         }
         try {
@@ -43,4 +43,4 @@ class InitCommand extends _command_1.default {
     }
 }
 exports.default = InitCommand.createCommand();
-//# sourceMappingURL=InitCommand.js.map
+//# sourceMappingURL=InitCommand%20copy.js.map

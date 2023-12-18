@@ -56,6 +56,8 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
         UtilsService.setRWSVar(cfgPathFile, configPath);
     }    
 
+    console.log();
+
     const frameworkConfigFactory: () => IAppConfig = require('@App/' + configPath).default;
     return frameworkConfigFactory();
 }
@@ -68,7 +70,7 @@ const main = async () => {
     let APP_CFG: IAppConfig | null = null;
 
     if (command === 'init') {
-        const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default        
+        const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config'       
 
         const cfgData = getConfig(configPath, cfgPathFile);        
 
@@ -83,12 +85,12 @@ const main = async () => {
     }
 
     if(!APP_CFG){
-        APP_CFG = getConfig(cfgPathFile);    
+        APP_CFG = getConfig('config/config', cfgPathFile);    
                 
     }
 
     if(!APP_CFG){
-        throw new Error('No config for CLI. Try to initialize with "npx rws init config=path/to/config.ts"');
+        throw new Error(`No config for CLI. Try to initialize with "npx rws init config=path/to/config.ts" (from ${process.cwd()}/src)`);
     }    
 
     const APP = getAppConfig(APP_CFG);
