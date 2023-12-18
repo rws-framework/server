@@ -111,16 +111,16 @@ class RouterService extends _service_1.default {
         const meta = controllerMetadata[key].metadata;
         switch (meta.method) {
             case 'GET':
-                controllerRoutes.get[meta.name] = [action, app.get.bind(app), meta.params];
+                controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.get.bind(app), meta.params];
                 break;
             case 'POST':
-                controllerRoutes.post[meta.name] = [action, app.post.bind(app), meta.params];
+                controllerRoutes.post[meta.name] = [action.bind(controllerInstance), app.post.bind(app), meta.params];
                 break;
             case 'PUT':
-                controllerRoutes.put[meta.name] = [action, app.put.bind(app), meta.params];
+                controllerRoutes.put[meta.name] = [action.bind(controllerInstance), app.put.bind(app), meta.params];
                 break;
             case 'DELETE':
-                controllerRoutes.delete[meta.name] = [action, app.delete.bind(app), meta.params];
+                controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params];
                 break;
         }
     }
