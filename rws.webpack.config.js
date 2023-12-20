@@ -21,8 +21,7 @@ module.exports = {
   module: {
     rules: [
         {
-          test: /\.(js|ts)$/,
-          exclude: /node_modules/,        
+          test: /\.(js|ts)$/,               
           use: `${process.cwd()}/node_modules/ts-loader/dist/index.js`        
         },
         {
