@@ -15,6 +15,7 @@ module.exports = {
       filename: 'rws.js',
     },
     resolve: {
+      modules: [path.resolve(process.cwd(), 'node_modules'), '../node_modules'],
       alias: {                 
        'rws-js-server': path.resolve(__dirname, '..', 'dist', 'src'),
        '@cwd': path.resolve(process.cwd(), 'src')
@@ -27,6 +28,7 @@ module.exports = {
             test: /\.(js|ts)$/,            
             loader: 'ts-loader',
             options: {              
+              allowTsInNodeModules: true,
               configFile: path.resolve(__dirname, 'tsconfig.json'),              
               getCustomTransformers: program => ({
                   before: [
