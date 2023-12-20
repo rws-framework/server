@@ -87,7 +87,7 @@ async function installDeps(){
         await ProcessService.runShellCommand(`npm install ts-transformer-keys`);
     }
 
-    rwsPackageSetup();
+    await rwsPackageSetup();
     
     log(color().green('[RWS]') + color().yellowBright('RWS Dependencies config finish.'))
 }
