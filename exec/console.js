@@ -82,9 +82,61 @@ const main = async () => {
 
 async function installDeps(){
     log(color().green('[RWS]') + color().yellowBright(' Installing dependencies...'));
-    await ProcessService.runShellCommand(`cd ${webpackPath} && npm install`);
-    log(color().green('[RWS]') + color().yellowBright(' Dependencies installed.'))
+    await ProcessService.runShellCommand(`npm install ts-transformer-keys`);
+    rwsPackageSetup();
+    await ProcessService.runShellCommand(`npm install`);
+    rwsPackageSetup(true);
+    log(color().green('[RWS]') + color().yellowBright('RWS Dependencies installed.'))
 }
+
+const rwsPackageSetup = (revert = false) => {
+    try {
+        const cwd = process.cwd();
+        const originalPackageJsonPath = path.join(cwd, 'package.json');
+        const backupPackageJsonPath = path.join(cwd, '_package.json');
+        const rwsPackageJsonPath = path.join(webpackPath, 'package.json');
+        
+        const cwdPackage = JSON.parse(fs.readFileSync(originalPackageJsonPath, 'utf-8'));
+        const rwsPackage = JSON.parse(fs.readFileSync(rwsPackageJsonPath, 'utf-8'));
+
+        cwdPackage.dependencies = {
+            ...rwsPackage.dependencies,
+            ...cwdPackage.dependencies,            
+        }
+
+        
+        cwdPackage.devDependencies = {
+            ...rwsPackage.devDependencies,
+            ...cwdPackage.devDependencies,            
+        }
+          
+        if (fs.existsSync(originalPackageJsonPath)) {
+            if(revert){
+                fs.unlinkSync(originalPackageJsonPath);
+                fs.renameSync(backupPackageJsonPath, originalPackageJsonPath);
+            }else{
+                fs.renameSync(originalPackageJsonPath, backupPackageJsonPath);
+            }
+            console.log('Original package.json has been renamed to _package.json');
+        } else {
+            console.warn('No package.json found in the current working directory.');
+            return;
+        }
+  
+        if(!revert){
+            if (fs.existsSync(rwsPackageJsonPath)) {
+                fs.writeFileSync(originalPackageJsonPath, JSON.stringify(cwdPackage, null, 2));                
+
+                console.log('Webpack package.json has been copied to the current working directory.');
+            } else {
+                console.error('Webpack package.json not found.');
+                return;
+            }
+        }
+    } catch (error) {
+      console.error('An error occurred:', error);
+    }
+  };
 
 async function generateCliClient()
 {    
