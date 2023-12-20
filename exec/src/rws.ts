@@ -54,12 +54,22 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
         }      
     } else {
         UtilsService.setRWSVar(cfgPathFile, configPath);
-    }    
+    }            
+    
 
-    console.log();
+    const frameworkConfigFactory: () => IAppConfig = require('@cwd/' + configPath).default;    
 
-    const frameworkConfigFactory: () => IAppConfig = require('@App/' + configPath).default;
     return frameworkConfigFactory();
+}
+
+function copyFileSync(source: string, destination: string) {
+    try {
+        const content = fs.readFileSync(source);
+        fs.writeFileSync(destination, content);
+        console.log(`File copied from ${source} to ${destination}`);
+    } catch (error) {
+        console.error('Error occurred while copying file:', error);
+    }
 }
 
 const main = async () => { 

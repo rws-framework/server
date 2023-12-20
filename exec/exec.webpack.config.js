@@ -16,21 +16,18 @@ module.exports = {
     },
     resolve: {
       alias: {                 
-       'rws-js-server': path.resolve(__dirname, '..', 'dist', 'src')
+       'rws-js-server': path.resolve(__dirname, '..', 'dist', 'src'),
+       '@cwd': path.resolve(process.cwd(), 'src')
       },
-      extensions: ['.ts', '.js', '.node'],
-      plugins: [       
-        // new TsconfigPathsPlugin({configFile: path.resolve(rootDir, 'tsconfig.json')}) 
-      ]    
+      extensions: ['.ts', '.js', '.node'],      
     },
     module: {
       rules: [
           {
             test: /\.(js|ts)$/,            
             loader: 'ts-loader',
-            options: {
-              configFile: path.resolve(rootDir, 'tsconfig.json'),
-              // make sure not to set `transpileOnly: true` here, otherwise it will not work
+            options: {              
+              configFile: path.resolve(__dirname, 'tsconfig.json'),              
               getCustomTransformers: program => ({
                   before: [
                       keysTransformer(program)

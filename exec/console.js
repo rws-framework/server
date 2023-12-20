@@ -81,15 +81,24 @@ const main = async () => {
 }
 
 async function installDeps(){
-    log(color().green('[RWS]') + color().yellowBright(' Installing dependencies...'));
-    await ProcessService.runShellCommand(`npm install ts-transformer-keys`);
+    log(color().green('[RWS]') + color().yellowBright('RWS Dependencies config start...'))
+
+    if(!fs.existsSync(`${process.cwd() + '/node_modules/ts-transformer-keys'}`)){        
+        await ProcessService.runShellCommand(`npm install ts-transformer-keys`);
+    }
+
     rwsPackageSetup();
-    await ProcessService.runShellCommand(`npm install`);
-    rwsPackageSetup(true);
-    log(color().green('[RWS]') + color().yellowBright('RWS Dependencies installed.'))
+    
+    log(color().green('[RWS]') + color().yellowBright('RWS Dependencies config finish.'))
 }
 
-const rwsPackageSetup = (revert = false) => {
+const rwsPackageSetup = async () => {    
+    if(UtilsService.getRWSVar('_rws_deps_installed') === 'True'){
+        console.log('Deps are installed.');
+
+        return;
+    }
+
     try {
         const cwd = process.cwd();
         const originalPackageJsonPath = path.join(cwd, 'package.json');
@@ -98,6 +107,8 @@ const rwsPackageSetup = (revert = false) => {
         
         const cwdPackage = JSON.parse(fs.readFileSync(originalPackageJsonPath, 'utf-8'));
         const rwsPackage = JSON.parse(fs.readFileSync(rwsPackageJsonPath, 'utf-8'));
+
+        cwdPackage.scripts.postinstall = '';
 
         cwdPackage.dependencies = {
             ...rwsPackage.dependencies,
@@ -111,28 +122,19 @@ const rwsPackageSetup = (revert = false) => {
         }
           
         if (fs.existsSync(originalPackageJsonPath)) {
-            if(revert){
-                fs.unlinkSync(originalPackageJsonPath);
-                fs.renameSync(backupPackageJsonPath, originalPackageJsonPath);
-            }else{
-                fs.renameSync(originalPackageJsonPath, backupPackageJsonPath);
-            }
-            console.log('Original package.json has been renamed to _package.json');
+            fs.renameSync(originalPackageJsonPath, backupPackageJsonPath);
+            fs.writeFileSync(originalPackageJsonPath, JSON.stringify(cwdPackage, null, 2));
+            await ProcessService.runShellCommand(`npm install`);
+            fs.unlinkSync(originalPackageJsonPath);
+            fs.renameSync(backupPackageJsonPath, originalPackageJsonPath);
+            UtilsService.setRWSVar('_rws_deps_installed', 'True');
+
         } else {
             console.warn('No package.json found in the current working directory.');
             return;
         }
   
-        if(!revert){
-            if (fs.existsSync(rwsPackageJsonPath)) {
-                fs.writeFileSync(originalPackageJsonPath, JSON.stringify(cwdPackage, null, 2));                
-
-                console.log('Webpack package.json has been copied to the current working directory.');
-            } else {
-                console.error('Webpack package.json not found.');
-                return;
-            }
-        }
+     
     } catch (error) {
       console.error('An error occurred:', error);
     }

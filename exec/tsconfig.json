@@ -9,15 +9,15 @@
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "outDir": "dist/src",
+    "outDir": "./dist/exec",
     "strictNullChecks": false,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "declaration": true,
     "paths": {
       "rws-js-server": [
-        "./src/"
-      ]    
+        "../src"
+      ]  
     }
   },
   "include": [
