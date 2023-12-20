@@ -55,9 +55,8 @@ const totalMemoryMB = totalMemoryKB / 1024;
 const totalMemoryGB = totalMemoryMB / 1024;
 
 const moduleCfgDir = `${path.resolve(process.cwd())}/node_modules/.rws`;
-    const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
-
-    const webpackPath = path.resolve(__dirname, '..');
+const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
+const webpackPath = path.resolve(__dirname, '..');
 
 const main = async () => {    
     if(fs.existsSync(cfgPathFile)){
@@ -66,12 +65,7 @@ const main = async () => {
         process.env.WEBPACK_CFG_FILE = args?.config || 'config/config';    
     }
 
-    if(!fs.existsSync(`${process.cwd()}/node_modules/ts-loader`)){
-        log(color().green('[RWS]')+' installing ts-loader for inner RWS CLI ops') 
-        await ProcessService.runShellCommand(`cd ${process.cwd()} && npm install ts-loader`);    
-        log('[RWS Console] install done')
-    }
-
+    await installDeps();
     
     await generateCliClient();        
 
@@ -84,6 +78,12 @@ const main = async () => {
     }
 
     return;
+}
+
+async function installDeps(){
+    log(color().green('[RWS]') + color().yellowBright(' Installing dependencies...'));
+    await ProcessService.runShellCommand(`cd ${webpackPath} && npm install`);
+    log(color().green('[RWS]') + color().yellowBright(' Dependencies installed.'))
 }
 
 async function generateCliClient()
