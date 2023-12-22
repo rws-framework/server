@@ -33,7 +33,7 @@ class UtilsService extends TheService {
     }
 
     if(!fs.existsSync(`${moduleCfgDir}/${fileName}`)){
-      return null;
+      return;
     }
 
     fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);

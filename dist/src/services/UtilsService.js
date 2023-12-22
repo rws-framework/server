@@ -29,7 +29,7 @@ class UtilsService extends _service_1.default {
             fs_1.default.mkdirSync(moduleCfgDir);
         }
         if (!fs_1.default.existsSync(`${moduleCfgDir}/${fileName}`)) {
-            return null;
+            return;
         }
         fs_1.default.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
     }
