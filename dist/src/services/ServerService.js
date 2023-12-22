@@ -148,7 +148,9 @@ class ServerService extends socket_io_1.Server {
         const AppConfigService = (0, AppConfigService_1.default)();
         const app = (0, express_1.default)();
         let https = true;
-        app.use(express_1.default.static(opts.pub_dir));
+        if (opts.pub_dir) {
+            app.use(express_1.default.static(opts.pub_dir));
+        }
         app.set('view engine', 'ejs');
         app.use(fileUpload());
         app.use((req, res, next) => {

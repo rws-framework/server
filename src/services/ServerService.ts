@@ -187,7 +187,9 @@ class ServerService extends ServerBase {
              
         let https: boolean = true;
 
-        app.use(express.static(opts.pub_dir));
+        if(opts.pub_dir){
+            app.use(express.static(opts.pub_dir));
+        }
 
         app.set('view engine', 'ejs');                             
         
