@@ -206,8 +206,8 @@ class ServerService extends ServerBase {
         app.use(bodyParser.json({ limit: '200mb' }));
 
 
-        const sslCert = await AppConfigService.get('ssl_cert');
-        const sslKey = await AppConfigService.get('ssl_key');
+        const sslCert = AppConfigService.get('ssl_cert');
+        const sslKey = AppConfigService.get('ssl_key');  
 
         const options: {key?: Buffer, cert?: Buffer} = {}
 
@@ -217,8 +217,6 @@ class ServerService extends ServerBase {
             options.key = fs.readFileSync(sslKey);
             options.cert = fs.readFileSync(sslCert);
         }        
-        
-          
 
         await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
 

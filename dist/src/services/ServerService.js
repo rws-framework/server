@@ -161,8 +161,8 @@ class ServerService extends socket_io_1.Server {
         });
         // app.use(express.json({ limit: '200mb' }));
         app.use(body_parser_1.default.json({ limit: '200mb' }));
-        const sslCert = await AppConfigService.get('ssl_cert');
-        const sslKey = await AppConfigService.get('ssl_key');
+        const sslCert = AppConfigService.get('ssl_cert');
+        const sslKey = AppConfigService.get('ssl_key');
         const options = {};
         if (!sslCert || !sslKey) {
             https = false;

@@ -13,14 +13,20 @@ async function init(cfg) {
     const httpRoutes = await AppConfigService.get('http_routes');
     const controler_list = await AppConfigService.get('controller_list');
     const pub_dir = await AppConfigService.get('pub_dir');
+    const sslCert = AppConfigService.get('ssl_cert');
+    const sslKey = AppConfigService.get('ssl_key');
+    let https = true;
+    if (!sslCert || !sslKey) {
+        https = false;
+    }
     (await ServerService_1.default.initializeApp({
         port: port,
         wsRoutes: wsRoutes,
         httpRoutes: httpRoutes,
         controllerList: controler_list,
-        pub_dir: pub_dir
+        pub_dir: pub_dir,
     })).webServer().listen(port, () => {
-        ConsoleService_1.default.log(ConsoleService_1.default.color().green('Server' + ` is working on port ${port}`));
+        ConsoleService_1.default.log(ConsoleService_1.default.color().green('Server' + ` is working on port ${port} using HTTP${https ? 'S' : ''} protocol`));
     });
 }
 exports.default = init;
