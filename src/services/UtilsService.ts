@@ -16,6 +16,10 @@ class UtilsService extends TheService {
     const executionDir = process.cwd();    
     const moduleCfgDir = `${executionDir}/node_modules/.rws`;
 
+    if(!fs.existsSync(`${moduleCfgDir}/${fileName}`)){
+      return;
+    }
+
     try{
       return fs.readFileSync(`${moduleCfgDir}/${fileName}`, 'utf-8');
     } catch (e: any){
@@ -30,10 +34,6 @@ class UtilsService extends TheService {
 
     if(!fs.existsSync(moduleCfgDir)){
       fs.mkdirSync(moduleCfgDir);
-    }
-
-    if(!fs.existsSync(`${moduleCfgDir}/${fileName}`)){
-      return;
     }
 
     fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);

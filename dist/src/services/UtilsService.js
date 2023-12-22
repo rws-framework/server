@@ -15,6 +15,9 @@ class UtilsService extends _service_1.default {
     getRWSVar(fileName) {
         const executionDir = process.cwd();
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+        if (!fs_1.default.existsSync(`${moduleCfgDir}/${fileName}`)) {
+            return;
+        }
         try {
             return fs_1.default.readFileSync(`${moduleCfgDir}/${fileName}`, 'utf-8');
         }
@@ -27,9 +30,6 @@ class UtilsService extends _service_1.default {
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
         if (!fs_1.default.existsSync(moduleCfgDir)) {
             fs_1.default.mkdirSync(moduleCfgDir);
-        }
-        if (!fs_1.default.existsSync(`${moduleCfgDir}/${fileName}`)) {
-            return;
         }
         fs_1.default.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
     }
