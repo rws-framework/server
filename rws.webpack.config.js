@@ -20,15 +20,24 @@ module.exports = {
   },
   module: {
     rules: [
-        {
-          test: /\.(js|ts)$/,               
-          use: `${process.cwd()}/node_modules/ts-loader/dist/index.js`        
-        },
-        {
-            test: /\.node$/,
-            use: 'node-loader',
-        }        
-      ],
+      {
+        test: /\.(ts|js)$/,
+        use: [                       
+          {
+            loader: 'ts-loader',
+            options: {
+              allowTsInNodeModules: true,
+              configFile: path.resolve(config.tsConfigPath)
+            }
+          }
+        ],
+        exclude: /node_modules\/(?!rws-js-server)/,
+      },       
+      {
+          test: /\.node$/,
+          use: 'node-loader',
+      }        
+    ],
   },
   plugins: [
   ],
