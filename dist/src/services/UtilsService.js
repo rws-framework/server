@@ -25,6 +25,12 @@ class UtilsService extends _service_1.default {
     setRWSVar(fileName, value) {
         const executionDir = process.cwd();
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+        if (!fs_1.default.existsSync(moduleCfgDir)) {
+            fs_1.default.mkdirSync(moduleCfgDir);
+        }
+        if (!fs_1.default.existsSync(`${moduleCfgDir}/${fileName}`)) {
+            return null;
+        }
         fs_1.default.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
     }
 }

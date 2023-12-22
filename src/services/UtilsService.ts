@@ -28,6 +28,14 @@ class UtilsService extends TheService {
     const executionDir = process.cwd();    
     const moduleCfgDir = `${executionDir}/node_modules/.rws`;
 
+    if(!fs.existsSync(moduleCfgDir)){
+      fs.mkdirSync(moduleCfgDir);
+    }
+
+    if(!fs.existsSync(`${moduleCfgDir}/${fileName}`)){
+      return null;
+    }
+
     fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
   }
 
