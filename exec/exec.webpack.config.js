@@ -4,7 +4,7 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const webpackFilters = require('../webpackFilters');
 const rootDir = process.cwd();
 const nodeExternals = require('webpack-node-externals');
-const UtilsService = require('../dist/src/services/UtilsService');
+const UtilsService = require('../_tools');
 
 const modules_setup = [path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')];
 

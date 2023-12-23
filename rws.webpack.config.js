@@ -2,7 +2,7 @@ const path = require('path');
 const keysTransformer = require('ts-transformer-keys/transformer').default;
 const webpackFilters = require('./webpackFilters');
 const nodeExternals = require('webpack-node-externals');
-const UtilsService = require('./_tools.js');
+const UtilsService = require('./_tools');
 
 const modules_setup = [path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')];
 
