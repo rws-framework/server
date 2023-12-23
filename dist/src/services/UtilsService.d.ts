@@ -4,6 +4,7 @@ declare class UtilsService extends TheService {
     isInterface<T>(func: any): func is T;
     getRWSVar(fileName: string): string | null;
     setRWSVar(fileName: string, value: string): void;
+    findRootWorkspacePath(currentPath: string): string;
 }
 declare const _default: UtilsService;
 export default _default;

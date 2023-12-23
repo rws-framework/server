@@ -4,6 +4,9 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const webpackFilters = require('../webpackFilters');
 const rootDir = process.cwd();
 const nodeExternals = require('webpack-node-externals');
+const UtilsService = require('../dist/src/services/UtilsService');
+
+const modules_setup = [path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')];
 
 module.exports = {
     entry: path.resolve(__dirname) + '/src/rws.ts',
@@ -15,7 +18,7 @@ module.exports = {
       filename: 'rws.js',
     },
     resolve: {
-      modules: [path.resolve(process.cwd(), 'node_modules'), '../node_modules'],
+      modules: modules_setup,
       alias: {                 
        'rws-js-server': path.resolve(__dirname, '..', 'dist', 'src'),
        '@cwd': path.resolve(process.cwd(), 'src')

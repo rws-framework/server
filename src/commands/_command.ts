@@ -1,6 +1,7 @@
 import IAppConfig from "../interfaces/IAppConfig";
 import path from 'path';
 import fs from 'fs';
+import UtilsService from "../services/UtilsService";
 
 interface ICmdParams {
     [key: string]: any
@@ -28,7 +29,8 @@ export default abstract class TheCommand {
     constructor(name: string, childModule: {id: string, loaded: boolean, exports: any, paths: any[], children: any[]}){
         this.name = name;
 
-        const moduleCfgDir = path.resolve(process.cwd(), 'node_modules', '.rws');
+        const rootPackageDir = UtilsService.findRootWorkspacePath(process.cwd());
+        const moduleCfgDir = path.resolve(rootPackageDir, 'node_modules', '.rws');
         const cmdDirFile = `${moduleCfgDir}/_cli_cmd_dir`;       
         
 
@@ -38,10 +40,17 @@ export default abstract class TheCommand {
         
         const filePath:string = childModule.id;
         
-        const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
+        const cmdDir = `${filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '')}`;
+
+        let finalCmdDir = cmdDir;
+
+        if(cmdDir.indexOf('node_modules') > -1){
+            finalCmdDir = rootPackageDir + '/' + finalCmdDir.substring(finalCmdDir.indexOf("node_modules"));
+        }
+        
         
         if(!fs.existsSync(cmdDirFile)){
-            fs.writeFileSync(cmdDirFile, cmdDir);
+            fs.writeFileSync(cmdDirFile, finalCmdDir);
         }     
     }
 

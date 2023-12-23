@@ -5,18 +5,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const UtilsService_1 = __importDefault(require("../services/UtilsService"));
 class TheCommand {
     constructor(name, childModule) {
         this.name = name;
-        const moduleCfgDir = path_1.default.resolve(process.cwd(), 'node_modules', '.rws');
+        const rootPackageDir = UtilsService_1.default.findRootWorkspacePath(process.cwd());
+        const moduleCfgDir = path_1.default.resolve(rootPackageDir, 'node_modules', '.rws');
         const cmdDirFile = `${moduleCfgDir}/_cli_cmd_dir`;
         if (!fs_1.default.existsSync(moduleCfgDir)) {
             fs_1.default.mkdirSync(moduleCfgDir);
         }
         const filePath = childModule.id;
-        const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
+        const cmdDir = `${filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '')}`;
+        let finalCmdDir = cmdDir;
+        if (cmdDir.indexOf('node_modules') > -1) {
+            finalCmdDir = rootPackageDir + '/' + finalCmdDir.substring(finalCmdDir.indexOf("node_modules"));
+        }
         if (!fs_1.default.existsSync(cmdDirFile)) {
-            fs_1.default.writeFileSync(cmdDirFile, cmdDir);
+            fs_1.default.writeFileSync(cmdDirFile, finalCmdDir);
         }
     }
     getSourceFilePath() {

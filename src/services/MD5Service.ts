@@ -59,6 +59,7 @@ class MD5Service extends TheService {
 
     batchGenerateCommandFileMD5(moduleCfgDir: string): string[] 
     {
+    
         if (!fs.existsSync(moduleCfgDir)) {
             fs.mkdirSync(moduleCfgDir);
         }
@@ -67,9 +68,7 @@ class MD5Service extends TheService {
             return [];
         }        
 
-        const cmdDirPath = fs.readFileSync(`${moduleCfgDir}/_cli_cmd_dir`, 'utf-8');
-
-        console.log(cmdDirPath);
+        const cmdDirPath = fs.readFileSync(`${moduleCfgDir}/_cli_cmd_dir`, 'utf-8');    
     
         return TraversalService.getAllFilesInFolder(path.resolve(process.cwd()) + '/' + cmdDirPath, [
             process.cwd() + '/' + cmdDirPath + '/index.ts'

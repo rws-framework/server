@@ -54,9 +54,13 @@ const totalMemoryKB = totalMemoryBytes / 1024;
 const totalMemoryMB = totalMemoryKB / 1024;
 const totalMemoryGB = totalMemoryMB / 1024;
 
-const moduleCfgDir = `${path.resolve(process.cwd())}/node_modules/.rws`;
-const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
+
 const webpackPath = path.resolve(__dirname, '..');
+
+const packageRootDir = UtilsService.findRootWorkspacePath(process.cwd())
+console.log(packageRootDir);
+const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
+const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
 
 const main = async () => {    
     if(fs.existsSync(cfgPathFile)){
@@ -65,7 +69,7 @@ const main = async () => {
         process.env.WEBPACK_CFG_FILE = args?.config || 'config/config';    
     }
 
-    await installDeps();
+    // await installDeps();
     
     await generateCliClient();        
 
@@ -83,62 +87,14 @@ const main = async () => {
 async function installDeps(){
     log(color().green('[RWS]') + color().yellowBright('RWS Dependencies config start...'))
 
-    if(!fs.existsSync(`${process.cwd() + '/node_modules/ts-transformer-keys'}`)){        
-        await ProcessService.runShellCommand(`npm install ts-transformer-keys`);
+    if(!fs.existsSync(`${packageRootDir} + '/node_modules/ts-transformer-keys'}`)){        
+        await ProcessService.runShellCommand(`yarn add ts-transformer-keys`);
     }
 
-    await rwsPackageSetup();
+    //await rwsPackageSetup();
     
     log(color().green('[RWS]') + color().yellowBright('RWS Dependencies config finish.'))
 }
-
-const rwsPackageSetup = async () => {    
-    if(UtilsService.getRWSVar('_rws_deps_installed') === 'True'){
-        console.log('Deps are installed.');
-
-        return;
-    }
-
-    try {
-        const cwd = process.cwd();
-        const originalPackageJsonPath = path.join(cwd, 'package.json');
-        const backupPackageJsonPath = path.join(cwd, '_package.json');
-        const rwsPackageJsonPath = path.join(webpackPath, 'package.json');
-        
-        const cwdPackage = JSON.parse(fs.readFileSync(originalPackageJsonPath, 'utf-8'));
-        const rwsPackage = JSON.parse(fs.readFileSync(rwsPackageJsonPath, 'utf-8'));
-
-        cwdPackage.scripts.postinstall = '';
-
-        cwdPackage.dependencies = {
-            ...rwsPackage.dependencies,
-            ...cwdPackage.dependencies,            
-        }
-
-        
-        cwdPackage.devDependencies = {
-            ...rwsPackage.devDependencies,
-            ...cwdPackage.devDependencies,            
-        }
-          
-        if (fs.existsSync(originalPackageJsonPath)) {
-            fs.renameSync(originalPackageJsonPath, backupPackageJsonPath);
-            fs.writeFileSync(originalPackageJsonPath, JSON.stringify(cwdPackage, null, 2));
-            await ProcessService.runShellCommand(`npm install`);
-            fs.unlinkSync(originalPackageJsonPath);
-            fs.renameSync(backupPackageJsonPath, originalPackageJsonPath);
-            UtilsService.setRWSVar('_rws_deps_installed', 'True');
-
-        } else {
-            console.warn('No package.json found in the current working directory.');
-            return;
-        }
-  
-     
-    } catch (error) {
-      console.error('An error occurred:', error);
-    }
-  };
 
 async function generateCliClient()
 {    
@@ -157,7 +113,7 @@ async function generateCliClient()
             warn('[RWS] Forcing CLI client reload...');
         }
         log(color().green('[RWS]') + color().yellowBright(' Detected CLI file changes. Generating CLI client file...'));      
-        await ProcessService.PM2ExecCommand(`npx webpack --config ${webpackPath}/exec/exec.webpack.config.js`);
+        await ProcessService.PM2ExecCommand(`yarn webpack --config ${webpackPath}/exec/exec.webpack.config.js`);
         log(color().green('[RWS]') + ' CLI client file generated.')       
     }else{
         log(color().green('[RWS]') + ' CLI client file is up to date.')  

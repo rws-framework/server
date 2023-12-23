@@ -1,5 +1,8 @@
 import TheService from "./_service";
 import fs from 'fs';
+import path from 'path';
+//@ts-ignore
+import utils from '../../_tools';
 
 class UtilsService extends TheService {
   filterNonEmpty<T>(arr: T[]): T[]
@@ -39,6 +42,21 @@ class UtilsService extends TheService {
     fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
   }
 
+  findRootWorkspacePath(currentPath: string): string
+  {  
+    const parentPackageJsonPath = path.join(currentPath + '/..', 'package.json');        
+    const parentPackageDir = path.dirname(parentPackageJsonPath);
+
+    if (fs.existsSync(parentPackageJsonPath)) {
+      const packageJson = JSON.parse(fs.readFileSync(parentPackageJsonPath, 'utf-8'));
+
+      if (packageJson.workspaces) {
+        return this.findRootWorkspacePath(parentPackageDir);
+      }
+    }
+
+    return currentPath;
+  }
 }
 
 export default UtilsService.getSingleton();
