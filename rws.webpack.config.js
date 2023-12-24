@@ -4,8 +4,11 @@ const webpackFilters = require('./webpackFilters');
 const nodeExternals = require('webpack-node-externals');
 const UtilsService = require('./_tools');
 
-const modules_setup = [path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')];
+const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')
 
+const modules_setup = [rootPackageNodeModules];
+
+// console.log(modules_setup)s;
 
 module.exports = {
   entry: `${process.cwd()}/src/index.ts`,
@@ -23,6 +26,7 @@ module.exports = {
       
     }
   },
+  context: process.cwd(),
   module: {
     rules: [
       {
@@ -32,7 +36,12 @@ module.exports = {
             loader: 'ts-loader',
             options: {
               allowTsInNodeModules: true,
-              configFile: path.resolve(process.cwd() + '/tsconfig.json')
+              configFile: path.resolve(process.cwd() + '/tsconfig.json'),
+              // compilerOptions: {
+              //   paths: {
+              //     '*': [rootPackageNodeModules + '/*']
+              //   }
+              // }
             }
           }
         ],

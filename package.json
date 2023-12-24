@@ -1,6 +1,6 @@
 {
   "name": "rws-js-server",
-  "version": "1.8.4",
+  "version": "1.9.0",
   "description": "",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
@@ -32,6 +32,7 @@
     "ejs": "^3.1.9",
     "express": "^4.17.1",
     "express-fileupload": "^1.4.3",
+    "dotenv": "^16.3.1",
     "file-loader": "^6.2.0",
     "jsonwebtoken": "^9.0.2",
     "kcors": "^2.2.2",

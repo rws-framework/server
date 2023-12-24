@@ -93,7 +93,7 @@ class AWSService extends _service_1.default {
     }
     async firePermissionCheck(roleARN, permissions) {
         const params = {
-            PolicySourceArn: roleARN,
+            PolicySourceArn: roleARN, // Replace with your IAM role ARN
             ActionNames: permissions
         };
         const policies = [];

@@ -40,6 +40,8 @@ if(process.argv.length > 4){
 
 const executionDir = process.cwd();
 
+const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
+const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 function getConfig(configPath: string, cfgPathFile: string | null = null) 
 {    
     if(cfgPathFile === null){
@@ -72,8 +74,7 @@ function copyFileSync(source: string, destination: string) {
     }
 }
 
-const main = async () => { 
-    const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+const main = async () => {     
     const cfgPathFile = `_cfg_path`;
 
     const tsFile = path.resolve(__dirname, '..', 'src') + '/rws.ts';
@@ -100,7 +101,7 @@ const main = async () => {
     }
 
     if(!APP_CFG){
-        throw new Error(`No config for CLI. Try to initialize with "npx rws init config=path/to/config.ts" (from ${process.cwd()}/src)`);
+        throw new Error(`No config for CLI. Try to initialize with "yarn rws init config=path/to/config.ts" (config path from ${process.cwd()}/src)`);
     }    
 
     const APP = getAppConfig(APP_CFG);

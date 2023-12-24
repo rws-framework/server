@@ -6,12 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _command_1 = __importDefault(require("./_command"));
 const install_1 = require("../install");
 const ConsoleService_1 = __importDefault(require("../services/ConsoleService"));
+const UtilsService_1 = __importDefault(require("../services/UtilsService"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const { log, warn, error, color } = ConsoleService_1.default;
 const executionDir = process.cwd();
-const moduleCfgDir = `${executionDir}/node_modules/.rws`;
-const cfgPathFile = `${moduleCfgDir}/_cfg_path`;
+const packageRootDir = UtilsService_1.default.findRootWorkspacePath(executionDir);
+const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const moduleDir = path_1.default.resolve(path_1.default.dirname(module.id), '..', '..').replace('dist', '');
 class InitCommand extends _command_1.default {
     constructor() {

@@ -58,7 +58,7 @@ const totalMemoryGB = totalMemoryMB / 1024;
 const webpackPath = path.resolve(__dirname, '..');
 
 const packageRootDir = UtilsService.findRootWorkspacePath(process.cwd())
-console.log(packageRootDir);
+
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
 

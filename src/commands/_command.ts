@@ -40,7 +40,7 @@ export default abstract class TheCommand {
         
         const filePath:string = childModule.id;
         
-        const cmdDir = `${filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '')}`;
+        const cmdDir = `${filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '')}`;        
 
         let finalCmdDir = cmdDir;
 

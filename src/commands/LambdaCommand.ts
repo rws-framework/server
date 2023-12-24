@@ -10,11 +10,12 @@ import LambdaService from "../services/LambdaService";
 import VPCService from "../services/VPCService";
 import CloudWatchService from "../services/CloudWatchService";
 
-
 const { log, warn, error, color, rwsLog } = ConsoleService;
 
 const executionDir = process.cwd();
-const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+
+const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
+const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
 
 const moduleDir = path.resolve(path.dirname(module.id), '..', '..').replace('dist/', '');

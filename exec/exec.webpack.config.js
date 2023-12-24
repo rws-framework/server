@@ -5,8 +5,8 @@ const webpackFilters = require('../webpackFilters');
 const rootDir = process.cwd();
 const nodeExternals = require('webpack-node-externals');
 const UtilsService = require('../_tools');
-
-const modules_setup = [path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')];
+const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')
+const modules_setup = [rootPackageNodeModules];
 
 module.exports = {
     entry: path.resolve(__dirname) + '/src/rws.ts',
@@ -21,7 +21,7 @@ module.exports = {
       modules: modules_setup,
       alias: {                 
        'rws-js-server': path.resolve(__dirname, '..', 'dist', 'src'),
-       '@cwd': path.resolve(process.cwd(), 'src')
+       '@cwd': path.resolve(process.cwd(), 'src')       
       },
       extensions: ['.ts', '.js', '.node'],      
     },
@@ -32,7 +32,12 @@ module.exports = {
             loader: 'ts-loader',
             options: {              
               allowTsInNodeModules: true,
-              configFile: path.resolve(__dirname, 'tsconfig.json'),              
+              configFile: path.resolve(__dirname, 'tsconfig.json'), 
+              // compilerOptions: {
+              //   paths: {
+              //     '*': [rootPackageNodeModules + '/*']
+              //   }
+              // },             
               getCustomTransformers: program => ({
                   before: [
                       keysTransformer(program)

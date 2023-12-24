@@ -1,16 +1,16 @@
 import Command, { ICmdParams } from './_command';
 import { SetupRWS } from '../install';
 import ConsoleService from '../services/ConsoleService';
-
+import UtilsService from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
 
 const { log, warn, error, color } = ConsoleService;
 
 const executionDir = process.cwd();
-const moduleCfgDir = `${executionDir}/node_modules/.rws`;
-const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
 
+const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
+const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const moduleDir = path.resolve(path.dirname(module.id), '..', '..').replace('dist', '');
 
 

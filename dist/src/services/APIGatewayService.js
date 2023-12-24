@@ -80,7 +80,7 @@ class APIGatewayService extends _service_1.default {
             restApiId: restApiId,
             resourceId: resource.id,
             httpMethod: httpMethod,
-            authorizationType: "NONE",
+            authorizationType: "NONE", // Change this if you want to use an authorizer
             apiKeyRequired: false
         }).promise();
     }

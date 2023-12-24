@@ -5,10 +5,13 @@ import ProcessService from '../services/ProcessService';
 import path from 'path';
 import fs from 'fs';
 
+import UtilsService from '../services/UtilsService';
 const { log, warn, error, color } = ConsoleService;
 
 const executionDir = process.cwd();
-const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+
+const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
+const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
 
 const moduleDir = path.resolve(path.dirname(module.id), '..', '..').replace('dist', '');

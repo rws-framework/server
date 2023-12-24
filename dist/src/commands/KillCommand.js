@@ -7,9 +7,11 @@ const _command_1 = __importDefault(require("./_command"));
 const ConsoleService_1 = __importDefault(require("../services/ConsoleService"));
 const ProcessService_1 = __importDefault(require("../services/ProcessService"));
 const path_1 = __importDefault(require("path"));
+const UtilsService_1 = __importDefault(require("../services/UtilsService"));
 const { log, warn, error, color } = ConsoleService_1.default;
 const executionDir = process.cwd();
-const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+const packageRootDir = UtilsService_1.default.findRootWorkspacePath(executionDir);
+const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;
 const moduleDir = path_1.default.resolve(path_1.default.dirname(module.id), '..', '..').replace('dist', '');
 class KillCommand extends _command_1.default {
