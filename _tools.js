@@ -28,6 +28,16 @@ function linkWorkspaces(packageJsonPath, rootDir){
   });
 }
 
+function removeWorkspacePackages(packageJsonPath, rootDir){
+  const package = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+
+  package.workspaces.forEach((workspace) => {
+      if(fs.existsSync(`${rootDir}/${workspace}/node_modules`)){
+          removeDirectory(`${rootDir}/${workspace}/node_modules`);
+      }      
+  });
+}
+
 function createAndLogSymlink(target, pathForLink) {
     // Ensure absolute paths
     const absoluteTarget = path.resolve(target);
@@ -60,5 +70,5 @@ function removeDirectory(dirPath) {
 module.exports = {
     findRootWorkspacePath,
     linkWorkspaces,
-    removeDirectory
+    removeWorkspacePackages
 }
