@@ -266,7 +266,7 @@ class LambdaService extends TheService {
 
       rwsLog(`installing ${functionName} modules...`);
 
-      await ProcessService.runShellCommand(`npm install`, true);
+      await ProcessService.runShellCommand(`npm install`, null, true);
 
       rwsLog(color().green(`${functionName} modules have been installed.`));      
 

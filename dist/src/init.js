@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const AppConfigService_1 = __importDefault(require("./services/AppConfigService"));
 const ServerService_1 = __importDefault(require("./services/ServerService"));
 const ConsoleService_1 = __importDefault(require("./services/ConsoleService"));
+const UtilsService_1 = __importDefault(require("./services/UtilsService"));
+const fs_1 = __importDefault(require("fs"));
+const ProcessService_1 = __importDefault(require("./services/ProcessService"));
 async function init(cfg) {
     const AppConfigService = (0, AppConfigService_1.default)(cfg);
     const port = await AppConfigService.get('port');
@@ -18,6 +21,14 @@ async function init(cfg) {
     let https = true;
     if (!sslCert || !sslKey) {
         https = false;
+    }
+    const executeDir = process.cwd();
+    const packageRootDir = UtilsService_1.default.findRootWorkspacePath(executeDir);
+    const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
+    const moduleCfgFile = `${moduleCfgDir}/_cfg_path`;
+    if (!fs_1.default.existsSync(moduleCfgFile)) {
+        ConsoleService_1.default.log(ConsoleService_1.default.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
+        ProcessService_1.default.runShellCommand('yarn rws init config/config');
     }
     (await ServerService_1.default.initializeApp({
         port: port,

@@ -291,11 +291,15 @@ class ProcessService extends TheService {
     });
   }
 
-  async runShellCommand(command: string, silent: boolean = false): Promise<void> {
+  async runShellCommand(command: string, cwd: string = null,silent: boolean = false): Promise<void> {
     return new Promise((resolve, reject) => {
       const [cmd, ...args] = command.split(' ');
       
-      const spawned = spawn(cmd, args, { stdio: silent ? 'ignore' : 'inherit' });
+      if(!cwd){
+        cwd = process.cwd();
+      }
+
+      const spawned = spawn(cmd, args, { stdio: silent ? 'ignore' : 'inherit', cwd });
 
       spawned.on('exit', (code) => {
         if (code !== 0) {

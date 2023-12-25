@@ -182,7 +182,7 @@ class LambdaService extends _service_1.default {
             const oldDir = process.cwd();
             process.chdir(`${moduleDir}/lambda-functions/${functionName}`);
             rwsLog(`installing ${functionName} modules...`);
-            await ProcessService_1.default.runShellCommand(`npm install`, true);
+            await ProcessService_1.default.runShellCommand(`npm install`, null, true);
             rwsLog(color().green(`${functionName} modules have been installed.`));
             process.chdir(oldDir);
             const packagePath = `${moduleDir}/lambda-functions/${functionName}/node_modules`;

@@ -42,6 +42,8 @@ const executionDir = process.cwd();
 
 const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
+const moduleCfgFile = `${moduleCfgDir}/_cfg_path`;
+
 function getConfig(configPath: string, cfgPathFile: string | null = null) 
 {    
     if(cfgPathFile === null){

@@ -5,6 +5,10 @@ import IAppConfig from "./interfaces/IAppConfig";
 import getConfigService from "./services/AppConfigService";
 import ServerService from "./services/ServerService";
 import ConsoleService from "./services/ConsoleService";
+import UtilsService from "./services/UtilsService";
+
+import fs from "fs";
+import ProcessService from "./services/ProcessService";
 
 
 async function init(cfg: IAppConfig){    
@@ -22,6 +26,16 @@ async function init(cfg: IAppConfig){
 
     if(!sslCert || !sslKey){
         https = false;
+    }
+
+    const executeDir: string = process.cwd();
+    const packageRootDir = UtilsService.findRootWorkspacePath(executeDir)
+    const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
+    const moduleCfgFile = `${moduleCfgDir}/_cfg_path`;
+
+    if(!fs.existsSync(moduleCfgFile )){        
+        ConsoleService.log(ConsoleService.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
+        ProcessService.runShellCommand('yarn rws init config/config');
     }
 
     (await ServerService.initializeApp({
