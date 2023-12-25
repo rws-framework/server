@@ -28,7 +28,7 @@ async function init(cfg) {
     const moduleCfgFile = `${moduleCfgDir}/_cfg_path`;
     if (!fs_1.default.existsSync(moduleCfgFile)) {
         ConsoleService_1.default.log(ConsoleService_1.default.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
-        ProcessService_1.default.runShellCommand('yarn rws init config/config');
+        await ProcessService_1.default.runShellCommand('yarn rws init config/config');
     }
     (await ServerService_1.default.initializeApp({
         port: port,

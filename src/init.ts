@@ -35,7 +35,7 @@ async function init(cfg: IAppConfig){
 
     if(!fs.existsSync(moduleCfgFile )){        
         ConsoleService.log(ConsoleService.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
-        ProcessService.runShellCommand('yarn rws init config/config');
+        await ProcessService.runShellCommand('yarn rws init config/config');
     }
 
     (await ServerService.initializeApp({
