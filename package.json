@@ -1,14 +1,13 @@
 {
   "name": "rws-js-server",
-  "version": "1.9.1",
+  "version": "1.9.3",
   "description": "",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "scripts": {
     "dev": "tsc-watch --noClear -p ./tsconfig.json",
     "docs": "typedoc --tsconfig ./tsconfig.json",
-    "build": "npx tsc",
-    "postinstall": "npx rws init config/config"
+    "build": "tsc"    
   },
   "author": "papablack",
   "license": "ISC",
