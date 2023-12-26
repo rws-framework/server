@@ -171,7 +171,9 @@ class ServerService extends socket_io_1.Server {
             options.key = fs_1.default.readFileSync(sslKey);
             options.cert = fs_1.default.readFileSync(sslCert);
         }
-        await RouterService_1.default.assignRoutes(app, opts.httpRoutes, opts.controllerList);
+        if (AppConfigService.get('features') && AppConfigService.get('features').routing_enabled) {
+            await RouterService_1.default.assignRoutes(app, opts.httpRoutes, opts.controllerList);
+        }
         const webServer = https ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
         return _a.init(webServer, opts);
     }

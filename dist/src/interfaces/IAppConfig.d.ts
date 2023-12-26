@@ -1,5 +1,10 @@
 import { RWSHTTPRoutingEntry, WsRoutes, RWSController, RWSCommand } from "../index";
 export default interface IAppConfig {
+    features?: {
+        ws_enabled?: boolean;
+        routing_enabled?: boolean;
+        test_routes?: boolean;
+    };
     mongo_url: string;
     mongo_db: string;
     port: number;

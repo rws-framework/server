@@ -218,7 +218,9 @@ class ServerService extends ServerBase {
             options.cert = fs.readFileSync(sslCert);
         }        
 
-        await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
+        if(AppConfigService.get('features') && AppConfigService.get('features').routing_enabled){
+            await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
+        }
 
         const webServer = https ? HTTPS.createServer(options, app) : HTTP.createServer(app);    
 
