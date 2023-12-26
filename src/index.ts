@@ -24,7 +24,7 @@ import UtilsService from './services/UtilsService';
 import RWSPrompt from './models/prompts/_prompt';
 import { InverseRelation, InverseTimeSeries, Relation, TrackType} from './models/annotations/index';
 import { Route } from './routing/annotations/index';
-import getAppConfig, { IAppConfig } from './services/AppConfigService';
+import getAppConfig, { IAppConfig, AppConfigService } from './services/AppConfigService';
 
 const RWSannotations = {
     modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, TrackType },
@@ -45,6 +45,7 @@ export {
     init as serverInit,
     SetupRWS,
     getAppConfig,    
+    AppConfigService,
 
     Controller as RWSController,
     TheService as RWSService,
