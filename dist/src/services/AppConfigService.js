@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.AppConfigService = void 0;
 const _service_1 = __importDefault(require("./_service"));
 const AppDefaultConfig = {
     mongo_url: null,
@@ -61,5 +62,6 @@ class AppConfigService extends _service_1.default {
         return _service_1.default._instances[className];
     }
 }
+exports.AppConfigService = AppConfigService;
 exports.default = (cfg) => AppConfigService.getConfigSingleton(cfg);
 //# sourceMappingURL=AppConfigService.js.map

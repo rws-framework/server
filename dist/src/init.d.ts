@@ -1,3 +1,4 @@
 import IAppConfig from "./interfaces/IAppConfig";
-declare function init(cfg: IAppConfig): Promise<void>;
+import { AppConfigService } from "./services/AppConfigService";
+declare function init(cfg: IAppConfig, addToConfig?: (configService: AppConfigService) => Promise<void>): Promise<void>;
 export default init;

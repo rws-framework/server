@@ -2,7 +2,7 @@
 
 
 import IAppConfig from "./interfaces/IAppConfig";
-import getConfigService from "./services/AppConfigService";
+import getConfigService, { AppConfigService } from "./services/AppConfigService";
 import ServerService from "./services/ServerService";
 import ConsoleService from "./services/ConsoleService";
 import UtilsService from "./services/UtilsService";
@@ -11,7 +11,7 @@ import fs from "fs";
 import ProcessService from "./services/ProcessService";
 
 
-async function init(cfg: IAppConfig){    
+async function init(cfg: IAppConfig, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
     const AppConfigService = getConfigService(cfg);
     const port = await AppConfigService.get('port');
     const wsRoutes = await AppConfigService.get('ws_routes');
@@ -21,6 +21,10 @@ async function init(cfg: IAppConfig){
 
     const sslCert = AppConfigService.get('ssl_cert');
     const sslKey = AppConfigService.get('ssl_key');      
+
+    if(addToConfig !== null){
+        await addToConfig(AppConfigService);
+    }
 
     let https = true;
 

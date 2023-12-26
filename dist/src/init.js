@@ -9,7 +9,7 @@ const ConsoleService_1 = __importDefault(require("./services/ConsoleService"));
 const UtilsService_1 = __importDefault(require("./services/UtilsService"));
 const fs_1 = __importDefault(require("fs"));
 const ProcessService_1 = __importDefault(require("./services/ProcessService"));
-async function init(cfg) {
+async function init(cfg, addToConfig = null) {
     const AppConfigService = (0, AppConfigService_1.default)(cfg);
     const port = await AppConfigService.get('port');
     const wsRoutes = await AppConfigService.get('ws_routes');
@@ -18,6 +18,9 @@ async function init(cfg) {
     const pub_dir = await AppConfigService.get('pub_dir');
     const sslCert = AppConfigService.get('ssl_cert');
     const sslKey = AppConfigService.get('ssl_key');
+    if (addToConfig !== null) {
+        await addToConfig(AppConfigService);
+    }
     let https = true;
     if (!sslCert || !sslKey) {
         https = false;

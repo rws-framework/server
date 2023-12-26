@@ -12,4 +12,4 @@ declare class AppConfigService extends TheService {
 }
 declare const _default: (cfg?: IAppConfig) => AppConfigService;
 export default _default;
-export { IAppConfig };
+export { IAppConfig, AppConfigService };

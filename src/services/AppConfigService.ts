@@ -81,4 +81,4 @@ class AppConfigService extends TheService{
 }
 
 export default (cfg?: IAppConfig): AppConfigService => AppConfigService.getConfigSingleton(cfg);
-export { IAppConfig }
+export { IAppConfig, AppConfigService }
