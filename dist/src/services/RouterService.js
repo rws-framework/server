@@ -98,7 +98,7 @@ class RouterService extends _service_1.default {
                 res.send(controllerMethodReturn);
                 return;
             }
-            if (routeParams.responseType === 'html') {
+            if (routeParams.responseType === 'html' && (0, AppConfigService_1.default)().get('pub_dir')) {
                 res.sendFile(path_1.default.join((0, AppConfigService_1.default)().get('pub_dir'), controllerMethodReturn.template_name + '.html'));
                 return;
             }

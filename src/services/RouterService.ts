@@ -136,7 +136,7 @@ class RouterService extends TheService{
           return;
         }                                              
 
-        if(routeParams.responseType === 'html'){          
+        if(routeParams.responseType === 'html' && appConfig().get('pub_dir')){          
           res.sendFile(path.join(appConfig().get('pub_dir'),  controllerMethodReturn.template_name + '.html'));
           return;
         }
