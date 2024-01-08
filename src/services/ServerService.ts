@@ -96,6 +96,12 @@ class ServerService extends ServerBase {
             });
         });
 
+        this.use(async (socket, next) => {
+            const request: HTTP.IncomingMessage = socket.request;
+            const response: ServerResponse = new ServerResponse(request);
+            corsMiddleware(request, response, next);            
+        });
+
         if(opts.authorization){
             this.use(async (socket, next) => {
                 const AppConfigService = getConfigService();
@@ -130,9 +136,7 @@ class ServerService extends ServerBase {
                     response.writeHead(403, 'Token unauthorized');
                     response.end();
                     return;
-                }
-
-                corsMiddleware(request, response, next);            
+                }                    
             });
         }
           

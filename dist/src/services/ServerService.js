@@ -81,6 +81,11 @@ class ServerService extends socket_io_1.Server {
                 new SocketClass(_a.io).handleConnection(socket, eventName);
             });
         });
+        this.use(async (socket, next) => {
+            const request = socket.request;
+            const response = new http_1.ServerResponse(request);
+            corsMiddleware(request, response, next);
+        });
         if (opts.authorization) {
             this.use(async (socket, next) => {
                 const AppConfigService = (0, AppConfigService_1.default)();
@@ -111,7 +116,6 @@ class ServerService extends socket_io_1.Server {
                     response.end();
                     return;
                 }
-                corsMiddleware(request, response, next);
             });
         }
     }
