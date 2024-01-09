@@ -90,7 +90,7 @@ class VPCService extends _service_1.default {
                 VpcId: vpcId,
                 ServiceName: serviceName,
                 VpcEndpointType: "Gateway",
-                RouteTableIds: [defaultRouteTable.RouteTableId], // Add your route table IDs here
+                RouteTableIds: [defaultRouteTable.RouteTableId],
                 TagSpecifications: [
                     {
                         ResourceType: "vpc-endpoint",

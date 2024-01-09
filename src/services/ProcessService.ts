@@ -35,6 +35,7 @@ type InterpreterType = 'node' | 'none';
 interface ICommandOpts {
   exec_mode?: string
   index?: number,
+  cwd?: string,
   interpreter?: InterpreterType
   env: {
     [key: string]: string
@@ -129,7 +130,7 @@ class ProcessService extends TheService {
           script: cmd,
           name: processName,
           args: args,
-          cwd: process.cwd(),
+          cwd: theOpts.cwd ? theOpts.cwd : process.cwd(),
           interpreter: theOpts.interpreter,
           autorestart: false,
           exec_mode: exec_mode,

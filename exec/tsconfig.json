@@ -17,7 +17,7 @@
     "paths": {
       "rws-js-server": [
         "../src"
-      ]  
+      ]
     }
   },
   "include": [

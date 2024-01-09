@@ -139,7 +139,7 @@ class DBService extends _service_1.default {
             // Create a time series collection
             const options = {
                 timeseries: {
-                    timeField: 'timestamp', // Replace with your timestamp field
+                    timeField: 'timestamp',
                     metaField: 'params' // Replace with your metadata field
                 }
             };

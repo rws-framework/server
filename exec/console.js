@@ -113,7 +113,7 @@ async function generateCliClient()
             warn('[RWS] Forcing CLI client reload...');
         }
         log(color().green('[RWS]') + color().yellowBright(' Detected CLI file changes. Generating CLI client file...'));      
-        await ProcessService.PM2ExecCommand(`yarn webpack --config ${webpackPath}/exec/exec.webpack.config.js`);
+        await ProcessService.PM2ExecCommand(`yarn webpack --config ${webpackPath}/exec/exec.webpack.config.js`, { options: { cwd: process.cwd() }});
         log(color().green('[RWS]') + ' CLI client file generated.')       
     }else{
         log(color().green('[RWS]') + ' CLI client file is up to date.')  

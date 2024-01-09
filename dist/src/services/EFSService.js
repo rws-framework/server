@@ -143,13 +143,13 @@ class EFSService extends _service_1.default {
         const clientToken = this.generateClientToken(); // Generate a unique client token
         const params = {
             FileSystemId: fileSystemId,
-            ClientToken: clientToken, // Add the client token here
+            ClientToken: clientToken,
             PosixUser: {
-                Uid: 1001, // You can adjust these values as per your requirements.
+                Uid: 1001,
                 Gid: 1001
             },
             RootDirectory: {
-                Path: "/mnt/efs", // The path where Lambda will mount the EFS.
+                Path: "/mnt/efs",
                 CreationInfo: {
                     OwnerUid: 1001,
                     OwnerGid: 1001,

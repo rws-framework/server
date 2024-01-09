@@ -72,7 +72,7 @@ class ProcessService extends _service_1.default {
                     script: cmd,
                     name: processName,
                     args: args,
-                    cwd: process.cwd(),
+                    cwd: theOpts.cwd ? theOpts.cwd : process.cwd(),
                     interpreter: theOpts.interpreter,
                     autorestart: false,
                     exec_mode: exec_mode,

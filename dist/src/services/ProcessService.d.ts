@@ -7,6 +7,7 @@ type InterpreterType = 'node' | 'none';
 interface ICommandOpts {
     exec_mode?: string;
     index?: number;
+    cwd?: string;
     interpreter?: InterpreterType;
     env: {
         [key: string]: string;

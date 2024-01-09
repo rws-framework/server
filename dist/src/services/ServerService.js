@@ -60,14 +60,14 @@ class ServerService extends socket_io_1.Server {
         this.srv = webServer;
         this.srv.on("options", (req, res) => {
             res.writeHead(200, {
-                "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
+                "Access-Control-Allow-Origin": _DOMAIN,
                 "Access-Control-Allow-Methods": "GET, POST",
                 "Access-Control-Allow-Headers": "Content-Type"
             });
             res.end();
         });
         const corsMiddleware = (0, cors_1.default)({
-            origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
+            origin: _DOMAIN,
             methods: ['GET', 'POST'],
         });
         //socket stuff
@@ -78,7 +78,7 @@ class ServerService extends socket_io_1.Server {
             });
             Object.keys(opts.wsRoutes).forEach((eventName) => {
                 const SocketClass = opts.wsRoutes[eventName];
-                new SocketClass(_a.io).handleConnection(socket, eventName);
+                new SocketClass(ServerService.io).handleConnection(socket, eventName);
             });
         });
         this.use(async (socket, next) => {
@@ -128,8 +128,8 @@ class ServerService extends socket_io_1.Server {
         }
     }
     static init(webServer, opts) {
-        if (!_a.io) {
-            _a.io = new _a(webServer, opts);
+        if (!ServerService.io) {
+            ServerService.io = new ServerService(webServer, opts);
         }
         const allProcessesIds = ProcessService_1.default.getAllProcessesIds();
         const executeDir = process.cwd();
@@ -143,7 +143,7 @@ class ServerService extends socket_io_1.Server {
                 fs_1.default.unlink(`${rwsDir}/pid`, () => { });
             }
         });
-        return _a.io;
+        return ServerService.io;
     }
     webServer() {
         return this.srv;
@@ -179,7 +179,7 @@ class ServerService extends socket_io_1.Server {
             await RouterService_1.default.assignRoutes(app, opts.httpRoutes, opts.controllerList);
         }
         const webServer = https ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
-        return _a.init(webServer, opts);
+        return ServerService.init(webServer, opts);
     }
 }
 _a = ServerService;
@@ -195,7 +195,7 @@ ServerService.cookies = {
         });
     },
     getCookie: async (headers, key) => {
-        const cookiesBin = await _a.cookies.getCookies(headers);
+        const cookiesBin = await ServerService.cookies.getCookies(headers);
         if (!cookiesBin[key]) {
             return null;
         }
