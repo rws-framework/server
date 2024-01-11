@@ -13,6 +13,7 @@ import Controller from "../controllers/_controller";
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from "../routing/routes";
 import ProcessService from "./ProcessService";
 import ConsoleService from "./ConsoleService";
+import UtilsService from "./UtilsService";
 import path from 'path';
 import bodyParser from 'body-parser';
 import Error404 from '../errors/Error404';
@@ -161,8 +162,9 @@ class ServerService extends ServerBase {
 
         const allProcessesIds = ProcessService.getAllProcessesIds();
 
-        const executeDir = process.cwd();        
-        const rwsDir = `${executeDir}/node_modules/.rws`;
+        const executeDir = process.cwd();     
+        const pacakgeDir = UtilsService.findRootWorkspacePath(process.cwd());   
+        const rwsDir = `${pacakgeDir}/node_modules/.rws`;
 
         if(!fs.existsSync(rwsDir)){
             fs.mkdirSync(rwsDir);

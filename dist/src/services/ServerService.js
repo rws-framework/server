@@ -38,6 +38,7 @@ const express_1 = __importDefault(require("express"));
 const RouterService_1 = __importDefault(require("./RouterService"));
 const ProcessService_1 = __importDefault(require("./ProcessService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
+const UtilsService_1 = __importDefault(require("./UtilsService"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const Error404_1 = __importDefault(require("../errors/Error404"));
 const fileUpload = require('express-fileupload');
@@ -134,7 +135,8 @@ class ServerService extends socket_io_1.Server {
         }
         const allProcessesIds = ProcessService_1.default.getAllProcessesIds();
         const executeDir = process.cwd();
-        const rwsDir = `${executeDir}/node_modules/.rws`;
+        const pacakgeDir = UtilsService_1.default.findRootWorkspacePath(process.cwd());
+        const rwsDir = `${pacakgeDir}/node_modules/.rws`;
         if (!fs_1.default.existsSync(rwsDir)) {
             fs_1.default.mkdirSync(rwsDir);
         }
