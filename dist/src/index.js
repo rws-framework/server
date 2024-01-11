@@ -26,7 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RWSPrompt = exports.RWSTestSuite = exports.RWSAppCommands = exports.RWSannotations = exports.ProcessService = exports.Socket = exports.TimeSeriesModel = exports.UtilsService = exports.TraversalService = exports.MD5Service = exports.EFSService = exports.AWSService = exports.LambdaService = exports.ConsoleService = exports.S3Service = exports.AuthService = exports.DBService = exports.RWSServer = exports.RWSModel = exports.RWSCommand = exports.RWSSocket = exports.RWSService = exports.RWSController = exports.AppConfigService = exports.getAppConfig = exports.SetupRWS = exports.serverInit = void 0;
+exports.RWSErrorCodes = exports.RWSPrompt = exports.RWSTestSuite = exports.RWSAppCommands = exports.RWSannotations = exports.ProcessService = exports.Socket = exports.TimeSeriesModel = exports.UtilsService = exports.TraversalService = exports.MD5Service = exports.EFSService = exports.AWSService = exports.LambdaService = exports.ConsoleService = exports.S3Service = exports.AuthService = exports.DBService = exports.RWSServer = exports.RWSModel = exports.RWSCommand = exports.RWSSocket = exports.RWSService = exports.RWSController = exports.AppConfigService = exports.getAppConfig = exports.SetupRWS = exports.serverInit = void 0;
 const socket_io_1 = require("socket.io");
 Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return socket_io_1.Socket; } });
 const init_1 = __importDefault(require("./init"));
@@ -85,4 +85,6 @@ const index_3 = __importDefault(require("./commands/index"));
 exports.RWSAppCommands = index_3.default;
 const RWSTestSuite = __importStar(require("./tests/index"));
 exports.RWSTestSuite = RWSTestSuite;
+const RWSErrorCodes = __importStar(require("./errors/index"));
+exports.RWSErrorCodes = RWSErrorCodes;
 //# sourceMappingURL=index.js.map

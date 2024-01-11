@@ -20,4 +20,5 @@ export { IRequestParams, IHTTProuteMethod };
  */
 export default class Controller extends RWSService {
     constructor();
+    callMethod(methodName: string): (params: IRequestParams) => any;
 }

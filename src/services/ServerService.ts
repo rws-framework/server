@@ -15,7 +15,7 @@ import ProcessService from "./ProcessService";
 import ConsoleService from "./ConsoleService";
 import path from 'path';
 import bodyParser from 'body-parser';
-
+import Error404 from '../errors/Error404';
 
 const fileUpload = require('express-fileupload');
 
@@ -166,15 +166,7 @@ class ServerService extends ServerBase {
 
         if(!fs.existsSync(rwsDir)){
             fs.mkdirSync(rwsDir);
-        }
-
-        fs.writeFileSync(`${rwsDir}/pid`, allProcessesIds.join(','));
-
-        process.on('exit', (code) => {
-            if(fs.existsSync(`${rwsDir}/pid`)){
-                fs.unlink(`${rwsDir}/pid`, () => {});
-            }
-        });
+        }  
  
         return ServerService.io;
     }
@@ -225,6 +217,14 @@ class ServerService extends ServerBase {
         if(AppConfigService.get('features') && AppConfigService.get('features').routing_enabled){
             await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
         }
+
+        app.use((req, res, next) => {
+            const error =  new Error404(new Error('Sorry, the page you\'re looking for doesn\'t exist.'), req.url);
+
+            error.printFullError();
+
+            res.status(404).send(error.getMessage());
+        });
 
         const webServer = https ? HTTPS.createServer(options, app) : HTTP.createServer(app);    
 

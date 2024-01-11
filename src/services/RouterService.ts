@@ -7,9 +7,10 @@ import { IHTTProuteParams } from "../routing/annotations/Route";
 import UtilsService from './UtilsService';
 import appConfig from './AppConfigService';
 import path from 'path';
+import { RWSError } from '../errors/index';
 
 
-type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction, IHTTProuteParams]};
+type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction, IHTTProuteParams, string]};
 
 interface IControllerRoutes {
   get: RouteEntry;
@@ -65,7 +66,7 @@ class RouterService extends TheService{
         }        
 
         controllerList.forEach((controllerInstance: Controller) => {          
-          const controllerMetadata: Record<string, {annotationType: string, metadata: any}> = this.getRouterAnnotations(controllerInstance.constructor as typeof Controller); // Pass the class constructor      
+          const controllerMetadata: Record<string, {annotationType: string, metadata: any}> = this.getRouterAnnotations(controllerInstance.constructor as typeof Controller);
           
           if(controllerMetadata){            
             Object.keys(controllerMetadata).forEach((key: string) => {
@@ -114,36 +115,43 @@ class RouterService extends TheService{
     }
 
     private addRouteToServer(actions: RouteEntry, route: IHTTProute){
-      const [routeMethod, appMethod, routeParams] = actions[route.name];                                
-
+ 
+      const [routeMethod, appMethod, routeParams, methodName] = actions[route.name];                                
+      
       if(!appMethod){
         return;
       }        
 
       appMethod(route.path, async (req: Request, res: Response) => {
-        const controllerMethodReturn = await routeMethod({
-          req: req,
-          query: req.query,
-          params: route.noParams ? [] : req.params,
-          data: req.body,
-          res: res       
-        });     
+        try {
 
-        res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  
+          const controllerMethodReturn = await routeMethod({
+            req: req,
+            query: req.query,
+            params: route.noParams ? [] : req.params,
+            data: req.body,
+            res: res       
+          });     
 
-        if(routeParams.responseType === 'json' || !routeParams.responseType){                
+          res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  
+
+          if(routeParams.responseType === 'json' || !routeParams.responseType){                
+            res.send(controllerMethodReturn);
+            return;
+          }                                              
+
+          if(routeParams.responseType === 'html' && appConfig().get('pub_dir')){          
+            res.sendFile(path.join(appConfig().get('pub_dir'),  controllerMethodReturn.template_name + '.html'));
+            return;
+          }
+
           res.send(controllerMethodReturn);
           return;
-        }                                              
-
-        if(routeParams.responseType === 'html' && appConfig().get('pub_dir')){          
-          res.sendFile(path.join(appConfig().get('pub_dir'),  controllerMethodReturn.template_name + '.html'));
-          return;
+        }catch(err: RWSError | any){
+          console.log(err);
+          // err.printFullError();
         }
-
-        res.send(controllerMethodReturn);
-        return;
-      });     
+      });
     }
 
     private setControllerRoutes(
@@ -151,23 +159,23 @@ class RouterService extends TheService{
       controllerMetadata: Record<string, {annotationType: string, metadata: any}>, 
       controllerRoutes: IControllerRoutes, key: string, app: express.Express): void
       {
-      const action: IHTTProuteMethod = (controllerInstance as any)[key];
+      const action: IHTTProuteMethod = (controllerInstance as Controller).callMethod(key);
         const meta = controllerMetadata[key].metadata;                                        
         switch(meta.method) {
           case 'GET':
-            controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.get.bind(app), meta.params]; 
+            controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.get.bind(app), meta.params, key]; 
             break;
 
           case 'POST':
-            controllerRoutes.post[meta.name] = [action.bind(controllerInstance), app.post.bind(app), meta.params];
+            controllerRoutes.post[meta.name] = [action.bind(controllerInstance), app.post.bind(app), meta.params, key];
             break;
 
           case 'PUT':
-            controllerRoutes.put[meta.name] = [action.bind(controllerInstance), app.put.bind(app), meta.params]; 
+            controllerRoutes.put[meta.name] = [action.bind(controllerInstance), app.put.bind(app), meta.params, key]; 
             break;
 
           case 'DELETE':
-            controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params];
+            controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params, key];
             break;  
         }
     }

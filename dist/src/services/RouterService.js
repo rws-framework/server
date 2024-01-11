@@ -42,7 +42,7 @@ class RouterService extends _service_1.default {
             get: {}, post: {}, put: {}, delete: {}
         };
         controllerList.forEach((controllerInstance) => {
-            const controllerMetadata = this.getRouterAnnotations(controllerInstance.constructor); // Pass the class constructor      
+            const controllerMetadata = this.getRouterAnnotations(controllerInstance.constructor);
             if (controllerMetadata) {
                 Object.keys(controllerMetadata).forEach((key) => {
                     if (controllerMetadata[key].annotationType !== 'Route') {
@@ -81,46 +81,52 @@ class RouterService extends _service_1.default {
         });
     }
     addRouteToServer(actions, route) {
-        const [routeMethod, appMethod, routeParams] = actions[route.name];
+        const [routeMethod, appMethod, routeParams, methodName] = actions[route.name];
         if (!appMethod) {
             return;
         }
         appMethod(route.path, async (req, res) => {
-            const controllerMethodReturn = await routeMethod({
-                req: req,
-                query: req.query,
-                params: route.noParams ? [] : req.params,
-                data: req.body,
-                res: res
-            });
-            res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));
-            if (routeParams.responseType === 'json' || !routeParams.responseType) {
+            try {
+                const controllerMethodReturn = await routeMethod({
+                    req: req,
+                    query: req.query,
+                    params: route.noParams ? [] : req.params,
+                    data: req.body,
+                    res: res
+                });
+                res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));
+                if (routeParams.responseType === 'json' || !routeParams.responseType) {
+                    res.send(controllerMethodReturn);
+                    return;
+                }
+                if (routeParams.responseType === 'html' && (0, AppConfigService_1.default)().get('pub_dir')) {
+                    res.sendFile(path_1.default.join((0, AppConfigService_1.default)().get('pub_dir'), controllerMethodReturn.template_name + '.html'));
+                    return;
+                }
                 res.send(controllerMethodReturn);
                 return;
             }
-            if (routeParams.responseType === 'html' && (0, AppConfigService_1.default)().get('pub_dir')) {
-                res.sendFile(path_1.default.join((0, AppConfigService_1.default)().get('pub_dir'), controllerMethodReturn.template_name + '.html'));
-                return;
+            catch (err) {
+                console.log(err);
+                // err.printFullError();
             }
-            res.send(controllerMethodReturn);
-            return;
         });
     }
     setControllerRoutes(controllerInstance, controllerMetadata, controllerRoutes, key, app) {
-        const action = controllerInstance[key];
+        const action = controllerInstance.callMethod(key);
         const meta = controllerMetadata[key].metadata;
         switch (meta.method) {
             case 'GET':
-                controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.get.bind(app), meta.params];
+                controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.get.bind(app), meta.params, key];
                 break;
             case 'POST':
-                controllerRoutes.post[meta.name] = [action.bind(controllerInstance), app.post.bind(app), meta.params];
+                controllerRoutes.post[meta.name] = [action.bind(controllerInstance), app.post.bind(app), meta.params, key];
                 break;
             case 'PUT':
-                controllerRoutes.put[meta.name] = [action.bind(controllerInstance), app.put.bind(app), meta.params];
+                controllerRoutes.put[meta.name] = [action.bind(controllerInstance), app.put.bind(app), meta.params, key];
                 break;
             case 'DELETE':
-                controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params];
+                controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params, key];
                 break;
         }
     }

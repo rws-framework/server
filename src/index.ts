@@ -41,6 +41,8 @@ import TheSocket, { JSONMessage } from './sockets/_socket';
 import RWSAppCommands from './commands/index';
 import * as RWSTestSuite from './tests/index';
 
+import * as RWSErrorCodes from './errors/index';
+
 export {
     init as serverInit,
     SetupRWS,
@@ -85,5 +87,6 @@ export {
     RWSAppCommands,
     RWSTestSuite,  
     
-    RWSPrompt
+    RWSPrompt,
+    RWSErrorCodes
 }

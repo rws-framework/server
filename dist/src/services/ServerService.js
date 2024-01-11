@@ -39,6 +39,7 @@ const RouterService_1 = __importDefault(require("./RouterService"));
 const ProcessService_1 = __importDefault(require("./ProcessService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
 const body_parser_1 = __importDefault(require("body-parser"));
+const Error404_1 = __importDefault(require("../errors/Error404"));
 const fileUpload = require('express-fileupload');
 const _DOMAIN = '*'; //'https://' + AppConfigService.get('nginx', 'domain');
 const WEBSOCKET_CORS = {
@@ -137,12 +138,6 @@ class ServerService extends socket_io_1.Server {
         if (!fs_1.default.existsSync(rwsDir)) {
             fs_1.default.mkdirSync(rwsDir);
         }
-        fs_1.default.writeFileSync(`${rwsDir}/pid`, allProcessesIds.join(','));
-        process.on('exit', (code) => {
-            if (fs_1.default.existsSync(`${rwsDir}/pid`)) {
-                fs_1.default.unlink(`${rwsDir}/pid`, () => { });
-            }
-        });
         return ServerService.io;
     }
     webServer() {
@@ -178,6 +173,11 @@ class ServerService extends socket_io_1.Server {
         if (AppConfigService.get('features') && AppConfigService.get('features').routing_enabled) {
             await RouterService_1.default.assignRoutes(app, opts.httpRoutes, opts.controllerList);
         }
+        app.use((req, res, next) => {
+            const error = new Error404_1.default(new Error('Sorry, the page you\'re looking for doesn\'t exist.'), req.url);
+            error.printFullError();
+            res.status(404).send(error.getMessage());
+        });
         const webServer = https ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
         return ServerService.init(webServer, opts);
     }
