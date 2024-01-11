@@ -31,7 +31,7 @@ class ZipService extends _service_1.default {
         // archive.directory(sourcePath, params.recursive ? false : params.destpath);
         archive.glob('**/*', {
             cwd: sourcePath,
-            dot: true,
+            dot: true, //include .dotpaths
             ignore: params.ignore
         });
         log(`${color().green('[RWS Lambda Service]')} ZIP params:`);

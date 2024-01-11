@@ -61,14 +61,14 @@ class ServerService extends socket_io_1.Server {
         this.srv = webServer;
         this.srv.on("options", (req, res) => {
             res.writeHead(200, {
-                "Access-Control-Allow-Origin": _DOMAIN,
+                "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
                 "Access-Control-Allow-Methods": "GET, POST",
                 "Access-Control-Allow-Headers": "Content-Type"
             });
             res.end();
         });
         const corsMiddleware = (0, cors_1.default)({
-            origin: _DOMAIN,
+            origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
             methods: ['GET', 'POST'],
         });
         //socket stuff
@@ -79,7 +79,7 @@ class ServerService extends socket_io_1.Server {
             });
             Object.keys(opts.wsRoutes).forEach((eventName) => {
                 const SocketClass = opts.wsRoutes[eventName];
-                new SocketClass(ServerService.io).handleConnection(socket, eventName);
+                new SocketClass(_a.io).handleConnection(socket, eventName);
             });
         });
         this.use(async (socket, next) => {
@@ -129,8 +129,8 @@ class ServerService extends socket_io_1.Server {
         }
     }
     static init(webServer, opts) {
-        if (!ServerService.io) {
-            ServerService.io = new ServerService(webServer, opts);
+        if (!_a.io) {
+            _a.io = new _a(webServer, opts);
         }
         const allProcessesIds = ProcessService_1.default.getAllProcessesIds();
         const executeDir = process.cwd();
@@ -138,7 +138,7 @@ class ServerService extends socket_io_1.Server {
         if (!fs_1.default.existsSync(rwsDir)) {
             fs_1.default.mkdirSync(rwsDir);
         }
-        return ServerService.io;
+        return _a.io;
     }
     webServer() {
         return this.srv;
@@ -179,7 +179,7 @@ class ServerService extends socket_io_1.Server {
             res.status(404).send(error.getMessage());
         });
         const webServer = https ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
-        return ServerService.init(webServer, opts);
+        return _a.init(webServer, opts);
     }
 }
 _a = ServerService;
@@ -195,7 +195,7 @@ ServerService.cookies = {
         });
     },
     getCookie: async (headers, key) => {
-        const cookiesBin = await ServerService.cookies.getCookies(headers);
+        const cookiesBin = await _a.cookies.getCookies(headers);
         if (!cookiesBin[key]) {
             return null;
         }

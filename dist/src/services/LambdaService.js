@@ -67,7 +67,7 @@ class LambdaService extends _service_1.default {
             log(`${color().green('[RWS Lambda Service]')} uploading ${color().yellowBright(zipPath)}...`);
             const s3params = {
                 Bucket: s3BucketName,
-                Key: 'RWS-' + functionDirName + '.zip',
+                Key: 'RWS-' + functionDirName + '.zip', // File name you want to save as in S3
                 Body: zipFile
             };
             const s3Data = await S3Service_1.default.upload(s3params, true);
@@ -94,7 +94,7 @@ class LambdaService extends _service_1.default {
                     Handler: _HANDLER,
                     Code,
                     VpcConfig: {
-                        SubnetIds: [subnetId],
+                        SubnetIds: [subnetId], // Add your subnet IDs
                         SecurityGroupIds: await VPCService_1.default.listSecurityGroups(), // Add your security group ID
                     },
                     FileSystemConfigs: [

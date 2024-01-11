@@ -79,7 +79,7 @@ class ConsoleService extends _service_1.default {
             'objectValue': 'magenta',
             'braces': 'blue',
             'arrayBraces': 'yellow',
-            'colons': 'white',
+            'colons': 'white', // Color for colons
             'default': 'reset' // Default color to reset to default chalk color
         };
         const getCodeColor = (chalkKey, textValue) => {

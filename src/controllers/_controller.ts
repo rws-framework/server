@@ -1,6 +1,8 @@
 import { Response, Request } from "express";
 import RWSService from "../services/_service";
 
+import AppConfig from '../services/AppConfigService'
+
 import Error404 from '../errors/Error404';
 import Error500 from '../errors/Error500';
 
@@ -31,7 +33,7 @@ export default class Controller extends RWSService {
 
     callMethod(methodName: string): (params: IRequestParams) => any
     {
-        return (params: IRequestParams) => {                    
+        return (params: IRequestParams) => {                            
             if((!(this as any)[methodName])){
                 throw new Error404(new Error('The method does not exist in controller.'), `${__filename}::${methodName}`);
             }
