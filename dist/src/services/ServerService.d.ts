@@ -4,9 +4,11 @@ import { Server as ServerBase, Socket } from "socket.io";
 import HTTPS from "https";
 import HTTP from "http";
 import ITheSocket from "../interfaces/ITheSocket";
+import { Request, Response } from "express";
 import { AxiosRequestHeaders } from 'axios';
 import Controller from "../controllers/_controller";
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from "../routing/routes";
+import RWSError from '../errors/_error';
 type WsRoutes = {
     [eventName: string]: new (data: any) => ITheSocket;
 };
@@ -32,6 +34,8 @@ declare class ServerService extends ServerBase {
     static init(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts): ServerService;
     webServer(): HTTP.Server | HTTPS.Server;
     static initializeApp(opts: IInitOpts): Promise<ServerService>;
+    static on404(req: Request, res: Response): void;
+    static processErrorTemplate(error: RWSError): string;
     static cookies: {
         getCookies: (headers: AxiosRequestHeaders) => Promise<CookieType>;
         getCookie: (headers: AxiosRequestHeaders, key: string) => Promise<string | null>;

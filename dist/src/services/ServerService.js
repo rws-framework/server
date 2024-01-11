@@ -39,6 +39,7 @@ const RouterService_1 = __importDefault(require("./RouterService"));
 const ProcessService_1 = __importDefault(require("./ProcessService"));
 const ConsoleService_1 = __importDefault(require("./ConsoleService"));
 const UtilsService_1 = __importDefault(require("./UtilsService"));
+const path_1 = __importDefault(require("path"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const Error404_1 = __importDefault(require("../errors/Error404"));
 const fileUpload = require('express-fileupload');
@@ -172,16 +173,36 @@ class ServerService extends socket_io_1.Server {
             options.key = fs_1.default.readFileSync(sslKey);
             options.cert = fs_1.default.readFileSync(sslCert);
         }
+        let processed_routes = [];
         if (AppConfigService.get('features') && AppConfigService.get('features').routing_enabled) {
-            await RouterService_1.default.assignRoutes(app, opts.httpRoutes, opts.controllerList);
+            processed_routes = await RouterService_1.default.assignRoutes(app, opts.httpRoutes, opts.controllerList);
         }
         app.use((req, res, next) => {
-            const error = new Error404_1.default(new Error('Sorry, the page you\'re looking for doesn\'t exist.'), req.url);
-            error.printFullError();
-            res.status(404).send(error.getMessage());
+            if (!RouterService_1.default.hasRoute(req.originalUrl, processed_routes)) {
+                _a.on404(req, res);
+            }
+            else {
+                next();
+            }
         });
         const webServer = https ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
         return _a.init(webServer, opts);
+    }
+    static on404(req, res) {
+        const error = new Error404_1.default(new Error('Sorry, the page you\'re looking for doesn\'t exist.'), req.url);
+        error.printFullError();
+        let response = error.getMessage();
+        if (req.headers.accept.indexOf('text/html') > -1) {
+            const htmlTemplate = this.processErrorTemplate(error);
+            response = htmlTemplate;
+        }
+        res.status(404).send(response);
+    }
+    static processErrorTemplate(error) {
+        return fs_1.default.readFileSync(path_1.default.resolve(__dirname, '..', '..', '..', 'html') + '/error.html', 'utf-8')
+            .replace('{{error_number}}', error.getCode().toString())
+            .replace('{{error_message}}', error.getMessage())
+            .replace('{{error_stack_trace}}', error.getStackTraceString() !== '' ? `<h4>Stack trace:</h4><pre>${error.getStackTraceString()}</pre>` : '');
     }
 }
 _a = ServerService;

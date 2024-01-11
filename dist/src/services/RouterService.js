@@ -7,6 +7,7 @@ require("reflect-metadata");
 const _service_1 = __importDefault(require("./_service"));
 const AppConfigService_1 = __importDefault(require("./AppConfigService"));
 const path_1 = __importDefault(require("path"));
+const index_1 = require("../errors/index");
 /**
  *
  */
@@ -79,6 +80,7 @@ class RouterService extends _service_1.default {
                 this.addRouteToServer(actions, route);
             });
         });
+        return routes;
     }
     addRouteToServer(actions, route) {
         const [routeMethod, appMethod, routeParams, methodName] = actions[route.name];
@@ -95,15 +97,20 @@ class RouterService extends _service_1.default {
                     res: res
                 });
                 res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));
+                let status = 200;
+                if (controllerMethodReturn instanceof index_1.RWSError) {
+                    status = controllerMethodReturn.getCode();
+                }
                 if (routeParams.responseType === 'json' || !routeParams.responseType) {
-                    res.send(controllerMethodReturn);
+                    res.status(status).send(controllerMethodReturn);
                     return;
                 }
                 if (routeParams.responseType === 'html' && (0, AppConfigService_1.default)().get('pub_dir')) {
-                    res.sendFile(path_1.default.join((0, AppConfigService_1.default)().get('pub_dir'), controllerMethodReturn.template_name + '.html'));
+                    res.status(status).sendFile(path_1.default.join((0, AppConfigService_1.default)().get('pub_dir'), controllerMethodReturn.template_name + '.html'));
                     return;
                 }
-                res.send(controllerMethodReturn);
+                console.log(status);
+                res.status(status).send(controllerMethodReturn);
                 return;
             }
             catch (err) {
@@ -129,6 +136,16 @@ class RouterService extends _service_1.default {
                 controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params, key];
                 break;
         }
+    }
+    hasRoute(routePath, routes) {
+        return this.getRoute(routePath, routes) !== null;
+    }
+    getRoute(routePath, routes) {
+        const front_routes = (0, AppConfigService_1.default)().get('front_routes');
+        const foundRoute = routes.find((item) => {
+            return item.path.indexOf(routePath) > -1 && !item.noParams;
+        });
+        return !!foundRoute ? foundRoute : null;
     }
 }
 exports.default = RouterService.getSingleton();

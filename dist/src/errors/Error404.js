@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _error_1 = __importDefault(require("./_error"));
 class Error404 extends _error_1.default {
     constructor(baseError, resourcePath, params = null) {
-        super(baseError, params);
+        super(404, baseError, params);
         this.name = '404 Resource not found';
         this.message = `Resource "${resourcePath}" was not found`;
     }

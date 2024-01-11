@@ -16,13 +16,15 @@ class Controller extends _service_1.default {
     callMethod(methodName) {
         return (params) => {
             if ((!this[methodName])) {
-                throw new Error404_1.default(new Error('The method does not exist in controller.'), `${__filename}::${methodName}`);
+                const error = new Error404_1.default(new Error('The method does not exist in controller.'), `${__filename}::${methodName}`);
+                return error;
             }
             try {
                 return this[methodName](params);
             }
             catch (e) {
-                throw new Error500_1.default(e, `${__filename}::${methodName}`, params);
+                const error = new Error500_1.default(e, `${__filename}::${methodName}`, params);
+                return error;
             }
         };
     }

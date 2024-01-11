@@ -6,7 +6,7 @@ import HTTP, { IncomingMessage, ServerResponse } from "http";
 import ITheSocket from "../interfaces/ITheSocket";
 import AuthService from "./AuthService";
 import fs from 'fs';
-import express from "express";
+import express, { Request, Response } from "express";
 import RouterService from "./RouterService";
 import { AxiosRequestHeaders } from 'axios';
 import Controller from "../controllers/_controller";
@@ -17,6 +17,7 @@ import UtilsService from "./UtilsService";
 import path from 'path';
 import bodyParser from 'body-parser';
 import Error404 from '../errors/Error404';
+import RWSError from '../errors/_error';
 
 const fileUpload = require('express-fileupload');
 
@@ -216,21 +217,51 @@ class ServerService extends ServerBase {
             options.cert = fs.readFileSync(sslCert);
         }        
 
+        let processed_routes: IHTTProute[] = [];
+
         if(AppConfigService.get('features') && AppConfigService.get('features').routing_enabled){
-            await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
-        }
-
-        app.use((req, res, next) => {
-            const error =  new Error404(new Error('Sorry, the page you\'re looking for doesn\'t exist.'), req.url);
-
-            error.printFullError();
-
-            res.status(404).send(error.getMessage());
+            processed_routes = await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
+        }  
+        
+                
+        app.use((req, res, next) => {                              
+            if(!RouterService.hasRoute(req.originalUrl, processed_routes)){
+                ServerService.on404(req, res);
+            }else{
+                next();
+            }            
         });
+
 
         const webServer = https ? HTTPS.createServer(options, app) : HTTP.createServer(app);    
 
         return ServerService.init(webServer, opts);         
+    }
+
+    static on404(req: Request, res: Response): void
+    {
+        const error =  new Error404(new Error('Sorry, the page you\'re looking for doesn\'t exist.'), req.url);
+
+        error.printFullError();    
+        
+        let response = error.getMessage();
+
+        if(req.headers.accept.indexOf('text/html') > -1){
+            const htmlTemplate = this.processErrorTemplate(error);
+
+                response = htmlTemplate;
+        }   
+      
+        res.status(404).send(response);
+    }
+
+    static processErrorTemplate(error: RWSError): string
+    {
+        return fs.readFileSync( path.resolve(__dirname, '..', '..', '..', 'html') + '/error.html', 'utf-8')
+            .replace('{{error_number}}', error.getCode().toString())
+            .replace('{{error_message}}', error.getMessage())
+            .replace('{{error_stack_trace}}',  error.getStackTraceString() !== '' ? `<h4>Stack trace:</h4><pre>${error.getStackTraceString()}</pre>` : '')
+        ;
     }
 
     static cookies = {                

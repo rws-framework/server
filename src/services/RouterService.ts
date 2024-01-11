@@ -59,7 +59,7 @@ class RouterService extends TheService{
         return annotationsData;
     }
 
-    async assignRoutes(app: express.Express, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<void>
+    async assignRoutes(app: express.Express, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]>
     {                
         const controllerRoutes: IControllerRoutes = {
           get: {}, post: {}, put: {}, delete: {}
@@ -112,6 +112,8 @@ class RouterService extends TheService{
               this.addRouteToServer(actions, route);
             });
         });
+
+        return routes;
     }
 
     private addRouteToServer(actions: RouteEntry, route: IHTTProute){
@@ -135,17 +137,25 @@ class RouterService extends TheService{
 
           res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  
 
+          let status = 200;
+
+          if(controllerMethodReturn instanceof RWSError){
+            status = controllerMethodReturn.getCode();
+          }
+
           if(routeParams.responseType === 'json' || !routeParams.responseType){                
-            res.send(controllerMethodReturn);
+            res.status(status).send(controllerMethodReturn);
             return;
           }                                              
 
           if(routeParams.responseType === 'html' && appConfig().get('pub_dir')){          
-            res.sendFile(path.join(appConfig().get('pub_dir'),  controllerMethodReturn.template_name + '.html'));
+            res.status(status).sendFile(path.join(appConfig().get('pub_dir'),  controllerMethodReturn.template_name + '.html'));
             return;
           }
 
-          res.send(controllerMethodReturn);
+          console.log(status);
+
+          res.status(status).send(controllerMethodReturn);
           return;
         }catch(err: RWSError | any){
           console.log(err);
@@ -178,6 +188,23 @@ class RouterService extends TheService{
             controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params, key];
             break;  
         }
+    }
+    
+    hasRoute(routePath: string, routes: IHTTProute[]): boolean
+    {
+      return this.getRoute(routePath, routes) !== null;
+    }
+
+    getRoute(routePath: string, routes: IHTTProute[]): IHTTProute | null
+    {
+
+      const front_routes = appConfig().get('front_routes');
+
+      const foundRoute = routes.find((item: IHTTProute) => {
+        return item.path.indexOf(routePath) > -1 && !item.noParams
+      });      
+
+      return !!foundRoute ? foundRoute : null;
     }
 }
 

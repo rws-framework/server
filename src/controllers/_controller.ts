@@ -35,13 +35,16 @@ export default class Controller extends RWSService {
     {
         return (params: IRequestParams) => {                            
             if((!(this as any)[methodName])){
-                throw new Error404(new Error('The method does not exist in controller.'), `${__filename}::${methodName}`);
+                const error = new Error404(new Error('The method does not exist in controller.'), `${__filename}::${methodName}`);
+
+                return error;
             }
 
             try {              
                 return (this as any)[methodName](params);
             }catch(e: Error | unknown){
-                throw new Error500(e, `${__filename}::${methodName}`, params);
+                const error = new Error500(e, `${__filename}::${methodName}`, params);
+                return error;
             }
         }
     }

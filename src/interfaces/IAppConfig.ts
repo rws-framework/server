@@ -9,6 +9,7 @@ export default interface IAppConfig {
     mongo_url: string
     mongo_db: string
     port: number
+    ws_port?: number
     domain: string
     test_port: number
     ssl_cert: string
@@ -19,6 +20,7 @@ export default interface IAppConfig {
     controller_list: RWSController[]
     ws_routes: WsRoutes
     http_routes: RWSHTTPRoutingEntry[] 
+    front_routes?: Record<string, unknown>[],
     commands?: RWSCommand[]
     aws_lambda_region?: string
     aws_access_key?: string

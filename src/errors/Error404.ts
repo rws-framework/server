@@ -4,7 +4,7 @@ export default class Error404 extends RWSError{
     name = '404 Resource not found'
 
     constructor(baseError: Error | unknown, resourcePath: string, params: any = null){
-        super(baseError, params);
+        super(404, baseError, params);
 
         this.message = `Resource "${resourcePath}" was not found`
     }
