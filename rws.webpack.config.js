@@ -24,13 +24,14 @@ module.exports = {
     extensions: ['.ts', '.js', '.node'],  
     alias: {
       
-    }
+    },
+    symlinks: false
   },
   context: process.cwd(),
   module: {
     rules: [
       {
-        test: /\.(ts|js)$/,
+        test: /\.(ts)$/,
         use: [                       
           {
             loader: 'ts-loader',
@@ -58,5 +59,7 @@ module.exports = {
   stats: {
     warningsFilter: webpackFilters,
   },
-  externals: [nodeExternals()],
+  externals: [nodeExternals({
+    allowlist: ['rws-js-server'],
+  })],
 };

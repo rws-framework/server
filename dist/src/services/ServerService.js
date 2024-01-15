@@ -90,44 +90,7 @@ class ServerService extends socket_io_1.Server {
             corsMiddleware(request, response, next);
         });
         if (opts.authorization) {
-            this.use(async (socket, next) => {
-                const AppConfigService = (0, AppConfigService_1.default)();
-                const request = socket.request;
-                const response = new http_1.ServerResponse(request);
-                const authHeader = request.headers.authorization;
-                const UserClass = await AppConfigService.get('user_class');
-                if (!authHeader) {
-                    response.writeHead(400, 'No token provided');
-                    response.end();
-                    return;
-                }
-                if (!_self.tokens[socket.id]) {
-                    _self.setJWTToken(socket.id, authHeader);
-                }
-                if (!_self.users[socket.id]) {
-                    try {
-                        _self.users[socket.id] = await AuthService_1.default.authorize(_self.tokens[socket.id], UserClass);
-                    }
-                    catch (e) {
-                        ConsoleService_1.default.error('Token authorization error: ', e.message);
-                    }
-                }
-                if (!_self.users[socket.id]) {
-                    _self.disconnectClient(socket);
-                    ConsoleService_1.default.error('Token unauthorized');
-                    response.writeHead(403, 'Token unauthorized');
-                    response.end();
-                    return;
-                }
-            });
-        }
-    }
-    setJWTToken(socketId, token) {
-        if (token.indexOf('Bearer') > -1) {
-            this.tokens[socketId] = token.split(' ')[1];
-        }
-        else {
-            this.tokens[socketId] = token;
+            this.setupAuth();
         }
     }
     static init(webServer, opts) {
@@ -142,9 +105,6 @@ class ServerService extends socket_io_1.Server {
             fs_1.default.mkdirSync(rwsDir);
         }
         return _a.io;
-    }
-    webServer() {
-        return this.srv;
     }
     static async initializeApp(opts) {
         const AppConfigService = (0, AppConfigService_1.default)();
@@ -187,6 +147,50 @@ class ServerService extends socket_io_1.Server {
         });
         const webServer = https ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
         return _a.init(webServer, opts);
+    }
+    setJWTToken(socketId, token) {
+        if (token.indexOf('Bearer') > -1) {
+            this.tokens[socketId] = token.split(' ')[1];
+        }
+        else {
+            this.tokens[socketId] = token;
+        }
+    }
+    webServer() {
+        return this.srv;
+    }
+    setupAuth() {
+        const _self = this;
+        this.use(async (socket, next) => {
+            const AppConfigService = (0, AppConfigService_1.default)();
+            const request = socket.request;
+            const response = new http_1.ServerResponse(request);
+            const authHeader = request.headers.authorization;
+            const UserClass = await AppConfigService.get('user_class');
+            if (!authHeader) {
+                response.writeHead(400, 'No token provided');
+                response.end();
+                return;
+            }
+            if (!_self.tokens[socket.id]) {
+                _self.setJWTToken(socket.id, authHeader);
+            }
+            if (!_self.users[socket.id]) {
+                try {
+                    _self.users[socket.id] = await AuthService_1.default.authorize(_self.tokens[socket.id], UserClass);
+                }
+                catch (e) {
+                    ConsoleService_1.default.error('Token authorization error: ', e.message);
+                }
+            }
+            if (!_self.users[socket.id]) {
+                _self.disconnectClient(socket);
+                ConsoleService_1.default.error('Token unauthorized');
+                response.writeHead(403, 'Token unauthorized');
+                response.end();
+                return;
+            }
+        });
     }
     static on404(req, res) {
         const error = new Error404_1.default(new Error('Sorry, the page you\'re looking for doesn\'t exist.'), req.url);

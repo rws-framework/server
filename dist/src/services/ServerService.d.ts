@@ -29,11 +29,12 @@ declare class ServerService extends ServerBase {
     private tokens;
     private users;
     constructor(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts);
+    static init(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts): ServerService;
+    static initializeApp(opts: IInitOpts): Promise<ServerService>;
     disconnectClient: (clientSocket: Socket) => void;
     setJWTToken(socketId: string, token: string): void;
-    static init(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts): ServerService;
     webServer(): HTTP.Server | HTTPS.Server;
-    static initializeApp(opts: IInitOpts): Promise<ServerService>;
+    private setupAuth;
     static on404(req: Request, res: Response): void;
     static processErrorTemplate(error: RWSError): string;
     static cookies: {

@@ -105,55 +105,9 @@ class ServerService extends ServerBase {
         });
 
         if(opts.authorization){
-            this.use(async (socket, next) => {
-                const AppConfigService = getConfigService();
-                const request: HTTP.IncomingMessage = socket.request;
-                const response: ServerResponse = new ServerResponse(request);
-                const authHeader = request.headers.authorization;            
-
-                const UserClass = await AppConfigService.get('user_class');    
-
-                if(!authHeader){
-                    response.writeHead(400, 'No token provided');
-                    response.end();
-                    return;
-                }
-
-                if(!_self.tokens[socket.id]){
-                    _self.setJWTToken(socket.id, authHeader);
-                }
-
-                if(!_self.users[socket.id]){
-                    try{
-                        _self.users[socket.id] = await AuthService.authorize<typeof UserClass>(_self.tokens[socket.id], UserClass);                    
-                    } catch(e: Error | any){
-                        ConsoleService.error('Token authorization error: ', e.message)
-                    }
-                }
-
-                if(!_self.users[socket.id]){
-
-                    _self.disconnectClient(socket);
-                    ConsoleService.error('Token unauthorized')
-                    response.writeHead(403, 'Token unauthorized');
-                    response.end();
-                    return;
-                }                    
-            });
+            this.setupAuth()
         }
           
-    }
-
-    disconnectClient = (clientSocket: Socket) => {
-        clientSocket.disconnect(true);
-    }
-    
-    setJWTToken(socketId: string, token: string): void {
-        if(token.indexOf('Bearer') > -1){
-            this.tokens[socketId] = token.split(' ')[1];
-        }else{
-            this.tokens[socketId] = token;
-        }
     }
 
     static init(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts): ServerService {
@@ -173,11 +127,6 @@ class ServerService extends ServerBase {
  
         return ServerService.io;
     }
-
-    public webServer(): HTTP.Server | HTTPS.Server
-    { 
-        return this.srv 
-    }  
 
     public static async initializeApp(opts: IInitOpts): Promise<ServerService>
     {
@@ -236,6 +185,63 @@ class ServerService extends ServerBase {
         const webServer = https ? HTTPS.createServer(options, app) : HTTP.createServer(app);    
 
         return ServerService.init(webServer, opts);         
+    }
+
+    disconnectClient = (clientSocket: Socket) => {
+        clientSocket.disconnect(true);
+    }
+    
+    setJWTToken(socketId: string, token: string): void {
+        if(token.indexOf('Bearer') > -1){
+            this.tokens[socketId] = token.split(' ')[1];
+        }else{
+            this.tokens[socketId] = token;
+        }
+    }    
+
+    public webServer(): HTTP.Server | HTTPS.Server
+    { 
+        return this.srv 
+    }  
+
+    private setupAuth()
+    {
+        const _self = this;
+        this.use(async (socket, next) => {
+            const AppConfigService = getConfigService();
+            const request: HTTP.IncomingMessage = socket.request;
+            const response: ServerResponse = new ServerResponse(request);
+            const authHeader = request.headers.authorization;            
+
+            const UserClass = await AppConfigService.get('user_class');    
+
+            if(!authHeader){
+                response.writeHead(400, 'No token provided');
+                response.end();
+                return;
+            }
+
+            if(!_self.tokens[socket.id]){
+                _self.setJWTToken(socket.id, authHeader);
+            }
+
+            if(!_self.users[socket.id]){
+                try{
+                    _self.users[socket.id] = await AuthService.authorize<typeof UserClass>(_self.tokens[socket.id], UserClass);                    
+                } catch(e: Error | any){
+                    ConsoleService.error('Token authorization error: ', e.message)
+                }
+            }
+
+            if(!_self.users[socket.id]){
+
+                _self.disconnectClient(socket);
+                ConsoleService.error('Token unauthorized')
+                response.writeHead(403, 'Token unauthorized');
+                response.end();
+                return;
+            }                    
+        });
     }
 
     static on404(req: Request, res: Response): void
