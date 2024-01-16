@@ -12,6 +12,7 @@ const ProcessService_1 = __importDefault(require("./services/ProcessService"));
 async function init(cfg, addToConfig = null) {
     const AppConfigService = (0, AppConfigService_1.default)(cfg);
     const port = await AppConfigService.get('port');
+    const ws_port = await AppConfigService.get('ws_port');
     const wsRoutes = await AppConfigService.get('ws_routes');
     const httpRoutes = await AppConfigService.get('http_routes');
     const controler_list = await AppConfigService.get('controller_list');
@@ -33,15 +34,20 @@ async function init(cfg, addToConfig = null) {
         ConsoleService_1.default.log(ConsoleService_1.default.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
         await ProcessService_1.default.runShellCommand('yarn rws init config/config');
     }
-    (await ServerService_1.default.initializeApp({
-        port: port,
+    const theServer = await ServerService_1.default.initializeApp({
         wsRoutes: wsRoutes,
         httpRoutes: httpRoutes,
         controllerList: controler_list,
         pub_dir: pub_dir,
-    })).webServer().listen(port, () => {
-        ConsoleService_1.default.log(ConsoleService_1.default.color().green('Server' + ` is working on port ${port} using HTTP${https ? 'S' : ''} protocol`));
     });
+    const wsStart = async () => {
+        return (await theServer.websocket.starter());
+    };
+    const httpStart = async () => {
+        return (await theServer.http.starter());
+    };
+    wsStart();
+    await httpStart();
 }
 exports.default = init;
 //# sourceMappingURL=init.js.map

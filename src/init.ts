@@ -14,6 +14,7 @@ import ProcessService from "./services/ProcessService";
 async function init(cfg: IAppConfig, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
     const AppConfigService = getConfigService(cfg);
     const port = await AppConfigService.get('port');
+    const ws_port = await AppConfigService.get('ws_port');
     const wsRoutes = await AppConfigService.get('ws_routes');
     const httpRoutes = await AppConfigService.get('http_routes');
     const controler_list = await AppConfigService.get('controller_list');
@@ -42,15 +43,23 @@ async function init(cfg: IAppConfig, addToConfig: (configService: AppConfigServi
         await ProcessService.runShellCommand('yarn rws init config/config');
     }
 
-    (await ServerService.initializeApp({
-        port: port,
+    const theServer = await ServerService.initializeApp({        
         wsRoutes: wsRoutes,
         httpRoutes: httpRoutes,
         controllerList: controler_list,
         pub_dir: pub_dir,
-    })).webServer().listen(port, () => {    
-        ConsoleService.log(ConsoleService.color().green('Server' + ` is working on port ${port} using HTTP${https ? 'S' : ''} protocol`));
     });
+
+    const wsStart = async () => {
+        return (await theServer.websocket.starter());
+    }
+
+    const httpStart = async () => {
+        return (await theServer.http.starter());
+    }
+
+    wsStart();
+    await httpStart();    
 }
 
 export default init;

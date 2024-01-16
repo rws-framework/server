@@ -1,7 +1,7 @@
 import getConfig, { IAppConfig } from '../../services/AppConfigService';
 
 import { Server } from "socket.io";
-import ServerService from "../../services/ServerService";
+import ServerService, { ServerControlSet } from "../../services/ServerService";
 import { io, Socket } from 'socket.io-client';
 
 import * as _mocha from 'mocha';
@@ -24,7 +24,7 @@ interface ITheUser {
 interface ITestVars {
     theUser: ITheUser | null,
     socket: Socket | null,
-    server: Server | null,
+    server: ServerControlSet | null,
     browser: WebBrowser | null
 }
 
@@ -81,7 +81,7 @@ type LoginCallbackSet = { before?: LoginCallback, beforeEach?: LoginCallback, af
 const setLoggedLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet) => {
     setLifeCycle(testVars, {
         before: async () => {
-            testVars.server = await startWS();
+            testVars.server = await startServer();
 
             if(callbacks?.after){
                 return await callbacks.after(testVars);
@@ -105,7 +105,8 @@ const setLoggedLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet) =
         },
         after: async () => {            
             if(testVars.server){
-                testVars.server.close();
+                testVars.server.http.instance.close();
+                testVars.server.websocket.instance.close();
             }  
             
             if(callbacks?.after){
@@ -119,23 +120,24 @@ const setLoggedLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet) =
     });
 };  
 
-const startWS = async (): Promise<ServerService> => {
+const startServer = async (): Promise<ServerControlSet> => {
     const _TESTPORT = await getConfig().get('test_port');
+    const _TESTWSPORT = await getConfig().get('test_ws_port');
 
-    const server = await ServerService.initializeApp({
-        port: _TESTPORT,
+    const server = await ServerService.initializeApp({        
         controllerList: await getConfig().get('controller_list'),
         wsRoutes: await getConfig().get('ws_routes'),
         httpRoutes: await getConfig().get('http_routes')
     });
 
-    const startListener = async () => new Promise<void>((resolve) => {
-      server.webServer().listen(_TESTPORT, () => {
-        resolve();
-      });
+    const startHTTPListener = async () => new Promise<void>((resolve) => {
+      server.http.starter();
     });   
-   
-    await startListener();
+
+    const startWSListener = async () => new Promise<void>((resolve) => {
+        server.websocket.starter();
+    });   
+    
 
     return server;
 };
@@ -178,7 +180,7 @@ const setLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet, timeout
 
 export default {    
     connectToWS,    
-    startWS,    
+    startServer,    
     createTestVars,
     disableLogging: () => { console.log = () => {} }
 }

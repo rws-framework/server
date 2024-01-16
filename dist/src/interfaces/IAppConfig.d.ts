@@ -4,13 +4,15 @@ export default interface IAppConfig {
         ws_enabled?: boolean;
         routing_enabled?: boolean;
         test_routes?: boolean;
+        ssl?: boolean;
     };
     mongo_url: string;
     mongo_db: string;
     port: number;
     ws_port?: number;
     domain: string;
-    test_port: number;
+    test_port?: number;
+    test_ws_port?: number;
     ssl_cert: string;
     ssl_key: string;
     secret_key: string;

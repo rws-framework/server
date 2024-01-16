@@ -1,7 +1,6 @@
 /// <reference types="chai" />
 import { IAppConfig } from '../../services/AppConfigService';
-import { Server } from "socket.io";
-import ServerService from "../../services/ServerService";
+import { ServerControlSet } from "../../services/ServerService";
 import { Socket } from 'socket.io-client';
 import * as _mocha from 'mocha';
 import { WebBrowser } from './BrowserHelper';
@@ -13,7 +12,7 @@ interface ITheUser {
 interface ITestVars {
     theUser: ITheUser | null;
     socket: Socket | null;
-    server: Server | null;
+    server: ServerControlSet | null;
     browser: WebBrowser | null;
 }
 type LoginCallback = (testVars: ITestVars) => Promise<any> | null;
@@ -25,7 +24,7 @@ type LoginCallbackSet = {
 } | null;
 declare const _default: {
     connectToWS: (jwt_token: string, ping_event?: string, ping_response_event?: string) => Promise<Socket<import("@socket.io/component-emitter").DefaultEventsMap, import("@socket.io/component-emitter").DefaultEventsMap>>;
-    startWS: () => Promise<ServerService>;
+    startServer: () => Promise<ServerControlSet>;
     createTestVars: (cfg?: IAppConfig) => ITestVars;
     disableLogging: () => void;
 };

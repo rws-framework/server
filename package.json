@@ -1,9 +1,8 @@
 {
   "name": "rws-js-server",
-  "version": "1.12.0",
+  "version": "2.0.0",
   "description": "",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "tsc-watch --noClear -p ./tsconfig.json",
     "docs": "typedoc --tsconfig ./tsconfig.json",
@@ -58,6 +57,7 @@
     "tsc-watch": "^6.0.4",
     "url-router": "^13.0.0",
     "utf-8-validate": "^5.0.10",
+    "compression": "^1.7.4",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
@@ -79,6 +79,7 @@
     "@types/socket.io-client": "^3.0.0",
     "@types/tough-cookie": "^4.0.2",    
     "@types/body-parser": "1.19.5",
+    "@types/compression": "^1.7.5",
     "artillery": "^2.0.0-36",
     "chai": "^4.3.7",
     "chai-like": "^1.1.1",

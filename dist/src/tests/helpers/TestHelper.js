@@ -79,7 +79,7 @@ const connectToWS = async (jwt_token, ping_event = '__PING__', ping_response_eve
 const setLoggedLifeCycle = (testVars, callbacks) => {
     setLifeCycle(testVars, {
         before: async () => {
-            testVars.server = await startWS();
+            testVars.server = await startServer();
             if (callbacks === null || callbacks === void 0 ? void 0 : callbacks.after) {
                 return await callbacks.after(testVars);
             }
@@ -99,7 +99,8 @@ const setLoggedLifeCycle = (testVars, callbacks) => {
         },
         after: async () => {
             if (testVars.server) {
-                testVars.server.close();
+                testVars.server.http.instance.close();
+                testVars.server.websocket.instance.close();
             }
             if (callbacks === null || callbacks === void 0 ? void 0 : callbacks.after) {
                 return await callbacks.after(testVars);
@@ -110,20 +111,20 @@ const setLoggedLifeCycle = (testVars, callbacks) => {
         beforeEach: 30000
     });
 };
-const startWS = async () => {
+const startServer = async () => {
     const _TESTPORT = await (0, AppConfigService_1.default)().get('test_port');
+    const _TESTWSPORT = await (0, AppConfigService_1.default)().get('test_ws_port');
     const server = await ServerService_1.default.initializeApp({
-        port: _TESTPORT,
         controllerList: await (0, AppConfigService_1.default)().get('controller_list'),
         wsRoutes: await (0, AppConfigService_1.default)().get('ws_routes'),
         httpRoutes: await (0, AppConfigService_1.default)().get('http_routes')
     });
-    const startListener = async () => new Promise((resolve) => {
-        server.webServer().listen(_TESTPORT, () => {
-            resolve();
-        });
+    const startHTTPListener = async () => new Promise((resolve) => {
+        server.http.starter();
     });
-    await startListener();
+    const startWSListener = async () => new Promise((resolve) => {
+        server.websocket.starter();
+    });
     return server;
 };
 const setLifeCycle = (testVars, callbacks, timeouts) => {
@@ -157,7 +158,7 @@ const setLifeCycle = (testVars, callbacks, timeouts) => {
 };
 exports.default = {
     connectToWS,
-    startWS,
+    startServer,
     createTestVars,
     disableLogging: () => { console.log = () => { }; }
 };

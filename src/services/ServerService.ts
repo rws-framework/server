@@ -1,4 +1,4 @@
-import { Server as ServerBase, Socket } from "socket.io";
+import { Server as ServerBase, Socket, ServerOptions } from "socket.io";
 import HTTPS from "https";
 import getConfigService from "./AppConfigService";
 import cors from 'cors';
@@ -6,7 +6,7 @@ import HTTP, { IncomingMessage, ServerResponse } from "http";
 import ITheSocket from "../interfaces/ITheSocket";
 import AuthService from "./AuthService";
 import fs from 'fs';
-import express, { Request, Response } from "express";
+import expressServer, { Request, Response, Express } from "express";
 import RouterService from "./RouterService";
 import { AxiosRequestHeaders } from 'axios';
 import Controller from "../controllers/_controller";
@@ -18,6 +18,7 @@ import path from 'path';
 import bodyParser from 'body-parser';
 import Error404 from '../errors/Error404';
 import RWSError from '../errors/_error';
+import compression from 'compression';
 
 const fileUpload = require('express-fileupload');
 
@@ -44,75 +45,99 @@ type JWTUsers<IUser> = {
 
 type CookieType = {[key: string] : string};
 
-interface IInitOpts {
-    port: number
-    controllerList: Controller[];
-    wsRoutes: WsRoutes,
-    httpRoutes: IHTTProute[],
+interface IInitOpts {    
+    controllerList?: Controller[];
+    wsRoutes?: WsRoutes,
+    httpRoutes?: IHTTProute[],
     pub_dir?: string,
     authorization?: boolean
 }
 
+type RWSServer = HTTP.Server | HTTPS.Server;
+type ServerStarter = (callback?: () => void) => Promise<void>;
+type RWSServerPair = { instance: ServerService, starter: ServerStarter }
+type ServerControlSet = { websocket: RWSServerPair, http: RWSServerPair }
+
 class ServerService extends ServerBase {    
-    private static io: ServerService;
-    private srv: HTTP.Server | HTTPS.Server;
+    private static http_server: RWSServerPair;
+    private static ws_server: RWSServerPair;
+    private server_app: Express; 
+    private options: IInitOpts; 
+    private srv: RWSServer;
     private tokens: UserTokens = {};
     private users: JWTUsers<any> = {};
 
-    constructor(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts){ 
+    constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
         super(webServer, {
             cors: WEBSOCKET_CORS,
             //transports: ['websocket']
         }); 
         const _self: ServerService = this;
 
+        this.server_app = expressApp;
         this.srv = webServer;
+        this.options = opts;
+
+        const corsSettings = {
+            "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
+            "Access-Control-Allow-Methods": "GET, POST",
+            "Access-Control-Allow-Headers": "Content-Type"
+        };
 
         this.srv.on("options", (req, res) => {
-            res.writeHead(200, {
-              "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
-              "Access-Control-Allow-Methods": "GET, POST",
-              "Access-Control-Allow-Headers": "Content-Type"
-            });
+            res.writeHead(200, corsSettings);
             res.end();
+        });
+
+        this.server_app.use((req, res, next) => {
+
+            Object.keys(corsSettings).forEach((key: string) => {
+                res.setHeader(key, (corsSettings as any)[key]);
+            });
+
+            next();
         });
 
         const corsMiddleware = cors({
             origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
             methods: ['GET', 'POST'],
-        });        
-    
-        //socket stuff
-
-        this.sockets.on('connection', (socket: Socket) => {            
-            ConsoleService.log('[WS] connection recieved');
-            
-
-            socket.on('__PING__', () => {
-                socket.emit('__PONG__', '__PONG__');
-            });
-
-            Object.keys(opts.wsRoutes).forEach((eventName) => {                
-                const SocketClass = opts.wsRoutes[eventName];                
-                new SocketClass(ServerService.io).handleConnection(socket, eventName);
-            });
-        });
+        });                 
 
         this.use(async (socket, next) => {
             const request: HTTP.IncomingMessage = socket.request;
             const response: ServerResponse = new ServerResponse(request);
             corsMiddleware(request, response, next);            
-        });
+        });        
 
         if(opts.authorization){
-            this.setupAuth()
-        }
-          
+            this.setupAuth();
+        }          
     }
 
-    static init(webServer: HTTP.Server | HTTPS.Server, opts: IInitOpts): ServerService {
-        if (!ServerService.io) {
-            ServerService.io = new ServerService(webServer, opts);                
+    public static async initializeApp(opts: IInitOpts): Promise<ServerControlSet>
+    {                
+        if (!ServerService.http_server) { 
+            const [baseHttpServer, expressHttpServer] = await ServerService.createServerInstance(opts);
+           
+            const http_instance = new ServerService(baseHttpServer, expressHttpServer, opts);
+            const isSSL = getConfigService().get('features')?.ssl;
+            const httpPort = getConfigService().get('port');
+            
+            ServerService.http_server = { instance: await http_instance.configureHTTPServer(), starter: http_instance.createServerStarter(httpPort, () => {
+                ConsoleService.log(ConsoleService.color().green('Request/response server' + ` is working on port ${httpPort} using HTTP${isSSL ? 'S' : ''} protocol`));
+            })};  
+        }
+
+        if (!ServerService.ws_server) {
+            const [baseWsServer, expressWsServer] = await ServerService.createServerInstance(opts);
+            const ws_instance = new ServerService(baseWsServer, expressWsServer, opts);
+            const isSSL = getConfigService().get('features')?.ssl;
+
+            const wsPort = getConfigService().get('ws_port');
+
+            ServerService.ws_server = { instance: await ws_instance.configureWSServer(), starter: ws_instance.createServerStarter(wsPort, () => {
+                ConsoleService.log(ConsoleService.color().green('Websocket server' + ` is working on port ${wsPort}. SSL is ${isSSL ? 'enabled' : 'disabled'}.`));
+            })};  
         }
 
         const allProcessesIds = ProcessService.getAllProcessesIds();
@@ -124,67 +149,11 @@ class ServerService extends ServerBase {
         if(!fs.existsSync(rwsDir)){
             fs.mkdirSync(rwsDir);
         }  
- 
-        return ServerService.io;
-    }
-
-    public static async initializeApp(opts: IInitOpts): Promise<ServerService>
-    {
-        const AppConfigService = getConfigService();
-        const app = express();
-             
-        let https: boolean = true;
-
-        if(opts.pub_dir){
-            app.use(express.static(opts.pub_dir));
+        
+        return {
+            websocket: this.ws_server,
+            http: this.http_server,
         }
-
-        app.set('view engine', 'ejs');                             
-        
-        app.use(fileUpload());
-
-        app.use((req, res, next) => {
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-            next();
-        });
-
-        // app.use(express.json({ limit: '200mb' }));
-        app.use(bodyParser.json({ limit: '200mb' }));
-
-
-        const sslCert = AppConfigService.get('ssl_cert');
-        const sslKey = AppConfigService.get('ssl_key');  
-
-        const options: {key?: Buffer, cert?: Buffer} = {}
-
-        if(!sslCert || !sslKey){
-            https = false;            
-        }else{
-            options.key = fs.readFileSync(sslKey);
-            options.cert = fs.readFileSync(sslCert);
-        }        
-
-        let processed_routes: IHTTProute[] = [];
-
-        if(AppConfigService.get('features') && AppConfigService.get('features').routing_enabled){
-            processed_routes = await RouterService.assignRoutes(app, opts.httpRoutes, opts.controllerList);
-        }  
-        
-                
-        app.use((req, res, next) => {                              
-            if(!RouterService.hasRoute(req.originalUrl, processed_routes)){
-                ServerService.on404(req, res);
-            }else{
-                next();
-            }            
-        });
-
-
-        const webServer = https ? HTTPS.createServer(options, app) : HTTP.createServer(app);    
-
-        return ServerService.init(webServer, opts);         
     }
 
     disconnectClient = (clientSocket: Socket) => {
@@ -199,12 +168,97 @@ class ServerService extends ServerBase {
         }
     }    
 
-    public webServer(): HTTP.Server | HTTPS.Server
+    public webServer(): RWSServer
     { 
         return this.srv 
     }  
 
-    private setupAuth()
+    static async createServerInstance(opts: IInitOpts): Promise<[RWSServer, Express]>
+    {
+        const app = expressServer();       
+        const isSSL = getConfigService().get('features')?.ssl;
+        const options: {key?: Buffer, cert?: Buffer} = {}
+
+        if(isSSL){
+            const sslCert = getConfigService().get('ssl_cert');
+            const sslKey = getConfigService().get('ssl_key');  
+
+            if( !sslKey || !sslCert || !fs.existsSync(sslCert) || !fs.existsSync(sslKey)){
+                throw new Error('SSL keys set in config do not exist.');
+            }
+
+            options.key = fs.readFileSync(sslKey);
+            options.cert = fs.readFileSync(sslCert);       
+        }       
+
+        const webServer = isSSL ? HTTPS.createServer(options, app) : HTTP.createServer(app);            
+
+        return [webServer, app];
+    }
+
+    createServerStarter(port: number, injected: () => void = () => {}): ServerStarter
+    {
+        return (async (callback: () => void = () => {}) => {            
+            this.webServer().listen(port, () => {
+                injected();
+                callback();
+            });
+        }).bind(this);
+    }
+
+    public async configureHTTPServer(): Promise<ServerService>
+    {
+        this.server_app.use(fileUpload());
+
+      
+        // app.use(express.json({ limit: '200mb' }));
+        this.server_app.use(bodyParser.json({ limit: '200mb' }));    
+        
+        if(getConfigService().get('features')?.routing_enabled){
+            if(this.options.pub_dir){
+                this.server_app.use(expressServer.static(this.options.pub_dir));
+            }     
+    
+            this.server_app.set('view engine', 'ejs');   
+
+            const processed_routes: IHTTProute[] = await RouterService.assignRoutes(this.server_app, this.options.httpRoutes, this.options.controllerList);
+
+            this.server_app.use((req, res, next) => {                              
+                if(!RouterService.hasRoute(req.originalUrl, processed_routes)){
+                    ServerService.on404(req, res);
+                }else{
+                    next();
+                }            
+            });      
+        }
+
+        this.use(compression);
+
+        return this;
+    }
+
+    public async configureWSServer(): Promise<ServerService>
+    {
+        if(getConfigService().get('features')?.ws_enabled){
+            this.sockets.on('connection', (socket: Socket) => {            
+                ConsoleService.log('[WS] connection recieved');
+                
+
+                socket.on('__PING__', () => {
+                    socket.emit('__PONG__', '__PONG__');
+                });
+
+                Object.keys(this.options.wsRoutes).forEach((eventName) => {                
+                    const SocketClass = this.options.wsRoutes[eventName];                
+                    new SocketClass(ServerService.ws_server).handleConnection(socket, eventName);
+                });
+            });
+        }
+
+        return this;
+    }
+
+    public setupAuth()
     {
         const _self = this;
         this.use(async (socket, next) => {
@@ -294,7 +348,12 @@ class ServerService extends ServerBase {
           return cookiesBin[key];
         }        
     };
+
+    public getOptions(): IInitOpts
+    {
+        return this.options;
+    }
 }
 
 export default ServerService
-export { WsRoutes, IHTTProute, IInitOpts, ITheSocket, IPrefixedHTTProutes, RWSHTTPRoutingEntry }
+export { WsRoutes, IHTTProute, IInitOpts, ITheSocket, IPrefixedHTTProutes, RWSHTTPRoutingEntry, RWSServer, ServerControlSet }

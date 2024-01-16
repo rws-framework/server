@@ -42,6 +42,7 @@ const UtilsService_1 = __importDefault(require("./UtilsService"));
 const path_1 = __importDefault(require("path"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const Error404_1 = __importDefault(require("../errors/Error404"));
+const compression_1 = __importDefault(require("compression"));
 const fileUpload = require('express-fileupload');
 const _DOMAIN = '*'; //'https://' + AppConfigService.get('nginx', 'domain');
 const WEBSOCKET_CORS = {
@@ -49,7 +50,7 @@ const WEBSOCKET_CORS = {
     methods: ["GET", "POST"]
 };
 class ServerService extends socket_io_1.Server {
-    constructor(webServer, opts) {
+    constructor(webServer, expressApp, opts) {
         super(webServer, {
             cors: WEBSOCKET_CORS,
             //transports: ['websocket']
@@ -60,29 +61,27 @@ class ServerService extends socket_io_1.Server {
             clientSocket.disconnect(true);
         };
         const _self = this;
+        this.server_app = expressApp;
         this.srv = webServer;
+        this.options = opts;
+        const corsSettings = {
+            "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
+            "Access-Control-Allow-Methods": "GET, POST",
+            "Access-Control-Allow-Headers": "Content-Type"
+        };
         this.srv.on("options", (req, res) => {
-            res.writeHead(200, {
-                "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
-                "Access-Control-Allow-Methods": "GET, POST",
-                "Access-Control-Allow-Headers": "Content-Type"
-            });
+            res.writeHead(200, corsSettings);
             res.end();
+        });
+        this.server_app.use((req, res, next) => {
+            Object.keys(corsSettings).forEach((key) => {
+                res.setHeader(key, corsSettings[key]);
+            });
+            next();
         });
         const corsMiddleware = (0, cors_1.default)({
             origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
             methods: ['GET', 'POST'],
-        });
-        //socket stuff
-        this.sockets.on('connection', (socket) => {
-            ConsoleService_1.default.log('[WS] connection recieved');
-            socket.on('__PING__', () => {
-                socket.emit('__PONG__', '__PONG__');
-            });
-            Object.keys(opts.wsRoutes).forEach((eventName) => {
-                const SocketClass = opts.wsRoutes[eventName];
-                new SocketClass(_a.io).handleConnection(socket, eventName);
-            });
         });
         this.use(async (socket, next) => {
             const request = socket.request;
@@ -93,9 +92,25 @@ class ServerService extends socket_io_1.Server {
             this.setupAuth();
         }
     }
-    static init(webServer, opts) {
-        if (!_a.io) {
-            _a.io = new _a(webServer, opts);
+    static async initializeApp(opts) {
+        var _b, _c;
+        if (!_a.http_server) {
+            const [baseHttpServer, expressHttpServer] = await _a.createServerInstance(opts);
+            const http_instance = new _a(baseHttpServer, expressHttpServer, opts);
+            const isSSL = (_b = (0, AppConfigService_1.default)().get('features')) === null || _b === void 0 ? void 0 : _b.ssl;
+            const httpPort = (0, AppConfigService_1.default)().get('port');
+            _a.http_server = { instance: await http_instance.configureHTTPServer(), starter: http_instance.createServerStarter(httpPort, () => {
+                    ConsoleService_1.default.log(ConsoleService_1.default.color().green('Request/response server' + ` is working on port ${httpPort} using HTTP${isSSL ? 'S' : ''} protocol`));
+                }) };
+        }
+        if (!_a.ws_server) {
+            const [baseWsServer, expressWsServer] = await _a.createServerInstance(opts);
+            const ws_instance = new _a(baseWsServer, expressWsServer, opts);
+            const isSSL = (_c = (0, AppConfigService_1.default)().get('features')) === null || _c === void 0 ? void 0 : _c.ssl;
+            const wsPort = (0, AppConfigService_1.default)().get('ws_port');
+            _a.ws_server = { instance: await ws_instance.configureWSServer(), starter: ws_instance.createServerStarter(wsPort, () => {
+                    ConsoleService_1.default.log(ConsoleService_1.default.color().green('Websocket server' + ` is working on port ${wsPort}. SSL is ${isSSL ? 'enabled' : 'disabled'}.`));
+                }) };
         }
         const allProcessesIds = ProcessService_1.default.getAllProcessesIds();
         const executeDir = process.cwd();
@@ -104,49 +119,10 @@ class ServerService extends socket_io_1.Server {
         if (!fs_1.default.existsSync(rwsDir)) {
             fs_1.default.mkdirSync(rwsDir);
         }
-        return _a.io;
-    }
-    static async initializeApp(opts) {
-        const AppConfigService = (0, AppConfigService_1.default)();
-        const app = (0, express_1.default)();
-        let https = true;
-        if (opts.pub_dir) {
-            app.use(express_1.default.static(opts.pub_dir));
-        }
-        app.set('view engine', 'ejs');
-        app.use(fileUpload());
-        app.use((req, res, next) => {
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-            next();
-        });
-        // app.use(express.json({ limit: '200mb' }));
-        app.use(body_parser_1.default.json({ limit: '200mb' }));
-        const sslCert = AppConfigService.get('ssl_cert');
-        const sslKey = AppConfigService.get('ssl_key');
-        const options = {};
-        if (!sslCert || !sslKey) {
-            https = false;
-        }
-        else {
-            options.key = fs_1.default.readFileSync(sslKey);
-            options.cert = fs_1.default.readFileSync(sslCert);
-        }
-        let processed_routes = [];
-        if (AppConfigService.get('features') && AppConfigService.get('features').routing_enabled) {
-            processed_routes = await RouterService_1.default.assignRoutes(app, opts.httpRoutes, opts.controllerList);
-        }
-        app.use((req, res, next) => {
-            if (!RouterService_1.default.hasRoute(req.originalUrl, processed_routes)) {
-                _a.on404(req, res);
-            }
-            else {
-                next();
-            }
-        });
-        const webServer = https ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
-        return _a.init(webServer, opts);
+        return {
+            websocket: this.ws_server,
+            http: this.http_server,
+        };
     }
     setJWTToken(socketId, token) {
         if (token.indexOf('Bearer') > -1) {
@@ -158,6 +134,70 @@ class ServerService extends socket_io_1.Server {
     }
     webServer() {
         return this.srv;
+    }
+    static async createServerInstance(opts) {
+        var _b;
+        const app = (0, express_1.default)();
+        const isSSL = (_b = (0, AppConfigService_1.default)().get('features')) === null || _b === void 0 ? void 0 : _b.ssl;
+        const options = {};
+        if (isSSL) {
+            const sslCert = (0, AppConfigService_1.default)().get('ssl_cert');
+            const sslKey = (0, AppConfigService_1.default)().get('ssl_key');
+            if (!sslKey || !sslCert || !fs_1.default.existsSync(sslCert) || !fs_1.default.existsSync(sslKey)) {
+                throw new Error('SSL keys set in config do not exist.');
+            }
+            options.key = fs_1.default.readFileSync(sslKey);
+            options.cert = fs_1.default.readFileSync(sslCert);
+        }
+        const webServer = isSSL ? https_1.default.createServer(options, app) : http_1.default.createServer(app);
+        return [webServer, app];
+    }
+    createServerStarter(port, injected = () => { }) {
+        return (async (callback = () => { }) => {
+            this.webServer().listen(port, () => {
+                injected();
+                callback();
+            });
+        }).bind(this);
+    }
+    async configureHTTPServer() {
+        var _b;
+        this.server_app.use(fileUpload());
+        // app.use(express.json({ limit: '200mb' }));
+        this.server_app.use(body_parser_1.default.json({ limit: '200mb' }));
+        if ((_b = (0, AppConfigService_1.default)().get('features')) === null || _b === void 0 ? void 0 : _b.routing_enabled) {
+            if (this.options.pub_dir) {
+                this.server_app.use(express_1.default.static(this.options.pub_dir));
+            }
+            this.server_app.set('view engine', 'ejs');
+            const processed_routes = await RouterService_1.default.assignRoutes(this.server_app, this.options.httpRoutes, this.options.controllerList);
+            this.server_app.use((req, res, next) => {
+                if (!RouterService_1.default.hasRoute(req.originalUrl, processed_routes)) {
+                    _a.on404(req, res);
+                }
+                else {
+                    next();
+                }
+            });
+        }
+        this.use(compression_1.default);
+        return this;
+    }
+    async configureWSServer() {
+        var _b;
+        if ((_b = (0, AppConfigService_1.default)().get('features')) === null || _b === void 0 ? void 0 : _b.ws_enabled) {
+            this.sockets.on('connection', (socket) => {
+                ConsoleService_1.default.log('[WS] connection recieved');
+                socket.on('__PING__', () => {
+                    socket.emit('__PONG__', '__PONG__');
+                });
+                Object.keys(this.options.wsRoutes).forEach((eventName) => {
+                    const SocketClass = this.options.wsRoutes[eventName];
+                    new SocketClass(_a.ws_server).handleConnection(socket, eventName);
+                });
+            });
+        }
+        return this;
     }
     setupAuth() {
         const _self = this;
@@ -207,6 +247,9 @@ class ServerService extends socket_io_1.Server {
             .replace('{{error_number}}', error.getCode().toString())
             .replace('{{error_message}}', error.getMessage())
             .replace('{{error_stack_trace}}', error.getStackTraceString() !== '' ? `<h4>Stack trace:</h4><pre>${error.getStackTraceString()}</pre>` : '');
+    }
+    getOptions() {
+        return this.options;
     }
 }
 _a = ServerService;
