@@ -55,13 +55,15 @@ interface IInitOpts {
 
 const getCurrentLineNumber = UtilsService.getCurrentLineNumber;
 
-const wsLog = async (fakeError: Error, text: any, socket: Socket = null, isError: boolean = false): Promise<void> => {
+const wsLog = async (fakeError: Error, text: any, socketId: string = null, isError: boolean = false): Promise<void> => {
     const logit = isError ? console.error : console.log;
   
     const filePath = module.id;
     const fileName = filePath.split('/').pop();
 
-    logit(`{WS}[`,`${filePath}:${await getCurrentLineNumber(fakeError)}`,`]${socket ? `(${socket.id}):` : ''}`,`${text}`);
+    const marker = '[RWS Websocket]'
+
+    logit(isError ? ConsoleService.color().red(marker) : ConsoleService.color().green(marker), `|`,`${filePath}:${await getCurrentLineNumber(fakeError)}`,`|${socketId ? ConsoleService.color().blueBright(` (${socketId})`) : ''}:`,`${text}`);
 }
 
 type RWSServer = HTTP.Server | HTTPS.Server;
@@ -253,24 +255,28 @@ class ServerService extends ServerBase {
         if(getConfigService().get('features')?.ws_enabled){          
 
             this.sockets.on('connection', async (socket: Socket) => {            
-                wsLog(new Error(), `Client connection recieved`, socket);
+                const socketId: string = socket.id;
 
-                socket.on("disconnect", async (reason) => {
-                    wsLog(new Error(), `Client disconnected due to ${reason}`, socket, true);
+                wsLog(new Error(), `Client connection recieved`, socketId);
+
+    
+
+                socket.on("disconnect",  async (reason: string) => {                    
+                    wsLog(new Error(), `Client disconnected due to ${reason}`, socketId);
                     
                     if (reason === 'transport error') {
-                        // console.error(`Transport error details:`, socket);
-                    }
+                        wsLog(new Error(), `Transport error`, socketId, true);
+                    }                    
                 });
 
                 socket.on('error', async (error) => {
-                    console.error('wut')
-                    wsLog(new Error(), error, socket, true);                    
+                  
+                    wsLog(new Error(), error, socketId, true);                    
                 });
                 
 
                 socket.on('__PING__', async () => {
-                    wsLog(new Error(), 'Emmiting pong', socket)
+                    wsLog(new Error(), 'Emmiting pong', socketId)
                     socket.emit('__PONG__', '__PONG__');
                 });                
 

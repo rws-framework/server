@@ -23,7 +23,7 @@ class ConsoleService extends TheService {
   }
 
 
-  color(): any {
+  color(): Chalk {
     return chalk;
   }
 

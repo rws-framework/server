@@ -1,10 +1,11 @@
 import TheService from "./_service";
+import { Chalk } from 'chalk';
 import { Logger as PinoLogger } from 'pino';
 declare class ConsoleService extends TheService {
     private isEnabled;
     private originalLogMethods?;
     constructor();
-    color(): any;
+    color(): Chalk;
     log(...obj: any[]): void;
     colorObject(obj: any): string;
     warn(...obj: any[]): void;
