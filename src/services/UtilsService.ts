@@ -1,8 +1,8 @@
 import TheService from "./_service";
 import fs from 'fs';
 import path from 'path';
-//@ts-ignore
-import utils from '../../_tools';
+
+import { SourceMapConsumer, RawSourceMap  } from 'source-map';
 
 class UtilsService extends TheService {
   filterNonEmpty<T>(arr: T[]): T[]
@@ -56,6 +56,39 @@ class UtilsService extends TheService {
     }
 
     return currentPath;
+  }
+
+  async getCurrentLineNumber(error: Error = null): Promise<number> {
+    if(!error){
+      error = new Error();
+    }
+    const stack = error.stack || '';
+    const stackLines = stack.split('\n');
+    const relevantLine = stackLines[1];
+
+    // Extract file path from the stack line
+    const match = relevantLine.match(/\((.*?):\d+:\d+\)/);
+    if (!match) return -1;
+    const filePath = match[1];
+
+    // Assuming the source map is in the same directory with '.map' extension
+    const sourceMapPath = `${filePath}.map`;    
+
+    // Read the source map
+    const sourceMapContent = fs.readFileSync(sourceMapPath, 'utf-8');    
+    const sourceMap: RawSourceMap = JSON.parse(sourceMapContent);
+    const consumer = await new SourceMapConsumer(sourceMap);
+
+    // Extract line and column number
+    const lineMatch = relevantLine.match(/:(\d+):(\d+)/);
+    if (!lineMatch) return -1;
+
+    const originalPosition = consumer.originalPositionFor({
+        line: parseInt(lineMatch[1]),
+        column: parseInt(lineMatch[2]),
+    });
+
+    return originalPosition.line;
   }
 }
 

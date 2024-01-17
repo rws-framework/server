@@ -49,11 +49,18 @@ const WEBSOCKET_CORS = {
     origin: _DOMAIN,
     methods: ["GET", "POST"]
 };
+const getCurrentLineNumber = UtilsService_1.default.getCurrentLineNumber;
+const wsLog = async (fakeError, text, socket = null, isError = false) => {
+    const logit = isError ? console.error : console.log;
+    const filePath = module.id;
+    const fileName = filePath.split('/').pop();
+    logit(`{WS}[`, `${filePath}:${await getCurrentLineNumber(fakeError)}`, `]${socket ? `(${socket.id}):` : ''}`, `${text}`);
+};
 class ServerService extends socket_io_1.Server {
     constructor(webServer, expressApp, opts) {
         super(webServer, {
             cors: WEBSOCKET_CORS,
-            //transports: ['websocket']
+            transports: ['websocket']
         });
         this.tokens = {};
         this.users = {};
@@ -186,9 +193,20 @@ class ServerService extends socket_io_1.Server {
     async configureWSServer() {
         var _b;
         if ((_b = (0, AppConfigService_1.default)().get('features')) === null || _b === void 0 ? void 0 : _b.ws_enabled) {
-            this.sockets.on('connection', (socket) => {
-                ConsoleService_1.default.log('[WS] connection recieved');
-                socket.on('__PING__', () => {
+            this.sockets.on('connection', async (socket) => {
+                wsLog(new Error(), `Client connection recieved`, socket);
+                socket.on("disconnect", async (reason) => {
+                    wsLog(new Error(), `Client disconnected due to ${reason}`, socket, true);
+                    if (reason === 'transport error') {
+                        // console.error(`Transport error details:`, socket);
+                    }
+                });
+                socket.on('error', async (error) => {
+                    console.error('wut');
+                    wsLog(new Error(), error, socket, true);
+                });
+                socket.on('__PING__', async () => {
+                    wsLog(new Error(), 'Emmiting pong', socket);
                     socket.emit('__PONG__', '__PONG__');
                 });
                 Object.keys(this.options.wsRoutes).forEach((eventName) => {

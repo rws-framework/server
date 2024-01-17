@@ -14,10 +14,11 @@ module.exports = {
   entry: `${process.cwd()}/src/index.ts`,
   mode: 'development',
   target: 'node',
-  devtool: 'inline-source-map',
+  devtool: 'inline-source',
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: 'rws.server.js',
+    sourceMapFilename: '[file].map',
   },
   resolve: {
     modules: modules_setup,

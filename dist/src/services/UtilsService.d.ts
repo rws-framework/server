@@ -5,6 +5,7 @@ declare class UtilsService extends TheService {
     getRWSVar(fileName: string): string | null;
     setRWSVar(fileName: string, value: string): void;
     findRootWorkspacePath(currentPath: string): string;
+    getCurrentLineNumber(error?: Error): Promise<number>;
 }
 declare const _default: UtilsService;
 export default _default;

@@ -1,8 +1,8 @@
-import { Server as ServerBase, Socket, ServerOptions } from "socket.io";
+import { Server as ServerBase, Socket } from "socket.io";
 import HTTPS from "https";
 import getConfigService from "./AppConfigService";
 import cors from 'cors';
-import HTTP, { IncomingMessage, ServerResponse } from "http";
+import HTTP, { ServerResponse } from "http";
 import ITheSocket from "../interfaces/ITheSocket";
 import AuthService from "./AuthService";
 import fs from 'fs';
@@ -53,6 +53,17 @@ interface IInitOpts {
     authorization?: boolean
 }
 
+const getCurrentLineNumber = UtilsService.getCurrentLineNumber;
+
+const wsLog = async (fakeError: Error, text: any, socket: Socket = null, isError: boolean = false): Promise<void> => {
+    const logit = isError ? console.error : console.log;
+  
+    const filePath = module.id;
+    const fileName = filePath.split('/').pop();
+
+    logit(`{WS}[`,`${filePath}:${await getCurrentLineNumber(fakeError)}`,`]${socket ? `(${socket.id}):` : ''}`,`${text}`);
+}
+
 type RWSServer = HTTP.Server | HTTPS.Server;
 type ServerStarter = (callback?: () => void) => Promise<void>;
 type RWSServerPair = { instance: ServerService, starter: ServerStarter }
@@ -70,7 +81,7 @@ class ServerService extends ServerBase {
     constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
         super(webServer, {
             cors: WEBSOCKET_CORS,
-            //transports: ['websocket']
+            transports: ['websocket']
         }); 
         const _self: ServerService = this;
 
@@ -238,15 +249,30 @@ class ServerService extends ServerBase {
     }
 
     public async configureWSServer(): Promise<ServerService>
-    {
-        if(getConfigService().get('features')?.ws_enabled){
-            this.sockets.on('connection', (socket: Socket) => {            
-                ConsoleService.log('[WS] connection recieved');
+    { 
+        if(getConfigService().get('features')?.ws_enabled){          
+
+            this.sockets.on('connection', async (socket: Socket) => {            
+                wsLog(new Error(), `Client connection recieved`, socket);
+
+                socket.on("disconnect", async (reason) => {
+                    wsLog(new Error(), `Client disconnected due to ${reason}`, socket, true);
+                    
+                    if (reason === 'transport error') {
+                        // console.error(`Transport error details:`, socket);
+                    }
+                });
+
+                socket.on('error', async (error) => {
+                    console.error('wut')
+                    wsLog(new Error(), error, socket, true);                    
+                });
                 
 
-                socket.on('__PING__', () => {
+                socket.on('__PING__', async () => {
+                    wsLog(new Error(), 'Emmiting pong', socket)
                     socket.emit('__PONG__', '__PONG__');
-                });
+                });                
 
                 Object.keys(this.options.wsRoutes).forEach((eventName) => {                
                     const SocketClass = this.options.wsRoutes[eventName];                
