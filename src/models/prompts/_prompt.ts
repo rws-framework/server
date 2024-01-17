@@ -95,6 +95,20 @@ class RWSPrompt {
         return this.hyperParameters;
     }
 
+    setHyperParameter(key: string, value: any): RWSPrompt
+    {        
+        this.hyperParameters[key] = value;
+        
+        return this;
+    }
+    
+    setHyperParameters(value: any): RWSPrompt
+    {        
+        this.hyperParameters = value;
+        
+        return this;
+    }
+
     getModelMetadata(): [string, string]
     {
         return [this.modelType, this.modelId];

@@ -27,6 +27,9 @@ class S3Service extends _service_1.default {
         }
         return AWSService_1.default.getS3(region).upload(params).promise();
     }
+    async download(params, region = null) {
+        return AWSService_1.default.getS3(region).getObject(params).promise();
+    }
     async delete(params, region = null) {
         await this.deleteObject({ Bucket: params.Bucket, Key: params.Key }, region);
         return;

@@ -20,7 +20,7 @@ declare class DBService extends TheService {
     update(data: any, collection: string): Promise<IModel>;
     findOneBy(collection: string, conditions: any): Promise<IModel | null>;
     delete(collection: string, conditions: any): Promise<void>;
-    findBy(collection: string, conditions: any): Promise<IModel[]>;
+    findBy(collection: string, conditions: any, fields?: string[] | null): Promise<IModel[]>;
     collectionExists(collection_name: string): Promise<boolean>;
     createTimeSeriesCollection(collection_name: string): Promise<Collection<ITimeSeries>>;
     private getCollectionHandler;

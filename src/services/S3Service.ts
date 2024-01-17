@@ -30,6 +30,11 @@ class S3Service extends TheService {
         return AWSService.getS3(region).upload(params).promise()
     }
 
+    async download(params: AWS.S3.Types.GetObjectRequest, region: string = null): Promise<AWS.S3.GetObjectOutput | null>
+    {     
+        return AWSService.getS3(region).getObject(params).promise();
+    }
+
     async delete(params: AWS.S3.Types.DeleteObjectRequest, region: string = null): Promise<void>
     {
         await this.deleteObject({ Bucket: params.Bucket, Key: params.Key }, region);

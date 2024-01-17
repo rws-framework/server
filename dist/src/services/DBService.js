@@ -114,8 +114,15 @@ class DBService extends _service_1.default {
         await this.getCollectionHandler(collection).deleteMany({ where: conditions });
         return;
     }
-    async findBy(collection, conditions) {
-        return await this.getCollectionHandler(collection).findMany({ where: conditions });
+    async findBy(collection, conditions, fields = null) {
+        const params = { where: conditions };
+        if (fields) {
+            params.select = {};
+            fields.forEach((fieldName) => {
+                params.select[fieldName] = true;
+            });
+        }
+        return await this.getCollectionHandler(collection).findMany(params);
     }
     async collectionExists(collection_name) {
         var _a;

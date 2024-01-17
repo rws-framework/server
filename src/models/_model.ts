@@ -285,10 +285,11 @@ class Model<ChildClass> implements IModel{
     
     public static async findBy<ChildClass extends Model<ChildClass>>(
       this: { new(): ChildClass; _collection: string },    
-      conditions: any
+      conditions: any,
+      fields: string[] | null = null
     ): Promise<ChildClass[]> {
       const collection = Reflect.get(this, '_collection');
-      const dbData = await DBService.findBy(collection, conditions);
+      const dbData = await DBService.findBy(collection, conditions, fields);
     
       if (dbData.length) {
         const instanced: ChildClass[] = [];

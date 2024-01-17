@@ -152,9 +152,18 @@ class DBService extends TheService {
     return;
   }
 
-  async findBy(collection: string, conditions: any): Promise<IModel[]>
+  async findBy(collection: string, conditions: any, fields: string[] | null = null): Promise<IModel[]>
   {    
-    return await this.getCollectionHandler(collection).findMany({ where: conditions });
+    const params: any ={ where: conditions };
+
+    if(fields){
+      params.select = {}
+      fields.forEach((fieldName: string) => {        
+        params.select[fieldName] = true;
+      });    
+    }
+
+    return await this.getCollectionHandler(collection).findMany(params);
   }
 
   async collectionExists(collection_name: string): Promise<boolean>

@@ -45,7 +45,7 @@ declare class Model<ChildClass> implements IModel {
     static findBy<ChildClass extends Model<ChildClass>>(this: {
         new (): ChildClass;
         _collection: string;
-    }, conditions: any): Promise<ChildClass[]>;
+    }, conditions: any, fields?: string[] | null): Promise<ChildClass[]>;
     static create<T extends Model<T>>(this: new () => T, data: any): Promise<T>;
     private loadModels;
 }

@@ -230,9 +230,9 @@ class Model {
             id: this.id
         });
     }
-    static async findBy(conditions) {
+    static async findBy(conditions, fields = null) {
         const collection = Reflect.get(this, '_collection');
-        const dbData = await index_1.DBService.findBy(collection, conditions);
+        const dbData = await index_1.DBService.findBy(collection, conditions, fields);
         if (dbData.length) {
             const instanced = [];
             for (const data of dbData) {
