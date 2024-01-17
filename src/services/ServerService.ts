@@ -276,7 +276,7 @@ class ServerService extends ServerBase {
                 
 
                 socket.on('__PING__', async () => {
-                    wsLog(new Error(), 'Emmiting pong', socketId)
+                    wsLog(new Error(), `Recieved ping... Emmiting response callback.`, socketId)
                     socket.emit('__PONG__', '__PONG__');
                 });                
 

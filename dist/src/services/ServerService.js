@@ -207,7 +207,7 @@ class ServerService extends socket_io_1.Server {
                     wsLog(new Error(), error, socketId, true);
                 });
                 socket.on('__PING__', async () => {
-                    wsLog(new Error(), 'Emmiting pong', socketId);
+                    wsLog(new Error(), `Recieved ping... Emmiting response callback.`, socketId);
                     socket.emit('__PONG__', '__PONG__');
                 });
                 Object.keys(this.options.wsRoutes).forEach((eventName) => {
