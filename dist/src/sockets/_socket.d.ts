@@ -14,7 +14,7 @@ declare abstract class TheSocket implements ITheSocket {
     middlewareImplementation?(next: any): void;
     getJson(input: string): any;
     sendJson(input: Object): string;
-    emitMessage(method: string, socket: Socket, data?: any): void;
+    emitMessage<T>(method: string, socket: Socket, data?: T): void;
 }
 export default TheSocket;
 export { JSONMessage };

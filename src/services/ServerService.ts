@@ -71,6 +71,8 @@ type ServerStarter = (callback?: () => void) => Promise<void>;
 type RWSServerPair = { instance: ServerService, starter: ServerStarter }
 type ServerControlSet = { websocket: RWSServerPair, http: RWSServerPair }
 
+const MINUTE = 1000 * 60;
+
 class ServerService extends ServerBase {    
     private static http_server: RWSServerPair;
     private static ws_server: RWSServerPair;
@@ -83,7 +85,8 @@ class ServerService extends ServerBase {
     constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
         super(webServer, {
             cors: WEBSOCKET_CORS,
-            transports: ['websocket']
+            transports: ['websocket'],
+            pingTimeout: 5*MINUTE
         }); 
         const _self: ServerService = this;
 

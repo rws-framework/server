@@ -57,11 +57,13 @@ const wsLog = async (fakeError, text, socketId = null, isError = false) => {
     const marker = '[RWS Websocket]';
     logit(isError ? ConsoleService_1.default.color().red(marker) : ConsoleService_1.default.color().green(marker), `|`, `${filePath}:${await getCurrentLineNumber(fakeError)}`, `|${socketId ? ConsoleService_1.default.color().blueBright(` (${socketId})`) : ''}:`, `${text}`);
 };
+const MINUTE = 1000 * 60;
 class ServerService extends socket_io_1.Server {
     constructor(webServer, expressApp, opts) {
         super(webServer, {
             cors: WEBSOCKET_CORS,
-            transports: ['websocket']
+            transports: ['websocket'],
+            pingTimeout: 5 * MINUTE
         });
         this.tokens = {};
         this.users = {};
