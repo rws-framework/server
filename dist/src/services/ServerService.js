@@ -60,6 +60,7 @@ class ServerService extends socket_io_1.Server {
             origin: _DOMAIN,
             methods: ["GET", "POST"]
         };
+        const cors_headers = ['Content-Type', 'x-csrf-token', 'Accept', 'Authorization', 'x-junctionapi-version'];
         super(webServer, {
             cors: WEBSOCKET_CORS,
             transports: [opts.transport || 'websocket'],
@@ -77,7 +78,7 @@ class ServerService extends socket_io_1.Server {
         const corsHeadersSettings = {
             "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, x-csrf-token, Accept, Authorization",
+            "Access-Control-Allow-Headers": cors_headers.join(', '),
             "Access-Control-Allow-Credentials": 'true'
         };
         this.srv.on("options", (req, res) => {
@@ -93,7 +94,7 @@ class ServerService extends socket_io_1.Server {
         const corsOptions = {
             origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
             methods: ['GET', 'POST', 'OPTIONS'],
-            allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+            allowedHeaders: cors_headers
         };
         console.log('cors-options', corsOptions);
         const corsMiddleware = (0, cors_1.default)(corsOptions);
