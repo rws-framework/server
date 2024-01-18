@@ -44,11 +44,6 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const Error404_1 = __importDefault(require("../errors/Error404"));
 const compression_1 = __importDefault(require("compression"));
 const fileUpload = require('express-fileupload');
-const _DOMAIN = '*'; //'https://' + AppConfigService.get('nginx', 'domain');
-const WEBSOCKET_CORS = {
-    origin: _DOMAIN,
-    methods: ["GET", "POST"]
-};
 const getCurrentLineNumber = UtilsService_1.default.getCurrentLineNumber;
 const wsLog = async (fakeError, text, socketId = null, isError = false) => {
     const logit = isError ? console.error : console.log;
@@ -60,6 +55,11 @@ const wsLog = async (fakeError, text, socketId = null, isError = false) => {
 const MINUTE = 1000 * 60;
 class ServerService extends socket_io_1.Server {
     constructor(webServer, expressApp, opts) {
+        const _DOMAIN = opts.domain;
+        const WEBSOCKET_CORS = {
+            origin: _DOMAIN,
+            methods: ["GET", "POST"]
+        };
         super(webServer, {
             cors: WEBSOCKET_CORS,
             transports: [opts.transport || 'websocket'],
@@ -75,7 +75,7 @@ class ServerService extends socket_io_1.Server {
         this.srv = webServer;
         this.options = opts;
         const corsHeadersSettings = {
-            "Access-Control-Allow-Origin": '*', // Replace with your frontend domain
+            "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type"
         };
@@ -90,9 +90,9 @@ class ServerService extends socket_io_1.Server {
             next();
         });
         const corsOptions = {
-            origin: '*', // Replace with the appropriate origins or set it to '*'
+            origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
             methods: ['GET', 'POST', 'OPTIONS'],
-            allowedHeaders: ['Content-Type', 'Authorization']
+            allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
         };
         console.log('cors-options', corsOptions);
         const corsMiddleware = (0, cors_1.default)(corsOptions);

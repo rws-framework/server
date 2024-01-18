@@ -22,15 +22,6 @@ import compression from 'compression';
 
 const fileUpload = require('express-fileupload');
 
-const _DOMAIN: string =  '*';//'https://' + AppConfigService.get('nginx', 'domain');
-
-
-
-const WEBSOCKET_CORS = {
-    origin: _DOMAIN,
-    methods: ["GET", "POST"]
- }
-
 type WsRoutes = {
     [eventName: string]: new (data: any) => ITheSocket;
 };
@@ -52,6 +43,7 @@ interface IInitOpts {
     pub_dir?: string,
     authorization?: boolean
     transport?: 'polling' | 'websocket'
+    domain?: string
 }
 
 const getCurrentLineNumber = UtilsService.getCurrentLineNumber;
@@ -84,6 +76,13 @@ class ServerService extends ServerBase {
     private users: JWTUsers<any> = {};
 
     constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
+        const _DOMAIN: string =  opts.domain;
+
+        const WEBSOCKET_CORS = {
+            origin: _DOMAIN,
+            methods: ["GET", "POST"]
+        }
+
         super(webServer, {
             cors: WEBSOCKET_CORS,
             transports: [opts.transport || 'websocket'],
@@ -96,7 +95,7 @@ class ServerService extends ServerBase {
         this.options = opts;
 
         const corsHeadersSettings = {
-            "Access-Control-Allow-Origin": '*', // Replace with your frontend domain
+            "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type"
         };
@@ -116,9 +115,9 @@ class ServerService extends ServerBase {
         });
 
         const corsOptions: CorsOptions = {
-            origin: '*', // Replace with the appropriate origins or set it to '*'
+            origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
             methods: ['GET', 'POST', 'OPTIONS'],
-            allowedHeaders: ['Content-Type', 'Authorization']
+            allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
         }
 
         console.log('cors-options', corsOptions);

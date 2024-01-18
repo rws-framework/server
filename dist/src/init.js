@@ -10,6 +10,7 @@ const UtilsService_1 = __importDefault(require("./services/UtilsService"));
 const fs_1 = __importDefault(require("fs"));
 const ProcessService_1 = __importDefault(require("./services/ProcessService"));
 async function init(cfg, serverOptions = {}, addToConfig = null) {
+    var _a;
     const AppConfigService = (0, AppConfigService_1.default)(cfg);
     const port = await AppConfigService.get('port');
     const ws_port = await AppConfigService.get('ws_port');
@@ -39,6 +40,7 @@ async function init(cfg, serverOptions = {}, addToConfig = null) {
             httpRoutes: httpRoutes,
             controllerList: controler_list,
             pub_dir: pub_dir,
+            domain: `http${(await ((_a = AppConfigService.get('features')) === null || _a === void 0 ? void 0 : _a.ssl) ? 's' : '')}://${await AppConfigService.get('domain')}`
         }, ...serverOptions });
     const wsStart = async () => {
         return (await theServer.websocket.starter());

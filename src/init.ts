@@ -48,6 +48,7 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
         httpRoutes: httpRoutes,
         controllerList: controler_list,
         pub_dir: pub_dir,
+        domain: `http${(await AppConfigService.get('features')?.ssl ? 's' : '')}://${await AppConfigService.get('domain')}`
     },...serverOptions});
 
     const wsStart = async () => {
