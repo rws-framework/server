@@ -51,7 +51,7 @@ interface IInitOpts {
     httpRoutes?: IHTTProute[],
     pub_dir?: string,
     authorization?: boolean
-    transports?: string[]
+    transport?: 'polling' | 'websocket'
 }
 
 const getCurrentLineNumber = UtilsService.getCurrentLineNumber;
@@ -86,7 +86,7 @@ class ServerService extends ServerBase {
     constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
         super(webServer, {
             cors: WEBSOCKET_CORS,
-            transports: opts.transports || ['websocket'],
+            transports: [opts.transport || 'websocket'],
             pingTimeout: 5*MINUTE
         }); 
         const _self: ServerService = this;

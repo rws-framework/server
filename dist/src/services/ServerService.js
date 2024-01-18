@@ -62,7 +62,7 @@ class ServerService extends socket_io_1.Server {
     constructor(webServer, expressApp, opts) {
         super(webServer, {
             cors: WEBSOCKET_CORS,
-            transports: opts.transports || ['websocket'],
+            transports: [opts.transport || 'websocket'],
             pingTimeout: 5 * MINUTE
         });
         this.tokens = {};
