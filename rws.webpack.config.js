@@ -14,7 +14,7 @@ module.exports = {
   entry: `${process.cwd()}/src/index.ts`,
   mode: 'development',
   target: 'node',
-  devtool: 'inline-source',
+  devtool: 'source-map',
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: 'rws.server.js',

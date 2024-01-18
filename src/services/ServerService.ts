@@ -1,7 +1,7 @@
 import { Server as ServerBase, Socket } from "socket.io";
 import HTTPS from "https";
 import getConfigService from "./AppConfigService";
-import cors from 'cors';
+import cors, {CorsOptions} from 'cors';
 import HTTP, { ServerResponse } from "http";
 import ITheSocket from "../interfaces/ITheSocket";
 import AuthService from "./AuthService";
