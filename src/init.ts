@@ -3,7 +3,7 @@
 
 import IAppConfig from "./interfaces/IAppConfig";
 import getConfigService, { AppConfigService } from "./services/AppConfigService";
-import ServerService from "./services/ServerService";
+import ServerService, { IInitOpts } from "./services/ServerService";
 import ConsoleService from "./services/ConsoleService";
 import UtilsService from "./services/UtilsService";
 
@@ -11,7 +11,7 @@ import fs from "fs";
 import ProcessService from "./services/ProcessService";
 
 
-async function init(cfg: IAppConfig, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
+async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
     const AppConfigService = getConfigService(cfg);
     const port = await AppConfigService.get('port');
     const ws_port = await AppConfigService.get('ws_port');
@@ -43,12 +43,12 @@ async function init(cfg: IAppConfig, addToConfig: (configService: AppConfigServi
         await ProcessService.runShellCommand('yarn rws init config/config');
     }
 
-    const theServer = await ServerService.initializeApp({        
+    const theServer = await ServerService.initializeApp({...{        
         wsRoutes: wsRoutes,
         httpRoutes: httpRoutes,
         controllerList: controler_list,
         pub_dir: pub_dir,
-    });
+    },...serverOptions});
 
     const wsStart = async () => {
         return (await theServer.websocket.starter());

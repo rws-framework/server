@@ -9,7 +9,7 @@ const ConsoleService_1 = __importDefault(require("./services/ConsoleService"));
 const UtilsService_1 = __importDefault(require("./services/UtilsService"));
 const fs_1 = __importDefault(require("fs"));
 const ProcessService_1 = __importDefault(require("./services/ProcessService"));
-async function init(cfg, addToConfig = null) {
+async function init(cfg, serverOptions = {}, addToConfig = null) {
     const AppConfigService = (0, AppConfigService_1.default)(cfg);
     const port = await AppConfigService.get('port');
     const ws_port = await AppConfigService.get('ws_port');
@@ -34,12 +34,12 @@ async function init(cfg, addToConfig = null) {
         ConsoleService_1.default.log(ConsoleService_1.default.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
         await ProcessService_1.default.runShellCommand('yarn rws init config/config');
     }
-    const theServer = await ServerService_1.default.initializeApp({
-        wsRoutes: wsRoutes,
-        httpRoutes: httpRoutes,
-        controllerList: controler_list,
-        pub_dir: pub_dir,
-    });
+    const theServer = await ServerService_1.default.initializeApp({ ...{
+            wsRoutes: wsRoutes,
+            httpRoutes: httpRoutes,
+            controllerList: controler_list,
+            pub_dir: pub_dir,
+        }, ...serverOptions });
     const wsStart = async () => {
         return (await theServer.websocket.starter());
     };
