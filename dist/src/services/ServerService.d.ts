@@ -21,6 +21,7 @@ interface IInitOpts {
     httpRoutes?: IHTTProute[];
     pub_dir?: string;
     authorization?: boolean;
+    transports?: string[];
 }
 type RWSServer = HTTP.Server | HTTPS.Server;
 type ServerStarter = (callback?: () => void) => Promise<void>;

@@ -62,7 +62,7 @@ class ServerService extends socket_io_1.Server {
     constructor(webServer, expressApp, opts) {
         super(webServer, {
             cors: WEBSOCKET_CORS,
-            transports: ['websocket'],
+            transports: opts.transports || ['websocket'],
             pingTimeout: 5 * MINUTE
         });
         this.tokens = {};
@@ -75,8 +75,8 @@ class ServerService extends socket_io_1.Server {
         this.srv = webServer;
         this.options = opts;
         const corsHeadersSettings = {
-            "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
-            "Access-Control-Allow-Methods": "GET, POST",
+            "Access-Control-Allow-Origin": '*', // Replace with your frontend domain
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type"
         };
         this.srv.on("options", (req, res) => {

@@ -51,6 +51,7 @@ interface IInitOpts {
     httpRoutes?: IHTTProute[],
     pub_dir?: string,
     authorization?: boolean
+    transports?: string[]
 }
 
 const getCurrentLineNumber = UtilsService.getCurrentLineNumber;
@@ -85,7 +86,7 @@ class ServerService extends ServerBase {
     constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
         super(webServer, {
             cors: WEBSOCKET_CORS,
-            transports: ['websocket'],
+            transports: opts.transports || ['websocket'],
             pingTimeout: 5*MINUTE
         }); 
         const _self: ServerService = this;
@@ -95,8 +96,8 @@ class ServerService extends ServerBase {
         this.options = opts;
 
         const corsHeadersSettings = {
-            "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
-            "Access-Control-Allow-Methods": "GET, POST",
+            "Access-Control-Allow-Origin": '*', // Replace with your frontend domain
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type"
         };
 
