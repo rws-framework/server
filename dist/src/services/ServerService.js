@@ -74,30 +74,34 @@ class ServerService extends socket_io_1.Server {
         this.server_app = expressApp;
         this.srv = webServer;
         this.options = opts;
-        const corsSettings = {
+        const corsHeadersSettings = {
             "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
             "Access-Control-Allow-Methods": "GET, POST",
             "Access-Control-Allow-Headers": "Content-Type"
         };
         this.srv.on("options", (req, res) => {
-            res.writeHead(200, corsSettings);
+            res.writeHead(200, corsHeadersSettings);
             res.end();
         });
         this.server_app.use((req, res, next) => {
-            Object.keys(corsSettings).forEach((key) => {
-                res.setHeader(key, corsSettings[key]);
+            Object.keys(corsHeadersSettings).forEach((key) => {
+                res.setHeader(key, corsHeadersSettings[key]);
             });
             next();
         });
-        const corsMiddleware = (0, cors_1.default)({
-            origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
-            methods: ['GET', 'POST'],
-        });
+        const corsOptions = {
+            origin: '*', // Replace with the appropriate origins or set it to '*'
+            methods: ['GET', 'POST', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization']
+        };
+        console.log('cors-options', corsOptions);
+        const corsMiddleware = (0, cors_1.default)(corsOptions);
         this.use(async (socket, next) => {
             const request = socket.request;
             const response = new http_1.ServerResponse(request);
             corsMiddleware(request, response, next);
         });
+        this.server_app.options('*', (0, cors_1.default)(corsOptions)); // Enable pre-flight for all routes
         if (opts.authorization) {
             this.setupAuth();
         }
