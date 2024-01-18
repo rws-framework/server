@@ -77,7 +77,7 @@ class ServerService extends socket_io_1.Server {
         const corsHeadersSettings = {
             "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Headers": "Content-Type, x-csrf-token, Accept, Authorization",
             "Access-Control-Allow-Credentials": 'true'
         };
         this.srv.on("options", (req, res) => {
