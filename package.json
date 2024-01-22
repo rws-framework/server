@@ -1,14 +1,6 @@
 {
   "name": "rws-js-server",
-<<<<<<< HEAD
-<<<<<<< HEAD
-  "version": "2.3.0",
-=======
-  "version": "2.1.9",
->>>>>>> 0758c58 (v2.1.9)
-=======
-  "version": "2.1.10",
->>>>>>> d9b5def (v2.1.10)
+  "version": "2.3.2",
   "description": "",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
