@@ -76,7 +76,7 @@ class ServerService extends socket_io_1.Server {
         this.srv = webServer;
         this.options = opts;
         const corsHeadersSettings = {
-            "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
+            "Access-Control-Allow-Origin": _DOMAIN,
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
             "Access-Control-Allow-Headers": cors_headers.join(', '),
             "Access-Control-Allow-Credentials": 'true'
@@ -92,7 +92,7 @@ class ServerService extends socket_io_1.Server {
             next();
         });
         const corsOptions = {
-            origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
+            origin: _DOMAIN,
             methods: ['GET', 'POST', 'OPTIONS'],
             allowedHeaders: cors_headers
         };
@@ -110,21 +110,21 @@ class ServerService extends socket_io_1.Server {
     }
     static async initializeApp(opts) {
         var _b, _c;
-        if (!_a.http_server) {
-            const [baseHttpServer, expressHttpServer] = await _a.createServerInstance(opts);
-            const http_instance = new _a(baseHttpServer, expressHttpServer, opts);
+        if (!ServerService.http_server) {
+            const [baseHttpServer, expressHttpServer] = await ServerService.createServerInstance(opts);
+            const http_instance = new ServerService(baseHttpServer, expressHttpServer, opts);
             const isSSL = (_b = (0, AppConfigService_1.default)().get('features')) === null || _b === void 0 ? void 0 : _b.ssl;
             const httpPort = (0, AppConfigService_1.default)().get('port');
-            _a.http_server = { instance: await http_instance.configureHTTPServer(), starter: http_instance.createServerStarter(httpPort, () => {
+            ServerService.http_server = { instance: await http_instance.configureHTTPServer(), starter: http_instance.createServerStarter(httpPort, () => {
                     ConsoleService_1.default.log(ConsoleService_1.default.color().green('Request/response server' + ` is working on port ${httpPort} using HTTP${isSSL ? 'S' : ''} protocol`));
                 }) };
         }
-        if (!_a.ws_server) {
-            const [baseWsServer, expressWsServer] = await _a.createServerInstance(opts);
-            const ws_instance = new _a(baseWsServer, expressWsServer, opts);
+        if (!ServerService.ws_server) {
+            const [baseWsServer, expressWsServer] = await ServerService.createServerInstance(opts);
+            const ws_instance = new ServerService(baseWsServer, expressWsServer, opts);
             const isSSL = (_c = (0, AppConfigService_1.default)().get('features')) === null || _c === void 0 ? void 0 : _c.ssl;
             const wsPort = (0, AppConfigService_1.default)().get('ws_port');
-            _a.ws_server = { instance: await ws_instance.configureWSServer(), starter: ws_instance.createServerStarter(wsPort, () => {
+            ServerService.ws_server = { instance: await ws_instance.configureWSServer(), starter: ws_instance.createServerStarter(wsPort, () => {
                     ConsoleService_1.default.log(ConsoleService_1.default.color().green('Websocket server' + ` is working on port ${wsPort}. SSL is ${isSSL ? 'enabled' : 'disabled'}.`));
                 }) };
         }
@@ -189,7 +189,7 @@ class ServerService extends socket_io_1.Server {
             const processed_routes = await RouterService_1.default.assignRoutes(this.server_app, this.options.httpRoutes, this.options.controllerList);
             this.server_app.use((req, res, next) => {
                 if (!RouterService_1.default.hasRoute(req.originalUrl, processed_routes)) {
-                    _a.on404(req, res);
+                    ServerService.on404(req, res);
                 }
                 else {
                     next();
@@ -220,7 +220,7 @@ class ServerService extends socket_io_1.Server {
                 });
                 Object.keys(this.options.wsRoutes).forEach((eventName) => {
                     const SocketClass = this.options.wsRoutes[eventName];
-                    new SocketClass(_a.ws_server).handleConnection(socket, eventName);
+                    new SocketClass(ServerService.ws_server).handleConnection(socket, eventName);
                 });
             });
         }
@@ -292,7 +292,7 @@ ServerService.cookies = {
         });
     },
     getCookie: async (headers, key) => {
-        const cookiesBin = await _a.cookies.getCookies(headers);
+        const cookiesBin = await ServerService.cookies.getCookies(headers);
         if (!cookiesBin[key]) {
             return null;
         }

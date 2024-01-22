@@ -20,12 +20,16 @@ function linkWorkspaces(packageJsonPath, rootDir){
   const package = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
   package.workspaces.forEach((workspace) => {
-      if(fs.existsSync(`${rootDir}/${workspace}/node_modules`)){
-          removeDirectory(`${rootDir}/${workspace}/node_modules`);
-      }
-  
-      createAndLogSymlink( `${rootDir}/node_modules`,`${rootDir}/${workspace}/node_modules`);
+      linkWorkspace(workspace, rootDir);
   });
+}
+
+function linkWorkspace(workspace, rootDir){  
+  if(fs.existsSync(`${rootDir}/${workspace}/node_modules`)){
+    removeDirectory(`${rootDir}/${workspace}/node_modules`);
+  }
+
+  createAndLogSymlink( `${rootDir}/node_modules`,`${rootDir}/${workspace}/node_modules`);
 }
 
 function removeWorkspacePackages(packageJsonPath, rootDir){
