@@ -67,16 +67,14 @@ const main = async () => {
         process.env.WEBPACK_CFG_FILE = fs.readFileSync(cfgPathFile, 'utf-8');
     }else{
         process.env.WEBPACK_CFG_FILE = args?.config || 'config/config';    
-    }
-
-    // await installDeps();
+    }    
     
     await generateCliClient();        
 
-    log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`);  
+    log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`, `${webpackPath}/exec/dist/rws.js ${command2map} ${args}`);  
 
     try {
-        await ProcessService.PM2ExecCommand(`${webpackPath}/exec/dist/rws.js`, { args: [command2map, args, ...extraArgsAggregated] });
+        await ProcessService.runShellCommand(`node ${webpackPath}/exec/dist/rws.js ${command2map} ${args}`, process.cwd());
     } catch(err) {
         error(err);
     }
@@ -87,9 +85,7 @@ const main = async () => {
 async function installDeps(){
     log(color().green('[RWS]') + color().yellowBright('RWS Dependencies config start...'))
 
-    if(!fs.existsSync(`${packageRootDir} + '/node_modules/ts-transformer-keys'}`)){        
-        await ProcessService.runShellCommand(`yarn add ts-transformer-keys`);
-    }
+    await ProcessService.runShellCommand(`yarn global add pm2`);
 
     //await rwsPackageSetup();
     
@@ -113,7 +109,8 @@ async function generateCliClient()
             warn('[RWS] Forcing CLI client reload...');
         }
         log(color().green('[RWS]') + color().yellowBright(' Detected CLI file changes. Generating CLI client file...'));      
-        await ProcessService.PM2ExecCommand(`yarn webpack --config ${webpackPath}/exec/exec.webpack.config.js`, { options: { cwd: process.cwd() }});
+        
+        await ProcessService.runShellCommand(`yarn webpack --config ${webpackPath}/exec/exec.webpack.config.js`, process.cwd());
         log(color().green('[RWS]') + ' CLI client file generated.')       
     }else{
         log(color().green('[RWS]') + ' CLI client file is up to date.')  

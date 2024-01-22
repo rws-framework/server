@@ -18,12 +18,6 @@ declare const _default: ({
     getName(): string;
     getCommandParameters(params: import("./_command").ICmdParams): import("./_command").ICmdParamsReturn;
 } | {
-    execute(params: import("./_command").ICmdParams): Promise<void>;
-    name: string;
-    getSourceFilePath(): string;
-    getName(): string;
-    getCommandParameters(params: import("./_command").ICmdParams): import("./_command").ICmdParamsReturn;
-} | {
     execute(params?: import("./_command").ICmdParams): Promise<void>;
     name: string;
     getSourceFilePath(): string;

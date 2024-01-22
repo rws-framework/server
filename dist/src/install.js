@@ -98,9 +98,7 @@ async function main(cfg) {
     fs_1.default.writeFileSync(schemaPath, template);
     process.env.DB_URL = dbUrl;
     // Define the command you want to run
-    await ProcessService_1.default.PM2ExecCommand('npx prisma generate --schema=' + schemaPath, { options: { env: {
-                DB_URL: dbUrl
-            } } });
+    await ProcessService_1.default.runShellCommand('npx prisma generate --schema=' + schemaPath);
     log(color().green('[RWS Init]') + ' prisma schema generated from ', schemaPath);
     return;
 }

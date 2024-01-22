@@ -3,29 +3,9 @@ interface IExecCmdOpts {
     verbose?: boolean;
     _default: any | null;
 }
-type InterpreterType = 'node' | 'none';
-interface ICommandOpts {
-    exec_mode?: string;
-    index?: number;
-    cwd?: string;
-    interpreter?: InterpreterType;
-    env: {
-        [key: string]: string;
-    };
-}
 declare class ProcessService extends TheService {
     getParentPID(pid: number): number;
     getAllProcessesIds(): number[];
-    private generatePM2Name;
-    PM2ExecCommand(command: string, commandOpts?: {
-        options?: ICommandOpts;
-        args?: string[];
-    }): Promise<string>;
-    isProcessDead(processName: string, _interval?: number): Promise<boolean>;
-    private _PM2KillSelf;
-    PM2RunCommandsInParallel(commands: string[]): Promise<void>;
-    killProcess(scriptPath: string): Promise<void>;
-    killRWS(): Promise<void>;
     runShellCommand(command: string, cwd?: string, silent?: boolean): Promise<void>;
     sleep(ms: number): Promise<void>;
     getInput(prompt: string): Promise<string>;

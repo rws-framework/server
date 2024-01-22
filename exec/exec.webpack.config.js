@@ -12,7 +12,7 @@ module.exports = {
     entry: path.resolve(__dirname) + '/src/rws.ts',
     mode: 'development',
     target: 'node',
-    devtool: 'inline-source-map',
+    devtool: 'source-map',
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'rws.js',
@@ -34,9 +34,7 @@ module.exports = {
               allowTsInNodeModules: true,
               configFile: path.resolve(__dirname, 'tsconfig.json'), 
               // compilerOptions: {
-              //   paths: {
-              //     '*': [rootPackageNodeModules + '/*']
-              //   }
+              //   baseUrl: UtilsService.findRootWorkspacePath(process.cwd())
               // },             
               getCustomTransformers: program => ({
                   before: [
