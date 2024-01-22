@@ -20,8 +20,7 @@ module.exports = {
     resolve: {
       modules: modules_setup,
       alias: {                 
-       'rws-js-server': path.resolve(__dirname, '..', 'dist', 'src'),
-       '@cwd': path.resolve(process.cwd(), 'src')       
+       'rws-js-server': path.resolve(__dirname, '..', 'dist', 'src')       
       },
       extensions: ['.ts', '.js', '.node'],      
     },
