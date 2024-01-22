@@ -74,5 +74,6 @@ function removeDirectory(dirPath) {
 module.exports = {
     findRootWorkspacePath,
     linkWorkspaces,
+    linkWorkspace,
     removeWorkspacePackages
 }
