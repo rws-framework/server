@@ -55,7 +55,7 @@ const wsLog = async (fakeError, text, socketId = null, isError = false) => {
 const MINUTE = 1000 * 60;
 class ServerService extends socket_io_1.Server {
     constructor(webServer, expressApp, opts) {
-        const _DOMAIN = opts.domain;
+        const _DOMAIN = opts.cors_domain || opts.domain;
         const WEBSOCKET_CORS = {
             origin: _DOMAIN,
             methods: ["GET", "POST"]

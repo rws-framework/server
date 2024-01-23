@@ -44,6 +44,7 @@ interface IInitOpts {
     authorization?: boolean
     transport?: 'polling' | 'websocket'
     domain?: string
+    cors_domain?: string
 }
 
 const getCurrentLineNumber = UtilsService.getCurrentLineNumber;
@@ -76,7 +77,7 @@ class ServerService extends ServerBase {
     private users: JWTUsers<any> = {};
 
     constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
-        const _DOMAIN: string =  opts.domain;
+        const _DOMAIN: string =  opts.cors_domain || opts.domain;
 
         const WEBSOCKET_CORS = {
             origin: _DOMAIN,

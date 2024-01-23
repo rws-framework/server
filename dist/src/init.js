@@ -18,6 +18,7 @@ async function init(cfg, serverOptions = {}, addToConfig = null) {
     const httpRoutes = await AppConfigService.get('http_routes');
     const controler_list = await AppConfigService.get('controller_list');
     const pub_dir = await AppConfigService.get('pub_dir');
+    const cors_domain = await AppConfigService.get('cors_domain');
     const sslCert = AppConfigService.get('ssl_cert');
     const sslKey = AppConfigService.get('ssl_key');
     if (addToConfig !== null) {
@@ -30,7 +31,7 @@ async function init(cfg, serverOptions = {}, addToConfig = null) {
     const executeDir = process.cwd();
     const packageRootDir = UtilsService_1.default.findRootWorkspacePath(executeDir);
     const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-    const moduleCfgFile = `${moduleCfgDir}/_cfg_path`;
+    const moduleCfgFile = `${moduleCfgDir}/_rws_installed`;
     if (!fs_1.default.existsSync(moduleCfgFile)) {
         ConsoleService_1.default.log(ConsoleService_1.default.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
         await ProcessService_1.default.runShellCommand('yarn rws init config/config');
@@ -40,7 +41,8 @@ async function init(cfg, serverOptions = {}, addToConfig = null) {
             httpRoutes: httpRoutes,
             controllerList: controler_list,
             pub_dir: pub_dir,
-            domain: `http${(await ((_a = AppConfigService.get('features')) === null || _a === void 0 ? void 0 : _a.ssl) ? 's' : '')}://${await AppConfigService.get('domain')}`
+            domain: `http${(await ((_a = AppConfigService.get('features')) === null || _a === void 0 ? void 0 : _a.ssl) ? 's' : '')}://${await AppConfigService.get('domain')}`,
+            cors_domain: cors_domain
         }, ...serverOptions });
     const wsStart = async () => {
         return (await theServer.websocket.starter());

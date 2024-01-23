@@ -19,6 +19,7 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
     const httpRoutes = await AppConfigService.get('http_routes');
     const controler_list = await AppConfigService.get('controller_list');
     const pub_dir = await AppConfigService.get('pub_dir');
+    const cors_domain = await AppConfigService.get('cors_domain');
 
     const sslCert = AppConfigService.get('ssl_cert');
     const sslKey = AppConfigService.get('ssl_key');      
@@ -36,7 +37,7 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
     const executeDir: string = process.cwd();
     const packageRootDir = UtilsService.findRootWorkspacePath(executeDir)
     const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-    const moduleCfgFile = `${moduleCfgDir}/_cfg_path`;
+    const moduleCfgFile = `${moduleCfgDir}/_rws_installed`;
 
     if(!fs.existsSync(moduleCfgFile )){        
         ConsoleService.log(ConsoleService.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
@@ -48,7 +49,8 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
         httpRoutes: httpRoutes,
         controllerList: controler_list,
         pub_dir: pub_dir,
-        domain: `http${(await AppConfigService.get('features')?.ssl ? 's' : '')}://${await AppConfigService.get('domain')}`
+        domain: `http${(await AppConfigService.get('features')?.ssl ? 's' : '')}://${await AppConfigService.get('domain')}`,
+        cors_domain: cors_domain
     },...serverOptions});
 
     const wsStart = async () => {

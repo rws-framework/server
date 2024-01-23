@@ -23,6 +23,7 @@ interface IInitOpts {
     authorization?: boolean;
     transport?: 'polling' | 'websocket';
     domain?: string;
+    cors_domain?: string;
 }
 type RWSServer = HTTP.Server | HTTPS.Server;
 type ServerStarter = (callback?: () => void) => Promise<void>;
