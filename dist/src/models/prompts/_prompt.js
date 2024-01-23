@@ -54,6 +54,21 @@ class RWSPrompt {
         this.hyperParameters = value;
         return this;
     }
+    setMultiTemplate(template) {
+        this.multiTemplate = template;
+        return this;
+    }
+    getMultiTemplate() {
+        return this.multiTemplate;
+    }
+    async setConvo(convo) {
+        this.convo = convo;
+        await this.convo.chain(this.getMultiTemplate(), []);
+        return this;
+    }
+    getConvo() {
+        return this.convo;
+    }
     getModelMetadata() {
         return [this.modelType, this.modelId];
     }

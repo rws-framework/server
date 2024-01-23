@@ -21,7 +21,10 @@ import EFSService from './services/EFSService';
 import MD5Service from './services/MD5Service';
 import TraversalService from './services/TraversalService';
 import UtilsService from './services/UtilsService';
+import VectorStoreService from './services/VectorStoreService';
 import RWSPrompt from './models/prompts/_prompt';
+import RWSConvo from './models/convo/ConvoLoader';
+import RWSVectorStore from './models/convo/VectorStore';
 import { InverseRelation, InverseTimeSeries, Relation, TrackType} from './models/annotations/index';
 import { Route } from './routing/annotations/index';
 import getAppConfig, { IAppConfig, AppConfigService } from './services/AppConfigService';
@@ -67,6 +70,7 @@ export {
     MD5Service,
     TraversalService,
     UtilsService,
+    VectorStoreService,
 
     TimeSeriesModel,
 
@@ -87,6 +91,8 @@ export {
     RWSAppCommands,
     RWSTestSuite,  
     
+    RWSVectorStore,
+    RWSConvo,
     RWSPrompt,
     RWSErrorCodes
 }

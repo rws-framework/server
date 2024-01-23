@@ -1,5 +1,6 @@
 import { Readable } from 'stream';
-
+import { PromptTemplate } from "@langchain/core/prompts";
+import ConvoLoader from '../convo/ConvoLoader';
 
 interface IPromptHyperParameters {
     temperature: number,
@@ -33,7 +34,8 @@ class RWSPrompt {
     private output: string;
     private modelId: string;
     private modelType: string;
-
+    private multiTemplate: PromptTemplate;
+    private convo: ConvoLoader;
     private hyperParameters: IPromptHyperParameters;
 
     constructor(params: IPromptParams){
@@ -112,6 +114,31 @@ class RWSPrompt {
         this.hyperParameters = value;
         
         return this;
+    }
+
+    setMultiTemplate(template: PromptTemplate): RWSPrompt
+    {
+        this.multiTemplate = template
+        return this;
+    }
+
+    getMultiTemplate(): PromptTemplate
+    {
+        return this.multiTemplate;
+    }
+
+    async setConvo(convo: ConvoLoader): Promise<RWSPrompt>
+    {
+        this.convo = convo
+
+        await this.convo.chain(this.getMultiTemplate(), []);
+        
+        return this;
+    }
+
+    getConvo(): ConvoLoader
+    {
+        return this.convo;
     }
 
     getModelMetadata(): [string, string]
