@@ -16,8 +16,8 @@ class UtilsService extends TheService {
 
   getRWSVar(fileName: string): string | null
   {
-    const executionDir = process.cwd();    
-    const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+    const packageDir = this.findRootWorkspacePath(process.cwd());    
+    const moduleCfgDir = `${packageDir}/node_modules/.rws`;
 
     if(!fs.existsSync(`${moduleCfgDir}/${fileName}`)){
       return;
@@ -32,8 +32,8 @@ class UtilsService extends TheService {
   
   setRWSVar(fileName: string, value: string)
   {
-    const executionDir = process.cwd();    
-    const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+    const packageDir = this.findRootWorkspacePath(process.cwd());    
+    const moduleCfgDir = `${packageDir}/node_modules/.rws`;
 
     if(!fs.existsSync(moduleCfgDir)){
       fs.mkdirSync(moduleCfgDir);

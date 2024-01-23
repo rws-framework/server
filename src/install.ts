@@ -7,6 +7,8 @@ import DBService from "./services/DBService";
 import TimeSeriesModel from "./models/types/TimeSeriesModel";
 import ProcessService from "./services/ProcessService";
 import ConsoleService from "./services/ConsoleService";
+import UtilsService from "./services/UtilsService";
+
 const { log, warn, error, color } = ConsoleService;
 
 const {runShellCommand} = ProcessService;
@@ -126,6 +128,8 @@ async function main(cfg: IAppConfig)
   await ProcessService.runShellCommand('npx prisma generate --schema='+schemaPath);  
 
   log(color().green('[RWS Init]') + ' prisma schema generated from ', schemaPath);
+
+  UtilsService.setRWSVar('_rws_installed', 'OK');
 
   return;
 }

@@ -33,6 +33,7 @@ declare class RWSPrompt {
     listen(source: string | Readable): Promise<RWSPrompt>;
     addEnchantment(enchantment: IPromptEnchantment): void;
     getEnchantedInput(): string | null;
+    getModelId(): string;
     readSentInput(): string;
     readInput(): string;
     readOutput(): string;

@@ -13,6 +13,7 @@ const DBService_1 = __importDefault(require("./services/DBService"));
 const TimeSeriesModel_1 = __importDefault(require("./models/types/TimeSeriesModel"));
 const ProcessService_1 = __importDefault(require("./services/ProcessService"));
 const ConsoleService_1 = __importDefault(require("./services/ConsoleService"));
+const UtilsService_1 = __importDefault(require("./services/UtilsService"));
 const { log, warn, error, color } = ConsoleService_1.default;
 const { runShellCommand } = ProcessService_1.default;
 exports.runShellCommand = runShellCommand;
@@ -100,6 +101,7 @@ async function main(cfg) {
     // Define the command you want to run
     await ProcessService_1.default.runShellCommand('npx prisma generate --schema=' + schemaPath);
     log(color().green('[RWS Init]') + ' prisma schema generated from ', schemaPath);
+    UtilsService_1.default.setRWSVar('_rws_installed', 'OK');
     return;
 }
 const SetupRWS = main;

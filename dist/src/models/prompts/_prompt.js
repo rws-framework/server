@@ -28,6 +28,9 @@ class RWSPrompt {
     getEnchantedInput() {
         return this.enhancedInput[this.enhancedInput.length - 1].output;
     }
+    getModelId() {
+        return this.modelId;
+    }
     readSentInput() {
         return this.sentInput;
     }

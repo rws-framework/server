@@ -64,7 +64,7 @@ class MD5Service extends TheService {
             fs.mkdirSync(moduleCfgDir);
         }
 
-        if (!fs.existsSync(`${moduleCfgDir}/_cli_cmd_dir`)) {
+        if (!fs.existsSync(`${moduleCfgDir}/__rws_installed`) || !fs.existsSync(`${moduleCfgDir}/_cli_cmd_dir`)) {
             return [];
         }        
 

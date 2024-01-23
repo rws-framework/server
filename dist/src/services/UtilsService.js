@@ -15,8 +15,8 @@ class UtilsService extends _service_1.default {
         return typeof func === 'function';
     }
     getRWSVar(fileName) {
-        const executionDir = process.cwd();
-        const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+        const packageDir = this.findRootWorkspacePath(process.cwd());
+        const moduleCfgDir = `${packageDir}/node_modules/.rws`;
         if (!fs_1.default.existsSync(`${moduleCfgDir}/${fileName}`)) {
             return;
         }
@@ -28,8 +28,8 @@ class UtilsService extends _service_1.default {
         }
     }
     setRWSVar(fileName, value) {
-        const executionDir = process.cwd();
-        const moduleCfgDir = `${executionDir}/node_modules/.rws`;
+        const packageDir = this.findRootWorkspacePath(process.cwd());
+        const moduleCfgDir = `${packageDir}/node_modules/.rws`;
         if (!fs_1.default.existsSync(moduleCfgDir)) {
             fs_1.default.mkdirSync(moduleCfgDir);
         }

@@ -47,7 +47,7 @@ class MD5Service extends _service_1.default {
         if (!fs_1.default.existsSync(moduleCfgDir)) {
             fs_1.default.mkdirSync(moduleCfgDir);
         }
-        if (!fs_1.default.existsSync(`${moduleCfgDir}/_cli_cmd_dir`)) {
+        if (!fs_1.default.existsSync(`${moduleCfgDir}/__rws_installed`) || !fs_1.default.existsSync(`${moduleCfgDir}/_cli_cmd_dir`)) {
             return [];
         }
         const cmdDirPath = fs_1.default.readFileSync(`${moduleCfgDir}/_cli_cmd_dir`, 'utf-8');

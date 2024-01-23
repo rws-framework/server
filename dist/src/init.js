@@ -35,6 +35,7 @@ async function init(cfg, serverOptions = {}, addToConfig = null) {
     if (!fs_1.default.existsSync(moduleCfgFile)) {
         ConsoleService_1.default.log(ConsoleService_1.default.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
         await ProcessService_1.default.runShellCommand('yarn rws init config/config');
+        UtilsService_1.default.setRWSVar('_rws_installed', 'OK');
     }
     const theServer = await ServerService_1.default.initializeApp({ ...{
             wsRoutes: wsRoutes,

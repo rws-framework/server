@@ -71,6 +71,11 @@ class RWSPrompt {
         return this.enhancedInput[this.enhancedInput.length - 1].output;
     }
 
+    getModelId(): string
+    {
+        return this.modelId;
+    }
+
     readSentInput(): string
     {
         return this.sentInput;

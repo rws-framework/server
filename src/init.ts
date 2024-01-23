@@ -39,9 +39,10 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
     const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
     const moduleCfgFile = `${moduleCfgDir}/_rws_installed`;
 
-    if(!fs.existsSync(moduleCfgFile )){        
+    if(!fs.existsSync(moduleCfgFile)){        
         ConsoleService.log(ConsoleService.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
         await ProcessService.runShellCommand('yarn rws init config/config');
+        UtilsService.setRWSVar('_rws_installed', 'OK');    
     }
 
     const theServer = await ServerService.initializeApp({...{        
