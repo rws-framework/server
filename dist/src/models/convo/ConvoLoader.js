@@ -9,11 +9,18 @@ const VectorStoreService_1 = __importDefault(require("../../services/VectorStore
 const uuid_1 = require("uuid");
 const chains_1 = require("langchain/chains");
 class ConvoLoader {
-    constructor(pathToTextFile, embeddings) {
+    constructor(embeddings, convoId = null) {
         this._initiated = false;
         this.embeddings = embeddings;
-        this.convo_id = (0, uuid_1.v4)();
-        this.init(pathToTextFile);
+        if (convoId === null) {
+            this.convo_id = ConvoLoader.uuid();
+        }
+        else {
+            this.convo_id = convoId;
+        }
+    }
+    static uuid() {
+        return (0, uuid_1.v4)();
     }
     async init(pathToTextFile) {
         this.loader = new text_1.TextLoader(pathToTextFile);
@@ -25,6 +32,7 @@ class ConvoLoader {
         this.docs = await this.docSplitter.splitDocuments(await this.loader.load());
         this.store = await VectorStoreService_1.default.createStore(this.docs, this.embeddings);
         this._initiated = true;
+        return this;
     }
     getId() {
         return this.convo_id;
@@ -37,6 +45,13 @@ class ConvoLoader {
     }
     isInitiated() {
         return this._initiated;
+    }
+    setLLMClient(client) {
+        this.llmClient = client;
+        return this;
+    }
+    getLLMClient() {
+        return this.llmClient;
     }
     async chain(promptTemplate) {
         if (!this.llmChain) {
@@ -62,18 +77,11 @@ class ConvoLoader {
                 }
                 if (i > 9) {
                     clearInterval(interval);
-                    reject(false);
+                    reject(null);
                 }
                 i++;
             }, 300);
         });
-    }
-    setLLMClient(client) {
-        this.llmClient = client;
-        return this;
-    }
-    getLLMClient() {
-        return this.llmClient;
     }
 }
 exports.default = ConvoLoader;

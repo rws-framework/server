@@ -31,6 +31,12 @@ interface IRWSPromptRequestExecutor {
     promptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null) => Promise<RWSPrompt>
 }
 
+
+interface IRWSSinglePromptRequestExecutor {
+    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null) => Promise<RWSPrompt>
+}
+
+
 interface IRWSPromptStreamExecutor {
     promptStream: (prompt: RWSPrompt, read: (size: number) => void) => Readable
 }
@@ -46,6 +52,8 @@ class RWSPrompt {
     private multiTemplate: PromptTemplate;
     private convo: ConvoLoader;
     private hyperParameters: IPromptHyperParameters;
+
+    private varStorage: any = {};
 
     constructor(params: IPromptParams){
         this.input = params.input;
@@ -95,6 +103,19 @@ class RWSPrompt {
     readInput(): string
     {
         return this.input;
+    }
+
+    
+    readBaseInput(): string
+    {
+        return this.originalInput;
+    }    
+
+    setBaseInput(input: string): RWSPrompt
+    {
+        this.originalInput = input;
+        
+        return this;
     }
 
     readOutput(): string
@@ -161,10 +182,27 @@ class RWSPrompt {
         await executor.promptRequest(this, null, intruderPrompt);
     }
 
+    async singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt: string = null): Promise<void>
+    {
+        this.sentInput = this.input;
+        await executor.singlePromptRequest(this, null, intruderPrompt);
+    }
+
     streamWith(executor: IRWSPromptStreamExecutor, read: (size: number) => void): Readable
     {
         this.sentInput = this.input;
         return executor.promptStream(this, read);
+    }
+
+    getVar<T>(key: string): T
+    {
+        return Object.keys(this.varStorage).includes(key) ? this.varStorage[key] : null;
+    }
+
+    setVar<T>(key: string, val: T): RWSPrompt {
+        this.varStorage[key] = val;
+
+        return this;
     }
 
     async readStream(stream: Readable, react: (chunk: string) => void): Promise<void>    
@@ -199,4 +237,4 @@ class RWSPrompt {
 
 export default RWSPrompt;
 
-export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor }
+export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor, IRWSSinglePromptRequestExecutor }

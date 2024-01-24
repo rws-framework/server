@@ -143,25 +143,35 @@ class RouterService extends TheService{
             status = controllerMethodReturn.getCode();
           }
 
-          if(routeParams.responseType === 'json' || !routeParams.responseType){                
-            res.status(status).send(controllerMethodReturn);
-            return;
-          }                                              
-
-          if(routeParams.responseType === 'html' && appConfig().get('pub_dir')){          
-            res.status(status).sendFile(path.join(appConfig().get('pub_dir'),  controllerMethodReturn.template_name + '.html'));
-            return;
-          }
-
-          console.log(status);
-
-          res.status(status).send(controllerMethodReturn);
+          this.sendResponseWithStatus(res, status, routeParams, controllerMethodReturn);          
+          
           return;
-        }catch(err: RWSError | any){
-          console.log(err);
-          // err.printFullError();
+        }catch(err: RWSError | any){          
+          err.printFullError();
+          
+          this.sendResponseWithStatus(res, err.code, routeParams, {
+            success: false,
+            data: {
+              error: err
+            }
+          });          
         }
       });
+    }
+
+    private sendResponseWithStatus(res: Response, status: number, routeParams: IHTTProuteParams, output: any)
+    {
+      if(routeParams.responseType === 'json' || !routeParams.responseType){                
+        res.status(status).send(output);
+        return;
+      }                                              
+
+      if(routeParams.responseType === 'html' && appConfig().get('pub_dir')){          
+        res.status(status).sendFile(path.join(appConfig().get('pub_dir'),  output.template_name + '.html'));
+        return;
+      }
+
+      res.status(status).send();
     }
 
     private setControllerRoutes(

@@ -15,6 +15,7 @@ declare class RouterService extends TheService {
     }>;
     assignRoutes(app: express.Express, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]>;
     private addRouteToServer;
+    private sendResponseWithStatus;
     private setControllerRoutes;
     hasRoute(routePath: string, routes: IHTTProute[]): boolean;
     getRoute(routePath: string, routes: IHTTProute[]): IHTTProute | null;

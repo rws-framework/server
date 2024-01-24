@@ -6,8 +6,8 @@ import AppConfig from '../services/AppConfigService'
 import Error404 from '../errors/Error404';
 import Error500 from '../errors/Error500';
 
-type IHTTProuteMethod  = (params: IRequestParams) => any
-interface IRequestParams{
+type IHTTProuteMethod  = (params: IRequestParams<any>) => any
+interface IRequestParams<T>{
     query: {
         [key: string]: any
     },
@@ -27,13 +27,15 @@ export {IRequestParams, IHTTProuteMethod}
  * @category Core extendable objects
  */
 export default class Controller extends RWSService {
+    private _hasError: boolean;
+
     constructor() {
         super();        
     }
 
-    callMethod(methodName: string): (params: IRequestParams) => any
+    callMethod(methodName: string): (params: IRequestParams<any>) => any
     {
-        return (params: IRequestParams) => {                            
+        return (params: IRequestParams<any>) => {                            
             if((!(this as any)[methodName])){
                 const error = new Error404(new Error('The method does not exist in controller.'), `${__filename}::${methodName}`);
 
@@ -47,5 +49,15 @@ export default class Controller extends RWSService {
                 return error;
             }
         }
+    }
+
+    hasError(){
+        const hasError: boolean = this._hasError;
+        this._hasError = false;
+        return hasError;
+    }
+
+    flagError(){
+        this._hasError = true;
     }
 }

@@ -1,11 +1,10 @@
 import { TextLoader } from "langchain/document_loaders/fs/text";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { BedrockEmbeddings } from "langchain/embeddings/bedrock"
 import { PromptTemplate } from "@langchain/core/prompts";
 import { EmbeddingsInterface } from "@langchain/core/embeddings";
 import VectorStoreService from '../../services/VectorStoreService';
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
-import { Bedrock as LLMBedrock } from "langchain/llms/bedrock";
+import { Bedrock as LLMBedrock } from "@langchain/community/llms/bedrock";
 
 import { v4 as uuid } from 'uuid';
 
@@ -24,13 +23,22 @@ class ConvoLoader {
     private llmClient: LLMBedrock;
     private llmChain: LLMChain;
     
-    constructor(pathToTextFile: string, embeddings: EmbeddingsInterface){
+    constructor(embeddings: EmbeddingsInterface, convoId: string | null = null){
         this.embeddings = embeddings;
-        this.convo_id = uuid();
-        this.init(pathToTextFile);
+        
+        if(convoId === null){
+            this.convo_id = ConvoLoader.uuid();
+        } else {
+            this.convo_id = convoId;
+        }                
     }
 
-    private async init(pathToTextFile: string)
+    static uuid(): string
+    {
+        return uuid();
+    }
+
+    public async init(pathToTextFile: string): Promise<ConvoLoader>
     {
         this.loader = new TextLoader(pathToTextFile);
         this.docSplitter = new RecursiveCharacterTextSplitter({
@@ -44,6 +52,8 @@ class ConvoLoader {
         this.store = await VectorStoreService.createStore(this.docs, this.embeddings);
 
         this._initiated = true;
+
+        return this;
     }
 
     getId(): string {
@@ -64,6 +74,18 @@ class ConvoLoader {
         return this._initiated;
     }
 
+    setLLMClient(client: LLMBedrock): ConvoLoader
+    {
+        this.llmClient = client;
+        
+        return this;
+    }
+
+    getLLMClient(): LLMBedrock
+    {
+        return this.llmClient;
+    }
+
     async chain(promptTemplate: PromptTemplate): Promise<LLMChain>
     {        
         if(!this.llmChain){
@@ -82,7 +104,7 @@ class ConvoLoader {
         return this.llmChain;
     }
 
-    async waitForInit(): Promise<ConvoLoader>
+    async waitForInit(): Promise<ConvoLoader | null>
     {
         const _self = this;
         return new Promise((resolve, reject)=>{
@@ -96,25 +118,13 @@ class ConvoLoader {
 
                 if(i>9){
                     clearInterval(interval);
-                    reject(false)
+                    reject(null)
                 }
 
                 i++;
             }, 300);            
         })
-    }
-
-    setLLMClient(client: LLMBedrock): ConvoLoader
-    {
-        this.llmClient = client;
-        
-        return this;
-    }
-
-    getLLMClient(): LLMBedrock
-    {
-        return this.llmClient;
-    }
+    }  
 }
 
 export default ConvoLoader;

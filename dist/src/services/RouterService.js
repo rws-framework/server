@@ -101,23 +101,30 @@ class RouterService extends _service_1.default {
                 if (controllerMethodReturn instanceof index_1.RWSError) {
                     status = controllerMethodReturn.getCode();
                 }
-                if (routeParams.responseType === 'json' || !routeParams.responseType) {
-                    res.status(status).send(controllerMethodReturn);
-                    return;
-                }
-                if (routeParams.responseType === 'html' && (0, AppConfigService_1.default)().get('pub_dir')) {
-                    res.status(status).sendFile(path_1.default.join((0, AppConfigService_1.default)().get('pub_dir'), controllerMethodReturn.template_name + '.html'));
-                    return;
-                }
-                console.log(status);
-                res.status(status).send(controllerMethodReturn);
+                this.sendResponseWithStatus(res, status, routeParams, controllerMethodReturn);
                 return;
             }
             catch (err) {
-                console.log(err);
-                // err.printFullError();
+                err.printFullError();
+                this.sendResponseWithStatus(res, err.code, routeParams, {
+                    success: false,
+                    data: {
+                        error: err
+                    }
+                });
             }
         });
+    }
+    sendResponseWithStatus(res, status, routeParams, output) {
+        if (routeParams.responseType === 'json' || !routeParams.responseType) {
+            res.status(status).send(output);
+            return;
+        }
+        if (routeParams.responseType === 'html' && (0, AppConfigService_1.default)().get('pub_dir')) {
+            res.status(status).sendFile(path_1.default.join((0, AppConfigService_1.default)().get('pub_dir'), output.template_name + '.html'));
+            return;
+        }
+        res.status(status).send();
     }
     setControllerRoutes(controllerInstance, controllerMetadata, controllerRoutes, key, app) {
         const action = controllerInstance.callMethod(key);

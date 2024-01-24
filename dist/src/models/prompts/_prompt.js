@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const stream_1 = require("stream");
 class RWSPrompt {
     constructor(params) {
+        this.varStorage = {};
         this.input = params.input;
         this.originalInput = params.input;
         this.hyperParameters = params.hyperParameters;
@@ -36,6 +37,13 @@ class RWSPrompt {
     }
     readInput() {
         return this.input;
+    }
+    readBaseInput() {
+        return this.originalInput;
+    }
+    setBaseInput(input) {
+        this.originalInput = input;
+        return this;
     }
     readOutput() {
         return this.output;
@@ -76,9 +84,20 @@ class RWSPrompt {
         this.sentInput = this.input;
         await executor.promptRequest(this, null, intruderPrompt);
     }
+    async singleRequestWith(executor, intruderPrompt = null) {
+        this.sentInput = this.input;
+        await executor.singlePromptRequest(this, null, intruderPrompt);
+    }
     streamWith(executor, read) {
         this.sentInput = this.input;
         return executor.promptStream(this, read);
+    }
+    getVar(key) {
+        return Object.keys(this.varStorage).includes(key) ? this.varStorage[key] : null;
+    }
+    setVar(key, val) {
+        this.varStorage[key] = val;
+        return this;
     }
     async readStream(stream, react) {
         let first = true;

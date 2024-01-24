@@ -27,8 +27,27 @@ class S3Service extends _service_1.default {
         }
         return AWSService_1.default.getS3(region).upload(params).promise();
     }
-    async download(params, region = null) {
+    async downloadObject(params, region = null) {
         return AWSService_1.default.getS3(region).getObject(params).promise();
+    }
+    async downloadToString(s3key, bucket, region) {
+        return new Promise(async (resolve, reject) => {
+            let s3pageResponse = await this.downloadObject({
+                Key: s3key,
+                Bucket: bucket
+            }, region);
+            if (s3pageResponse.Body instanceof Buffer || s3pageResponse.Body instanceof Uint8Array) {
+                resolve(s3pageResponse.Body.toString());
+            }
+            else if (typeof s3pageResponse.Body === 'string') {
+                resolve(s3pageResponse.Body);
+            }
+            else {
+                // Handle other types or throw an error
+                console.error('Unsupported data type');
+                reject('Unsupported data type');
+            }
+        });
     }
     async delete(params, region = null) {
         await this.deleteObject({ Bucket: params.Bucket, Key: params.Key }, region);

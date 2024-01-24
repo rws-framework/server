@@ -26,6 +26,9 @@ type IPromptSender = (prompt: RWSPrompt) => Promise<void>;
 interface IRWSPromptRequestExecutor {
     promptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null) => Promise<RWSPrompt>;
 }
+interface IRWSSinglePromptRequestExecutor {
+    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null) => Promise<RWSPrompt>;
+}
 interface IRWSPromptStreamExecutor {
     promptStream: (prompt: RWSPrompt, read: (size: number) => void) => Readable;
 }
@@ -40,6 +43,7 @@ declare class RWSPrompt {
     private multiTemplate;
     private convo;
     private hyperParameters;
+    private varStorage;
     constructor(params: IPromptParams);
     listen(source: string | Readable): Promise<RWSPrompt>;
     addEnchantment(enchantment: IPromptEnchantment): void;
@@ -47,6 +51,8 @@ declare class RWSPrompt {
     getModelId(): string;
     readSentInput(): string;
     readInput(): string;
+    readBaseInput(): string;
+    setBaseInput(input: string): RWSPrompt;
     readOutput(): string;
     getHyperParameters(base?: any): IPromptHyperParameters;
     setHyperParameter(key: string, value: any): RWSPrompt;
@@ -57,8 +63,11 @@ declare class RWSPrompt {
     getConvo(): ConvoLoader;
     getModelMetadata(): [string, string];
     requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt?: string): Promise<void>;
+    singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt?: string): Promise<void>;
     streamWith(executor: IRWSPromptStreamExecutor, read: (size: number) => void): Readable;
+    getVar<T>(key: string): T;
+    setVar<T>(key: string, val: T): RWSPrompt;
     readStream(stream: Readable, react: (chunk: string) => void): Promise<void>;
 }
 export default RWSPrompt;
-export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor };
+export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor, IRWSSinglePromptRequestExecutor };

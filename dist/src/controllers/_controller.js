@@ -28,6 +28,14 @@ class Controller extends _service_1.default {
             }
         };
     }
+    hasError() {
+        const hasError = this._hasError;
+        this._hasError = false;
+        return hasError;
+    }
+    flagError() {
+        this._hasError = true;
+    }
 }
 exports.default = Controller;
 //# sourceMappingURL=_controller.js.map
