@@ -17,12 +17,13 @@ import MD5Service from './services/MD5Service';
 import TraversalService from './services/TraversalService';
 import UtilsService from './services/UtilsService';
 import VectorStoreService from './services/VectorStoreService';
-import RWSPrompt from './models/prompts/_prompt';
+import RWSPrompt, { IRWSPromptRequestExecutor, IRWSPromptStreamExecutor } from './models/prompts/_prompt';
 import RWSConvo from './models/convo/ConvoLoader';
 import RWSVectorStore from './models/convo/VectorStore';
 import { InverseRelation, InverseTimeSeries, Relation, TrackType } from './models/annotations/index';
 import { Route } from './routing/annotations/index';
 import getAppConfig, { IAppConfig, AppConfigService } from './services/AppConfigService';
+import { IContextToken } from './interfaces/IContextToken';
 declare const RWSannotations: {
     modelAnnotations: {
         InverseRelation: typeof InverseRelation;
@@ -42,4 +43,4 @@ import TheSocket, { JSONMessage } from './sockets/_socket';
 import RWSAppCommands from './commands/index';
 import * as RWSTestSuite from './tests/index';
 import * as RWSErrorCodes from './errors/index';
-export { init as serverInit, SetupRWS, getAppConfig, AppConfigService, Controller as RWSController, TheService as RWSService, TheSocket as RWSSocket, TheCommand as RWSCommand, Model as RWSModel, IModel as IRWSModel, ServerService as RWSServer, DBService, AuthService, S3Service, ConsoleService, LambdaService, AWSService, EFSService, MD5Service, TraversalService, UtilsService, VectorStoreService, TimeSeriesModel, WsRoutes, IRequestParams, ITheSocket, ITimeSeries, IAppConfig, Socket, ProcessService, RWSannotations, JSONMessage as RWSJSONMessage, ICmdParams, IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry, RWSAppCommands, RWSTestSuite, RWSVectorStore, RWSConvo, RWSPrompt, RWSErrorCodes };
+export { init as serverInit, SetupRWS, getAppConfig, AppConfigService, Controller as RWSController, TheService as RWSService, TheSocket as RWSSocket, TheCommand as RWSCommand, Model as RWSModel, IModel as IRWSModel, ServerService as RWSServer, DBService, AuthService, S3Service, ConsoleService, LambdaService, AWSService, EFSService, MD5Service, TraversalService, UtilsService, VectorStoreService, TimeSeriesModel, WsRoutes, IRequestParams, ITheSocket, ITimeSeries, IAppConfig, IContextToken, Socket, ProcessService, RWSannotations, JSONMessage as RWSJSONMessage, ICmdParams, IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry, RWSAppCommands, RWSTestSuite, RWSVectorStore, RWSConvo, RWSPrompt, RWSErrorCodes, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor };

@@ -1,6 +1,7 @@
 import { Readable } from 'stream';
 import { PromptTemplate } from "@langchain/core/prompts";
 import ConvoLoader from '../convo/ConvoLoader';
+import { IContextToken } from '../../interfaces/IContextToken';
 
 interface IPromptHyperParameters {
     temperature: number,
@@ -25,6 +26,14 @@ interface IPromptEnchantment {
 }
 
 type IPromptSender = (prompt: RWSPrompt) => Promise<void>;
+
+interface IRWSPromptRequestExecutor {
+    promptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null) => Promise<RWSPrompt>
+}
+
+interface IRWSPromptStreamExecutor {
+    promptStream: (prompt: RWSPrompt, read: (size: number) => void) => Readable
+}
 
 class RWSPrompt {
     private input: string;
@@ -131,7 +140,7 @@ class RWSPrompt {
     {
         this.convo = convo
 
-        await this.convo.chain(this.getMultiTemplate(), []);
+        await this.convo.chain(this.getMultiTemplate());
         
         return this;
     }
@@ -146,10 +155,16 @@ class RWSPrompt {
         return [this.modelType, this.modelId];
     }
 
-    async sendWith(promptSender: IPromptSender): Promise<void>
+    async requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt: string = null): Promise<void>
     {
         this.sentInput = this.input;
-        await promptSender(this);
+        await executor.promptRequest(this, null, intruderPrompt);
+    }
+
+    streamWith(executor: IRWSPromptStreamExecutor, read: (size: number) => void): Readable
+    {
+        this.sentInput = this.input;
+        return executor.promptStream(this, read);
     }
 
     async readStream(stream: Readable, react: (chunk: string) => void): Promise<void>    
@@ -184,4 +199,4 @@ class RWSPrompt {
 
 export default RWSPrompt;
 
-export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters }
+export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor }

@@ -38,7 +38,7 @@ class ConvoLoader {
     isInitiated() {
         return this._initiated;
     }
-    async chain(promptTemplate, promptVars) {
+    async chain(promptTemplate) {
         if (!this.llmChain) {
             this.createChain({
                 llm: this.getLLMClient(),

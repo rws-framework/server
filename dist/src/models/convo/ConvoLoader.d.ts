@@ -19,7 +19,7 @@ declare class ConvoLoader {
     getDocs(): VectorDocType;
     getStore(): RWSVectorStore;
     isInitiated(): boolean;
-    chain(promptTemplate: PromptTemplate, promptVars: string[]): Promise<LLMChain>;
+    chain(promptTemplate: PromptTemplate): Promise<LLMChain>;
     private createChain;
     waitForInit(): Promise<ConvoLoader>;
     setLLMClient(client: LLMBedrock): ConvoLoader;

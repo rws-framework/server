@@ -64,7 +64,7 @@ class ConvoLoader {
         return this._initiated;
     }
 
-    async chain(promptTemplate: PromptTemplate, promptVars: string[]): Promise<LLMChain>
+    async chain(promptTemplate: PromptTemplate): Promise<LLMChain>
     {        
         if(!this.llmChain){
             this.createChain({

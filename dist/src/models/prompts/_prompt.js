@@ -63,7 +63,7 @@ class RWSPrompt {
     }
     async setConvo(convo) {
         this.convo = convo;
-        await this.convo.chain(this.getMultiTemplate(), []);
+        await this.convo.chain(this.getMultiTemplate());
         return this;
     }
     getConvo() {
@@ -72,9 +72,13 @@ class RWSPrompt {
     getModelMetadata() {
         return [this.modelType, this.modelId];
     }
-    async sendWith(promptSender) {
+    async requestWith(executor, intruderPrompt = null) {
         this.sentInput = this.input;
-        await promptSender(this);
+        await executor.promptRequest(this, null, intruderPrompt);
+    }
+    streamWith(executor, read) {
+        this.sentInput = this.input;
+        return executor.promptStream(this, read);
     }
     async readStream(stream, react) {
         let first = true;

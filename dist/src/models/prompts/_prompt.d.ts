@@ -2,6 +2,7 @@
 import { Readable } from 'stream';
 import { PromptTemplate } from "@langchain/core/prompts";
 import ConvoLoader from '../convo/ConvoLoader';
+import { IContextToken } from '../../interfaces/IContextToken';
 interface IPromptHyperParameters {
     temperature: number;
     top_k?: number;
@@ -22,6 +23,12 @@ interface IPromptEnchantment {
     output: string;
 }
 type IPromptSender = (prompt: RWSPrompt) => Promise<void>;
+interface IRWSPromptRequestExecutor {
+    promptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null) => Promise<RWSPrompt>;
+}
+interface IRWSPromptStreamExecutor {
+    promptStream: (prompt: RWSPrompt, read: (size: number) => void) => Readable;
+}
 declare class RWSPrompt {
     private input;
     private enhancedInput;
@@ -49,8 +56,9 @@ declare class RWSPrompt {
     setConvo(convo: ConvoLoader): Promise<RWSPrompt>;
     getConvo(): ConvoLoader;
     getModelMetadata(): [string, string];
-    sendWith(promptSender: IPromptSender): Promise<void>;
+    requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt?: string): Promise<void>;
+    streamWith(executor: IRWSPromptStreamExecutor, read: (size: number) => void): Readable;
     readStream(stream: Readable, react: (chunk: string) => void): Promise<void>;
 }
 export default RWSPrompt;
-export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters };
+export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor };
