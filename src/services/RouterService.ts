@@ -8,6 +8,7 @@ import UtilsService from './UtilsService';
 import appConfig from './AppConfigService';
 import path from 'path';
 import { RWSError } from '../errors/index';
+import ConsoleService from './ConsoleService';
 
 
 type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction, IHTTProuteParams, string]};
@@ -146,13 +147,33 @@ class RouterService extends TheService{
           this.sendResponseWithStatus(res, status, routeParams, controllerMethodReturn);          
           
           return;
-        }catch(err: RWSError | any){          
-          err.printFullError();
+        }catch(err: Error | RWSError | any){   
+          let errMsg;          
+          let stack;
+
+          if(!!err.printFullError){
+            err.printFullError();
+            errMsg = err.getMessage();
+            
+            stack = err.getStack();
+          }else{
+            errMsg = err.message;
+            ConsoleService.error(errMsg);
+            console.log(err.stack) 
+            stack = err.stack;      
+            err.message = errMsg;     
+          }                 
+
+          const code = err.getCode ? err.getCode() : 500;
           
-          this.sendResponseWithStatus(res, err.code, routeParams, {
+          this.sendResponseWithStatus(res, code, routeParams, {
             success: false,
             data: {
-              error: err
+              error: {
+                code: code,
+                message: errMsg,
+                stack
+              }
             }
           });          
         }

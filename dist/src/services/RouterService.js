@@ -8,6 +8,7 @@ const _service_1 = __importDefault(require("./_service"));
 const AppConfigService_1 = __importDefault(require("./AppConfigService"));
 const path_1 = __importDefault(require("path"));
 const index_1 = require("../errors/index");
+const ConsoleService_1 = __importDefault(require("./ConsoleService"));
 /**
  *
  */
@@ -105,11 +106,29 @@ class RouterService extends _service_1.default {
                 return;
             }
             catch (err) {
-                err.printFullError();
-                this.sendResponseWithStatus(res, err.code, routeParams, {
+                let errMsg;
+                let stack;
+                if (!!err.printFullError) {
+                    err.printFullError();
+                    errMsg = err.getMessage();
+                    stack = err.getStack();
+                }
+                else {
+                    errMsg = err.message;
+                    ConsoleService_1.default.error(errMsg);
+                    console.log(err.stack);
+                    stack = err.stack;
+                    err.message = errMsg;
+                }
+                const code = err.getCode ? err.getCode() : 500;
+                this.sendResponseWithStatus(res, code, routeParams, {
                     success: false,
                     data: {
-                        error: err
+                        error: {
+                            code: code,
+                            message: errMsg,
+                            stack
+                        }
                     }
                 });
             }
