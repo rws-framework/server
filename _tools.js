@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const { spawn } = require('child_process');
 
 function findRootWorkspacePath(currentPath) {        
   const parentPackageJsonPath = path.join(currentPath + '/..', 'package.json');        
@@ -14,6 +15,29 @@ function findRootWorkspacePath(currentPath) {
   }
 
   return currentPath;
+}
+
+async function runCommand(command, cwd = null, silent = false) {
+  return new Promise((resolve, reject) => {
+    const [cmd, ...args] = command.split(' ');
+    
+    if(!cwd){
+      cwd = process.cwd();
+    }
+
+    const spawned = spawn(cmd, args, { stdio: silent ? 'ignore' : 'inherit', cwd });
+
+    spawned.on('exit', (code) => {
+      if (code !== 0) {
+        return reject(new Error(`Command failed with exit code ${code}`));
+      }
+      resolve();
+    });
+
+    spawned.on('error', (error) => {
+      reject(error);
+    });
+  });
 }
 
 function linkWorkspaces(packageJsonPath, rootDir){
@@ -75,5 +99,6 @@ module.exports = {
     findRootWorkspacePath,
     linkWorkspaces,
     linkWorkspace,
-    removeWorkspacePackages
+    removeWorkspacePackages,
+    runCommand
 }
