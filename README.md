@@ -1,27 +1,135 @@
-# Creating and Configuring RWS-JS Server Application
+# RWS-JS Server Setup and Configuration Guide
 
-RWS-JS is a flexible server framework that you can use to set up web servers, WebSocket servers, and more. The application's configuration is crucial for its successful operation. In this guide, you'll learn how to create and configure an RWS-JS server application.
+RWS-JS is a flexible server for fullstack Realtime Web Suite framework that you can use to set up web servers, WebSocket servers, and more in sync with your frontend. The application's configuration is crucial for its successful operation. In this guide, you'll learn how to create and configure an RWS-JS server application.
 
-## Index
+## Table of Contents
+1. [Prerequisites](#prerequisites)
+2. [Setting Up](#setting-up)
+   - [Install Package](#install-package)
+      - [Package File](#package-file)
+      - [TS Config File](#tsconfig-file)
+   - [Initialize Server Setup](#initialize-server-setup)
+   - [Server Configuration](#server-configuration)
+3. [Creating Server Configuration](#creating-server-configuration)
+   - [Example Webpack Config](#example-webpack-config)
+   - [RWS Webpack Config](#rws-webpack-config)
+   - [RWS App Configuration](#rws-app-configuration)
+4. [Commands](#commands)
+   - [Sample Command](#sample-command)
+   - [New Command](#new-command)
+   - [Database Models](#database-models)
+5. [Route Configuration](#route-configuration)
+   - [Request Route Configuration](#request-route-configuration)   
+   - [Websocket Route Configuration](#websocket-route-configuration)
+6. [Running the Server](#running-the-server)
+   - [Server Initialization](#server-initialization)
+   - [DB Service](#db-service)
+   - [Implementation](#implementation)
+7. [BASH Installs for Node Libraries](#bash-installs-for-node-libraries)
 
-- [Prerequisites](#prerequisites)
-- [Setting Up](#setting-up)
-- [Creating Server Configuration](#creating-server-configuration)
-  - [Example webpack config](#example-webpack-config)  
-  - [RWS App Configuration](#database-and-server-configuration)
-  - [Commands](#commands)
-  - [Database models](#database-models)
-  - [Route Configuration](#route-configuration)
-- [Running the Server](#running-the-server)
 
 ## Prerequisites
 
-Make sure you have Node.js installed on your local machine. If not, you can download it from the [official Node.js website](https://nodejs.org).
+Make sure you have Node.js and yarn installed on your local machine. If not, you can download it from the [official Node.js website](https://nodejs.org).
 
 ## Setting Up
 
+### Install yarn
+
 ```bash
-npm install rws-js-server --save
+npm install -g yarn
+```
+
+### Install package
+
+```bash
+yarn add rws-js-server
+```
+
+### Package file
+
+**To use serve you need this packages in your package.json:**
+
+```json
+{
+   "dependencies": {,        
+        "@types/archiver": "^6.0.2",
+        "@types/body-parser": "^1.19.5",
+        "@types/express": "^4.17.21",
+        "compression": "^1.7.4",
+        "dotenv": "^16.3.1",
+        "jsonwebtoken": "9.0.2",
+        "nodemon": "^1.12.1",
+        "npm-run-all": "^4.1.1",
+        "puppeteer": "^21.0.3",
+        "readable-stream": "^4.5.2",
+        "reflect-metadata": "^0.2.1",
+        "rws-js-server": "*",
+        "ts-transformer-keys": "^0.4.4",
+        "tsconfig-paths-webpack-plugin": "^4.1.0",
+        "typescript": "^5.3.3",
+        "webpack-node-externals": "^3.0.0"        
+    },
+    "devDependencies": {
+        "@types/chai": "^4.3.5",
+        "@types/chai-like": "^1.1.1",
+        "@types/chai-things": "^0.0.35",
+        "@types/compression": "^1.7.5",
+        "@types/jsonwebtoken": "9.0.2",
+        "@types/lodash": "^4.14.202",
+        "@types/mocha": "^10.0.1",        
+        "chai": "^4.3.7",
+        "chai-like": "^1.1.1",
+        "chai-things": "^0.2.0",
+        "mocha": "^10.2.0",
+        "ts-node": "^10.9.1",
+        "webpack": "^5.75.0",
+        "webpack-bundle-analyzer": "^4.10.1",
+        "webpack-cli": "^5.1.4"
+    }
+}
+```
+
+### Tsconfig file
+
+**tsconfig.json:**
+
+```json
+{
+    "compilerOptions": {
+      "baseUrl": ".",
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "target": "ES2018",
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "strict": true,
+      "esModuleInterop": true,
+      "sourceMap": true,
+      "resolveJsonModule": true,
+      "outDir": "dist",
+      "strictNullChecks": false,    
+      "allowSyntheticDefaultImports": true,
+      "paths": {                 
+      }
+    },
+    "include": ["./src"],  
+    "exclude": []
+  }
+```
+
+### Initialzie server setup (by default uses src/config/config.ts)
+
+```bash
+
+yarn rws init
+```
+
+### OR with specifig config path
+
+```bash
+
+yarn rws init path/to/cfg.ts/from/src
 ```
 
 ## Creating Server Configuration
@@ -33,19 +141,22 @@ Create a new file named `config.ts` in the root of your project. This file will 
 ```Js
 const path = require('path');
 const keysTransformer = require('ts-transformer-keys/transformer').default;
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+
+const  RWSWebPackSettings  = require('rws-js-server/rws.webpack.config');
+
+RWSWebPackSettings.resolve.plugins = [
+  new TsconfigPathsPlugin({configFile: './tsconfig.json'})
+]
+
+RWSWebPackSettings.output.path = path.resolve(__dirname, 'build');
+RWSWebPackSettings.output.filename = 'jtrainer.server.js',
 
 
-const  RWSWebPackSettings  = require('./@rws/@rws-js-server/rws.webpack.config');
-
-
-RWSWebPackSettings.output = {
-  path: path.resolve(__dirname, 'build'),
-    filename: 'rws.server.js',
-}
-
-RWSWebPackSettings.devtool = 'inline-source-map';
+RWSWebPackSettings.devtool = 'source-map';
 RWSWebPackSettings.mode = 'development';
 
+// console.log(RWSWebPackSettings);
 
 module.exports = RWSWebPackSettings;
 ```
@@ -57,53 +168,69 @@ module.exports = RWSWebPackSettings;
 ```Js
 const path = require('path');
 const keysTransformer = require('ts-transformer-keys/transformer').default;
+const webpackFilters = require('./webpackFilters');
+const nodeExternals = require('webpack-node-externals');
+const UtilsService = require('./_tools');
+
+const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')
+
+const modules_setup = [rootPackageNodeModules];
+
+// console.log(modules_setup)s;
 
 module.exports = {
-  entry: './src/index.ts',
+  entry: `${process.cwd()}/src/index.ts`,
   mode: 'development',
   target: 'node',
-  devtool: 'inline-source-map',
+  devtool: 'source-map',
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: 'rws.server.js',
+    sourceMapFilename: '[file].map',
   },
   resolve: {
-    extensions: ['.ts', '.js', '.node'],
+    modules: modules_setup,
+    extensions: ['.ts', '.js', '.node'],  
+    alias: {
+      
+    },
+    symlinks: false
   },
+  context: process.cwd(),
   module: {
     rules: [
-        {
-          test: /\.(js|ts)$/,
-          exclude: /node_modules/,
-          loader: 'ts-loader',
-          options: {
-            // make sure not to set `transpileOnly: true` here, otherwise it will not work
-            getCustomTransformers: program => ({
-                before: [
-                    keysTransformer(program)
-                ]
-            })
+      {
+        test: /\.(ts)$/,
+        use: [                       
+          {
+            loader: 'ts-loader',
+            options: {
+              allowTsInNodeModules: true,
+              configFile: path.resolve(process.cwd() + '/tsconfig.json'),
+              // compilerOptions: {
+              //   paths: {
+              //     '*': [rootPackageNodeModules + '/*']
+              //   }
+              // }
+            }
           }
-        },
-        {
-            test: /\.node$/,
-            use: 'node-loader',
-          }        
-      ],
-  },
-  resolveLoader: {
-    modules: [path.resolve(__dirname, 'node_modules')],
-  },
-  stats: {
-    warningsFilter: [
-      /aws-crt/,
-      /express\/lib\/view/,
-      /mongodb-client-encryption\/lib\/providers\/gcp/,
-      /mongodb\/lib\/utils/,
-      /snappy/,
-      /mongodb-js\/zstd/
+        ],
+        exclude: /node_modules\/(?!rws-js-server)/,
+      },       
+      {
+          test: /\.node$/,
+          use: 'node-loader',
+      }        
     ],
-  }
+  },
+  plugins: [
+  ],
+  stats: {
+    warningsFilter: webpackFilters,
+  },
+  externals: [nodeExternals({
+    allowlist: ['rws-js-server'],
+  })],
 };
 ```
 
@@ -111,35 +238,71 @@ module.exports = {
 
 Define the connection details for your MongoDB instance and server configurations:
 
-**config.ts**:
+**src/config/config.ts**:
 
 ```typescript
-import { IAppConfig } from "rws-js-server";
-import ConfigService from "../services/ConfigService";
-import { getModels } from "../models";
-import ControllerList from "../controllers";
-import CommandList from "../commands";
-import TimeTrackerSocket from "../sockets/TimeTrackerSocket";
-import routes from '../routing/routes';
+import { ConsoleService, IAppConfig } from "rws-js-server";
 
-export default (): IAppConfig => {
+import JWTUser from "../user/model";
+import { getModels } from "../models";
+import ControllerList from '../controllers/index';
+import TimeTrackerSocket from "../sockets/ChatSocket";
+import routes from '../routing/routes';
+import ws_routes from '../routing/sockets';
+import CommandList from '../commands';
+import dotenv from 'dotenv';
+
+
+export default (): IAppConfig => { 
+    dotenv.config();
+    const DB_NAME: string = process.env.MONGO_DB_NAME;
+    const DB_HOST: string = process.env.MONGO_HOST;
+    const DB_PORT: number = parseInt(process.env.MONGO_PORT);
+    const DB_USER: string = process.env.MONGO_INITDB_ROOT_USERNAME;
+    const DB_PASS: string = process.env.MONGO_INITDB_ROOT_PASSWORD;
+
+    const AWS_ACCESS_KEY: string = process.env.AWS_ACCESS_KEY;
+    const AWS_SECRET_KEY: string = process.env.AWS_SECRET_KEY;
+
+    const APP_DOMAIN: string = process.env.APP_DOMAIN;
+    const PUB_FOLDER: string = process.env.PUB_FOLDER;
+
+    const APP_PORT: number = parseInt(process.env.APP_PORT);
+    const APP_WS_PORT: number = parseInt(process.env.APP_WS_PORT);
+    const TESTING_PORT: number = parseInt(process.env.TESTING_PORT);
+    const APP_SSL: boolean = process.env.APP_SSL === 'True';
+    const APP_CORS_ALLOW: string = process.env.APP_CORS_ALLOW ? process.env.APP_CORS_ALLOW : APP_DOMAIN;
+
+    const dbString: string = `mongodb+srv://${DB_USER}:${DB_PASS}@${DB_HOST}/${DB_NAME}?retryWrites=true&w=majority`;        
+
     return {
-        mongo_url: ConfigService.get('mongo', 'mongoUrl'),
-        mongo_db: ConfigService.get('mongo', 'mongoDbname'),
-        port: ConfigService.get('websocket', 'port'),        
-        test_port: ConfigService.get('websocket', 'test_port'),
-        domain: ConfigService.get('nginx', 'domain'),
-        ssl_cert: ConfigService.get('websocket', 'ssl_cert'),
-        ssl_key: ConfigService.get('websocket', 'ssl_key'),
-        secret_key: ConfigService.get('app', 'secretKey'),
+        features: {
+            ws_enabled: true,
+            routing_enabled: true,
+            ssl: APP_SSL
+        },
+        mongo_url: dbString,
+        mongo_db: DB_NAME,
+        port: APP_PORT,        
+        ws_port: APP_WS_PORT,
+        test_port: TESTING_PORT,
+        domain: APP_DOMAIN,
+        cors_domain: APP_CORS_ALLOW,
+        ssl_cert: '',
+        ssl_key: '',
+        secret_key: '',
         user_class: JWTUser,
         user_models: getModels(),
         controller_list: ControllerList,
-        ws_routes: {
-            'time': TimeTrackerSocket 
-        },
+        ws_routes: ws_routes,
         http_routes: routes(),
-        commands: CommandList 
+        commands: CommandList,
+        aws_lambda_region: null,        
+        aws_access_key: AWS_ACCESS_KEY,
+        aws_secret_key: AWS_SECRET_KEY,
+        aws_lambda_role: null,
+        aws_lambda_bucket: null,
+        pub_dir: PUB_FOLDER,        
     }
 }
 ```
@@ -161,8 +324,8 @@ class HelloCommand extends RWSCommand {
         console.log('    Thanks for installing RWS junction instance, ' + params.user + '\n\n');
         console.log('    This is output of example command for RWS JS server framework.');
         console.log('                                   (src/commands/HelloCommand.ts).');
-        console.log('    Develop your server with "npm run dev"\n');
-        console.log('    Or build and start with "npm run build" and "npm run server"');
+        console.log('    Develop your server with "yarn dev"\n');
+        console.log('    Or build and start with "yarn build" and "yarn server"');
         console.log('\n\n\n    Params passed to this command (those starting with "_" are autogenrated by console script)');
         console.log(params);
         console.log('\n</HELLO COMMAND>')
@@ -281,7 +444,17 @@ class TimeTracker extends RWSModel<TimeTracker> implements ITimeTracker {
 export default TimeTracker;
 ```
 
-### Route Configuration
+**AFTER EVERY MODEL FIELD CHANGE RUN:**
+
+```shell
+yarn rws init
+```
+
+this will update prisma schema for async DB Calls with new fields and their types
+
+## Route Configuration
+
+### Request Route Configuration
 Define your http routes in file that returns array IHTTPRoutes interfaces
 
 ```typescript
@@ -299,9 +472,19 @@ import {IHTTPRoute} from "rws-js-server";
 export default (): IHTTPRoute[] => {
     return [
         {
-            name: 'home:index',
-            path: '/'
-        }
+            prefix: '/prefix',
+            routes: [
+                {
+                    name: 'prefix:controller:route',
+                    path: '/prefix/route/path/with/:param'
+                },                
+            ]
+        },        
+        {
+            name: 'home:route',
+            path: '/*',
+            noParams: true, // this route will not process parameters and put them to request object
+        },             
     ]
 }
 ```
@@ -320,15 +503,47 @@ class HomeController extends RWSController{
     @Route('home:index', 'GET')
     public indexAction(params: IRequestParams): Object 
     {
-        // console.log(params);
+        
         return {
             'success': true
+            'data': {
+              //your response stuff
+            }
         } // Send a response for the root route
     }
 }
 
 export default HomeController.getSingleton();
 ```
+
+A controller action with route ":param" usage - this one is called ":bookId'
+
+```typescript
+  @Route('train:get:book', 'GET')
+  public async getBookAction(params: IRequestParams<any>): Promise<IBook>
+  {     
+      return await Book.findOneBy({ id: params.req.params.bookId });
+  }
+```
+
+A controller action that outputs "template_name" HTML file from "pub_dir" config setting.
+
+default responseType for @Route is 'json'
+
+```typescript
+  @Route('home:index', 'GET', { responseType: 'html' })
+    public indexAction(params: IRequestParams<any>): any
+    {        
+        return {
+            template_name: 'index',
+            template_params: {
+                hello: 'world'
+            }
+        }
+    }    
+```
+
+### Websocket Route Configuration
 
 Define your websocket routes in file that returns object with key being event name to be handled and a socket class definition that extends RWSSocket
 
@@ -342,21 +557,29 @@ const ws_routes = {
 
 those routes goes to config file in "ws_routes" field
 
-### Running the Server
+## Running the Server
 
 Create a new index.ts file in the root of your project. This file will import the serverInit function from rws-js-server, and your configuration function from config.ts.
 
 **serverInit() takes in IAppConfig interface:**
 
 ```typescript
-import { IHTTPRoute, WsRoutes, RWSController, RWSCommand } from "rws-js-server"
+import { RWSHTTPRoutingEntry, WsRoutes, RWSController, RWSCommand } from "../index"
 
-export default interface IAppConfig {    
+export default interface IAppConfig {   
+    features?: {
+        ws_enabled?: boolean
+        routing_enabled?: boolean
+        test_routes?: boolean
+        ssl?: boolean
+    } 
     mongo_url: string
     mongo_db: string
     port: number
+    ws_port?: number
     domain: string
-    test_port: number
+    test_port?: number
+    test_ws_port?: number
     ssl_cert: string
     ssl_key: string
     secret_key: string
@@ -364,8 +587,16 @@ export default interface IAppConfig {
     user_models: any[]
     controller_list: RWSController[]
     ws_routes: WsRoutes
-    http_routes: IHTTPRoute[] 
+    http_routes: RWSHTTPRoutingEntry[] 
+    front_routes?: Record<string, unknown>[],
     commands?: RWSCommand[]
+    aws_lambda_region?: string
+    aws_access_key?: string
+    aws_secret_key?: string
+    aws_lambda_role?: string
+    aws_lambda_bucket?: string
+    pub_dir?: string
+    cors_domain?: string
 }
 ```
 
@@ -374,63 +605,92 @@ It reinstantiates if created empty and had passed config once.
 
 Every service in @RWS uses AppConfigService
 
-**serverInit()**
+**serverInit()** from ***{packageDir}/init.ts***
 ```typescript
 import IAppConfig from "./interfaces/IAppConfig";
-import getConfigService from "./services/AppConfigService";
-import ServerService from "./services/ServerService";
+import getConfigService, { AppConfigService } from "./services/AppConfigService";
+import ServerService, { IInitOpts } from "./services/ServerService";
+import ConsoleService from "./services/ConsoleService";
+import UtilsService from "./services/UtilsService";
+
+import fs from "fs";
+import ProcessService from "./services/ProcessService";
 
 
-async function init(cfg: IAppConfig){    
-    // App config data (cfg) is passed to AppConfigService export returning singleton - instantiated class
-    const AppConfigService = getConfigService(cfg); 
-
+async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
+    const AppConfigService = getConfigService(cfg);
     const port = await AppConfigService.get('port');
+    const ws_port = await AppConfigService.get('ws_port');
     const wsRoutes = await AppConfigService.get('ws_routes');
     const httpRoutes = await AppConfigService.get('http_routes');
     const controler_list = await AppConfigService.get('controller_list');
+    const pub_dir = await AppConfigService.get('pub_dir');
+    const cors_domain = await AppConfigService.get('cors_domain');
 
-    (await ServerService.initializeApp({
-        port: port,
+    const sslCert = AppConfigService.get('ssl_cert');
+    const sslKey = AppConfigService.get('ssl_key');      
+
+    if(addToConfig !== null){
+        await addToConfig(AppConfigService);
+    }
+
+    let https = true;
+
+    if(!sslCert || !sslKey){
+        https = false;
+    }
+
+    const executeDir: string = process.cwd();
+    const packageRootDir = UtilsService.findRootWorkspacePath(executeDir)
+    const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
+    const moduleCfgFile = `${moduleCfgDir}/_rws_installed`;
+
+    if(!fs.existsSync(moduleCfgFile)){        
+        ConsoleService.log(ConsoleService.color().yellow('No config path generated for CLI. Trying to initialize with "yarn rws init config/config"'));
+        await ProcessService.runShellCommand('yarn rws init config/config');
+        UtilsService.setRWSVar('_rws_installed', 'OK');    
+    }
+
+    const theServer = await ServerService.initializeApp({...{        
         wsRoutes: wsRoutes,
         httpRoutes: httpRoutes,
-        controllerList: controler_list    
-    })).webServer().listen(port, () => {    
-        console.log('HTTPS' + ` is working in port ${port}`);
-    });
+        controllerList: controler_list,
+        pub_dir: pub_dir,
+        domain: `http${(await AppConfigService.get('features')?.ssl ? 's' : '')}://${await AppConfigService.get('domain')}`,
+        cors_domain: cors_domain
+    },...serverOptions});
+
+    const wsStart = async () => {
+        return (await theServer.websocket.starter());
+    }
+
+    const httpStart = async () => {
+        return (await theServer.http.starter());
+    }
+
+    wsStart();
+    await httpStart();    
 }
 
 export default init;
 
+
 ```
 
-### or
+###
 
 **DBService**
 
 reading config from config singleton filled with cfg data passed to @RWS
 
 ```typescript
-import { PrismaClient } from "@prisma/client";
-import { Collection, Db, MongoClient } from 'mongodb';
-import ITimeSeries from "../models/interfaces/ITimeSeries";
-import { IModel } from "../models/_model";
-import getConfig from "./AppConfigService";
-import TheService from "./_service";
-
-interface IDBClientCreate {
-  dbUrl?: string;
-  dbName?: string;
-}
-
 class DBService extends TheService {
   private client: PrismaClient;
   private opts:IDBClientCreate = null;
+  private connected = false;
 
   constructor(opts: IDBClientCreate = null){
-    super();
-
-   this.connectToDB(opts);
+    super();   
   }
 
   private connectToDB(opts: IDBClientCreate = null) {
@@ -443,26 +703,58 @@ class DBService extends TheService {
       }
     }
 
-  }
-}
-```
+    if(!this.opts.dbUrl){
+      return;
+    }    
+  
+    try{
+      this.client = new PrismaClient({ 
+        datasources: {
+          db: {
+            url: this.opts.dbUrl
+          },
+        },
+      });     
 
-**index.ts**:
+      this.connected = true;
+    } catch (e){
+      ConsoleService.error('PRISMA CONNECTION ERROR');
+    }
+  }
+
+  private async createBaseMongoClient(): Promise<MongoClient>
+  {
+    const dbUrl = this.opts?.dbUrl || getConfig().get('mongo_url');
+    const client = new MongoClient(dbUrl);
+    
+    await client.connect();
+
+    return client;
+
+  }
+
+  //(...)
+```
+## Implementation
+### index.ts from your root/src directory##:
 
 ```typescript
-import { serverInit } from "rws-js-server";
+import { serverInit, ConsoleService, getAppConfig } from "rws-js-server";
+import config from './config/config'
+import BedrockService from "./services/BedrockService";
 
-import path from 'path';
-import ConfigService from "./services/ConfigService";
-import config from './config/config';
+// import path from 'path';
 
-async function main(){    
-    await serverInit(config());
+async function main(){            
+    await serverInit(config());    
+
+    getAppConfig().set('extra_param', 'value');    
 }
 
 main().then(() => {
-    console.log("Initialization complete");
+    ConsoleService.log("Initialization complete");
 }).catch((e) => {
+    ConsoleService.error(e);
     console.error(e);
 });
 
@@ -487,21 +779,37 @@ to start server in dev env:
     "build": "webpack --config webpack.config.js --output-path ./dist",
     "server": "node dist/rws.server.js",    
     "hello": "npx rws hello user=$USER",
-    "postinstall": "npx rws init config=config/config && npm run hello",
+    "postinstall": "npx rws init config=config/config && yarn hello",
     "test": "npx mocha"
   }
 }
 
 ```
 
+## Executing server
+
+
+### build:
+
 ```bash
-npm run dev
+yarn build
 ```
 
-to start tests:
+### watch:
 
 ```bash
-npm run test
+yarn dev
+```
+### run:
+
+```bash
+yarn server
+```
+
+### test:
+
+```bash
+yarn test
 ```
 
 *("hello" is a sample command)*
