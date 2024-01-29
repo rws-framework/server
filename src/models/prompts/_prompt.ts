@@ -7,7 +7,7 @@ interface IPromptHyperParameters {
     temperature: number,
     top_k?: number,
     top_p?: number,
-    [key: string]: string | number | boolean | null
+    [key: string]: number
 }
 
 interface IPromptParams {
@@ -123,13 +123,22 @@ class RWSPrompt {
         return this.output;
     }
 
-    getHyperParameters(base: any = null): IPromptHyperParameters
+    getHyperParameters<T extends IPromptHyperParameters>(base: any = null): T
     {        
         if(base){
             this.hyperParameters = {...base, ...this.hyperParameters};
         }
 
-        return this.hyperParameters;
+        return this.hyperParameters as T;
+    }
+
+    getHyperParameter<T>(key: keyof IPromptHyperParameters): T
+    {        
+        if(!this.hyperParameters[key]){
+            return null;
+        }
+
+        return this.hyperParameters[key] as T;
     }
 
     setHyperParameter(key: string, value: any): RWSPrompt
@@ -159,9 +168,7 @@ class RWSPrompt {
 
     async setConvo(convo: ConvoLoader): Promise<RWSPrompt>
     {
-        this.convo = convo
-
-        await this.convo.chain(this.getMultiTemplate());
+        this.convo = convo.setPrompt(this)        
         
         return this;
     }

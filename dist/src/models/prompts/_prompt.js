@@ -54,6 +54,12 @@ class RWSPrompt {
         }
         return this.hyperParameters;
     }
+    getHyperParameter(key) {
+        if (!this.hyperParameters[key]) {
+            return null;
+        }
+        return this.hyperParameters[key];
+    }
     setHyperParameter(key, value) {
         this.hyperParameters[key] = value;
         return this;
@@ -70,8 +76,7 @@ class RWSPrompt {
         return this.multiTemplate;
     }
     async setConvo(convo) {
-        this.convo = convo;
-        await this.convo.chain(this.getMultiTemplate());
+        this.convo = convo.setPrompt(this);
         return this;
     }
     getConvo() {

@@ -7,7 +7,7 @@ interface IPromptHyperParameters {
     temperature: number;
     top_k?: number;
     top_p?: number;
-    [key: string]: string | number | boolean | null;
+    [key: string]: number;
 }
 interface IPromptParams {
     hyperParameters?: IPromptHyperParameters;
@@ -54,7 +54,8 @@ declare class RWSPrompt {
     readBaseInput(): string;
     setBaseInput(input: string): RWSPrompt;
     readOutput(): string;
-    getHyperParameters(base?: any): IPromptHyperParameters;
+    getHyperParameters<T extends IPromptHyperParameters>(base?: any): T;
+    getHyperParameter<T>(key: keyof IPromptHyperParameters): T;
     setHyperParameter(key: string, value: any): RWSPrompt;
     setHyperParameters(value: any): RWSPrompt;
     setMultiTemplate(template: PromptTemplate): RWSPrompt;

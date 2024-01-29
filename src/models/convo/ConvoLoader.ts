@@ -9,6 +9,15 @@ import { Bedrock as LLMBedrock } from "@langchain/community/llms/bedrock";
 import { v4 as uuid } from 'uuid';
 
 import { LLMChain, LLMChainInput } from "langchain/chains";
+import RWSPrompt from "../prompts/_prompt";
+import { Error500 } from "../../errors";
+
+interface IBaseLangchainHyperParams {
+    temperature: number;
+    topK: number;
+    topP: number;
+    maxTokens:number;
+}
 
 class ConvoLoader {
     private loader: TextLoader;
@@ -22,6 +31,8 @@ class ConvoLoader {
     private convo_id: string;
     private llmClient: LLMBedrock;
     private llmChain: LLMChain;
+
+    private thePrompt: RWSPrompt;
     
     constructor(embeddings: EmbeddingsInterface, convoId: string | null = null){
         this.embeddings = embeddings;
@@ -38,13 +49,13 @@ class ConvoLoader {
         return uuid();
     }
 
-    public async init(pathToTextFile: string): Promise<ConvoLoader>
+    public async init(pathToTextFile: string, chunkSize: number = 2000, chunkOverlap: number = 200, separators: string[] = ["/n/n","."]): Promise<ConvoLoader>
     {
         this.loader = new TextLoader(pathToTextFile);
         this.docSplitter = new RecursiveCharacterTextSplitter({
-            chunkSize: 2000, // The size of the chunk that should be split.
-            chunkOverlap: 200, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
-            separators: ["/n/n","."] // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
+            chunkSize, // The size of the chunk that should be split.
+            chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
+            separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
         });
 
         this.docs = await this.docSplitter.splitDocuments(await this.loader.load());
@@ -86,13 +97,46 @@ class ConvoLoader {
         return this.llmClient;
     }
 
-    async chain(promptTemplate: PromptTemplate): Promise<LLMChain>
+    setPrompt(prompt: RWSPrompt): ConvoLoader
+    {
+        this.thePrompt = prompt;
+
+        return this;
+    }
+
+    async chain(hyperParamsMap: { [key: string]: string} = {
+        temperature: 'temperature',
+        topK: 'top_k',
+        topP: 'top_p',
+        maxTokens: 'max_tokens_to_sample'
+    }): Promise<LLMChain>
     {        
+
+        if(!this.thePrompt){
+            throw new Error500(new Error('No prompt initialized for conversation'), __filename);
+        }        
+
+        const hyperParams: IBaseLangchainHyperParams = {
+            temperature: null,
+            topK: null,
+            topP: null,
+            maxTokens: null
+        }
+
+        for (const key in hyperParamsMap){
+            const index: keyof IBaseLangchainHyperParams = key as keyof IBaseLangchainHyperParams;
+
+            hyperParams[index] = this.thePrompt.getHyperParameter<number>(hyperParamsMap[key]);
+        }
+
+        const chainParams: { llm: any, prompt: PromptTemplate, hyperparameters?: any } = {
+            llm: this.getLLMClient(),
+            prompt: this.thePrompt.getMultiTemplate(),
+            hyperparameters: hyperParams    
+        };      
+
         if(!this.llmChain){
-            this.createChain({
-                llm: this.getLLMClient(),
-                prompt: promptTemplate
-            });
+            this.createChain(chainParams);
         }        
 
         return this.llmChain;

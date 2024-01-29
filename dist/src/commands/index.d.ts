@@ -1,5 +1,11 @@
 declare const _default: ({
     execute(params?: import("./_command").ICmdParams): Promise<void>;
+    name: string;
+    getSourceFilePath(): string;
+    getName(): string;
+    getCommandParameters(params: import("./_command").ICmdParams): import("./_command").ICmdParamsReturn;
+} | {
+    execute(params?: import("./_command").ICmdParams): Promise<void>;
     executeLambdaLifeCycle: (lifeCycleEventName: keyof {
         preArchive?: (params: import("./LambdaCommand").ILambdaParams) => Promise<void>;
         postArchive?: (params: import("./LambdaCommand").ILambdaParams) => Promise<void>;
@@ -13,12 +19,6 @@ declare const _default: ({
     undeploy(params: import("./_command").ICmdParams): Promise<void>;
     openToWeb(params: import("./_command").ICmdParams): Promise<void>;
     delete(params: import("./_command").ICmdParams): Promise<void>;
-    name: string;
-    getSourceFilePath(): string;
-    getName(): string;
-    getCommandParameters(params: import("./_command").ICmdParams): import("./_command").ICmdParamsReturn;
-} | {
-    execute(params?: import("./_command").ICmdParams): Promise<void>;
     name: string;
     getSourceFilePath(): string;
     getName(): string;
