@@ -44,8 +44,6 @@ if(process.argv.length > 4){
     }
 }
 
-const pm2 = require('pm2');
-
 
 const os = require('os');
 
@@ -80,16 +78,6 @@ const main = async () => {
     }
 
     return;
-}
-
-async function installDeps(){
-    log(color().green('[RWS]') + color().yellowBright('RWS Dependencies config start...'))
-
-    await ProcessService.runShellCommand(`yarn global add pm2`);
-
-    //await rwsPackageSetup();
-    
-    log(color().green('[RWS]') + color().yellowBright('RWS Dependencies config finish.'))
 }
 
 async function generateCliClient()
