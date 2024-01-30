@@ -9,6 +9,7 @@ interface IConvoDebugXMLData {
     conversation: {
         $: {
             id: string;
+            [key: string]: string;
         };
         message: IRWSPromptJSON[];
     };
