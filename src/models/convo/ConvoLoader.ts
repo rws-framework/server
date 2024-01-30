@@ -9,14 +9,39 @@ import { Bedrock as LLMBedrock } from "@langchain/community/llms/bedrock";
 import { v4 as uuid } from 'uuid';
 
 import { LLMChain, LLMChainInput } from "langchain/chains";
-import RWSPrompt from "../prompts/_prompt";
+import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
 import { Error500 } from "../../errors";
+
+import { ChainValues } from "@langchain/core/utils/types";
+import { Callbacks , BaseCallbackConfig } from "langchain/callbacks";
+
+import xml2js from 'xml2js'
+import fs from "fs";
+import path from "path";
 
 interface IBaseLangchainHyperParams {
     temperature: number;
     topK: number;
     topP: number;
     maxTokens:number;
+}
+
+interface IConvoDebugXMLData {
+    conversation: {
+        $ : {
+            id: string
+        },
+        message: IRWSPromptJSON[]        
+    }
+}
+
+interface IConvoDebugXMLOutput {
+    xml : IConvoDebugXMLData,
+    path: string
+}
+
+interface IChainCallOutput {
+    text: string
 }
 
 class ConvoLoader {
@@ -104,6 +129,37 @@ class ConvoLoader {
         return this;
     }
 
+    async call(values: ChainValues, cfg: Callbacks | BaseCallbackConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
+    {   
+        const output = await (await this.chain()).call(values, cfg) as IChainCallOutput;        
+        await this.thePrompt.listen(output.text)        
+
+        await this.debugCall(debugCallback);
+
+        return this.thePrompt;
+    }
+
+    
+    private async debugCall(debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null)
+    {
+        try {
+        const debug = this.initDebugFile();
+
+        let callData: IConvoDebugXMLData = debug.xml;
+
+        callData.conversation.message.push(this.thePrompt.toJSON());
+
+        if(debugCallback){
+            callData = await debugCallback(callData);
+        }
+
+        this.debugSave(callData);
+        
+        }catch(error: Error | unknown){
+            console.log(error);
+        }
+    }
+
     async chain(hyperParamsMap: { [key: string]: string} = {
         temperature: 'temperature',
         topK: 'top_k',
@@ -169,6 +225,62 @@ class ConvoLoader {
             }, 300);            
         })
     }  
+
+    private parseXML(xml: string, callback: (err: Error, result: any) => void): xml2js.Parser
+    {
+        const parser = new xml2js.Parser();        
+
+        parser.parseString(xml, callback);
+        return parser;
+    }
+
+    static debugConvoDir(){
+        return path.resolve(process.cwd(), 'debug', 'conversations');
+    }
+
+    public debugConvoFile(){
+        return `${ConvoLoader.debugConvoDir()}/${this.getId()}.xml`
+    }
+
+    private initDebugFile(): IConvoDebugXMLOutput
+    {
+        let xmlContent: string;
+        let debugXML: IConvoDebugXMLData = null;
+
+        const convoDir = ConvoLoader.debugConvoDir();
+
+        if(!fs.existsSync(convoDir)){
+            fs.mkdirSync(convoDir, { recursive: true });
+        }
+
+        const convoFilePath = this.debugConvoFile();
+
+        if(!fs.existsSync(convoFilePath)){
+            xmlContent = `<conversation id="${this.getId()}"></conversation>`;
+
+            fs.writeFileSync(convoFilePath, xmlContent);
+        }else{
+            xmlContent = fs.readFileSync(convoFilePath, 'utf-8');
+        }
+
+        this.parseXML(xmlContent, (error: Error, result) => {            
+            debugXML = result;
+        });
+
+        if(!debugXML.conversation.message){
+            debugXML.conversation.message = [];
+        }
+
+        return { xml: debugXML, path: convoFilePath };
+    }
+
+    private debugSave(xml: IConvoDebugXMLData): void
+    {        
+        const builder = new xml2js.Builder();
+        fs.writeFileSync(this.debugConvoFile(), builder.buildObject(xml), 'utf-8')
+    }
+
 }
 
 export default ConvoLoader;
+export { IChainCallOutput, IConvoDebugXMLData }

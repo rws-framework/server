@@ -9,6 +9,9 @@ const VectorStoreService_1 = __importDefault(require("../../services/VectorStore
 const uuid_1 = require("uuid");
 const chains_1 = require("langchain/chains");
 const errors_1 = require("../../errors");
+const xml2js_1 = __importDefault(require("xml2js"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 class ConvoLoader {
     constructor(embeddings, convoId = null) {
         this._initiated = false;
@@ -57,6 +60,26 @@ class ConvoLoader {
     setPrompt(prompt) {
         this.thePrompt = prompt;
         return this;
+    }
+    async call(values, cfg, debugCallback = null) {
+        const output = await (await this.chain()).call(values, cfg);
+        await this.thePrompt.listen(output.text);
+        await this.debugCall(debugCallback);
+        return this.thePrompt;
+    }
+    async debugCall(debugCallback = null) {
+        try {
+            const debug = this.initDebugFile();
+            let callData = debug.xml;
+            callData.conversation.message.push(this.thePrompt.toJSON());
+            if (debugCallback) {
+                callData = await debugCallback(callData);
+            }
+            this.debugSave(callData);
+        }
+        catch (error) {
+            console.log(error);
+        }
     }
     async chain(hyperParamsMap = {
         temperature: 'temperature',
@@ -107,6 +130,44 @@ class ConvoLoader {
                 i++;
             }, 300);
         });
+    }
+    parseXML(xml, callback) {
+        const parser = new xml2js_1.default.Parser();
+        parser.parseString(xml, callback);
+        return parser;
+    }
+    static debugConvoDir() {
+        return path_1.default.resolve(process.cwd(), 'debug', 'conversations');
+    }
+    debugConvoFile() {
+        return `${ConvoLoader.debugConvoDir()}/${this.getId()}.xml`;
+    }
+    initDebugFile() {
+        let xmlContent;
+        let debugXML = null;
+        const convoDir = ConvoLoader.debugConvoDir();
+        if (!fs_1.default.existsSync(convoDir)) {
+            fs_1.default.mkdirSync(convoDir, { recursive: true });
+        }
+        const convoFilePath = this.debugConvoFile();
+        if (!fs_1.default.existsSync(convoFilePath)) {
+            xmlContent = `<conversation id="${this.getId()}"></conversation>`;
+            fs_1.default.writeFileSync(convoFilePath, xmlContent);
+        }
+        else {
+            xmlContent = fs_1.default.readFileSync(convoFilePath, 'utf-8');
+        }
+        this.parseXML(xmlContent, (error, result) => {
+            debugXML = result;
+        });
+        if (!debugXML.conversation.message) {
+            debugXML.conversation.message = [];
+        }
+        return { xml: debugXML, path: convoFilePath };
+    }
+    debugSave(xml) {
+        const builder = new xml2js_1.default.Builder();
+        fs_1.default.writeFileSync(this.debugConvoFile(), builder.buildObject(xml), 'utf-8');
     }
 }
 exports.default = ConvoLoader;

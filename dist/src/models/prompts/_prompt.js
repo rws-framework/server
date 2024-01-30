@@ -9,6 +9,7 @@ class RWSPrompt {
         this.hyperParameters = params.hyperParameters;
         this.modelId = params.modelId;
         this.modelType = params.modelType;
+        this.created_at = new Date();
     }
     async listen(source) {
         if (typeof source === 'string') {
@@ -43,6 +44,10 @@ class RWSPrompt {
     }
     setBaseInput(input) {
         this.originalInput = input;
+        return this;
+    }
+    injestOutput(content) {
+        this.output = content;
         return this;
     }
     readOutput() {
@@ -85,9 +90,10 @@ class RWSPrompt {
     getModelMetadata() {
         return [this.modelType, this.modelId];
     }
-    async requestWith(executor, intruderPrompt = null) {
+    async requestWith(executor, intruderPrompt = null, debugVars = {}) {
         this.sentInput = this.input;
-        await executor.promptRequest(this, null, intruderPrompt);
+        const returnedRWS = await executor.promptRequest(this, null, intruderPrompt, debugVars);
+        this.output = returnedRWS.readOutput();
     }
     async singleRequestWith(executor, intruderPrompt = null) {
         this.sentInput = this.input;
@@ -126,6 +132,24 @@ class RWSPrompt {
                 break;
             }
         }
+    }
+    toJSON() {
+        return {
+            input: this.input,
+            enhancedInput: this.enhancedInput,
+            sentInput: this.sentInput,
+            originalInput: this.originalInput,
+            output: this.output,
+            modelId: this.modelId,
+            modelType: this.modelType,
+            multiTemplate: this.multiTemplate,
+            convo: {
+                id: this.convo.getId()
+            },
+            hyperParameters: this.hyperParameters,
+            varStorage: this.varStorage,
+            created_at: this.created_at.toISOString()
+        };
     }
 }
 exports.default = RWSPrompt;

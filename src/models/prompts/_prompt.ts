@@ -1,6 +1,6 @@
 import { Readable } from 'stream';
 import { PromptTemplate } from "@langchain/core/prompts";
-import ConvoLoader from '../convo/ConvoLoader';
+import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
 import { IContextToken } from '../../interfaces/IContextToken';
 
 interface IPromptHyperParameters {
@@ -28,17 +28,33 @@ interface IPromptEnchantment {
 type IPromptSender = (prompt: RWSPrompt) => Promise<void>;
 
 interface IRWSPromptRequestExecutor {
-    promptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null) => Promise<RWSPrompt>
+    promptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>
 }
 
 
 interface IRWSSinglePromptRequestExecutor {
-    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null) => Promise<RWSPrompt>
+    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>
 }
 
 
 interface IRWSPromptStreamExecutor {
-    promptStream: (prompt: RWSPrompt, read: (size: number) => void) => Readable
+    promptStream: (prompt: RWSPrompt, read: (size: number) => void, debugVars?: any) => Readable
+}
+
+interface IRWSPromptJSON {
+
+    input: string;
+    enhancedInput: IPromptEnchantment[];
+    sentInput: string;
+    originalInput: string;
+    output: string;
+    modelId: string;
+    modelType: string;
+    multiTemplate: PromptTemplate;
+    convo: { id: string };
+    hyperParameters: IPromptHyperParameters;
+    created_at: string;
+    varStorage: any;
 }
 
 class RWSPrompt {
@@ -52,6 +68,7 @@ class RWSPrompt {
     private multiTemplate: PromptTemplate;
     private convo: ConvoLoader;
     private hyperParameters: IPromptHyperParameters;
+    private created_at: Date;
 
     private varStorage: any = {};
 
@@ -61,6 +78,8 @@ class RWSPrompt {
         this.hyperParameters = params.hyperParameters;
         this.modelId = params.modelId;
         this.modelType = params.modelType;
+
+        this.created_at = new Date();
     }
 
     async listen(source: string | Readable): Promise<RWSPrompt>
@@ -115,6 +134,13 @@ class RWSPrompt {
     {
         this.originalInput = input;
         
+        return this;
+    }
+
+    injestOutput(content: string): RWSPrompt
+    {
+        this.output = content;
+
         return this;
     }
 
@@ -176,17 +202,18 @@ class RWSPrompt {
     getConvo(): ConvoLoader
     {
         return this.convo;
-    }
+    }  
 
     getModelMetadata(): [string, string]
     {
         return [this.modelType, this.modelId];
     }
 
-    async requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt: string = null): Promise<void>
+    async requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt: string = null, debugVars: any = {}): Promise<void>
     {
         this.sentInput = this.input;
-        await executor.promptRequest(this, null, intruderPrompt);
+        const returnedRWS = await executor.promptRequest(this, null, intruderPrompt, debugVars);
+        this.output = returnedRWS.readOutput()        
     }
 
     async singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt: string = null): Promise<void>
@@ -240,8 +267,28 @@ class RWSPrompt {
             }            
         }        
     }
+
+    toJSON(): IRWSPromptJSON
+    {
+        return {
+            input: this.input,            
+            enhancedInput: this.enhancedInput,
+            sentInput: this.sentInput,
+            originalInput: this.originalInput,
+            output: this.output,
+            modelId: this.modelId,
+            modelType: this.modelType,
+            multiTemplate: this.multiTemplate,
+            convo: {
+                id: this.convo.getId()
+            },
+            hyperParameters: this.hyperParameters,
+            varStorage: this.varStorage,
+            created_at: this.created_at.toISOString()
+        }
+    }
 }
 
 export default RWSPrompt;
 
-export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor, IRWSSinglePromptRequestExecutor }
+export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptJSON, IChainCallOutput }

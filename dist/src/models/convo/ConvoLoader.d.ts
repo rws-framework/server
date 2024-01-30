@@ -2,7 +2,20 @@ import { EmbeddingsInterface } from "@langchain/core/embeddings";
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
 import { Bedrock as LLMBedrock } from "@langchain/community/llms/bedrock";
 import { LLMChain } from "langchain/chains";
-import RWSPrompt from "../prompts/_prompt";
+import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
+import { ChainValues } from "@langchain/core/utils/types";
+import { Callbacks, BaseCallbackConfig } from "langchain/callbacks";
+interface IConvoDebugXMLData {
+    conversation: {
+        $: {
+            id: string;
+        };
+        message: IRWSPromptJSON[];
+    };
+}
+interface IChainCallOutput {
+    text: string;
+}
 declare class ConvoLoader {
     private loader;
     private docSplitter;
@@ -24,10 +37,18 @@ declare class ConvoLoader {
     setLLMClient(client: LLMBedrock): ConvoLoader;
     getLLMClient(): LLMBedrock;
     setPrompt(prompt: RWSPrompt): ConvoLoader;
+    call(values: ChainValues, cfg: Callbacks | BaseCallbackConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
+    private debugCall;
     chain(hyperParamsMap?: {
         [key: string]: string;
     }): Promise<LLMChain>;
     private createChain;
     waitForInit(): Promise<ConvoLoader | null>;
+    private parseXML;
+    static debugConvoDir(): string;
+    debugConvoFile(): string;
+    private initDebugFile;
+    private debugSave;
 }
 export default ConvoLoader;
+export { IChainCallOutput, IConvoDebugXMLData };
