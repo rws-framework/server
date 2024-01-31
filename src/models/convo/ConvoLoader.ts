@@ -4,10 +4,12 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import { EmbeddingsInterface } from "@langchain/core/embeddings";
 import VectorStoreService from '../../services/VectorStoreService';
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
-import { Bedrock as LLMBedrock } from "@langchain/community/llms/bedrock";
+import { HumanMessage } from "@langchain/core/messages";
+import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
+import { BaseMessageChunk } from "@langchain/core/messages";
 
 import { v4 as uuid } from 'uuid';
-
+import getAppConfig from '../../services/AppConfigService';
 import { LLMChain, LLMChainInput } from "langchain/chains";
 import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
 import { Error500 } from "../../errors";
@@ -45,29 +47,37 @@ interface IChainCallOutput {
     text: string
 }
 
-class ConvoLoader {
+interface IEmbeddingsHandler<T extends object = {}> {
+    generateEmbeddings: (text?: string) => Promise<T>
+    storeEmbeddings: (embeddings: any, convoId: string) => Promise<void>
+}
+
+class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
     private loader: TextLoader;
     private docSplitter: RecursiveCharacterTextSplitter;    
 
-    private embeddings: EmbeddingsInterface;
+    private embeddings: IEmbeddingsHandler<any>;
 
     private docs: VectorDocType;
     private _initiated = false;
     private store: RWSVectorStore;
     private convo_id: string;
-    private llmClient: LLMBedrock;
+    private llmClient: LLMClient;
     private llmChain: LLMChain;
-
+    private llmChat: LLMChat;
+    private chatConstructor: new (config: any) => LLMChat;
     private thePrompt: RWSPrompt;
     
-    constructor(embeddings: EmbeddingsInterface, convoId: string | null = null){
+    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler, convoId: string | null = null){
         this.embeddings = embeddings;
         
         if(convoId === null){
             this.convo_id = ConvoLoader.uuid();
         } else {
             this.convo_id = convoId;
-        }                
+        }                        
+
+        this.chatConstructor = chatConstructor;       
     }
 
     static uuid(): string
@@ -75,7 +85,7 @@ class ConvoLoader {
         return uuid();
     }
 
-    public async init(pathToTextFile: string, chunkSize: number = 2000, chunkOverlap: number = 200, separators: string[] = ["/n/n","."]): Promise<ConvoLoader>
+    public async init(pathToTextFile: string, chunkSize: number = 2000, chunkOverlap: number = 200, separators: string[] = ["/n/n","."]): Promise<ConvoLoader<LLMClient, LLMChat>>
     {
         this.loader = new TextLoader(pathToTextFile);
         this.docSplitter = new RecursiveCharacterTextSplitter({
@@ -85,8 +95,7 @@ class ConvoLoader {
         });
 
         this.docs = await this.docSplitter.splitDocuments(await this.loader.load());
-
-        this.store = await VectorStoreService.createStore(this.docs, this.embeddings);
+        this.store = await VectorStoreService.createStore(this.docs, await this.embeddings.generateEmbeddings());
 
         this._initiated = true;
 
@@ -111,29 +120,67 @@ class ConvoLoader {
         return this._initiated;
     }
 
-    setLLMClient(client: LLMBedrock): ConvoLoader
+    setLLMClient(client: LLMClient): ConvoLoader<LLMClient, LLMChat>
     {
         this.llmClient = client;
         
         return this;
     }
 
-    getLLMClient(): LLMBedrock
+    getLLMClient(): LLMClient
     {
         return this.llmClient;
     }
 
-    setPrompt(prompt: RWSPrompt): ConvoLoader
+    setPrompt(prompt: RWSPrompt): ConvoLoader<LLMClient, LLMChat>
     {
-        this.thePrompt = prompt;
+        this.thePrompt = prompt;        
+
+        this.llmChat = new this.chatConstructor({
+            region: getAppConfig().get('aws_bedrock_region'),  
+            credentials: {  
+              accessKeyId: getAppConfig().get('aws_access_key'),  
+              secretAccessKey: getAppConfig().get('aws_secret_key'),  
+            },  
+            model: "anthropic.claude-v2",            
+            maxTokens: prompt.getHyperParameter<number>('max_tokens_to_sample'),
+            temperature: prompt.getHyperParameter<number>('temperature'),
+            modelKwargs: {
+                top_p: prompt.getHyperParameter<number>('top_p'),
+                top_k: prompt.getHyperParameter<number>('top_k'),
+            }
+        });        
 
         return this;
+    }
+
+    getChat(): LLMChat
+    {
+        return this.llmChat;
     }
 
     async call(values: ChainValues, cfg: Callbacks | BaseCallbackConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
     {   
         const output = await (await this.chain()).call(values, cfg) as IChainCallOutput;        
         await this.thePrompt.listen(output.text)        
+
+        await this.debugCall(debugCallback);
+
+        return this.thePrompt;
+    }
+
+    async callChat(content: string, embeddingsEnabled: boolean = true, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
+    {
+        if(embeddingsEnabled){
+            const embeddings = await this.embeddings.generateEmbeddings(content);
+            await this.embeddings.storeEmbeddings(embeddings, this.getId());
+        }
+
+        const response: BaseMessageChunk = await this.llmChat.invoke([
+            new HumanMessage({ content }),
+        ]);
+
+        await this.thePrompt.listen(response.content as string)        
 
         await this.debugCall(debugCallback);
 
@@ -205,7 +252,7 @@ class ConvoLoader {
         return this.llmChain;
     }
 
-    async waitForInit(): Promise<ConvoLoader | null>
+    async waitForInit(): Promise<ConvoLoader<LLMClient, LLMChat> | null>
     {
         const _self = this;
         return new Promise((resolve, reject)=>{
@@ -284,4 +331,4 @@ class ConvoLoader {
 }
 
 export default ConvoLoader;
-export { IChainCallOutput, IConvoDebugXMLData }
+export { IChainCallOutput, IConvoDebugXMLData, IEmbeddingsHandler }

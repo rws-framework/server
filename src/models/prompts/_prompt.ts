@@ -1,6 +1,8 @@
 import { Readable } from 'stream';
 import { PromptTemplate } from "@langchain/core/prompts";
 import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
+import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
+
 import { IContextToken } from '../../interfaces/IContextToken';
 
 interface IPromptHyperParameters {
@@ -66,7 +68,7 @@ class RWSPrompt {
     private modelId: string;
     private modelType: string;
     private multiTemplate: PromptTemplate;
-    private convo: ConvoLoader;
+    private convo: ConvoLoader<any, any>;
     private hyperParameters: IPromptHyperParameters;
     private created_at: Date;
 
@@ -192,17 +194,17 @@ class RWSPrompt {
         return this.multiTemplate;
     }
 
-    async setConvo(convo: ConvoLoader): Promise<RWSPrompt>
+    async setConvo(convo: ConvoLoader<any, SimpleChatModel>): Promise<RWSPrompt>
     {
         this.convo = convo.setPrompt(this)        
         
         return this;
     }
 
-    getConvo(): ConvoLoader
+    getConvo<T, C extends SimpleChatModel>(): ConvoLoader<T, C>
     {
         return this.convo;
-    }  
+    }
 
     getModelMetadata(): [string, string]
     {

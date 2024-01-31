@@ -6,14 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const text_1 = require("langchain/document_loaders/fs/text");
 const text_splitter_1 = require("langchain/text_splitter");
 const VectorStoreService_1 = __importDefault(require("../../services/VectorStoreService"));
+const messages_1 = require("@langchain/core/messages");
 const uuid_1 = require("uuid");
+const AppConfigService_1 = __importDefault(require("../../services/AppConfigService"));
 const chains_1 = require("langchain/chains");
 const errors_1 = require("../../errors");
 const xml2js_1 = __importDefault(require("xml2js"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 class ConvoLoader {
-    constructor(embeddings, convoId = null) {
+    constructor(chatConstructor, embeddings, convoId = null) {
         this._initiated = false;
         this.embeddings = embeddings;
         if (convoId === null) {
@@ -22,6 +24,7 @@ class ConvoLoader {
         else {
             this.convo_id = convoId;
         }
+        this.chatConstructor = chatConstructor;
     }
     static uuid() {
         return (0, uuid_1.v4)();
@@ -34,7 +37,7 @@ class ConvoLoader {
             separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
         });
         this.docs = await this.docSplitter.splitDocuments(await this.loader.load());
-        this.store = await VectorStoreService_1.default.createStore(this.docs, this.embeddings);
+        this.store = await VectorStoreService_1.default.createStore(this.docs, await this.embeddings.generateEmbeddings());
         this._initiated = true;
         return this;
     }
@@ -59,11 +62,40 @@ class ConvoLoader {
     }
     setPrompt(prompt) {
         this.thePrompt = prompt;
+        this.llmChat = new this.chatConstructor({
+            region: (0, AppConfigService_1.default)().get('aws_bedrock_region'),
+            credentials: {
+                accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
+                secretAccessKey: (0, AppConfigService_1.default)().get('aws_secret_key'),
+            },
+            model: "anthropic.claude-v2",
+            maxTokens: prompt.getHyperParameter('max_tokens_to_sample'),
+            temperature: prompt.getHyperParameter('temperature'),
+            modelKwargs: {
+                top_p: prompt.getHyperParameter('top_p'),
+                top_k: prompt.getHyperParameter('top_k'),
+            }
+        });
         return this;
+    }
+    getChat() {
+        return this.llmChat;
     }
     async call(values, cfg, debugCallback = null) {
         const output = await (await this.chain()).call(values, cfg);
         await this.thePrompt.listen(output.text);
+        await this.debugCall(debugCallback);
+        return this.thePrompt;
+    }
+    async callChat(content, embeddingsEnabled = true, debugCallback = null) {
+        if (embeddingsEnabled) {
+            const embeddings = await this.embeddings.generateEmbeddings(content);
+            await this.embeddings.storeEmbeddings(embeddings, this.getId());
+        }
+        const response = await this.llmChat.invoke([
+            new messages_1.HumanMessage({ content }),
+        ]);
+        await this.thePrompt.listen(response.content);
         await this.debugCall(debugCallback);
         return this.thePrompt;
     }

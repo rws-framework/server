@@ -1,4 +1,3 @@
-/// <reference types="chai" />
 import { IAppConfig } from '../../services/AppConfigService';
 import { ServerControlSet } from "../../services/ServerService";
 import { Socket } from 'socket.io-client';
