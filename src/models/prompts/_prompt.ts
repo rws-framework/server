@@ -2,6 +2,7 @@ import { Readable } from 'stream';
 import { PromptTemplate } from "@langchain/core/prompts";
 import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
 import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
+import type { BaseLanguageModelInterface } from "@langchain/core/language_models/base";
 
 import { IContextToken } from '../../interfaces/IContextToken';
 
@@ -201,7 +202,7 @@ class RWSPrompt {
         return this;
     }
 
-    getConvo<T, C extends SimpleChatModel>(): ConvoLoader<T, C>
+    getConvo<T extends BaseLanguageModelInterface, C extends SimpleChatModel>(): ConvoLoader<T, C>
     {
         return this.convo;
     }

@@ -2,15 +2,18 @@ import { TextLoader } from "langchain/document_loaders/fs/text";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { EmbeddingsInterface } from "@langchain/core/embeddings";
+import { RunnableConfig } from "@langchain/core/runnables";
+import type { BaseLanguageModelInterface } from "@langchain/core/language_models/base";
 import VectorStoreService from '../../services/VectorStoreService';
+import ConsoleService from "../../services/ConsoleService";
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
 import { HumanMessage } from "@langchain/core/messages";
 import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
 import { BaseMessageChunk } from "@langchain/core/messages";
-
+import { Document } from "langchain/document";
 import { v4 as uuid } from 'uuid';
 import getAppConfig from '../../services/AppConfigService';
-import { LLMChain, LLMChainInput } from "langchain/chains";
+import { BaseChain, LLMChain, LLMChainInput, RetrievalQAChain, loadQAStuffChain } from "langchain/chains";
 import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
 import { Error500 } from "../../errors";
 
@@ -20,6 +23,10 @@ import { Callbacks , BaseCallbackConfig } from "langchain/callbacks";
 import xml2js from 'xml2js'
 import fs from "fs";
 import path from "path";
+
+const logConvo = (txt: string) => {
+    ConsoleService.rwsLog(ConsoleService.color().blueBright(txt));
+}
 
 interface IBaseLangchainHyperParams {
     temperature: number;
@@ -52,7 +59,7 @@ interface IEmbeddingsHandler<T extends object = {}> {
     storeEmbeddings: (embeddings: any, convoId: string) => Promise<void>
 }
 
-class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
+class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends SimpleChatModel> {
     private loader: TextLoader;
     private docSplitter: RecursiveCharacterTextSplitter;    
 
@@ -63,7 +70,7 @@ class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
     private store: RWSVectorStore;
     private convo_id: string;
     private llmClient: LLMClient;
-    private llmChain: LLMChain;
+    private llmChain: BaseChain;
     private llmChat: LLMChat;
     private chatConstructor: new (config: any) => LLMChat;
     private thePrompt: RWSPrompt;
@@ -85,7 +92,7 @@ class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
         return uuid();
     }
 
-    public async init(pathToTextFile: string, chunkSize: number = 2000, chunkOverlap: number = 200, separators: string[] = ["/n/n","."]): Promise<ConvoLoader<LLMClient, LLMChat>>
+    public async init(pathToTextFile: string, chunkSize: number = 400, chunkOverlap: number = 80, separators: string[] = ["/n/n","."]): Promise<ConvoLoader<LLMClient, LLMChat>>
     {
         this.loader = new TextLoader(pathToTextFile);
         this.docSplitter = new RecursiveCharacterTextSplitter({
@@ -94,9 +101,19 @@ class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
             separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
         });
 
-        this.docs = await this.docSplitter.splitDocuments(await this.loader.load());
-        this.store = await VectorStoreService.createStore(this.docs, await this.embeddings.generateEmbeddings());
+        const orgDocs =await this.loader.load();
+        const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
 
+        const avgCharCountPre = this.avgDocLength(orgDocs);
+        const avgCharCountPost = this.avgDocLength(splitDocs);
+
+        logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
+        logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
+        logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
+
+        this.docs = splitDocs;
+        this.store = await VectorStoreService.createStore(this.docs, await this.embeddings.generateEmbeddings());
+        
         this._initiated = true;
 
         return this;
@@ -159,9 +176,13 @@ class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
         return this.llmChat;
     }
 
-    async call(values: ChainValues, cfg: Callbacks | BaseCallbackConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
+    private avgDocLength = (documents: Document[]): number => {
+        return documents.reduce((sum, doc: Document) => sum + doc.pageContent.length, 0) / documents.length;
+    };
+
+    async call(values: ChainValues, cfg: RunnableConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
     {   
-        const output = await (await this.chain()).call(values, cfg) as IChainCallOutput;        
+        const output = await (await this.chain()).invoke(values, cfg) as IChainCallOutput;        
         await this.thePrompt.listen(output.text)        
 
         await this.debugCall(debugCallback);
@@ -169,7 +190,7 @@ class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
         return this.thePrompt;
     }
 
-    async callChat(content: string, embeddingsEnabled: boolean = true, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
+    async callChat(content: string, embeddingsEnabled: boolean = false, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
     {
         if(embeddingsEnabled){
             const embeddings = await this.embeddings.generateEmbeddings(content);
@@ -213,8 +234,11 @@ class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
         topK: 'top_k',
         topP: 'top_p',
         maxTokens: 'max_tokens_to_sample'
-    }): Promise<LLMChain>
+    }): Promise<BaseChain>
     {        
+        if(this.llmChain){
+            return this.llmChain;
+        }
 
         if(!this.thePrompt){
             throw new Error500(new Error('No prompt initialized for conversation'), __filename);
@@ -233,22 +257,24 @@ class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
             hyperParams[index] = this.thePrompt.getHyperParameter<number>(hyperParamsMap[key]);
         }
 
-        const chainParams: { llm: any, prompt: PromptTemplate, hyperparameters?: any } = {
-            llm: this.getLLMClient(),
+        const chainParams: { prompt: PromptTemplate, hyperparameters?: any } = {            
             prompt: this.thePrompt.getMultiTemplate(),
             hyperparameters: hyperParams    
         };      
 
-        if(!this.llmChain){
-            this.createChain(chainParams);
-        }        
+        this.createChain(chainParams);
 
         return this.llmChain;
     }
 
-    private async createChain(input: LLMChainInput): Promise<LLMChain>
+    private async createChain(input: { prompt: PromptTemplate, hyperparameters?: any }): Promise<BaseChain>
     {
-        this.llmChain = new LLMChain(input);
+        this.llmChain = new RetrievalQAChain({
+            combineDocumentsChain: loadQAStuffChain(this.getLLMClient(), input),
+            retriever: this.getStore().getFaiss().asRetriever(1),
+            returnSourceDocuments: true
+        });
+
         return this.llmChain;
     }
 
