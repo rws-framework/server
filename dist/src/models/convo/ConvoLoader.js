@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const text_1 = require("langchain/document_loaders/fs/text");
 const text_splitter_1 = require("langchain/text_splitter");
 const VectorStoreService_1 = __importDefault(require("../../services/VectorStoreService"));
+const ConsoleService_1 = __importDefault(require("../../services/ConsoleService"));
 const messages_1 = require("@langchain/core/messages");
 const uuid_1 = require("uuid");
 const AppConfigService_1 = __importDefault(require("../../services/AppConfigService"));
@@ -14,9 +15,15 @@ const errors_1 = require("../../errors");
 const xml2js_1 = __importDefault(require("xml2js"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
+const logConvo = (txt) => {
+    ConsoleService_1.default.rwsLog(ConsoleService_1.default.color().blueBright(txt));
+};
 class ConvoLoader {
     constructor(chatConstructor, embeddings, convoId = null) {
         this._initiated = false;
+        this.avgDocLength = (documents) => {
+            return documents.reduce((sum, doc) => sum + doc.pageContent.length, 0) / documents.length;
+        };
         this.embeddings = embeddings;
         if (convoId === null) {
             this.convo_id = ConvoLoader.uuid();
@@ -29,14 +36,21 @@ class ConvoLoader {
     static uuid() {
         return (0, uuid_1.v4)();
     }
-    async init(pathToTextFile, chunkSize = 2000, chunkOverlap = 200, separators = ["/n/n", "."]) {
+    async init(pathToTextFile, chunkSize = 400, chunkOverlap = 80, separators = ["/n/n", "."]) {
         this.loader = new text_1.TextLoader(pathToTextFile);
         this.docSplitter = new text_splitter_1.RecursiveCharacterTextSplitter({
             chunkSize, // The size of the chunk that should be split.
             chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
             separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
         });
-        this.docs = await this.docSplitter.splitDocuments(await this.loader.load());
+        const orgDocs = await this.loader.load();
+        const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
+        const avgCharCountPre = this.avgDocLength(orgDocs);
+        const avgCharCountPost = this.avgDocLength(splitDocs);
+        logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
+        logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
+        logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
+        this.docs = splitDocs;
         this.store = await VectorStoreService_1.default.createStore(this.docs, await this.embeddings.generateEmbeddings());
         this._initiated = true;
         return this;
@@ -82,12 +96,12 @@ class ConvoLoader {
         return this.llmChat;
     }
     async call(values, cfg, debugCallback = null) {
-        const output = await (await this.chain()).call(values, cfg);
+        const output = await (await this.chain()).invoke(values, cfg);
         await this.thePrompt.listen(output.text);
         await this.debugCall(debugCallback);
         return this.thePrompt;
     }
-    async callChat(content, embeddingsEnabled = true, debugCallback = null) {
+    async callChat(content, embeddingsEnabled = false, debugCallback = null) {
         if (embeddingsEnabled) {
             const embeddings = await this.embeddings.generateEmbeddings(content);
             await this.embeddings.storeEmbeddings(embeddings, this.getId());
@@ -119,6 +133,9 @@ class ConvoLoader {
         topP: 'top_p',
         maxTokens: 'max_tokens_to_sample'
     }) {
+        if (this.llmChain) {
+            return this.llmChain;
+        }
         if (!this.thePrompt) {
             throw new errors_1.Error500(new Error('No prompt initialized for conversation'), __filename);
         }
@@ -133,17 +150,18 @@ class ConvoLoader {
             hyperParams[index] = this.thePrompt.getHyperParameter(hyperParamsMap[key]);
         }
         const chainParams = {
-            llm: this.getLLMClient(),
             prompt: this.thePrompt.getMultiTemplate(),
             hyperparameters: hyperParams
         };
-        if (!this.llmChain) {
-            this.createChain(chainParams);
-        }
+        this.createChain(chainParams);
         return this.llmChain;
     }
     async createChain(input) {
-        this.llmChain = new chains_1.LLMChain(input);
+        this.llmChain = new chains_1.RetrievalQAChain({
+            combineDocumentsChain: (0, chains_1.loadQAStuffChain)(this.getLLMClient(), input),
+            retriever: this.getStore().getFaiss().asRetriever(1),
+            returnSourceDocuments: true
+        });
         return this.llmChain;
     }
     async waitForInit() {

@@ -3,6 +3,7 @@ import { Readable } from 'stream';
 import { PromptTemplate } from "@langchain/core/prompts";
 import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
 import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
+import type { BaseLanguageModelInterface } from "@langchain/core/language_models/base";
 import { IContextToken } from '../../interfaces/IContextToken';
 interface IPromptHyperParameters {
     temperature: number;
@@ -80,7 +81,7 @@ declare class RWSPrompt {
     setMultiTemplate(template: PromptTemplate): RWSPrompt;
     getMultiTemplate(): PromptTemplate;
     setConvo(convo: ConvoLoader<any, SimpleChatModel>): Promise<RWSPrompt>;
-    getConvo<T, C extends SimpleChatModel>(): ConvoLoader<T, C>;
+    getConvo<T extends BaseLanguageModelInterface, C extends SimpleChatModel>(): ConvoLoader<T, C>;
     getModelMetadata(): [string, string];
     requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt?: string, debugVars?: any): Promise<void>;
     singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt?: string): Promise<void>;

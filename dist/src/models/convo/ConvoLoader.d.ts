@@ -1,9 +1,10 @@
+import { RunnableConfig } from "@langchain/core/runnables";
+import type { BaseLanguageModelInterface } from "@langchain/core/language_models/base";
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
 import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
-import { LLMChain } from "langchain/chains";
+import { BaseChain } from "langchain/chains";
 import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
 import { ChainValues } from "@langchain/core/utils/types";
-import { Callbacks, BaseCallbackConfig } from "langchain/callbacks";
 interface IConvoDebugXMLData {
     conversation: {
         $: {
@@ -20,7 +21,7 @@ interface IEmbeddingsHandler<T extends object = {}> {
     generateEmbeddings: (text?: string) => Promise<T>;
     storeEmbeddings: (embeddings: any, convoId: string) => Promise<void>;
 }
-declare class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
+declare class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends SimpleChatModel> {
     private loader;
     private docSplitter;
     private embeddings;
@@ -44,12 +45,13 @@ declare class ConvoLoader<LLMClient, LLMChat extends SimpleChatModel> {
     getLLMClient(): LLMClient;
     setPrompt(prompt: RWSPrompt): ConvoLoader<LLMClient, LLMChat>;
     getChat(): LLMChat;
-    call(values: ChainValues, cfg: Callbacks | BaseCallbackConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
+    private avgDocLength;
+    call(values: ChainValues, cfg: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     callChat(content: string, embeddingsEnabled?: boolean, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     private debugCall;
     chain(hyperParamsMap?: {
         [key: string]: string;
-    }): Promise<LLMChain>;
+    }): Promise<BaseChain>;
     private createChain;
     waitForInit(): Promise<ConvoLoader<LLMClient, LLMChat> | null>;
     private parseXML;
