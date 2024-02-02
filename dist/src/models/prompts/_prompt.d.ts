@@ -15,7 +15,7 @@ interface IPromptHyperParameters {
 }
 interface IPromptParams {
     hyperParameters?: IPromptHyperParameters;
-    input: string;
+    input?: string;
     modelId: string;
     modelType: string;
 }
@@ -69,7 +69,7 @@ declare class RWSPrompt {
     private varStorage;
     private onStream;
     constructor(params: IPromptParams);
-    listen(source: string | ReadableStream): Promise<RWSPrompt>;
+    listen(source: string | ReadableStream): RWSPrompt;
     setStreamCallback(callback: (chunk: string) => void): void;
     addEnchantment(enchantment: IPromptEnchantment): void;
     getEnchantedInput(): string | null;
@@ -86,8 +86,9 @@ declare class RWSPrompt {
     setHyperParameters(value: any): RWSPrompt;
     setMultiTemplate(template: PromptTemplate): RWSPrompt;
     getMultiTemplate(): PromptTemplate;
-    setConvo(convo: ConvoLoader<any, SimpleChatModel>): Promise<RWSPrompt>;
+    setConvo(convo: ConvoLoader<any, SimpleChatModel>): RWSPrompt;
     getConvo<T extends BaseLanguageModelInterface, C extends SimpleChatModel>(): ConvoLoader<T, C>;
+    replacePromptVar(key: string, val: string): void;
     getModelMetadata(): [string, string];
     requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt?: string, debugVars?: any): Promise<void>;
     singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt?: string): Promise<void>;

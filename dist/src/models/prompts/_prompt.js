@@ -13,15 +13,18 @@ class RWSPrompt {
         this.modelType = params.modelType;
         this.created_at = new Date();
     }
-    async listen(source) {
+    listen(source) {
         if (typeof source === 'string') {
             this.output = source;
         }
         else if (source instanceof ReadableStream) {
             this.output = '';
+            let i = 0;
             this.readStreamAsText(source, (chunk) => {
                 this.output += chunk;
+                console.log('Chunk from readStreamAsText: i =', i);
                 this.onStream(chunk);
+                i++;
             });
         }
         return this;
@@ -86,12 +89,14 @@ class RWSPrompt {
     getMultiTemplate() {
         return this.multiTemplate;
     }
-    async setConvo(convo) {
+    setConvo(convo) {
         this.convo = convo.setPrompt(this);
         return this;
     }
     getConvo() {
         return this.convo;
+    }
+    replacePromptVar(key, val) {
     }
     getModelMetadata() {
         return [this.modelType, this.modelId];
@@ -159,12 +164,12 @@ class RWSPrompt {
     }
     async readStreamAsText(readableStream, callback) {
         const reader = readableStream.getReader();
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done)
-                break;
-            if (value && value.text) {
-                callback(value.text);
+        let readResult;
+        // Continuously read from the stream
+        while (!(readResult = await reader.read()).done) {
+            if (readResult.value && readResult.value.response) {
+                // Emit each chunk text as it's read
+                callback(readResult.value.response);
             }
         }
     }

@@ -8,6 +8,7 @@ const text_splitter_1 = require("langchain/text_splitter");
 const VectorStoreService_1 = __importDefault(require("../../services/VectorStoreService"));
 const ConsoleService_1 = __importDefault(require("../../services/ConsoleService"));
 const messages_1 = require("@langchain/core/messages");
+const document_1 = require("langchain/document");
 const uuid_1 = require("uuid");
 const AppConfigService_1 = __importDefault(require("../../services/AppConfigService"));
 const chains_1 = require("langchain/chains");
@@ -19,7 +20,10 @@ const logConvo = (txt) => {
     ConsoleService_1.default.rwsLog(ConsoleService_1.default.color().blueBright(txt));
 };
 class ConvoLoader {
-    constructor(chatConstructor, embeddings, convoId = null) {
+    constructor(chatConstructor, embeddings, convoId = null, baseSplitterParams = {
+        chunkSize: 400, chunkOverlap: 80, separators: ["/n/n", "."]
+    }) {
+        this.docs = [];
         this._initiated = false;
         this.avgDocLength = (documents) => {
             return documents.reduce((sum, doc) => sum + doc.pageContent.length, 0) / documents.length;
@@ -32,28 +36,44 @@ class ConvoLoader {
             this.convo_id = convoId;
         }
         this.chatConstructor = chatConstructor;
+        this._baseSplitterParams = baseSplitterParams;
     }
     static uuid() {
         return (0, uuid_1.v4)();
     }
-    async init(pathToTextFile, chunkSize = 400, chunkOverlap = 80, separators = ["/n/n", "."]) {
-        this.loader = new text_1.TextLoader(pathToTextFile);
-        this.docSplitter = new text_splitter_1.RecursiveCharacterTextSplitter({
-            chunkSize, // The size of the chunk that should be split.
-            chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
-            separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
-        });
-        const orgDocs = await this.loader.load();
-        const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
-        const avgCharCountPre = this.avgDocLength(orgDocs);
-        const avgCharCountPost = this.avgDocLength(splitDocs);
-        logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
-        logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
-        logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
-        this.docs = splitDocs;
+    async splitDocs(filePath, params) {
+        const splitDir = ConvoLoader.debugSplitDir(this.getId());
+        if (!fs_1.default.existsSync(splitDir)) {
+            this.loader = new text_1.TextLoader(filePath);
+            this.docSplitter = new text_splitter_1.RecursiveCharacterTextSplitter({
+                chunkSize: params.chunkSize, // The size of the chunk that should be split.
+                chunkOverlap: params.chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
+                separators: params.separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
+            });
+            fs_1.default.mkdirSync(splitDir, { recursive: true });
+            const orgDocs = await this.loader.load();
+            const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
+            const avgCharCountPre = this.avgDocLength(orgDocs);
+            const avgCharCountPost = this.avgDocLength(splitDocs);
+            logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
+            logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
+            logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
+            this.docs = splitDocs;
+            let i = 0;
+            this.docs.forEach((doc) => {
+                fs_1.default.writeFileSync(this.debugSplitFile(i), doc.pageContent);
+                i++;
+            });
+        }
+        else {
+            const splitFiles = fs_1.default.readdirSync(splitDir);
+            for (const filePath of splitFiles) {
+                const txt = fs_1.default.readFileSync(splitDir + '/' + filePath, 'utf-8');
+                this.docs.push(new document_1.Document({ pageContent: txt }));
+            }
+            ;
+        }
         this.store = await VectorStoreService_1.default.createStore(this.docs, await this.embeddings.generateEmbeddings());
-        this._initiated = true;
-        return this;
     }
     getId() {
         return this.convo_id;
@@ -77,6 +97,7 @@ class ConvoLoader {
     setPrompt(prompt) {
         this.thePrompt = prompt;
         this.llmChat = new this.chatConstructor({
+            streaming: true,
             region: (0, AppConfigService_1.default)().get('aws_bedrock_region'),
             credentials: {
                 accessKeyId: (0, AppConfigService_1.default)().get('aws_access_key'),
@@ -97,19 +118,26 @@ class ConvoLoader {
     }
     async call(values, cfg, debugCallback = null) {
         const output = await (await this.chain()).invoke(values, cfg);
-        await this.thePrompt.listen(output.text);
+        this.thePrompt.listen(output.text);
         await this.debugCall(debugCallback);
         return this.thePrompt;
     }
     async *callStreamGenerator(values, cfg, debugCallback = null) {
         yield (await this.chain()).stream(values, cfg);
     }
+    async similaritySearch(query, splitCount) {
+        console.log('Store is ready. Searching for embedds...');
+        const texts = await this.getStore().getFaiss().similaritySearchWithScore(`${query}`, splitCount);
+        console.log('Found best parts: ' + texts.length);
+        return texts.map(([doc, score]) => `${doc["pageContent"]}`).join('\n\n');
+    }
     async callStream(values, callback, cfg = {}, debugCallback) {
         const callGenerator = this.callStreamGenerator.bind(this);
         this.thePrompt.setStreamCallback(callback);
-        for await (const chunk of callGenerator(values, cfg, debugCallback)) {
-            await this.thePrompt.listen(chunk);
+        for await (const chunk of callGenerator({ query: values.query }, cfg, debugCallback)) {
+            this.thePrompt.listen(chunk);
         }
+        await this.debugCall(debugCallback);
         return this.thePrompt;
     }
     ;
@@ -139,40 +167,23 @@ class ConvoLoader {
             console.log(error);
         }
     }
-    async chain(hyperParamsMap = {
-        temperature: 'temperature',
-        topK: 'top_k',
-        topP: 'top_p',
-        maxTokens: 'max_tokens_to_sample'
-    }) {
+    async chain() {
         if (this.llmChain) {
             return this.llmChain;
         }
         if (!this.thePrompt) {
             throw new errors_1.Error500(new Error('No prompt initialized for conversation'), __filename);
         }
-        const hyperParams = {
-            temperature: null,
-            topK: null,
-            topP: null,
-            maxTokens: null
-        };
-        for (const key in hyperParamsMap) {
-            const index = key;
-            hyperParams[index] = this.thePrompt.getHyperParameter(hyperParamsMap[key]);
-        }
         const chainParams = {
-            prompt: this.thePrompt.getMultiTemplate(),
-            hyperparameters: hyperParams
+            prompt: this.thePrompt.getMultiTemplate()
         };
         this.createChain(chainParams);
         return this.llmChain;
     }
     async createChain(input) {
-        this.llmChain = new chains_1.RetrievalQAChain({
-            combineDocumentsChain: (0, chains_1.loadQAStuffChain)(this.getLLMClient(), input),
-            retriever: this.getStore().getFaiss().asRetriever(1),
-            returnSourceDocuments: true
+        this.llmChain = new chains_1.ConversationChain({
+            llm: this.llmChat,
+            prompt: input.prompt,
         });
         return this.llmChain;
     }
@@ -198,22 +209,28 @@ class ConvoLoader {
         parser.parseString(xml, callback);
         return parser;
     }
-    static debugConvoDir() {
-        return path_1.default.resolve(process.cwd(), 'debug', 'conversations');
+    static debugConvoDir(id) {
+        return path_1.default.resolve(process.cwd(), 'debug', 'conversations', id);
+    }
+    static debugSplitDir(id) {
+        return path_1.default.resolve(process.cwd(), 'debug', 'conversations', id, 'split');
     }
     debugConvoFile() {
-        return `${ConvoLoader.debugConvoDir()}/${this.getId()}.xml`;
+        return `${ConvoLoader.debugConvoDir(this.getId())}/conversation.xml`;
+    }
+    debugSplitFile(i) {
+        return `${ConvoLoader.debugSplitDir(this.getId())}/${i}.splitfile`;
     }
     initDebugFile() {
         let xmlContent;
         let debugXML = null;
-        const convoDir = ConvoLoader.debugConvoDir();
+        const convoDir = ConvoLoader.debugConvoDir(this.getId());
         if (!fs_1.default.existsSync(convoDir)) {
             fs_1.default.mkdirSync(convoDir, { recursive: true });
         }
         const convoFilePath = this.debugConvoFile();
         if (!fs_1.default.existsSync(convoFilePath)) {
-            xmlContent = `<conversation id="${this.getId()}"></conversation>`;
+            xmlContent = `<conversation id="conversation"></conversation>`;
             fs_1.default.writeFileSync(convoFilePath, xmlContent);
         }
         else {

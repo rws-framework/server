@@ -13,7 +13,7 @@ import { BaseMessageChunk } from "@langchain/core/messages";
 import { Document } from "langchain/document";
 import { v4 as uuid } from 'uuid';
 import getAppConfig from '../../services/AppConfigService';
-import { BaseChain, LLMChain, LLMChainInput, RetrievalQAChain, loadQAStuffChain } from "langchain/chains";
+import { BaseChain, LLMChain, LLMChainInput, RetrievalQAChain, ConversationChain, loadQAStuffChain } from "langchain/chains";
 import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
 import { IterableReadableStream } from "@langchain/core/utils/stream";
 
@@ -26,6 +26,12 @@ import { Callbacks , BaseCallbackConfig } from "langchain/callbacks";
 import xml2js from 'xml2js'
 import fs from "fs";
 import path from "path";
+
+interface ISplitterParams {
+    chunkSize: number
+    chunkOverlap: number
+    separators: string[]
+}
 
 const logConvo = (txt: string) => {
     ConsoleService.rwsLog(ConsoleService.color().blueBright(txt));
@@ -68,7 +74,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
 
     private embeddings: IEmbeddingsHandler<any>;
 
-    private docs: VectorDocType;
+    private docs: Document[] = [];
     private _initiated = false;
     private store: RWSVectorStore;
     private convo_id: string;
@@ -77,8 +83,12 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
     private llmChat: LLMChat;
     private chatConstructor: new (config: any) => LLMChat;
     private thePrompt: RWSPrompt;
+
+    public _baseSplitterParams: ISplitterParams;
     
-    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler, convoId: string | null = null){
+    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler, convoId: string | null = null, baseSplitterParams: ISplitterParams = {
+        chunkSize:400, chunkOverlap:80, separators: ["/n/n","."]
+    }){
         this.embeddings = embeddings;
         
         if(convoId === null){
@@ -87,7 +97,8 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
             this.convo_id = convoId;
         }                        
 
-        this.chatConstructor = chatConstructor;       
+        this.chatConstructor = chatConstructor;    
+        this._baseSplitterParams = baseSplitterParams;   
     }
 
     static uuid(): string
@@ -95,31 +106,49 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return uuid();
     }
 
-    public async init(pathToTextFile: string, chunkSize: number = 400, chunkOverlap: number = 80, separators: string[] = ["/n/n","."]): Promise<ConvoLoader<LLMClient, LLMChat>>
+
+    async splitDocs(filePath: string, params: ISplitterParams)
     {
-        this.loader = new TextLoader(pathToTextFile);
-        this.docSplitter = new RecursiveCharacterTextSplitter({
-            chunkSize, // The size of the chunk that should be split.
-            chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
-            separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
-        });
+        const splitDir = ConvoLoader.debugSplitDir(this.getId());
 
-        const orgDocs =await this.loader.load();
-        const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
+        if(!fs.existsSync(splitDir)){
+            this.loader = new TextLoader(filePath);
 
-        const avgCharCountPre = this.avgDocLength(orgDocs);
-        const avgCharCountPost = this.avgDocLength(splitDocs);
+            this.docSplitter = new RecursiveCharacterTextSplitter({
+                chunkSize: params.chunkSize, // The size of the chunk that should be split.
+                chunkOverlap: params.chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
+                separators: params.separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
+            });
 
-        logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
-        logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
-        logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
+            fs.mkdirSync(splitDir, { recursive: true });
+            
+            const orgDocs = await this.loader.load();
+            const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
 
-        this.docs = splitDocs;
-        this.store = await VectorStoreService.createStore(this.docs, await this.embeddings.generateEmbeddings());
+            const avgCharCountPre = this.avgDocLength(orgDocs);
+            const avgCharCountPost = this.avgDocLength(splitDocs);
+
+            logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
+            logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
+            logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
+
+            this.docs = splitDocs;            
+
+            let i = 0;
+            this.docs.forEach((doc: Document) => {
+                fs.writeFileSync(this.debugSplitFile(i), doc.pageContent);
+                i++;
+            });
+        }else{
+            const splitFiles = fs.readdirSync(splitDir);
+            
+            for(const filePath of splitFiles) {
+                const txt = fs.readFileSync(splitDir + '/' + filePath, 'utf-8');
+                this.docs.push(new Document({ pageContent: txt }));              
+            };
+        }
         
-        this._initiated = true;
-
-        return this;
+        this.store = await VectorStoreService.createStore(this.docs, await this.embeddings.generateEmbeddings());
     }
 
     getId(): string {
@@ -157,6 +186,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         this.thePrompt = prompt;        
 
         this.llmChat = new this.chatConstructor({
+            streaming: true,
             region: getAppConfig().get('aws_bedrock_region'),  
             credentials: {  
               accessKeyId: getAppConfig().get('aws_access_key'),  
@@ -186,7 +216,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
     async call(values: ChainValues, cfg: RunnableConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
     {   
         const output = await (await this.chain()).invoke(values, cfg) as IChainCallOutput;        
-        await this.thePrompt.listen(output.text)        
+        this.thePrompt.listen(output.text)        
 
         await this.debugCall(debugCallback);
 
@@ -194,8 +224,16 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
     }
 
     async *callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: RunnableConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): AsyncGenerator<IterableReadableStream<ChainValues>>
-    {   
-        yield (await this.chain() as RetrievalQAChain).stream(values, cfg);
+    {           
+        yield (await this.chain() as ConversationChain).stream(values, cfg);
+    }
+
+    async similaritySearch(query: string, splitCount: number): Promise<string>
+    {
+        console.log('Store is ready. Searching for embedds...');            
+        const texts = await this.getStore().getFaiss().similaritySearchWithScore(`${query}`, splitCount);
+        console.log('Found best parts: ' + texts.length);
+        return texts.map(([doc, score]: [any, number]) => `${doc["pageContent"]}`).join('\n\n');    
     }
 
     async callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg: RunnableConfig = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
@@ -204,9 +242,11 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
 
         this.thePrompt.setStreamCallback(callback);
         
-        for await (const chunk of callGenerator(values, cfg, debugCallback)) {
-           await this.thePrompt.listen(chunk)
-        }
+        for await (const chunk of callGenerator({query: values.query}, cfg, debugCallback)) {            
+           this.thePrompt.listen(chunk)
+        }        
+
+        await this.debugCall(debugCallback);
 
         return this.thePrompt;
     };
@@ -250,12 +290,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         }
     }
 
-    async chain(hyperParamsMap: { [key: string]: string} = {
-        temperature: 'temperature',
-        topK: 'top_k',
-        topP: 'top_p',
-        maxTokens: 'max_tokens_to_sample'
-    }): Promise<BaseChain>
+    async chain(): Promise<BaseChain>
     {        
         if(this.llmChain){
             return this.llmChain;
@@ -265,22 +300,8 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
             throw new Error500(new Error('No prompt initialized for conversation'), __filename);
         }        
 
-        const hyperParams: IBaseLangchainHyperParams = {
-            temperature: null,
-            topK: null,
-            topP: null,
-            maxTokens: null
-        }
-
-        for (const key in hyperParamsMap){
-            const index: keyof IBaseLangchainHyperParams = key as keyof IBaseLangchainHyperParams;
-
-            hyperParams[index] = this.thePrompt.getHyperParameter<number>(hyperParamsMap[key]);
-        }
-
-        const chainParams: { prompt: PromptTemplate, hyperparameters?: any } = {            
-            prompt: this.thePrompt.getMultiTemplate(),
-            hyperparameters: hyperParams    
+        const chainParams: { prompt: PromptTemplate, values?: ChainValues } = {            
+            prompt: this.thePrompt.getMultiTemplate()
         };      
 
         this.createChain(chainParams);
@@ -288,12 +309,11 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return this.llmChain;
     }
 
-    private async createChain(input: { prompt: PromptTemplate, hyperparameters?: any }): Promise<BaseChain>
+    private async createChain(input: { prompt: PromptTemplate, values?: ChainValues }): Promise<BaseChain>
     {
-        this.llmChain = new RetrievalQAChain({
-            combineDocumentsChain: loadQAStuffChain(this.getLLMClient(), input),
-            retriever: this.getStore().getFaiss().asRetriever(1),
-            returnSourceDocuments: true
+        this.llmChain = new ConversationChain({
+            llm: this.llmChat,
+            prompt: input.prompt,              
         });
 
         return this.llmChain;
@@ -329,20 +349,28 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return parser;
     }
 
-    static debugConvoDir(){
-        return path.resolve(process.cwd(), 'debug', 'conversations');
+    static debugConvoDir(id: string){
+        return path.resolve(process.cwd(), 'debug', 'conversations', id);
     }
 
-    public debugConvoFile(){
-        return `${ConvoLoader.debugConvoDir()}/${this.getId()}.xml`
+    static debugSplitDir(id: string){
+        return path.resolve(process.cwd(), 'debug', 'conversations', id, 'split');
     }
+    
+    public debugConvoFile(){
+        return `${ConvoLoader.debugConvoDir(this.getId())}/conversation.xml`
+    }    
+
+    public debugSplitFile(i: number){
+        return `${ConvoLoader.debugSplitDir(this.getId())}/${i}.splitfile`
+    }    
 
     private initDebugFile(): IConvoDebugXMLOutput
     {
         let xmlContent: string;
         let debugXML: IConvoDebugXMLData = null;
 
-        const convoDir = ConvoLoader.debugConvoDir();
+        const convoDir = ConvoLoader.debugConvoDir(this.getId());
 
         if(!fs.existsSync(convoDir)){
             fs.mkdirSync(convoDir, { recursive: true });
@@ -351,7 +379,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         const convoFilePath = this.debugConvoFile();
 
         if(!fs.existsSync(convoFilePath)){
-            xmlContent = `<conversation id="${this.getId()}"></conversation>`;
+            xmlContent = `<conversation id="conversation"></conversation>`;
 
             fs.writeFileSync(convoFilePath, xmlContent);
         }else{
@@ -378,4 +406,4 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
 }
 
 export default ConvoLoader;
-export { IChainCallOutput, IConvoDebugXMLData, IEmbeddingsHandler }
+export { IChainCallOutput, IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams }

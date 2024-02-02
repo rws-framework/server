@@ -18,7 +18,7 @@ interface IPromptHyperParameters {
 
 interface IPromptParams {
     hyperParameters?: IPromptHyperParameters;
-    input: string;
+    input?: string;
     modelId: string;
     modelType: string;
 }
@@ -95,16 +95,19 @@ class RWSPrompt {
         this.created_at = new Date();
     }
 
-    async listen(source: string | ReadableStream): Promise<RWSPrompt>
-    {      
+    listen(source: string | ReadableStream): RWSPrompt
+    {              
         if (typeof source === 'string') {
             this.output = source;
         } else if (source instanceof ReadableStream) {
            this.output = '';
 
+           let i = 0;
            this.readStreamAsText(source as ReadableStream, (chunk: string) => {            
             this.output += chunk;
+            console.log('Chunk from readStreamAsText: i =', i);
             this.onStream(chunk);
+            i++
            });            
         }
         
@@ -211,7 +214,7 @@ class RWSPrompt {
         return this.multiTemplate;
     }
 
-    async setConvo(convo: ConvoLoader<any, SimpleChatModel>): Promise<RWSPrompt>
+    setConvo(convo: ConvoLoader<any, SimpleChatModel>): RWSPrompt
     {
         this.convo = convo.setPrompt(this)        
         
@@ -221,6 +224,11 @@ class RWSPrompt {
     getConvo<T extends BaseLanguageModelInterface, C extends SimpleChatModel>(): ConvoLoader<T, C>
     {
         return this.convo;
+    }
+
+    replacePromptVar(key: string, val: string)
+    {
+
     }
 
     getModelMetadata(): [string, string]
@@ -307,15 +315,17 @@ class RWSPrompt {
 
     async  readStreamAsText(readableStream: ReadableStream, callback: (txt: string) => void) {
         const reader = readableStream.getReader();
-        
-    
-        while (true) {
-            const { done, value }: {done: boolean, value?: { text: string, sourceDocuments: Document[] }} = await reader.read();
-            if (done) break;     
-            if(value && value.text){
-                callback(value.text);
-            }                   
-        }        
+                
+        let readResult: any;
+
+        // Continuously read from the stream
+        while (!(readResult = await reader.read()).done) {
+            
+            if (readResult.value && readResult.value.response) {
+                // Emit each chunk text as it's read
+                callback(readResult.value.response);
+            }          
+        }
         
     }
 

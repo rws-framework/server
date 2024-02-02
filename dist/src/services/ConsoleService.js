@@ -154,6 +154,7 @@ class ConsoleService extends _service_1.default {
         if (!this.isEnabled) {
             return;
         }
+        console.error(obj);
         console.log(...obj.map((txt) => chalk_1.default.red('[RWS CLI ERROR] ' + txt)));
     }
     stopLogging() {

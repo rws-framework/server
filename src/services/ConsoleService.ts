@@ -165,7 +165,7 @@ class ConsoleService extends TheService {
     if (!this.isEnabled) {
       return;
     }
-
+console.error(obj)
     console.log(...obj.map((txt) => chalk.red('[RWS CLI ERROR] ' + txt)));  
   }
 

@@ -6,6 +6,11 @@ import { BaseChain } from "langchain/chains";
 import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
 import { IterableReadableStream } from "@langchain/core/utils/stream";
 import { ChainValues } from "@langchain/core/utils/types";
+interface ISplitterParams {
+    chunkSize: number;
+    chunkOverlap: number;
+    separators: string[];
+}
 interface IConvoDebugXMLData {
     conversation: {
         $: {
@@ -35,9 +40,10 @@ declare class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat 
     private llmChat;
     private chatConstructor;
     private thePrompt;
-    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler, convoId?: string | null);
+    _baseSplitterParams: ISplitterParams;
+    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler, convoId?: string | null, baseSplitterParams?: ISplitterParams);
     static uuid(): string;
-    init(pathToTextFile: string, chunkSize?: number, chunkOverlap?: number, separators?: string[]): Promise<ConvoLoader<LLMClient, LLMChat>>;
+    splitDocs(filePath: string, params: ISplitterParams): Promise<void>;
     getId(): string;
     getDocs(): VectorDocType;
     getStore(): RWSVectorStore;
@@ -49,19 +55,20 @@ declare class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat 
     private avgDocLength;
     call(values: ChainValues, cfg: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): AsyncGenerator<IterableReadableStream<ChainValues>>;
+    similaritySearch(query: string, splitCount: number): Promise<string>;
     callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg?: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     callChat(content: string, embeddingsEnabled?: boolean, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     private debugCall;
-    chain(hyperParamsMap?: {
-        [key: string]: string;
-    }): Promise<BaseChain>;
+    chain(): Promise<BaseChain>;
     private createChain;
     waitForInit(): Promise<ConvoLoader<LLMClient, LLMChat> | null>;
     private parseXML;
-    static debugConvoDir(): string;
+    static debugConvoDir(id: string): string;
+    static debugSplitDir(id: string): string;
     debugConvoFile(): string;
+    debugSplitFile(i: number): string;
     private initDebugFile;
     private debugSave;
 }
 export default ConvoLoader;
-export { IChainCallOutput, IConvoDebugXMLData, IEmbeddingsHandler };
+export { IChainCallOutput, IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams };
