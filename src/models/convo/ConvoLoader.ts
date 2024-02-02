@@ -15,6 +15,9 @@ import { v4 as uuid } from 'uuid';
 import getAppConfig from '../../services/AppConfigService';
 import { BaseChain, LLMChain, LLMChainInput, RetrievalQAChain, loadQAStuffChain } from "langchain/chains";
 import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
+import { IterableReadableStream } from "@langchain/core/utils/stream";
+
+
 import { Error500 } from "../../errors";
 
 import { ChainValues } from "@langchain/core/utils/types";
@@ -189,6 +192,24 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
 
         return this.thePrompt;
     }
+
+    async *callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: RunnableConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): AsyncGenerator<IterableReadableStream<ChainValues>>
+    {   
+        yield (await this.chain() as RetrievalQAChain).stream(values, cfg);
+    }
+
+    async callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg: RunnableConfig = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
+    {
+        const callGenerator = this.callStreamGenerator.bind(this);
+
+        this.thePrompt.setStreamCallback(callback);
+        
+        for await (const chunk of callGenerator(values, cfg, debugCallback)) {
+           await this.thePrompt.listen(chunk)
+        }
+
+        return this.thePrompt;
+    };
 
     async callChat(content: string, embeddingsEnabled: boolean = false, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
     {

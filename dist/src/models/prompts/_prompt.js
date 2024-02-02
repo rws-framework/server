@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const stream_1 = require("stream");
 class RWSPrompt {
     constructor(params) {
+        this.output = '';
         this.varStorage = {};
+        this.onStream = (chunk) => {
+        };
         this.input = params.input;
         this.originalInput = params.input;
         this.hyperParameters = params.hyperParameters;
@@ -15,13 +17,17 @@ class RWSPrompt {
         if (typeof source === 'string') {
             this.output = source;
         }
-        else if (source instanceof stream_1.Readable) {
-            this.output = ''; // Or any default value
-            this.readStream(source, (chunk) => {
-                this.output += source;
+        else if (source instanceof ReadableStream) {
+            this.output = '';
+            this.readStreamAsText(source, (chunk) => {
+                this.output += chunk;
+                this.onStream(chunk);
             });
         }
         return this;
+    }
+    setStreamCallback(callback) {
+        this.onStream = callback;
     }
     addEnchantment(enchantment) {
         this.enhancedInput.push(enchantment);
@@ -99,9 +105,9 @@ class RWSPrompt {
         this.sentInput = this.input;
         await executor.singlePromptRequest(this, null, intruderPrompt);
     }
-    streamWith(executor, read) {
+    async streamWith(executor, read, debugVars = {}) {
         this.sentInput = this.input;
-        return executor.promptStream(this, read);
+        return await executor.promptStream(this, read, debugVars);
     }
     getVar(key) {
         return Object.keys(this.varStorage).includes(key) ? this.varStorage[key] : null;
@@ -110,7 +116,7 @@ class RWSPrompt {
         this.varStorage[key] = val;
         return this;
     }
-    async readStream(stream, react) {
+    async _oldreadStream(stream, react) {
         let first = true;
         const chunks = []; // Replace 'any' with the actual type of your chunks
         for await (const event of stream) {
@@ -130,6 +136,35 @@ class RWSPrompt {
                 'validationException' in event) {
                 console.error(event);
                 break;
+            }
+        }
+    }
+    async isChainStreamType(source) {
+        if (source && typeof source[Symbol.asyncIterator] === 'function') {
+            const asyncIterator = source[Symbol.asyncIterator]();
+            if (typeof asyncIterator.next === 'function' &&
+                typeof asyncIterator.throw === 'function' &&
+                typeof asyncIterator.return === 'function') {
+                try {
+                    // Optionally check if the next method yields a value of the expected type
+                    const { value, done } = await asyncIterator.next();
+                    return !done && value instanceof ReadableStream; // or whatever check makes sense for IterableReadableStream<ChainValues>
+                }
+                catch (error) {
+                    // Handle or ignore error
+                }
+            }
+        }
+        return false;
+    }
+    async readStreamAsText(readableStream, callback) {
+        const reader = readableStream.getReader();
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done)
+                break;
+            if (value && value.text) {
+                callback(value.text);
             }
         }
     }

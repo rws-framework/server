@@ -3,6 +3,9 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
 import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
 import type { BaseLanguageModelInterface } from "@langchain/core/language_models/base";
+import { IterableReadableStream } from "@langchain/core/utils/stream";
+import { ChainValues } from "@langchain/core/utils/types";
+import { Document } from "langchain/document";
 
 import { IContextToken } from '../../interfaces/IContextToken';
 
@@ -41,7 +44,7 @@ interface IRWSSinglePromptRequestExecutor {
 
 
 interface IRWSPromptStreamExecutor {
-    promptStream: (prompt: RWSPrompt, read: (size: number) => void, debugVars?: any) => Readable
+    promptStream: (prompt: RWSPrompt, read: (chunk: string) => void, debugVars?: any) => Promise<ChainStreamType>
 }
 
 interface IRWSPromptJSON {
@@ -60,12 +63,15 @@ interface IRWSPromptJSON {
     varStorage: any;
 }
 
+type ChainStreamType = AsyncGenerator<IterableReadableStream<ChainValues>>;
+
 class RWSPrompt {
+    public _stream: ChainStreamType;
     private input: string;
     private enhancedInput: IPromptEnchantment[];
     private sentInput: string;
     private originalInput: string;
-    private output: string;
+    private output: string = '';
     private modelId: string;
     private modelType: string;
     private multiTemplate: PromptTemplate;
@@ -74,6 +80,10 @@ class RWSPrompt {
     private created_at: Date;
 
     private varStorage: any = {};
+
+    private onStream = (chunk: string) => {
+
+    }
 
     constructor(params: IPromptParams){
         this.input = params.input;
@@ -85,20 +95,26 @@ class RWSPrompt {
         this.created_at = new Date();
     }
 
-    async listen(source: string | Readable): Promise<RWSPrompt>
-    {
+    async listen(source: string | ReadableStream): Promise<RWSPrompt>
+    {      
         if (typeof source === 'string') {
             this.output = source;
-        } else if (source instanceof Readable) {
-            this.output = ''; // Or any default value
-    
-            this.readStream(source, (chunk: string) => {
-                this.output += source;
-            });
+        } else if (source instanceof ReadableStream) {
+           this.output = '';
+
+           this.readStreamAsText(source as ReadableStream, (chunk: string) => {            
+            this.output += chunk;
+            this.onStream(chunk);
+           });            
         }
         
 
         return this;
+    }   
+
+    setStreamCallback(callback: (chunk: string) => void): void
+    {
+        this.onStream = callback;
     }
 
     addEnchantment(enchantment: IPromptEnchantment): void
@@ -225,10 +241,10 @@ class RWSPrompt {
         await executor.singlePromptRequest(this, null, intruderPrompt);
     }
 
-    streamWith(executor: IRWSPromptStreamExecutor, read: (size: number) => void): Readable
+    async streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: string) => void, debugVars: any = {}): Promise<ChainStreamType>
     {
         this.sentInput = this.input;
-        return executor.promptStream(this, read);
+        return await executor.promptStream(this, read, debugVars);
     }
 
     getVar<T>(key: string): T
@@ -240,9 +256,9 @@ class RWSPrompt {
         this.varStorage[key] = val;
 
         return this;
-    }
+    } 
 
-    async readStream(stream: Readable, react: (chunk: string) => void): Promise<void>    
+    async _oldreadStream(stream: Readable, react: (chunk: string) => void): Promise<void>    
     {        
         let first = true;
         const chunks: string[] = []; // Replace 'any' with the actual type of your chunks
@@ -271,6 +287,38 @@ class RWSPrompt {
         }        
     }
 
+    private async isChainStreamType(source: any): Promise<boolean> {
+        if (source && typeof source[Symbol.asyncIterator] === 'function') {
+            const asyncIterator = source[Symbol.asyncIterator]();
+            if (typeof asyncIterator.next === 'function' && 
+                typeof asyncIterator.throw === 'function' && 
+                typeof asyncIterator.return === 'function') {
+                try {
+                    // Optionally check if the next method yields a value of the expected type
+                    const { value, done } = await asyncIterator.next();
+                    return !done && value instanceof ReadableStream; // or whatever check makes sense for IterableReadableStream<ChainValues>
+                } catch (error) {
+                    // Handle or ignore error
+                }
+            }
+        }
+        return false;
+    }
+
+    async  readStreamAsText(readableStream: ReadableStream, callback: (txt: string) => void) {
+        const reader = readableStream.getReader();
+        
+    
+        while (true) {
+            const { done, value }: {done: boolean, value?: { text: string, sourceDocuments: Document[] }} = await reader.read();
+            if (done) break;     
+            if(value && value.text){
+                callback(value.text);
+            }                   
+        }        
+        
+    }
+
     toJSON(): IRWSPromptJSON
     {
         return {
@@ -294,4 +342,4 @@ class RWSPrompt {
 
 export default RWSPrompt;
 
-export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptJSON, IChainCallOutput }
+export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptJSON, IChainCallOutput, ChainStreamType }

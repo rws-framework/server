@@ -4,6 +4,8 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
 import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
 import type { BaseLanguageModelInterface } from "@langchain/core/language_models/base";
+import { IterableReadableStream } from "@langchain/core/utils/stream";
+import { ChainValues } from "@langchain/core/utils/types";
 import { IContextToken } from '../../interfaces/IContextToken';
 interface IPromptHyperParameters {
     temperature: number;
@@ -32,7 +34,7 @@ interface IRWSSinglePromptRequestExecutor {
     singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>;
 }
 interface IRWSPromptStreamExecutor {
-    promptStream: (prompt: RWSPrompt, read: (size: number) => void, debugVars?: any) => Readable;
+    promptStream: (prompt: RWSPrompt, read: (chunk: string) => void, debugVars?: any) => Promise<ChainStreamType>;
 }
 interface IRWSPromptJSON {
     input: string;
@@ -50,7 +52,9 @@ interface IRWSPromptJSON {
     created_at: string;
     varStorage: any;
 }
+type ChainStreamType = AsyncGenerator<IterableReadableStream<ChainValues>>;
 declare class RWSPrompt {
+    _stream: ChainStreamType;
     private input;
     private enhancedInput;
     private sentInput;
@@ -63,8 +67,10 @@ declare class RWSPrompt {
     private hyperParameters;
     private created_at;
     private varStorage;
+    private onStream;
     constructor(params: IPromptParams);
-    listen(source: string | Readable): Promise<RWSPrompt>;
+    listen(source: string | ReadableStream): Promise<RWSPrompt>;
+    setStreamCallback(callback: (chunk: string) => void): void;
     addEnchantment(enchantment: IPromptEnchantment): void;
     getEnchantedInput(): string | null;
     getModelId(): string;
@@ -85,11 +91,13 @@ declare class RWSPrompt {
     getModelMetadata(): [string, string];
     requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt?: string, debugVars?: any): Promise<void>;
     singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt?: string): Promise<void>;
-    streamWith(executor: IRWSPromptStreamExecutor, read: (size: number) => void): Readable;
+    streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: string) => void, debugVars?: any): Promise<ChainStreamType>;
     getVar<T>(key: string): T;
     setVar<T>(key: string, val: T): RWSPrompt;
-    readStream(stream: Readable, react: (chunk: string) => void): Promise<void>;
+    _oldreadStream(stream: Readable, react: (chunk: string) => void): Promise<void>;
+    private isChainStreamType;
+    readStreamAsText(readableStream: ReadableStream, callback: (txt: string) => void): Promise<void>;
     toJSON(): IRWSPromptJSON;
 }
 export default RWSPrompt;
-export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptJSON, IChainCallOutput };
+export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptJSON, IChainCallOutput, ChainStreamType };

@@ -4,6 +4,7 @@ import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
 import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
 import { BaseChain } from "langchain/chains";
 import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
+import { IterableReadableStream } from "@langchain/core/utils/stream";
 import { ChainValues } from "@langchain/core/utils/types";
 interface IConvoDebugXMLData {
     conversation: {
@@ -47,6 +48,8 @@ declare class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat 
     getChat(): LLMChat;
     private avgDocLength;
     call(values: ChainValues, cfg: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
+    callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): AsyncGenerator<IterableReadableStream<ChainValues>>;
+    callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg?: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     callChat(content: string, embeddingsEnabled?: boolean, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     private debugCall;
     chain(hyperParamsMap?: {

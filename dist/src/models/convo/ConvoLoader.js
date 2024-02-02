@@ -101,6 +101,18 @@ class ConvoLoader {
         await this.debugCall(debugCallback);
         return this.thePrompt;
     }
+    async *callStreamGenerator(values, cfg, debugCallback = null) {
+        yield (await this.chain()).stream(values, cfg);
+    }
+    async callStream(values, callback, cfg = {}, debugCallback) {
+        const callGenerator = this.callStreamGenerator.bind(this);
+        this.thePrompt.setStreamCallback(callback);
+        for await (const chunk of callGenerator(values, cfg, debugCallback)) {
+            await this.thePrompt.listen(chunk);
+        }
+        return this.thePrompt;
+    }
+    ;
     async callChat(content, embeddingsEnabled = false, debugCallback = null) {
         if (embeddingsEnabled) {
             const embeddings = await this.embeddings.generateEmbeddings(content);
