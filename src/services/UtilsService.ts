@@ -4,7 +4,28 @@ import path from 'path';
 
 import { SourceMapConsumer, RawSourceMap  } from 'source-map';
 
-class UtilsService extends TheService {
+class UtilsService extends TheService {  
+  private _startTime: [number, number];
+
+  startExecTimeRecord()
+  {
+    this._startTime = process.hrtime();
+  }
+
+  endExecTimeRecord(): number
+  {
+
+    if(this._startTime === null){
+      return 0;
+    }
+
+    const elapsed = process.hrtime(this._startTime);   
+    
+    this._startTime = null;
+
+    return Math.round(elapsed[0] * 1000 + elapsed[1] / 1e6);
+  }
+
   filterNonEmpty<T>(arr: T[]): T[]
   {
     return arr.filter((argElement: T) => argElement !== '' && typeof argElement !== 'undefined' && argElement !== null);

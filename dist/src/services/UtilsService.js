@@ -8,6 +8,17 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const source_map_1 = require("source-map");
 class UtilsService extends _service_1.default {
+    startExecTimeRecord() {
+        this._startTime = process.hrtime();
+    }
+    endExecTimeRecord() {
+        if (this._startTime === null) {
+            return 0;
+        }
+        const elapsed = process.hrtime(this._startTime);
+        this._startTime = null;
+        return Math.round(elapsed[0] * 1000 + elapsed[1] / 1e6);
+    }
     filterNonEmpty(arr) {
         return arr.filter((argElement) => argElement !== '' && typeof argElement !== 'undefined' && argElement !== null);
     }

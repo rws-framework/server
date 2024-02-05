@@ -1,5 +1,8 @@
 import TheService from "./_service";
 declare class UtilsService extends TheService {
+    private _startTime;
+    startExecTimeRecord(): void;
+    endExecTimeRecord(): number;
     filterNonEmpty<T>(arr: T[]): T[];
     isInterface<T>(func: any): func is T;
     getRWSVar(fileName: string): string | null;
