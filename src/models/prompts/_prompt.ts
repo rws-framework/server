@@ -253,13 +253,15 @@ class RWSPrompt {
     {        
         const chainStream = await executor.promptStream(this, read, debugVars);
 
-        if(!this.input && this.multiTemplate.template){
-            this.input = this.multiTemplate.template;
-        }
-
         this.sentInput = this.input;
 
         return chainStream;
+    }
+
+    setInput(content: string): RWSPrompt
+    {
+        this.input = content;
+        return this;
     }
 
     getVar<T>(key: string): T

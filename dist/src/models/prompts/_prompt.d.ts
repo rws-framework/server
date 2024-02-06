@@ -93,6 +93,7 @@ declare class RWSPrompt {
     requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt?: string, debugVars?: any): Promise<void>;
     singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt?: string): Promise<void>;
     streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: string) => void, debugVars?: any): Promise<ChainStreamType>;
+    setInput(content: string): RWSPrompt;
     getVar<T>(key: string): T;
     setVar<T>(key: string, val: T): RWSPrompt;
     _oldreadStream(stream: Readable, react: (chunk: string) => void): Promise<void>;

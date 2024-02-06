@@ -47,7 +47,7 @@ module.exports = {
             }
           }
         ],
-        exclude: /node_modules\/(?!rws-js-server)/,
+        exclude: /node_modules\/(?!rws-js-server)|\.d\.ts$/,
       },       
       {
           test: /\.node$/,

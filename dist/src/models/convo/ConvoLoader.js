@@ -47,8 +47,8 @@ class ConvoLoader {
             console.log(`Split dir ${ConsoleService_1.default.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
             this.loader = new text_1.TextLoader(filePath);
             this.docSplitter = new text_splitter_1.RecursiveCharacterTextSplitter({
-                chunkSize: params.chunkSize, // The size of the chunk that should be split.
-                chunkOverlap: params.chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
+                chunkSize: params.chunkSize,
+                chunkOverlap: params.chunkOverlap,
                 separators: params.separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
             });
             fs_1.default.mkdirSync(splitDir, { recursive: true });

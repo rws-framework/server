@@ -112,11 +112,12 @@ class RWSPrompt {
     }
     async streamWith(executor, read, debugVars = {}) {
         const chainStream = await executor.promptStream(this, read, debugVars);
-        if (!this.input && this.multiTemplate.template) {
-            this.input = this.multiTemplate.template;
-        }
         this.sentInput = this.input;
         return chainStream;
+    }
+    setInput(content) {
+        this.input = content;
+        return this;
     }
     getVar(key) {
         return Object.keys(this.varStorage).includes(key) ? this.varStorage[key] : null;
