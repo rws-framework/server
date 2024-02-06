@@ -54,12 +54,12 @@ declare class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat 
     getChat(): LLMChat;
     private avgDocLength;
     call(values: ChainValues, cfg: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
-    callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): AsyncGenerator<IterableReadableStream<ChainValues>>;
+    callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: Partial<RunnableConfig>, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): AsyncGenerator<IterableReadableStream<ChainValues>>;
     similaritySearch(query: string, splitCount: number): Promise<string>;
-    callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg?: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
+    callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg?: Partial<RunnableConfig>, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     callChat(content: string, embeddingsEnabled?: boolean, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     private debugCall;
-    chain(): Promise<BaseChain>;
+    chain(): BaseChain;
     private createChain;
     waitForInit(): Promise<ConvoLoader<LLMClient, LLMChat> | null>;
     private parseXML;

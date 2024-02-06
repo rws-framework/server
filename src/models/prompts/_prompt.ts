@@ -244,15 +244,22 @@ class RWSPrompt {
     }
 
     async singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt: string = null): Promise<void>
-    {
-        this.sentInput = this.input;
+    {        
         await executor.singlePromptRequest(this, null, intruderPrompt);
+        this.sentInput = this.input;
     }
 
     async streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: string) => void, debugVars: any = {}): Promise<ChainStreamType>
-    {
+    {        
+        const chainStream = await executor.promptStream(this, read, debugVars);
+
+        if(!this.input && this.multiTemplate.template){
+            this.input = this.multiTemplate.template;
+        }
+
         this.sentInput = this.input;
-        return await executor.promptStream(this, read, debugVars);
+
+        return chainStream;
     }
 
     getVar<T>(key: string): T

@@ -44,6 +44,7 @@ class ConvoLoader {
     async splitDocs(filePath, params) {
         const splitDir = ConvoLoader.debugSplitDir(this.getId());
         if (!fs_1.default.existsSync(splitDir)) {
+            console.log(`Split dir ${ConsoleService_1.default.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
             this.loader = new text_1.TextLoader(filePath);
             this.docSplitter = new text_splitter_1.RecursiveCharacterTextSplitter({
                 chunkSize: params.chunkSize, // The size of the chunk that should be split.
@@ -117,13 +118,14 @@ class ConvoLoader {
         return this.llmChat;
     }
     async call(values, cfg, debugCallback = null) {
-        const output = await (await this.chain()).invoke(values, cfg);
+        const output = await (this.chain()).invoke(values, cfg);
         this.thePrompt.listen(output.text);
         await this.debugCall(debugCallback);
         return this.thePrompt;
     }
     async *callStreamGenerator(values, cfg, debugCallback = null) {
-        yield (await this.chain()).stream(values, cfg);
+        const chain = this.chain();
+        yield chain.stream(values, cfg);
     }
     async similaritySearch(query, splitCount) {
         console.log('Store is ready. Searching for embedds...');
@@ -135,9 +137,10 @@ class ConvoLoader {
         const callGenerator = this.callStreamGenerator.bind(this);
         this.thePrompt.setStreamCallback(callback);
         for await (const chunk of callGenerator({ query: values.query }, cfg, debugCallback)) {
+            console.log('chk', chunk);
             this.thePrompt.listen(chunk);
         }
-        await this.debugCall(debugCallback);
+        this.debugCall(debugCallback);
         return this.thePrompt;
     }
     ;
@@ -167,7 +170,7 @@ class ConvoLoader {
             console.log(error);
         }
     }
-    async chain() {
+    chain() {
         if (this.llmChain) {
             return this.llmChain;
         }

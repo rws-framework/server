@@ -107,12 +107,16 @@ class RWSPrompt {
         this.output = returnedRWS.readOutput();
     }
     async singleRequestWith(executor, intruderPrompt = null) {
-        this.sentInput = this.input;
         await executor.singlePromptRequest(this, null, intruderPrompt);
+        this.sentInput = this.input;
     }
     async streamWith(executor, read, debugVars = {}) {
+        const chainStream = await executor.promptStream(this, read, debugVars);
+        if (!this.input && this.multiTemplate.template) {
+            this.input = this.multiTemplate.template;
+        }
         this.sentInput = this.input;
-        return await executor.promptStream(this, read, debugVars);
+        return chainStream;
     }
     getVar(key) {
         return Object.keys(this.varStorage).includes(key) ? this.varStorage[key] : null;

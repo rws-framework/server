@@ -112,6 +112,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         const splitDir = ConvoLoader.debugSplitDir(this.getId());
 
         if(!fs.existsSync(splitDir)){
+            console.log(`Split dir ${ConsoleService.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`)
             this.loader = new TextLoader(filePath);
 
             this.docSplitter = new RecursiveCharacterTextSplitter({
@@ -215,7 +216,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
 
     async call(values: ChainValues, cfg: RunnableConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
     {   
-        const output = await (await this.chain()).invoke(values, cfg) as IChainCallOutput;        
+        const output = await (this.chain()).invoke(values, cfg) as IChainCallOutput;        
         this.thePrompt.listen(output.text)        
 
         await this.debugCall(debugCallback);
@@ -223,9 +224,10 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return this.thePrompt;
     }
 
-    async *callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: RunnableConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): AsyncGenerator<IterableReadableStream<ChainValues>>
+    async *callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: Partial<RunnableConfig>, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): AsyncGenerator<IterableReadableStream<ChainValues>>
     {           
-        yield (await this.chain() as ConversationChain).stream(values, cfg);
+        const chain = this.chain() as ConversationChain;        
+        yield chain.stream(values, cfg);
     }
 
     async similaritySearch(query: string, splitCount: number): Promise<string>
@@ -236,17 +238,18 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return texts.map(([doc, score]: [any, number]) => `${doc["pageContent"]}`).join('\n\n');    
     }
 
-    async callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg: RunnableConfig = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
+    async callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg: Partial<RunnableConfig> = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
     {
         const callGenerator = this.callStreamGenerator.bind(this);
 
         this.thePrompt.setStreamCallback(callback);
         
-        for await (const chunk of callGenerator({query: values.query}, cfg, debugCallback)) {            
+        for await (const chunk of callGenerator({query: values.query}, cfg, debugCallback)) { 
+           console.log('chk', chunk);           
            this.thePrompt.listen(chunk)
         }        
 
-        await this.debugCall(debugCallback);
+        this.debugCall(debugCallback);
 
         return this.thePrompt;
     };
@@ -290,7 +293,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         }
     }
 
-    async chain(): Promise<BaseChain>
+    chain(): BaseChain
     {        
         if(this.llmChain){
             return this.llmChain;
