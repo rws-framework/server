@@ -29,6 +29,9 @@ declare class Model<ChildClass> implements IModel {
     static isSubclass<T extends Model<T>, C extends new () => T>(constructor: C, baseClass: new () => T): boolean;
     hasTimeSeries(): boolean;
     static checkTimeSeries(constructor: any): boolean;
+    isDbVariable(variable: string): boolean;
+    static checkDbVariable(constructor: any, variable: string): boolean;
+    sanitizeDBData(data: any): any;
     static watchCollection<ChildClass extends Model<ChildClass>>(this: {
         new (): ChildClass;
         _collection: string;

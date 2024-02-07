@@ -121,7 +121,11 @@ class Model<ChildClass> implements IModel{
         const timeSeriesIds: {[key: string] : {collection: string, hydrationField:string, ids: string[]}} = this.getTimeSeriesModelFields();
         const timeSeriesHydrationFields: string[] = []
       
-        for (const key in (this as any)) {                      
+        for (const key in (this as any)) {      
+            if(!this.isDbVariable(key)){
+              continue;
+            } 
+
             if (this.hasOwnProperty(key) && !((this as any).constructor._BANNED_KEYS || Model._BANNED_KEYS).includes(key) && !timeSeriesHydrationFields.includes(key)) {              
               data[key] = this[key];
             }
@@ -130,7 +134,7 @@ class Model<ChildClass> implements IModel{
               data[key] = this[key];
               timeSeriesHydrationFields.push(timeSeriesIds[key].hydrationField);              
             }
-        }        
+        }                
 
         return data;
     }   
@@ -151,7 +155,7 @@ class Model<ChildClass> implements IModel{
     if (this.id) {
       this.preUpdate();
 
-      updatedModelData = await DBService.update(data, this.getCollection());      
+      updatedModelData = await DBService.update(data, this.getCollection());
 
       await this._asyncFill(updatedModelData);
       this.postUpdate();
@@ -245,6 +249,41 @@ class Model<ChildClass> implements IModel{
       return false;
     }
 
+    isDbVariable(variable: string): boolean 
+    {
+      return Model.checkDbVariable((this as any).constructor, variable);
+    }
+
+    static checkDbVariable(constructor: any, variable: string): boolean
+    {                   
+
+      if(variable === 'id'){
+        return true;
+      }
+
+      const data = constructor.prototype as any;
+      const dbAnnotations = Model.getModelAnnotations(constructor);
+      type AnnotationType = { annotationType: string, key: string };
+
+      const dbProperties: string[] = Object.keys(dbAnnotations).map((key: string): AnnotationType => {return {...dbAnnotations[key], key}}).filter((element: AnnotationType) => element.annotationType === 'TrackType' ).map((element: AnnotationType) => element.key);
+
+      return dbProperties.includes(variable);
+    }
+
+    sanitizeDBData(data: any): any
+    {
+      const dataKeys = Object.keys(data);
+      const sanitizedData: {[key: string]: any} = {};
+
+      for (const key of dataKeys){
+        if(this.isDbVariable(key)){
+          sanitizedData[key] = data[key];
+        }
+      }
+
+      return sanitizedData;
+    }
+
     public static async watchCollection<ChildClass extends Model<ChildClass>>(
       this: { new(): ChildClass; _collection: string }, 
       preRun: () => void
@@ -308,7 +347,10 @@ class Model<ChildClass> implements IModel{
 
     static async create<T extends Model<T>>(this: new () => T, data: any): Promise<T> {
       const newModel = new this();
-      await newModel._asyncFill(data);
+
+      const sanitizedData = newModel.sanitizeDBData(data);
+     
+      await newModel._asyncFill(sanitizedData);
     
       return newModel;
     }

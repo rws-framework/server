@@ -123,6 +123,9 @@ class Model {
         const timeSeriesIds = this.getTimeSeriesModelFields();
         const timeSeriesHydrationFields = [];
         for (const key in this) {
+            if (!this.isDbVariable(key)) {
+                continue;
+            }
             if (this.hasOwnProperty(key) && !(this.constructor._BANNED_KEYS || Model._BANNED_KEYS).includes(key) && !timeSeriesHydrationFields.includes(key)) {
                 data[key] = this[key];
             }
@@ -207,6 +210,28 @@ class Model {
         }
         return false;
     }
+    isDbVariable(variable) {
+        return Model.checkDbVariable(this.constructor, variable);
+    }
+    static checkDbVariable(constructor, variable) {
+        if (variable === 'id') {
+            return true;
+        }
+        const data = constructor.prototype;
+        const dbAnnotations = Model.getModelAnnotations(constructor);
+        const dbProperties = Object.keys(dbAnnotations).map((key) => { return { ...dbAnnotations[key], key }; }).filter((element) => element.annotationType === 'TrackType').map((element) => element.key);
+        return dbProperties.includes(variable);
+    }
+    sanitizeDBData(data) {
+        const dataKeys = Object.keys(data);
+        const sanitizedData = {};
+        for (const key of dataKeys) {
+            if (this.isDbVariable(key)) {
+                sanitizedData[key] = data[key];
+            }
+        }
+        return sanitizedData;
+    }
     static async watchCollection(preRun) {
         const collection = Reflect.get(this, '_collection');
         return await index_1.DBService.watchCollection(collection, preRun);
@@ -245,7 +270,8 @@ class Model {
     }
     static async create(data) {
         const newModel = new this();
-        await newModel._asyncFill(data);
+        const sanitizedData = newModel.sanitizeDBData(data);
+        await newModel._asyncFill(sanitizedData);
         return newModel;
     }
     loadModels() {
