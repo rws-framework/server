@@ -2,14 +2,8 @@ import TheService from "./_service";
 
 import AppConfigService from "./AppConfigService";
 import ConsoleService from "./ConsoleService";
-import LambdaService from "./LambdaService";
 
-import path from 'path';
-import fs from 'fs';
 import AWS from 'aws-sdk';
-import archiver from 'archiver';
-import ZipService from "./ZipService";
-import EFSService from "./EFSService";
 
 
 const { log, warn, error, color, rwsLog } = ConsoleService;

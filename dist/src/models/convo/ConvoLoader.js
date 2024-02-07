@@ -7,7 +7,6 @@ const text_1 = require("langchain/document_loaders/fs/text");
 const text_splitter_1 = require("langchain/text_splitter");
 const VectorStoreService_1 = __importDefault(require("../../services/VectorStoreService"));
 const ConsoleService_1 = __importDefault(require("../../services/ConsoleService"));
-const messages_1 = require("@langchain/core/messages");
 const document_1 = require("langchain/document");
 const uuid_1 = require("uuid");
 const AppConfigService_1 = __importDefault(require("../../services/AppConfigService"));
@@ -47,8 +46,8 @@ class ConvoLoader {
             console.log(`Split dir ${ConsoleService_1.default.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
             this.loader = new text_1.TextLoader(filePath);
             this.docSplitter = new text_splitter_1.RecursiveCharacterTextSplitter({
-                chunkSize: params.chunkSize,
-                chunkOverlap: params.chunkOverlap,
+                chunkSize: params.chunkSize, // The size of the chunk that should be split.
+                chunkOverlap: params.chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
                 separators: params.separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
             });
             fs_1.default.mkdirSync(splitDir, { recursive: true });
@@ -87,13 +86,6 @@ class ConvoLoader {
     }
     isInitiated() {
         return this._initiated;
-    }
-    setLLMClient(client) {
-        this.llmClient = client;
-        return this;
-    }
-    getLLMClient() {
-        return this.llmClient;
     }
     setPrompt(prompt) {
         this.thePrompt = prompt;
@@ -144,7 +136,10 @@ class ConvoLoader {
         const callGenerator = this.callStreamGenerator({ query: values.query }, cfg, debugCallback);
         await this.chain().call(values, [{
                 handleLLMNewToken(token) {
-                    callback(token);
+                    callback({
+                        content: token,
+                        status: 'rws_streaming'
+                    });
                     _self.thePrompt.listen(token, true);
                 }
             }
@@ -154,18 +149,6 @@ class ConvoLoader {
         return this.thePrompt;
     }
     ;
-    async callChat(content, embeddingsEnabled = false, debugCallback = null) {
-        if (embeddingsEnabled) {
-            const embeddings = await this.embeddings.generateEmbeddings(content);
-            await this.embeddings.storeEmbeddings(embeddings, this.getId());
-        }
-        const response = await this.llmChat.invoke([
-            new messages_1.HumanMessage({ content }),
-        ]);
-        await this.thePrompt.listen(response.content);
-        await this.debugCall(debugCallback);
-        return this.thePrompt;
-    }
     async similaritySearch(query, splitCount) {
         console.log('Store is ready. Searching for embedds...');
         const texts = await this.getStore().getFaiss().similaritySearchWithScore(`${query}`, splitCount);

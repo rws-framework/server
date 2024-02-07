@@ -16,6 +16,11 @@ interface IPromptHyperParameters {
     [key: string]: number
 }
 
+interface ILLMChunk {
+    content: string
+    status: string
+ }
+
 interface IPromptParams {
     hyperParameters?: IPromptHyperParameters;
     input?: string;
@@ -44,7 +49,7 @@ interface IRWSSinglePromptRequestExecutor {
 
 
 interface IRWSPromptStreamExecutor {
-    promptStream: (prompt: RWSPrompt, read: (chunk: string) => void, end: () => void, debugVars?: any) => Promise<RWSPrompt>
+    promptStream: (prompt: RWSPrompt, read: (chunk: ILLMChunk) => void, end: () => void, debugVars?: any) => Promise<RWSPrompt>
 }
 
 interface IRWSPromptJSON {
@@ -75,7 +80,7 @@ class RWSPrompt {
     private modelId: string;
     private modelType: string;
     private multiTemplate: PromptTemplate;
-    private convo: ConvoLoader<any, any>;
+    private convo: ConvoLoader<any>;
     private hyperParameters: IPromptHyperParameters;
     private created_at: Date;
 
@@ -208,14 +213,14 @@ class RWSPrompt {
         return this.multiTemplate;
     }
 
-    setConvo(convo: ConvoLoader<any, SimpleChatModel>): RWSPrompt
+    setConvo(convo: ConvoLoader<SimpleChatModel>): RWSPrompt
     {
         this.convo = convo.setPrompt(this)        
         
         return this;
     }
 
-    getConvo<T extends BaseLanguageModelInterface, C extends SimpleChatModel>(): ConvoLoader<T, C>
+    getConvo<T extends SimpleChatModel>(): ConvoLoader<T>
     {
         return this.convo;
     }
@@ -243,7 +248,7 @@ class RWSPrompt {
         this.sentInput = this.input;
     }
 
-    async streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: string) => void, end: () => void = () => {}, debugVars: any = {}): Promise<RWSPrompt>
+    async streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: ILLMChunk) => void, end: () => void = () => {}, debugVars: any = {}): Promise<RWSPrompt>
     {        
         return executor.promptStream(this, read, end, debugVars);
     }
@@ -351,4 +356,16 @@ class RWSPrompt {
 
 export default RWSPrompt;
 
-export { IPromptSender, IPromptEnchantment, IPromptParams, IPromptHyperParameters, IRWSPromptRequestExecutor, IRWSPromptStreamExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptJSON, IChainCallOutput, ChainStreamType }
+export { 
+    IPromptSender, 
+    IPromptEnchantment, 
+    IPromptParams, 
+    IPromptHyperParameters, 
+    IRWSPromptRequestExecutor, 
+    IRWSPromptStreamExecutor, 
+    IRWSSinglePromptRequestExecutor, 
+    IRWSPromptJSON, 
+    IChainCallOutput, 
+    ChainStreamType, 
+    ILLMChunk 
+}

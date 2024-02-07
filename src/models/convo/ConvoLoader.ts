@@ -2,26 +2,20 @@ import { TextLoader } from "langchain/document_loaders/fs/text";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { EmbeddingsInterface } from "@langchain/core/embeddings";
-import { RunnableConfig } from "@langchain/core/runnables";
-import type { BaseLanguageModelInterface } from "@langchain/core/language_models/base";
+import { RunnableConfig, Runnable } from "@langchain/core/runnables";
+import { BaseMessage } from "@langchain/core/messages";
+import { BaseLanguageModelInput } from "@langchain/core/language_models/base";
 import VectorStoreService from '../../services/VectorStoreService';
 import ConsoleService from "../../services/ConsoleService";
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
-import { HumanMessage } from "@langchain/core/messages";
-import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
-import { BaseMessageChunk } from "@langchain/core/messages";
 import { Document } from "langchain/document";
 import { v4 as uuid } from 'uuid';
 import getAppConfig from '../../services/AppConfigService';
-import { BaseChain, LLMChain, LLMChainInput, RetrievalQAChain, ConversationChain, loadQAStuffChain } from "langchain/chains";
-import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
-import { IterableReadableStream } from "@langchain/core/utils/stream";
-
+import { BaseChain, ConversationChain } from "langchain/chains";
+import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from "../prompts/_prompt";
 
 import { Error500 } from "../../errors";
-
 import { ChainValues } from "@langchain/core/utils/types";
-import { Callbacks , BaseCallbackConfig } from "langchain/callbacks";
 
 import xml2js from 'xml2js'
 import fs from "fs";
@@ -68,7 +62,7 @@ interface IEmbeddingsHandler<T extends object = {}> {
     storeEmbeddings: (embeddings: any, convoId: string) => Promise<void>
 }
 
-class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends SimpleChatModel> {
+class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, RunnableConfig>> {
     private loader: TextLoader;
     private docSplitter: RecursiveCharacterTextSplitter;    
 
@@ -77,8 +71,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
     private docs: Document[] = [];
     private _initiated = false;
     private store: RWSVectorStore;
-    private convo_id: string;
-    private llmClient: LLMClient;
+    private convo_id: string;    
     private llmChain: BaseChain;
     private llmChat: LLMChat;
     private chatConstructor: new (config: any) => LLMChat;
@@ -170,19 +163,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return this._initiated;
     }
 
-    setLLMClient(client: LLMClient): ConvoLoader<LLMClient, LLMChat>
-    {
-        this.llmClient = client;
-        
-        return this;
-    }
-
-    getLLMClient(): LLMClient
-    {
-        return this.llmClient;
-    }
-
-    setPrompt(prompt: RWSPrompt): ConvoLoader<LLMClient, LLMChat>
+    setPrompt(prompt: RWSPrompt): ConvoLoader<LLMChat>
     {
         this.thePrompt = prompt;        
 
@@ -214,7 +195,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return documents.reduce((sum, doc: Document) => sum + doc.pageContent.length, 0) / documents.length;
     };
 
-    async call(values: ChainValues, cfg: RunnableConfig, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
+    async call(values: ChainValues, cfg: Partial<RunnableConfig>, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
     {   
         const output = await (this.chain()).invoke(values, cfg) as IChainCallOutput;        
         this.thePrompt.listen(output.text)        
@@ -225,7 +206,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
     }
 
     async *callStreamGenerator(
-        this: ConvoLoader<LLMClient, LLMChat>, 
+        this: ConvoLoader<LLMChat>, 
         values: ChainValues, 
         cfg: Partial<RunnableConfig>,     
         debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null
@@ -251,14 +232,18 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         // }
     }   
 
-    async callStream(values: ChainValues, callback: (streamChunk: string) => void, end: () => void = () => {}, cfg: Partial<RunnableConfig> = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
+    async callStream(values: ChainValues, callback: (streamChunk: ILLMChunk) => void, end: () => void = () => {}, cfg: Partial<RunnableConfig> = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
     {
         const _self = this;   
         const callGenerator = this.callStreamGenerator({query: values.query}, cfg, debugCallback);        
 
         await this.chain().call(values, [{
                 handleLLMNewToken(token: string) {
-                    callback(token);
+                    callback({
+                        content: token,
+                        status: 'rws_streaming'
+                    });
+
                     _self.thePrompt.listen(token, true);
                 }
             }
@@ -270,24 +255,6 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
 
         return this.thePrompt;
     };
-
-    async callChat(content: string, embeddingsEnabled: boolean = false, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
-    {
-        if(embeddingsEnabled){
-            const embeddings = await this.embeddings.generateEmbeddings(content);
-            await this.embeddings.storeEmbeddings(embeddings, this.getId());
-        }
-
-        const response: BaseMessageChunk = await this.llmChat.invoke([
-            new HumanMessage({ content }),
-        ]);
-
-        await this.thePrompt.listen(response.content as string)        
-
-        await this.debugCall(debugCallback);
-
-        return this.thePrompt;
-    }
 
     async similaritySearch(query: string, splitCount: number): Promise<string>
     {
@@ -346,7 +313,7 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return this.llmChain;
     }
 
-    async waitForInit(): Promise<ConvoLoader<LLMClient, LLMChat> | null>
+    async waitForInit(): Promise<ConvoLoader<LLMChat> | null>
     {
         const _self = this;
         return new Promise((resolve, reject)=>{

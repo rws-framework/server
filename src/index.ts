@@ -22,7 +22,7 @@ import MD5Service from './services/MD5Service';
 import TraversalService from './services/TraversalService';
 import UtilsService from './services/UtilsService';
 import VectorStoreService from './services/VectorStoreService';
-import RWSPrompt, { IRWSPromptRequestExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptStreamExecutor, IChainCallOutput, IRWSPromptJSON, ChainStreamType } from './models/prompts/_prompt';
+import RWSPrompt, { ILLMChunk, IRWSPromptRequestExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptStreamExecutor, IChainCallOutput, IRWSPromptJSON, ChainStreamType } from './models/prompts/_prompt';
 import RWSConvo, { IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams } from './models/convo/ConvoLoader';
 import RWSVectorStore from './models/convo/VectorStore';
 import { InverseRelation, InverseTimeSeries, Relation, TrackType} from './models/annotations/index';
@@ -107,5 +107,6 @@ export {
     IConvoDebugXMLData,
     IEmbeddingsHandler,
     IRWSPromptJSON,
-    ISplitterParams
+    ISplitterParams,
+    ILLMChunk
 }
