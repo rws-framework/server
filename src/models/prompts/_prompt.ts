@@ -44,7 +44,7 @@ interface IRWSSinglePromptRequestExecutor {
 
 
 interface IRWSPromptStreamExecutor {
-    promptStream: (prompt: RWSPrompt, read: (chunk: string) => void, debugVars?: any) => Promise<ChainStreamType>
+    promptStream: (prompt: RWSPrompt, read: (chunk: string) => void, end: () => void, debugVars?: any) => Promise<RWSPrompt>
 }
 
 interface IRWSPromptJSON {
@@ -249,13 +249,9 @@ class RWSPrompt {
         this.sentInput = this.input;
     }
 
-    async streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: string) => void, debugVars: any = {}): Promise<ChainStreamType>
+    async streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: string) => void, end: () => void = () => {}, debugVars: any = {}): Promise<RWSPrompt>
     {        
-        const chainStream = await executor.promptStream(this, read, debugVars);
-
-        this.sentInput = this.input;
-
-        return chainStream;
+        return executor.promptStream(this, read, end, debugVars);
     }
 
     setInput(content: string): RWSPrompt

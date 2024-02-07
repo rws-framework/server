@@ -224,30 +224,35 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return this.thePrompt;
     }
 
-    async *callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: Partial<RunnableConfig>, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): AsyncGenerator<IterableReadableStream<ChainValues>>
+    async *callStreamGenerator(
+        this: ConvoLoader<LLMClient, LLMChat>, 
+        values: ChainValues, 
+        cfg: Partial<RunnableConfig>,     
+        debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null
+    ): AsyncGenerator<string>
     {           
-        const chain = this.chain() as ConversationChain;        
-        yield chain.stream(values, cfg);
-    }
+        const chain = this.chain() as ConversationChain;  
+        console.log('call stream');      
+        const stream = await chain.stream(values, cfg);
+        console.log('got stream');
 
-    async similaritySearch(query: string, splitCount: number): Promise<string>
+        // Listen to the stream and yield data chunks as they come
+        for await (const chunk of stream) {                  
+            yield chunk.response;
+        }
+    }   
+
+    async callStream(values: ChainValues, callback: (streamChunk: string) => void, end: () => void = () => {}, cfg: Partial<RunnableConfig> = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
     {
-        console.log('Store is ready. Searching for embedds...');            
-        const texts = await this.getStore().getFaiss().similaritySearchWithScore(`${query}`, splitCount);
-        console.log('Found best parts: ' + texts.length);
-        return texts.map(([doc, score]: [any, number]) => `${doc["pageContent"]}`).join('\n\n');    
-    }
-
-    async callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg: Partial<RunnableConfig> = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
-    {
-        const callGenerator = this.callStreamGenerator.bind(this);
-
-        this.thePrompt.setStreamCallback(callback);
         
-        for await (const chunk of callGenerator({query: values.query}, cfg, debugCallback)) { 
-           console.log('chk', chunk);           
-           this.thePrompt.listen(chunk)
-        }        
+        const callGenerator = this.callStreamGenerator({query: values.query}, cfg, debugCallback);        
+
+        for await (const chunk of callGenerator) {
+            callback(chunk);
+            this.thePrompt.listen(chunk);
+        }
+
+        end();
 
         this.debugCall(debugCallback);
 
@@ -272,6 +277,13 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         return this.thePrompt;
     }
 
+    async similaritySearch(query: string, splitCount: number): Promise<string>
+    {
+        console.log('Store is ready. Searching for embedds...');            
+        const texts = await this.getStore().getFaiss().similaritySearchWithScore(`${query}`, splitCount);
+        console.log('Found best parts: ' + texts.length);
+        return texts.map(([doc, score]: [any, number]) => `${doc["pageContent"]}`).join('\n\n');    
+    }
     
     private async debugCall(debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null)
     {

@@ -110,10 +110,8 @@ class RWSPrompt {
         await executor.singlePromptRequest(this, null, intruderPrompt);
         this.sentInput = this.input;
     }
-    async streamWith(executor, read, debugVars = {}) {
-        const chainStream = await executor.promptStream(this, read, debugVars);
-        this.sentInput = this.input;
-        return chainStream;
+    async streamWith(executor, read, end = () => { }, debugVars = {}) {
+        return executor.promptStream(this, read, end, debugVars);
     }
     setInput(content) {
         this.input = content;

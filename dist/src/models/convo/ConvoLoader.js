@@ -125,21 +125,21 @@ class ConvoLoader {
     }
     async *callStreamGenerator(values, cfg, debugCallback = null) {
         const chain = this.chain();
-        yield chain.stream(values, cfg);
+        console.log('call stream');
+        const stream = await chain.stream(values, cfg);
+        console.log('got stream');
+        // Listen to the stream and yield data chunks as they come
+        for await (const chunk of stream) {
+            yield chunk.response;
+        }
     }
-    async similaritySearch(query, splitCount) {
-        console.log('Store is ready. Searching for embedds...');
-        const texts = await this.getStore().getFaiss().similaritySearchWithScore(`${query}`, splitCount);
-        console.log('Found best parts: ' + texts.length);
-        return texts.map(([doc, score]) => `${doc["pageContent"]}`).join('\n\n');
-    }
-    async callStream(values, callback, cfg = {}, debugCallback) {
-        const callGenerator = this.callStreamGenerator.bind(this);
-        this.thePrompt.setStreamCallback(callback);
-        for await (const chunk of callGenerator({ query: values.query }, cfg, debugCallback)) {
-            console.log('chk', chunk);
+    async callStream(values, callback, end = () => { }, cfg = {}, debugCallback) {
+        const callGenerator = this.callStreamGenerator({ query: values.query }, cfg, debugCallback);
+        for await (const chunk of callGenerator) {
+            callback(chunk);
             this.thePrompt.listen(chunk);
         }
+        end();
         this.debugCall(debugCallback);
         return this.thePrompt;
     }
@@ -155,6 +155,12 @@ class ConvoLoader {
         await this.thePrompt.listen(response.content);
         await this.debugCall(debugCallback);
         return this.thePrompt;
+    }
+    async similaritySearch(query, splitCount) {
+        console.log('Store is ready. Searching for embedds...');
+        const texts = await this.getStore().getFaiss().similaritySearchWithScore(`${query}`, splitCount);
+        console.log('Found best parts: ' + texts.length);
+        return texts.map(([doc, score]) => `${doc["pageContent"]}`).join('\n\n');
     }
     async debugCall(debugCallback = null) {
         try {

@@ -4,7 +4,6 @@ import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
 import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
 import { BaseChain } from "langchain/chains";
 import RWSPrompt, { IRWSPromptJSON } from "../prompts/_prompt";
-import { IterableReadableStream } from "@langchain/core/utils/stream";
 import { ChainValues } from "@langchain/core/utils/types";
 interface ISplitterParams {
     chunkSize: number;
@@ -54,10 +53,10 @@ declare class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat 
     getChat(): LLMChat;
     private avgDocLength;
     call(values: ChainValues, cfg: RunnableConfig, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
-    callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: Partial<RunnableConfig>, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): AsyncGenerator<IterableReadableStream<ChainValues>>;
-    similaritySearch(query: string, splitCount: number): Promise<string>;
-    callStream(values: ChainValues, callback: (streamChunk: string) => void, cfg?: Partial<RunnableConfig>, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
+    callStreamGenerator(this: ConvoLoader<LLMClient, LLMChat>, values: ChainValues, cfg: Partial<RunnableConfig>, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): AsyncGenerator<string>;
+    callStream(values: ChainValues, callback: (streamChunk: string) => void, end?: () => void, cfg?: Partial<RunnableConfig>, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
     callChat(content: string, embeddingsEnabled?: boolean, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>;
+    similaritySearch(query: string, splitCount: number): Promise<string>;
     private debugCall;
     chain(): BaseChain;
     private createChain;
