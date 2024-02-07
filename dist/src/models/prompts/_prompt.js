@@ -13,19 +13,14 @@ class RWSPrompt {
         this.modelType = params.modelType;
         this.created_at = new Date();
     }
-    listen(source) {
-        if (typeof source === 'string') {
+    listen(source, stream = true) {
+        this.output = '';
+        if (!stream) {
             this.output = source;
         }
-        else if (source instanceof ReadableStream) {
-            this.output = '';
-            let i = 0;
-            this.readStreamAsText(source, (chunk) => {
-                this.output += chunk;
-                console.log('Chunk from readStreamAsText: i =', i);
-                this.onStream(chunk);
-                i++;
-            });
+        else {
+            this.output += source;
+            this.onStream(source);
         }
         return this;
     }

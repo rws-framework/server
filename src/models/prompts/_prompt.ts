@@ -95,23 +95,17 @@ class RWSPrompt {
         this.created_at = new Date();
     }
 
-    listen(source: string | ReadableStream): RWSPrompt
+    listen(source: string, stream: boolean = true): RWSPrompt
     {              
-        if (typeof source === 'string') {
-            this.output = source;
-        } else if (source instanceof ReadableStream) {
-           this.output = '';
+        this.output = '';
 
-           let i = 0;
-           this.readStreamAsText(source as ReadableStream, (chunk: string) => {            
-            this.output += chunk;
-            console.log('Chunk from readStreamAsText: i =', i);
-            this.onStream(chunk);
-            i++
-           });            
+        if (!stream) {
+            this.output = source;
+        } else {           
+           this.output += source;
+           this.onStream(source);            
         }
         
-
         return this;
     }   
 

@@ -69,7 +69,7 @@ declare class RWSPrompt {
     private varStorage;
     private onStream;
     constructor(params: IPromptParams);
-    listen(source: string | ReadableStream): RWSPrompt;
+    listen(source: string, stream?: boolean): RWSPrompt;
     setStreamCallback(callback: (chunk: string) => void): void;
     addEnchantment(enchantment: IPromptEnchantment): void;
     getEnchantedInput(): string | null;

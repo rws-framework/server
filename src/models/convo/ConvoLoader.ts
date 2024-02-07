@@ -231,26 +231,38 @@ class ConvoLoader<LLMClient extends BaseLanguageModelInterface, LLMChat extends 
         debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null
     ): AsyncGenerator<string>
     {           
-        const chain = this.chain() as ConversationChain;  
-        console.log('call stream');      
-        const stream = await chain.stream(values, cfg);
-        console.log('got stream');
+        // const _self = this;
+        // const chain = this.chain() as ConversationChain;  
+        // console.log('call stream');      
+        // const stream = await chain.call(values, [{
+        //         handleLLMNewToken(token: string) {
+        //             yield token;
+        //         }
+        //     }
+        // ]);
+        
+        // console.log('got stream');
+
+
 
         // Listen to the stream and yield data chunks as they come
-        for await (const chunk of stream) {                  
-            yield chunk.response;
-        }
+        // for await (const chunk of stream) {                  
+        //     yield chunk.response;
+        // }
     }   
 
     async callStream(values: ChainValues, callback: (streamChunk: string) => void, end: () => void = () => {}, cfg: Partial<RunnableConfig> = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
     {
-        
+        const _self = this;   
         const callGenerator = this.callStreamGenerator({query: values.query}, cfg, debugCallback);        
 
-        for await (const chunk of callGenerator) {
-            callback(chunk);
-            this.thePrompt.listen(chunk);
-        }
+        await this.chain().call(values, [{
+                handleLLMNewToken(token: string) {
+                    callback(token);
+                    _self.thePrompt.listen(token, true);
+                }
+            }
+        ]);
 
         end();
 

@@ -47,8 +47,8 @@ class ConvoLoader {
             console.log(`Split dir ${ConsoleService_1.default.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
             this.loader = new text_1.TextLoader(filePath);
             this.docSplitter = new text_splitter_1.RecursiveCharacterTextSplitter({
-                chunkSize: params.chunkSize,
-                chunkOverlap: params.chunkOverlap,
+                chunkSize: params.chunkSize, // The size of the chunk that should be split.
+                chunkOverlap: params.chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
                 separators: params.separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
             });
             fs_1.default.mkdirSync(splitDir, { recursive: true });
@@ -124,21 +124,31 @@ class ConvoLoader {
         return this.thePrompt;
     }
     async *callStreamGenerator(values, cfg, debugCallback = null) {
-        const chain = this.chain();
-        console.log('call stream');
-        const stream = await chain.stream(values, cfg);
-        console.log('got stream');
+        // const _self = this;
+        // const chain = this.chain() as ConversationChain;  
+        // console.log('call stream');      
+        // const stream = await chain.call(values, [{
+        //         handleLLMNewToken(token: string) {
+        //             yield token;
+        //         }
+        //     }
+        // ]);
+        // console.log('got stream');
         // Listen to the stream and yield data chunks as they come
-        for await (const chunk of stream) {
-            yield chunk.response;
-        }
+        // for await (const chunk of stream) {                  
+        //     yield chunk.response;
+        // }
     }
     async callStream(values, callback, end = () => { }, cfg = {}, debugCallback) {
+        const _self = this;
         const callGenerator = this.callStreamGenerator({ query: values.query }, cfg, debugCallback);
-        for await (const chunk of callGenerator) {
-            callback(chunk);
-            this.thePrompt.listen(chunk);
-        }
+        await this.chain().call(values, [{
+                handleLLMNewToken(token) {
+                    callback(token);
+                    _self.thePrompt.listen(token, true);
+                }
+            }
+        ]);
         end();
         this.debugCall(debugCallback);
         return this.thePrompt;
