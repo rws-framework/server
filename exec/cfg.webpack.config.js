@@ -9,19 +9,18 @@ const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(p
 const modules_setup = [rootPackageNodeModules];
 
 module.exports = {
-    entry: './src/rws.ts',
+    entry: process.cwd() + '/src/rws.ts',
     mode: 'development',
     target: 'node',
     devtool: 'source-map',
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: 'rws.js',
+      filename: 'cfg.js',
     },
     resolve: {
       modules: modules_setup,
       alias: {                 
-       'rws-js-server': 'vendors/rws',
-       '@rws_cwd': process.cwd()
+       'rws-js-server': 'vendors/rws'       
       },
       extensions: ['.ts', '.js', '.node'],      
     },
@@ -34,7 +33,7 @@ module.exports = {
                 loader: 'ts-loader',
                 options: {
                   allowTsInNodeModules: true,
-                  configFile: path.resolve(__dirname + '/execconfig.json'),
+                  configFile: path.resolve(process.cwd() + '/tsconfig.json'),
                   // compilerOptions: {
                   //   paths: {
                   //     '*': [rootPackageNodeModules + '/*']

@@ -64,7 +64,7 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
 
     console.log(__dirname);
     
-    const frameworkConfigFactory: () => IAppConfig = require( `@rws_cwd/src/${configPath}`).default;    
+    const frameworkConfigFactory: () => IAppConfig = require(`../dist/cfg`).default;    
 
     return frameworkConfigFactory();
 }

@@ -97,8 +97,8 @@ const setVendors = async () => {
 
         const configPath = args?.config || 'config/config';
         
-
-        fs.mkdirSync(path.resolve(__dirname, 'vendors', `${configPath}`), { recursive: true });                    
+        const webpackCmd = `${packageRootDir}/node_modules/.bin/webpack`;
+        await _tools.runCommand(`${webpackCmd} --config ./cfg.webpack.config.js`, __dirname);                 
     }
     
     ConsoleService = require('./vendors/rws/services/ConsoleService').default;
