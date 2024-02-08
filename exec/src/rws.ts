@@ -59,8 +59,12 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
     } else {
         UtilsService.setRWSVar(cfgPathFile, configPath);
     }                    
+
+    const pathWorkspaceToCwd = path.relative(__dirname, process.cwd());
+
+    console.log(__dirname);
     
-    const frameworkConfigFactory: () => IAppConfig = require( '/src/' + configPath).default;    
+    const frameworkConfigFactory: () => IAppConfig = require( `@rws_cwd/src/${configPath}`).default;    
 
     return frameworkConfigFactory();
 }

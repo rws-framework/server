@@ -100,5 +100,6 @@ module.exports = {
     linkWorkspaces,
     linkWorkspace,
     removeWorkspacePackages,
-    runCommand
+    runCommand,
+    createAndLogSymlink
 }

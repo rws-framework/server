@@ -9,7 +9,7 @@ const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(p
 const modules_setup = [rootPackageNodeModules];
 
 module.exports = {
-    entry: path.resolve(__dirname) + '/src/rws.ts',
+    entry: './src/rws.ts',
     mode: 'development',
     target: 'node',
     devtool: 'source-map',
@@ -20,28 +20,47 @@ module.exports = {
     resolve: {
       modules: modules_setup,
       alias: {                 
-       'rws-js-server': path.resolve(__dirname, '..', 'dist', 'src')       
+       'rws-js-server': 'vendors/rws',
+       '@rws_cwd': process.cwd()
       },
       extensions: ['.ts', '.js', '.node'],      
     },
     module: {
       rules: [
+          // {
+          //   test: /\.(js|ts)$/,            
+          //   loader: 'ts-loader',
+          //   options: {              
+          //     allowTsInNodeModules: true,
+          //     configFile: path.resolve(__dirname, 'execconfig.json'), 
+          //     // compilerOptions: {
+          //     //   baseUrl: UtilsService.findRootWorkspacePath(process.cwd())
+          //     // },             
+          //     getCustomTransformers: program => ({
+          //         before: [
+          //             keysTransformer(program)
+          //         ]
+          //     })
+          //   }
+          // },
           {
-            test: /\.(js|ts)$/,            
-            loader: 'ts-loader',
-            options: {              
-              allowTsInNodeModules: true,
-              configFile: path.resolve(__dirname, 'tsconfig.json'), 
-              // compilerOptions: {
-              //   baseUrl: UtilsService.findRootWorkspacePath(process.cwd())
-              // },             
-              getCustomTransformers: program => ({
-                  before: [
-                      keysTransformer(program)
-                  ]
-              })
-            }
-          },
+            test: /\.(ts)$/,
+            use: [                       
+              {
+                loader: 'ts-loader',
+                options: {
+                  allowTsInNodeModules: true,
+                  configFile: path.resolve(__dirname + '/execconfig.json'),
+                  // compilerOptions: {
+                  //   paths: {
+                  //     '*': [rootPackageNodeModules + '/*']
+                  //   }
+                  // }
+                }
+              }
+            ],
+            exclude: /node_modules\/(?!rws-js-server)|\.d\.ts$/,
+          },       
           {
               test: /\.node$/,
               use: 'node-loader',

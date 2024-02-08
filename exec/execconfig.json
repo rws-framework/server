@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": "../",
+    "baseUrl": ".",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "target": "ES2018",
@@ -9,14 +9,17 @@
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "outDir": "./vendors/rws",
+    "outDir": "./dist/exec",
     "strictNullChecks": false,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "declaration": true
+    "declaration": true,
+    "paths": {
+
+    }
   },
   "include": [
-    "../src",
+    "src"
   ],
   "exclude": []
 }
