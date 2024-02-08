@@ -134,16 +134,16 @@ class ConvoLoader {
     async callStream(values, callback, end = () => { }, cfg = {}, debugCallback) {
         const _self = this;
         const callGenerator = this.callStreamGenerator({ query: values.query }, cfg, debugCallback);
-        await this.chain().call(values, [{
-                handleLLMNewToken(token) {
-                    callback({
-                        content: token,
-                        status: 'rws_streaming'
-                    });
-                    _self.thePrompt.listen(token, true);
+        await this.chain().invoke(values, { callbacks: [{
+                    handleLLMNewToken(token) {
+                        callback({
+                            content: token,
+                            status: 'rws_streaming'
+                        });
+                        _self.thePrompt.listen(token, true);
+                    }
                 }
-            }
-        ]);
+            ] });
         end();
         this.debugCall(debugCallback);
         return this.thePrompt;

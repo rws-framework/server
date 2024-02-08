@@ -237,7 +237,7 @@ class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, 
         const _self = this;   
         const callGenerator = this.callStreamGenerator({query: values.query}, cfg, debugCallback);        
 
-        await this.chain().call(values, [{
+        await this.chain().invoke(values, { callbacks: [{
                 handleLLMNewToken(token: string) {
                     callback({
                         content: token,
@@ -247,7 +247,7 @@ class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, 
                     _self.thePrompt.listen(token, true);
                 }
             }
-        ]);
+        ]});
 
         end();
 
