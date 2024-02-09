@@ -12,6 +12,10 @@ interface IPromptHyperParameters {
     top_p?: number;
     [key: string]: number;
 }
+interface IRWSHistoryMessage {
+    content: string;
+    creator: string;
+}
 interface ILLMChunk {
     content: string;
     status: string;
@@ -53,7 +57,7 @@ interface IRWSPromptJSON {
     };
     hyperParameters: IPromptHyperParameters;
     created_at: string;
-    varStorage: any;
+    var_storage: any;
 }
 type ChainStreamType = AsyncGenerator<IterableReadableStream<ChainValues>>;
 declare class RWSPrompt {
@@ -102,6 +106,7 @@ declare class RWSPrompt {
     _oldreadStream(stream: Readable, react: (chunk: string) => void): Promise<void>;
     private isChainStreamType;
     readStreamAsText(readableStream: ReadableStream, callback: (txt: string) => void): Promise<void>;
+    addHistory(messages: IRWSHistoryMessage[], historyPrompt: string, callback?: (messages: IRWSHistoryMessage[], prompt: string) => void): void;
     toJSON(): IRWSPromptJSON;
 }
 export default RWSPrompt;

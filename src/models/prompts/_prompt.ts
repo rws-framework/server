@@ -16,6 +16,10 @@ interface IPromptHyperParameters {
     [key: string]: number
 }
 
+interface IRWSHistoryMessage { 
+    content: string, creator: string 
+}
+
 interface ILLMChunk {
     content: string
     status: string
@@ -53,7 +57,6 @@ interface IRWSPromptStreamExecutor {
 }
 
 interface IRWSPromptJSON {
-
     input: string;
     enhancedInput: IPromptEnchantment[];
     sentInput: string;
@@ -65,7 +68,7 @@ interface IRWSPromptJSON {
     convo: { id: string };
     hyperParameters: IPromptHyperParameters;
     created_at: string;
-    varStorage: any;
+    var_storage: any;
 }
 
 type ChainStreamType = AsyncGenerator<IterableReadableStream<ChainValues>>;
@@ -250,6 +253,7 @@ class RWSPrompt {
 
     async streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: ILLMChunk) => void, end: () => void = () => {}, debugVars: any = {}): Promise<RWSPrompt>
     {        
+        this.sentInput = this.input;
         return executor.promptStream(this, read, end, debugVars);
     }
 
@@ -333,6 +337,26 @@ class RWSPrompt {
         
     }
 
+    addHistory(messages: IRWSHistoryMessage[], historyPrompt: string, callback?: (messages: IRWSHistoryMessage[], prompt: string) => void){
+        const prompt = `
+            <history>       
+                ${messages.map(message => `
+                    <history-message creator="${message.creator}">
+                        ${message.content}
+                    </history-message>
+                `).join('')}              
+            </history>\n\n
+
+            ${historyPrompt}\n\n
+        ` ;
+
+        if(callback){
+            callback(messages, prompt);
+        }else{
+            this.input = prompt + this.input;
+        }
+    }
+
     toJSON(): IRWSPromptJSON
     {
         return {
@@ -343,12 +367,12 @@ class RWSPrompt {
             output: this.output,
             modelId: this.modelId,
             modelType: this.modelType,
-            multiTemplate: this.multiTemplate,
+            multiTemplate: this.multiTemplate,            
             convo: {
                 id: this.convo.getId()
             },
             hyperParameters: this.hyperParameters,
-            varStorage: this.varStorage,
+            var_storage: this.varStorage,
             created_at: this.created_at.toISOString()
         }
     }

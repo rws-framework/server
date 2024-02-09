@@ -106,6 +106,7 @@ class RWSPrompt {
         this.sentInput = this.input;
     }
     async streamWith(executor, read, end = () => { }, debugVars = {}) {
+        this.sentInput = this.input;
         return executor.promptStream(this, read, end, debugVars);
     }
     setInput(content) {
@@ -171,6 +172,25 @@ class RWSPrompt {
             }
         }
     }
+    addHistory(messages, historyPrompt, callback) {
+        const prompt = `
+            <history>       
+                ${messages.map(message => `
+                    <history-message creator="${message.creator}">
+                        ${message.content}
+                    </history-message>
+                `).join('')}              
+            </history>\n\n
+
+            ${historyPrompt}\n\n
+        `;
+        if (callback) {
+            callback(messages, prompt);
+        }
+        else {
+            this.input = prompt + this.input;
+        }
+    }
     toJSON() {
         return {
             input: this.input,
@@ -185,7 +205,7 @@ class RWSPrompt {
                 id: this.convo.getId()
             },
             hyperParameters: this.hyperParameters,
-            varStorage: this.varStorage,
+            var_storage: this.varStorage,
             created_at: this.created_at.toISOString()
         };
     }

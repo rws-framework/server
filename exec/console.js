@@ -44,6 +44,9 @@ if(process.argv.length > 4){
     }
 }
 
+if(command2map === 'init'){
+    forceReload = true;
+}
 
 const os = require('os');
 

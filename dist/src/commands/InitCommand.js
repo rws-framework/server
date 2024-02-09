@@ -28,6 +28,10 @@ class InitCommand extends _command_1.default {
         try {
             const cfgData = params._rws_config;
             try {
+                const endPrismaFilePath = packageRootDir + 'node_modules/.prisma/client/schema.prisma';
+                if (fs_1.default.existsSync(endPrismaFilePath)) {
+                    fs_1.default.unlinkSync(endPrismaFilePath);
+                }
                 await (0, install_1.SetupRWS)(cfgData);
                 const prismaCfgPath = moduleDir + '/prisma/schema.prisma';
                 fs_1.default.unlinkSync(prismaCfgPath);
