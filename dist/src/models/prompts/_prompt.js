@@ -175,9 +175,9 @@ class RWSPrompt {
     addHistory(messages, historyPrompt, callback) {
         const prompt = `
             ${messages.map(message => `
-                ${message.creator}: ${message.content}\n\n
-            `).join('')}
-            ${historyPrompt}\n\n
+                ${message.creator}: ${message.content}
+            `).join('\n\n')}
+            ${historyPrompt}
         `;
         if (callback) {
             callback(messages, prompt);
