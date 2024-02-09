@@ -2,6 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 class RWSPrompt {
     constructor(params) {
+        this.input = '';
+        this.sentInput = '';
+        this.originalInput = '';
         this.output = '';
         this.varStorage = {};
         this.onStream = (chunk) => {

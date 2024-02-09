@@ -133,7 +133,6 @@ class ConvoLoader {
     }
     async callStream(values, callback, end = () => { }, cfg = {}, debugCallback) {
         const _self = this;
-        const callGenerator = this.callStreamGenerator({ query: values.query }, cfg, debugCallback);
         await this.chain().invoke(values, { callbacks: [{
                     handleLLMNewToken(token) {
                         callback({

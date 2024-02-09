@@ -75,10 +75,10 @@ type ChainStreamType = AsyncGenerator<IterableReadableStream<ChainValues>>;
 
 class RWSPrompt {
     public _stream: ChainStreamType;
-    private input: string;
+    private input: string = '';
     private enhancedInput: IPromptEnchantment[];
-    private sentInput: string;
-    private originalInput: string;
+    private sentInput: string = '';
+    private originalInput: string = '';
     private output: string = '';
     private modelId: string;
     private modelType: string;

@@ -234,8 +234,7 @@ class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, 
 
     async callStream(values: ChainValues, callback: (streamChunk: ILLMChunk) => void, end: () => void = () => {}, cfg: Partial<RunnableConfig> = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
     {
-        const _self = this;   
-        const callGenerator = this.callStreamGenerator({query: values.query}, cfg, debugCallback);        
+        const _self = this;               
 
         await this.chain().invoke(values, { callbacks: [{
                 handleLLMNewToken(token: string) {
