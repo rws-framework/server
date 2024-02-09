@@ -339,14 +339,9 @@ class RWSPrompt {
 
     addHistory(messages: IRWSHistoryMessage[], historyPrompt: string, callback?: (messages: IRWSHistoryMessage[], prompt: string) => void){
         const prompt = `
-            <history>       
-                ${messages.map(message => `
-                    <history-message creator="${message.creator}">
-                        ${message.content}
-                    </history-message>
-                `).join('')}              
-            </history>\n\n
-
+            ${messages.map(message => `
+            ${message.creator}: ${message.content}\n\n
+        `).join('')} 
             ${historyPrompt}\n\n
         ` ;
 
