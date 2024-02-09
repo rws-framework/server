@@ -44,7 +44,7 @@ interface IRWSPromptRequestExecutor {
 
 
 interface IRWSSinglePromptRequestExecutor {
-    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>
+    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, ensureJson?: boolean, debugVars?: any) => Promise<RWSPrompt>
 }
 
 
@@ -242,9 +242,9 @@ class RWSPrompt {
         this.output = returnedRWS.readOutput()        
     }
 
-    async singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt: string = null): Promise<void>
+    async singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt: string = null, ensureJson: boolean = false): Promise<void>
     {        
-        await executor.singlePromptRequest(this, null, intruderPrompt);
+        await executor.singlePromptRequest(this, null, intruderPrompt, ensureJson);
         this.sentInput = this.input;
     }
 

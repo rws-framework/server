@@ -34,7 +34,7 @@ interface IRWSPromptRequestExecutor {
     promptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>;
 }
 interface IRWSSinglePromptRequestExecutor {
-    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>;
+    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, ensureJson?: boolean, debugVars?: any) => Promise<RWSPrompt>;
 }
 interface IRWSPromptStreamExecutor {
     promptStream: (prompt: RWSPrompt, read: (chunk: ILLMChunk) => void, end: () => void, debugVars?: any) => Promise<RWSPrompt>;
@@ -94,7 +94,7 @@ declare class RWSPrompt {
     replacePromptVar(key: string, val: string): void;
     getModelMetadata(): [string, string];
     requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt?: string, debugVars?: any): Promise<void>;
-    singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt?: string): Promise<void>;
+    singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt?: string, ensureJson?: boolean): Promise<void>;
     streamWith(executor: IRWSPromptStreamExecutor, read: (chunk: ILLMChunk) => void, end?: () => void, debugVars?: any): Promise<RWSPrompt>;
     setInput(content: string): RWSPrompt;
     getVar<T>(key: string): T;

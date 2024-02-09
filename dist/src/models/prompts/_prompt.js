@@ -101,8 +101,8 @@ class RWSPrompt {
         const returnedRWS = await executor.promptRequest(this, null, intruderPrompt, debugVars);
         this.output = returnedRWS.readOutput();
     }
-    async singleRequestWith(executor, intruderPrompt = null) {
-        await executor.singlePromptRequest(this, null, intruderPrompt);
+    async singleRequestWith(executor, intruderPrompt = null, ensureJson = false) {
+        await executor.singlePromptRequest(this, null, intruderPrompt, ensureJson);
         this.sentInput = this.input;
     }
     async streamWith(executor, read, end = () => { }, debugVars = {}) {
