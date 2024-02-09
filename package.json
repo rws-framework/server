@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsc-watch --noClear -p ./tsconfig.json",
     "docs": "typedoc --tsconfig ./tsconfig.json",
-    "build": "tsc"
+    "build": "yarn tsc"
   },
   "author": "papablack",
   "license": "ISC",
