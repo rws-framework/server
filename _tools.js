@@ -22,8 +22,11 @@ async function runCommand(command, cwd = null, silent = false) {
     const [cmd, ...args] = command.split(' ');
     
     if(!cwd){
+      console.log(`[RWS] Setting default CWD for "${command}"`);
       cwd = process.cwd();
     }
+
+    console.log(`[RWS] Running command "${command}" from "${cwd}"`);
 
     const spawned = spawn(cmd, args, { stdio: silent ? 'ignore' : 'inherit', cwd });
 
@@ -66,10 +69,10 @@ function removeWorkspacePackages(packageJsonPath, rootDir){
   });
 }
 
-function createAndLogSymlink(target, pathForLink) {
+function createAndLogSymlink(symLinkDir, targetDir) {
     // Ensure absolute paths
-    const absoluteTarget = path.resolve(target);
-    const absolutePathForLink = path.resolve(pathForLink);
+    const absoluteTarget = path.resolve(symLinkDir);
+    const absolutePathForLink = path.resolve(targetDir);
   
     // Create the symlink
     fs.symlink(absoluteTarget, absolutePathForLink, (err) => {
@@ -86,6 +89,11 @@ function createAndLogSymlink(target, pathForLink) {
 function removeDirectory(dirPath) {
   const absoluteDirPath = path.resolve(dirPath);
 
+  if(!fs.existsSync(absoluteDirPath)){
+    console.warn(`Directory "${absoluteDirPath}" does not exist.`);
+    return;
+  }
+
   fs.rmSync(absoluteDirPath, { recursive: true, force: true }, (err) => {
     if (err) {
       console.error("Error removing directory:", err);
@@ -100,5 +108,7 @@ module.exports = {
     linkWorkspaces,
     linkWorkspace,
     removeWorkspacePackages,
-    runCommand
+    runCommand,
+    removeDirectory,
+    createAndLogSymlink
 }

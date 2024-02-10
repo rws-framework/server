@@ -9,39 +9,41 @@ const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(p
 const modules_setup = [rootPackageNodeModules];
 
 module.exports = {
-    entry: path.resolve(__dirname) + '/src/rws.ts',
+    entry: process.cwd() + '/src/config/config.ts',
     mode: 'development',
     target: 'node',
     devtool: 'source-map',
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: 'rws.js',
+      filename: 'cfg.js',
     },
     resolve: {
       modules: modules_setup,
       alias: {                 
-       'rws-js-server': path.resolve(__dirname, '..', 'src')       
+       'rws-js-server': path.resolve(__dirname + '/../src')
       },
       extensions: ['.ts', '.js', '.node'],      
     },
     module: {
       rules: [
           {
-            test: /\.(js|ts)$/,            
-            loader: 'ts-loader',
-            options: {              
-              allowTsInNodeModules: true,
-              configFile: path.resolve(__dirname, 'exec.tsconfig.json'), 
-              // compilerOptions: {
-              //   baseUrl: UtilsService.findRootWorkspacePath(process.cwd())
-              // },             
-              getCustomTransformers: program => ({
-                  before: [
-                      keysTransformer(program)
-                  ]
-              })
-            }
-          },
+            test: /\.(ts)$/,
+            use: [                       
+              {
+                loader: 'ts-loader',
+                options: {
+                  allowTsInNodeModules: true,
+                  configFile: path.resolve(process.cwd() + '/tsconfig.json'),
+                  // compilerOptions: {
+                  //   paths: {
+                  //     '*': [rootPackageNodeModules + '/*']
+                  //   }
+                  // }
+                }
+              }
+            ],
+            exclude: /node_modules\/(?!rws-js-server)|\.d\.ts$/,
+          },       
           {
               test: /\.node$/,
               use: 'node-loader',
@@ -50,5 +52,5 @@ module.exports = {
     },  
     stats: {
       warningsFilter: webpackFilters,
-    }   
+    }    
 };

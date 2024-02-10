@@ -1,5 +1,5 @@
 export default class RWSError{
-    protected baseError: Error | unknown;
+    protected baseError: Error | any;
     protected name: string;
     protected message: string;
     protected code: number;
@@ -11,8 +11,15 @@ export default class RWSError{
         }
 
         this.code = code;
-        this.baseError = baseError;
-        this.stack = baseError.stack;
+        if(typeof baseError === 'string'){            
+            this.baseError = new Error(baseError as string);            
+        }else {
+            this.baseError = baseError;
+        }        
+
+        if(this.baseError.stack){
+            this.stack = baseError.stack;
+        }
     }
 
     printFullError(): void

@@ -17,14 +17,11 @@ const extraArgsAggregated = [];
 
 const { spawn, exec } = require('child_process');
 const crypto = require('crypto');
-const ProcessService = require('../dist/src/services/ProcessService').default;
-const ConsoleService = require('../dist/src/services/ConsoleService').default;
-const MD5Service = require('../dist/src/services/MD5Service').default;
-const UtilsService = require('../dist/src/services/UtilsService').default;
 
-const { filterNonEmpty } = UtilsService;
-const { log, warn, error, color } = ConsoleService;
+const _tools = require('../_tools');
 
+let ConsoleService = null;
+let MD5Service = null;
 
 for(let argvKey in process.argv){
     if(process.argv[argvKey] == '--reload'){
@@ -58,10 +55,10 @@ const totalMemoryGB = totalMemoryMB / 1024;
 
 const webpackPath = path.resolve(__dirname, '..');
 
-const packageRootDir = UtilsService.findRootWorkspacePath(process.cwd())
+let packageRootDir = null;
 
-const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
+let moduleCfgDir = null;
+let cfgPathFile = null;
 
 const main = async () => {    
     if(fs.existsSync(cfgPathFile)){
@@ -69,22 +66,84 @@ const main = async () => {
     }else{
         process.env.WEBPACK_CFG_FILE = args?.config || 'config/config';    
     }    
-    
+
+    await setVendors();
+    return;
     await generateCliClient();        
 
     log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`, `${webpackPath}/exec/dist/rws.js ${command2map} ${args}`);  
 
     try {
-        await ProcessService.runShellCommand(`node ${webpackPath}/exec/dist/rws.js ${command2map} ${args}`, process.cwd());
+        await _tools.runCommand(`node ${webpackPath}/exec/dist/rws.js ${command2map} ${args}`, webpackPath + '/exec');
     } catch(err) {
-        error(err);
+        rwsError(err);
     }
 
     return;
 }
 
+const setVendors = async () => {    
+    if(forceReload){
+        console.warn('[RWS] Forcing CLI vendors reload...');
+
+        _tools.removeDirectory(`${__dirname}/vendors`);
+        _tools.removeDirectory(`${__dirname}/node_modules`);
+        // await _tools.removeDirectory(`${__dirname}/src/_root`);
+    }
+
+    if(!fs.existsSync(path.resolve(__dirname, 'vendors'))){
+        packageRootDir = _tools.findRootWorkspacePath(process.cwd());
+        console.log('[RWS CLI vendors] Generating vendors for CLI usage...');
+        
+        const symLinkPath = path.resolve(__dirname, 'dist','node_modules');
+
+        if(fs.existsSync(symLinkPath)){
+            _tools.removeDirectory(symLinkPath);
+        }        
+
+        _tools.createAndLogSymlink(path.resolve(packageRootDir, 'node_modules'), symLinkPath);
+
+        await _tools.runCommand(`${packageRootDir}/node_modules/.bin/tsc`, __dirname);        
+
+        const configPath = args?.config || 'config/config';
+        
+        const webpackCmd = `${packageRootDir}/node_modules/.bin/webpack`;
+
+        if(fs.existsSync(__dirname + '/dist/package.json')){
+            fs.unlinkSync(__dirname + '/dist/package.json');
+        }
+
+        fs.writeFileSync( __dirname + '/dist/package.json', '{"name": "rws-js-server-cfg", "version": "1.0.0" }');
+
+        await _tools.runCommand(`${webpackCmd} --config ${__dirname}/cfg.webpack.config.js`, process.cwd());
+        
+        const cfgPath = path.relative(process.cwd(), __dirname, 'dist');
+
+        console.log('cwd', process.cwd());
+        const cfg = require(`./dist/cfg.js`);
+        console.log('cfgpath', cfg);
+
+        console.log('[RWS CLI vendors] Done.');
+    }
+    
+    ConsoleService = require('./vendors/rws/services/ConsoleService').default;
+    MD5Service = require('./vendors/rws/services/MD5Service').default;    
+}
+
 async function generateCliClient()
-{    
+{        
+    packageRootDir = _tools.findRootWorkspacePath(process.cwd());    
+
+    moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
+    cfgPathFile = `${moduleCfgDir}/_cfg_path`;      
+
+    const webpackCmd = `${packageRootDir}/node_modules/.bin/webpack`;
+
+    log = ConsoleService.log;
+    warn = ConsoleService.warn;
+    rwsError = ConsoleService.error;
+    color = ConsoleService.color;
+
     const consoleClientHashFile = `${moduleCfgDir}/_cli_hash`;       
 
     if(!fs.existsSync(moduleCfgDir)){
@@ -92,16 +151,17 @@ async function generateCliClient()
     }
 
     const tsFile = path.resolve(__dirname, 'src') + '/rws.ts';
+    const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);  
 
-    const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);       
 
     if((!fs.existsSync(consoleClientHashFile) || await MD5Service.cliClientHasChanged(consoleClientHashFile, tsFile, cmdFiles)) || forceReload){
         if(forceReload){
             warn('[RWS] Forcing CLI client reload...');
         }
+
         log(color().green('[RWS]') + color().yellowBright(' Detected CLI file changes. Generating CLI client file...'));      
         
-        await ProcessService.runShellCommand(`yarn webpack --config ${webpackPath}/exec/exec.webpack.config.js`, process.cwd());
+        await _tools.runCommand(`${webpackCmd} --config ./exec.webpack.config.js`, webpackPath + '/exec');
         log(color().green('[RWS]') + ' CLI client file generated.')       
     }else{
         log(color().green('[RWS]') + ' CLI client file is up to date.')  
@@ -115,5 +175,8 @@ function generatePM2Name(filePath)
 
 
 main().then(() => {
+    log = ConsoleService.log;
+    color = ConsoleService.color;
+
     log(color().green('[RWS]') + ' CLI command finished')
 });

@@ -3,14 +3,14 @@ import ConsoleService from "./ConsoleService";
 
 import path from 'path';
 import fs from 'fs';
-import archiver, {Format as ArchiveFormat} from 'archiver';
 
+import { BlobWriter, TextReader, ZipWriter } from '@zip.js/zip.js';import { Error500 } from "../errors";
 
 const { log, warn, error, color } = ConsoleService;
 
 interface IZipParams {
     recursive?: boolean
-    format?: ArchiveFormat
+    format?: string
     destpath?: string;
     ignore?: string[]
 }
@@ -28,36 +28,24 @@ class ZipService extends TheService {
     }   
 
     async createArchive(outputPath: string, sourcePath: string, params: IZipParams = null): Promise<string> {
-        if (params){
-            params = Object.assign(defaultZipParams, params);
-        }else{
-            params = defaultZipParams;
-        }
+        const writer = new BlobWriter();
+        const zipWriter = new ZipWriter(writer);
 
-        const archive = archiver(params.format);
-        const output = fs.createWriteStream(outputPath);
-        archive.pipe(output);      
-    
-        // archive.directory(sourcePath, params.recursive ? false : params.destpath);
+        // Add files to zip here
+        await zipWriter.add('hello.txt', new TextReader('Hello World!'));
+        await zipWriter.close();
 
-        archive.glob('**/*', {
-            cwd: sourcePath,
-            dot: true, //include .dotpaths
-            ignore: params.ignore
-        });
+        // Handle the zipped content, for example, save it
+        const blob = await writer.getData();
 
         log(`${color().green('[RWS Lambda Service]')} ZIP params:`);
         log(params);
     
-        return new Promise((resolve, reject) => {
-            archive.on('error', reject);
-            output.on('close', () => {
-                log(`Files in archive: ${archive.pointer()} bytes`);
-                resolve(outputPath);
-            });
-            output.on('error', reject);
-            archive.finalize();
-        });
+        try {
+            return outputPath;
+        } catch(e: Error | any){
+            throw new Error500('ZIP process error');
+        }
     }    
 
     listFilesInDirectory(directoryPath: string): string[] {
