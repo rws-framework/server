@@ -11,7 +11,7 @@ const executionDir = process.cwd();
 
 const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-const moduleDir = path.resolve(path.dirname(module.id), '..', '..').replace('dist', '');
+const moduleDir = path.resolve(path.dirname(module.id), '../..');
 
 
 class InitCommand extends Command 

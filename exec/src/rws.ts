@@ -43,6 +43,7 @@ const executionDir = process.cwd();
 const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const moduleCfgFile = `${moduleCfgDir}/_cfg_path`;
+const pkgDir = path.resolve(path.dirname(module.id), '../..');
 
 function getConfig(configPath: string, cfgPathFile: string | null = null) 
 {    
@@ -79,8 +80,8 @@ function copyFileSync(source: string, destination: string) {
 
 const main = async () => {     
     const cfgPathFile = `_cfg_path`;
-
-    const tsFile = path.resolve(__dirname, '..', 'src') + '/rws.ts';
+    const execDir = path.resolve(path.dirname(module.id));
+    const tsFile = execDir + '/rws.ts';
     let APP_CFG: IAppConfig | null = null;
 
     if (command === 'init') {
