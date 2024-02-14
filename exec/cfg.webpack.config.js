@@ -20,20 +20,20 @@ module.exports = {
     resolve: {
       modules: modules_setup,
       alias: {                 
-       'rws-js-server': path.resolve(__dirname + '/../src')
+      //  'rws-js-server': '../../src/'
       },
       extensions: ['.ts', '.js', '.node'],      
     },
     module: {
       rules: [
           {
-            test: /\.(ts)$/,
+            test: /\.(ts|js)$/,
             use: [                       
               {
                 loader: 'ts-loader',
                 options: {
                   allowTsInNodeModules: true,
-                  configFile: path.resolve(process.cwd() + '/tsconfig.json'),
+                  configFile: path.resolve(__dirname + '/cfg.tsconfig.json'),
                   // compilerOptions: {
                   //   paths: {
                   //     '*': [rootPackageNodeModules + '/*']
@@ -42,7 +42,7 @@ module.exports = {
                 }
               }
             ],
-            exclude: /node_modules\/(?!rws-js-server)|\.d\.ts$/,
+            exclude: /\.d\.ts$/,//node_modules\/(?!rws-js-server)|
           },       
           {
               test: /\.node$/,

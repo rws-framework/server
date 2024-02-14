@@ -61,13 +61,8 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
     }                    
 
     const pathWorkspaceToCwd = path.relative(__dirname, process.cwd());
-
     
-    
-    //@ts-ignore
-    const frameworkConfigFactory: any = require(`/dist/cfg`);    
-
-    console.log('CFG', frameworkConfigFactory, path.resolve(process.cwd()));
+    const frameworkConfigFactory: () => IAppConfig = require( '@cwd/src/' + configPath).default;
 
     return frameworkConfigFactory();
 }

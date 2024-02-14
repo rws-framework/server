@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
 import TraversalService from "./TraversalService";
+import UtilsService from "./UtilsService";
 
 
 class MD5Service extends TheService {
@@ -46,7 +47,7 @@ class MD5Service extends TheService {
     {
         const generatedHash: string = fs.readFileSync(consoleClientHashFile, 'utf-8');
    
-        const cmdFiles = this.batchGenerateCommandFileMD5(path.resolve(process.cwd(), 'node_modules', '.rws'));
+        const cmdFiles = this.batchGenerateCommandFileMD5(path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules', '.rws'));
 
         const currentSumHashes: string = (await this.generateCliHashes([tsFilename, ...cmdFiles])).join('/');            
 

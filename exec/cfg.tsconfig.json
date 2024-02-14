@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
+    "baseUrl": "../",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "target": "ES2018",
@@ -15,15 +15,11 @@
     "sourceMap": true,
     "declaration": true,
     "paths": {
-      "@cwd": [
-        "./"
-      ]    
+      
     }
   },
   "include": [
     "src"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": []
 }

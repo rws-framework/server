@@ -67,14 +67,13 @@ const main = async () => {
         process.env.WEBPACK_CFG_FILE = args?.config || 'config/config';    
     }    
 
-    await setVendors();
-    return;
+    await setVendors();    
     await generateCliClient();        
 
     log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`, `${webpackPath}/exec/dist/rws.js ${command2map} ${args}`);  
 
     try {
-        await _tools.runCommand(`node ${webpackPath}/exec/dist/rws.js ${command2map} ${args}`, webpackPath + '/exec');
+        await _tools.runCommand(`node ./build/rws.cli.js ${command2map} ${args}`, process.cwd());
     } catch(err) {
         rwsError(err);
     }
@@ -87,7 +86,7 @@ const setVendors = async () => {
         console.warn('[RWS] Forcing CLI vendors reload...');
 
         _tools.removeDirectory(`${__dirname}/vendors`);
-        _tools.removeDirectory(`${__dirname}/node_modules`);
+        // _tools.removeDirectory(`${__dirname}/node_modules`);
         // await _tools.removeDirectory(`${__dirname}/src/_root`);
     }
 
@@ -96,12 +95,18 @@ const setVendors = async () => {
         console.log('[RWS CLI vendors] Generating vendors for CLI usage...');
         
         const symLinkPath = path.resolve(__dirname, 'dist','node_modules');
+        const symLinkPathExec = path.resolve(__dirname, 'node_modules');
 
         if(fs.existsSync(symLinkPath)){
             _tools.removeDirectory(symLinkPath);
-        }        
+        }   
+        
+        if(fs.existsSync(symLinkPathExec)){
+            _tools.removeDirectory(symLinkPathExec);
+        } 
 
-        _tools.createAndLogSymlink(path.resolve(packageRootDir, 'node_modules'), symLinkPath);
+        // _tools.createAndLogSymlink(path.resolve(packageRootDir, 'node_modules'), symLinkPath);
+        // _tools.createAndLogSymlink(path.resolve(packageRootDir, 'node_modules'), symLinkPathExec);
 
         await _tools.runCommand(`${packageRootDir}/node_modules/.bin/tsc`, __dirname);        
 
@@ -109,19 +114,13 @@ const setVendors = async () => {
         
         const webpackCmd = `${packageRootDir}/node_modules/.bin/webpack`;
 
-        if(fs.existsSync(__dirname + '/dist/package.json')){
-            fs.unlinkSync(__dirname + '/dist/package.json');
-        }
+        // if(fs.existsSync(__dirname + '/dist/package.json')){
+        //     fs.unlinkSync(__dirname + '/dist/package.json');
+        // }
 
-        fs.writeFileSync( __dirname + '/dist/package.json', '{"name": "rws-js-server-cfg", "version": "1.0.0" }');
+        // fs.writeFileSync( __dirname + '/dist/package.json', '{"name": "rws-js-server-cfg", "version": "1.0.0" }');
 
-        await _tools.runCommand(`${webpackCmd} --config ${__dirname}/cfg.webpack.config.js`, process.cwd());
-        
-        const cfgPath = path.relative(process.cwd(), __dirname, 'dist');
-
-        console.log('cwd', process.cwd());
-        const cfg = require(`./dist/cfg.js`);
-        console.log('cfgpath', cfg);
+        // await _tools.runCommand(`${webpackCmd} --config ${__dirname}/exec.webpack.config.js`, process.cwd());             
 
         console.log('[RWS CLI vendors] Done.');
     }
@@ -161,7 +160,7 @@ async function generateCliClient()
 
         log(color().green('[RWS]') + color().yellowBright(' Detected CLI file changes. Generating CLI client file...'));      
         
-        await _tools.runCommand(`${webpackCmd} --config ./exec.webpack.config.js`, webpackPath + '/exec');
+        await _tools.runCommand(`${webpackCmd} --config ${webpackPath}/exec/exec.webpack.config.js`, process.cwd());
         log(color().green('[RWS]') + ' CLI client file generated.')       
     }else{
         log(color().green('[RWS]') + ' CLI client file is up to date.')  
