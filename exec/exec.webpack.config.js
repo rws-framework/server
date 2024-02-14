@@ -7,7 +7,7 @@ const nodeExternals = require('webpack-node-externals');
 const UtilsService = require('../_tools');
 const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')
 const modules_setup = [rootPackageNodeModules];
-
+const rwsExternals = require('../_rws_externals');
 const buildDir = path.resolve(process.cwd(), 'build');
 
 const relFromBuild = path.relative(buildDir, __dirname);
@@ -61,61 +61,5 @@ module.exports = {
     stats: {
       warningsFilter: webpackFilters,
     },
-    externals: ({context, request}, callback) => {
-      const inc_list_context = [
-        process.cwd(),    
-        rootPackageNodeModules + '/rws-js-server',
-      ];
-
-      const inc_list = [
-        'rws-js-server'    
-      ];
-
-      const not_inc_list_context = [        
-        'node_modules' 
-      ];
-
-      const not_inc_list = [
-         
-      ];
-
-      const exceptions_context = [ 
-        rootPackageNodeModules + '/rws-js-server',     
-      ];
-
-      const exceptions = [
-         path.resolve(__dirname),
-         
-      ];
-
-      const regexList = (list) => {           
-        // Create the RegExp object
-        const regex = new RegExp(list.map(ext => ext.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|'));
-
-        // console.log(regex);
-
-        return regex;
-      }
-
-     const includedCondition = (regexList(inc_list).test(request) || (regexList(inc_list_context).test(context) && request[0] === '.'));
-     const excludedCondition = (regexList(not_inc_list_context).test(context));
-     const contextExceptionCondition = regexList(exceptions_context).test(context) && request[0] === '.';
-     const requestExceptionCondition = (regexList(exceptions).test(request));
-
-      // console.error('GOT', request, context)
-      if ( 
-        (includedCondition
-        && !excludedCondition)
-        || (requestExceptionCondition || contextExceptionCondition)
-      ) {
-        //include in cli.js
-        // console.log('YEA', request, context ,includedCondition, excludedCondition, requestExceptionCondition);
-        return callback();
-      }
-
-      //use require()
-
-      // console.log('NEY', request, context, includedCondition, excludedCondition, requestExceptionCondition, contextExceptionCondition);
-      return callback(null, 'commonjs ' + request);
-    },
+    externals: rwsExternals(process.cwd(), rootPackageNodeModules)
 };

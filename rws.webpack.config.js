@@ -1,8 +1,8 @@
 const path = require('path');
 const keysTransformer = require('ts-transformer-keys/transformer').default;
 const webpackFilters = require('./webpackFilters');
-const nodeExternals = require('webpack-node-externals');
 const UtilsService = require('./_tools');
+const rwsExternals = require('./_rws_externals');
 
 const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')
 
@@ -60,7 +60,5 @@ module.exports = {
   stats: {
     warningsFilter: webpackFilters,
   },
-  externals: [nodeExternals({
-    allowlist: ['rws-js-server'],
-  })],
+  externals: rwsExternals(process.cwd(), rootPackageNodeModules)
 };
