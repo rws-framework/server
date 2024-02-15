@@ -3,7 +3,7 @@
 
 import IAppConfig from "./interfaces/IAppConfig";
 import getConfigService, { AppConfigService } from "./services/AppConfigService";
-import ServerService, { IInitOpts } from "./services/ServerService";
+import ServerService, { IInitOpts, ServerControlSet } from "./services/ServerService";
 import ConsoleService from "./services/ConsoleService";
 import UtilsService from "./services/UtilsService";
 
@@ -45,14 +45,16 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
         UtilsService.setRWSVar('_rws_installed', 'OK');    
     }
 
-    const theServer = await ServerService.initializeApp({...{        
+    const rwsAppOpts = {...{        
         wsRoutes: wsRoutes,
         httpRoutes: httpRoutes,
         controllerList: controler_list,
         pub_dir: pub_dir,
         domain: `http${(await AppConfigService.get('features')?.ssl ? 's' : '')}://${await AppConfigService.get('domain')}`,
         cors_domain: cors_domain
-    },...serverOptions});
+    },...serverOptions};
+
+    const theServer: ServerControlSet = await ServerService.initializeApp(rwsAppOpts);
 
     const wsStart = async () => {
         return (await theServer.websocket.starter());
@@ -64,6 +66,8 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
 
     wsStart();
     await httpStart();    
+
+    return theServer
 }
 
 export default init;

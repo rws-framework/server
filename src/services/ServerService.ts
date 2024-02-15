@@ -75,6 +75,7 @@ class ServerService extends ServerBase {
     private srv: RWSServer;
     private tokens: UserTokens = {};
     private users: JWTUsers<any> = {};
+    private corsOptions: CorsOptions;
 
     constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
         const _DOMAIN: string =  opts.cors_domain || opts.domain;
@@ -118,15 +119,13 @@ class ServerService extends ServerBase {
             next();
         });
 
-        const corsOptions: CorsOptions = {
+        this.corsOptions = {
             origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
             methods: ['GET', 'POST', 'OPTIONS'],
             allowedHeaders: cors_headers
         }
 
-        console.log('cors-options', corsOptions);
-
-        const corsMiddleware = cors(corsOptions);                 
+        const corsMiddleware = cors(this.corsOptions);                 
 
         this.use(async (socket, next) => {
             const request: HTTP.IncomingMessage = socket.request;
@@ -134,7 +133,7 @@ class ServerService extends ServerBase {
             corsMiddleware(request, response, next);            
         });        
 
-        this.server_app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
+        this.server_app.options('*', cors(this.corsOptions)); // Enable pre-flight for all routes
 
         if(opts.authorization){
             this.setupAuth();
@@ -175,7 +174,7 @@ class ServerService extends ServerBase {
 
         if(!fs.existsSync(rwsDir)){
             fs.mkdirSync(rwsDir);
-        }  
+        }          
         
         return {
             websocket: this.ws_server,
@@ -398,6 +397,11 @@ class ServerService extends ServerBase {
     public getOptions(): IInitOpts
     {
         return this.options;
+    }
+
+    public getCorsOptions(): CorsOptions
+    {
+        return this.corsOptions;
     }
 }
 

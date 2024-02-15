@@ -97,11 +97,8 @@ class RouterService extends TheService{
               // Handle the case where item is of type IHTTProute
               routes.push(item as IHTTProute);
           }        
-        });  
-
-        console.log('ROUTES IN ASSIGNMENT', routes);
-       
-
+        });          
+      
         routes.forEach((route: IHTTProute) => {          
             Object.keys(controllerRoutes).forEach((_method: string) => {
               const actions = controllerRoutes[_method as keyof IControllerRoutes];                           

@@ -9,7 +9,7 @@ import {SetupRWS} from './install';
 import ITimeSeries from './models/interfaces/ITimeSeries';
 import TimeSeriesModel from './models/types/TimeSeriesModel';
 
-import ServerService from './services/ServerService';
+import ServerService, { ServerControlSet } from './services/ServerService';
 import DBService from './services/DBService';
 import AuthService from './services/AuthService';
 import S3Service from './services/S3Service';
@@ -82,6 +82,7 @@ export {
     ITimeSeries,
     IAppConfig,
     IContextToken,
+    ServerControlSet,
             
     Socket,      
     ProcessService,    

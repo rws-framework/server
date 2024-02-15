@@ -7,7 +7,7 @@ const nodeExternals = require('webpack-node-externals');
 const UtilsService = require('../_tools');
 const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')
 const modules_setup = [rootPackageNodeModules];
-const rwsExternals = require('../_rws_externals');
+const {rwsExternals} = require('../_rws_externals');
 const buildDir = path.resolve(process.cwd(), 'build');
 
 const relFromBuild = path.relative(buildDir, __dirname);
