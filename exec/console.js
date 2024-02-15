@@ -151,8 +151,6 @@ async function generateCliClient()
 
     const tsFile = path.resolve(webpackPath, 'exec','src') + '/rws.ts';
 
-    console.log('!!!!!!!!!!!!',tsFile)
-
     const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);  
 
 
