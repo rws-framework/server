@@ -18,7 +18,7 @@ const extraArgsAggregated = [];
 const { spawn, exec } = require('child_process');
 const crypto = require('crypto');
 
-const _tools = require('../_tools');cd 
+const _tools = require('../_tools');
 
 let ConsoleService = null;
 let MD5Service = null;
