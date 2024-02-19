@@ -1,7 +1,5 @@
 import TheService from './_service';
 import IAppConfig from '../interfaces/IAppConfig';
-import fs from 'fs';
-import AppCommands from '../commands/index';
 
 const AppDefaultConfig: IAppConfig = {
     mongo_url: null,

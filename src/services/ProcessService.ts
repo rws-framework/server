@@ -4,9 +4,7 @@ import { spawn } from 'child_process';
 import ConsoleService from './ConsoleService';
 
 import readline from 'readline';
-import path from 'path';
 import os from 'os';
-import UtilsService from './UtilsService';
 
 const { log, warn, error, color } = ConsoleService;
 

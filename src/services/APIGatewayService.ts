@@ -1,5 +1,4 @@
 import TheService from './_service';
-import AppConfigService from './AppConfigService';
 import ConsoleService from './ConsoleService';
 import AWS from 'aws-sdk';
 import AWSService from './AWSService';

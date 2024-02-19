@@ -1,4 +1,4 @@
-import TestHelper, {ITestVars} from '../helpers/TestHelper';
+import {ITestVars} from '../helpers/TestHelper';
 
 export default abstract class TestCase
 {    

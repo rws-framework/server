@@ -1,10 +1,9 @@
 import 'reflect-metadata';
 import express, { Request, Response } from 'express';
 import TheService from './_service';
-import Controller, { IRequestParams, IHTTProuteMethod } from '../controllers/_controller';
-import { IHTTProute, RWSHTTPRoutingEntry, IPrefixedHTTProutes } from '../routing/routes';
+import Controller, { IHTTProuteMethod } from '../controllers/_controller';
+import { IHTTProute, RWSHTTPRoutingEntry } from '../routing/routes';
 import { IHTTProuteParams } from '../routing/annotations/Route';
-import UtilsService from './UtilsService';
 import appConfig from './AppConfigService';
 import path from 'path';
 import { RWSError } from '../errors/index';

@@ -1,6 +1,5 @@
 import getConfig, { IAppConfig } from '../../services/AppConfigService';
 
-import { Server } from 'socket.io';
 import ServerService, { ServerControlSet } from '../../services/ServerService';
 import { io, Socket } from 'socket.io-client';
 
@@ -129,16 +128,7 @@ const startServer = async (): Promise<ServerControlSet> => {
         wsRoutes: await getConfig().get('ws_routes'),
         httpRoutes: await getConfig().get('http_routes')
     });
-
-    const startHTTPListener = async () => new Promise<void>((resolve) => {
-        server.http.starter();
-    });   
-
-    const startWSListener = async () => new Promise<void>((resolve) => {
-        server.websocket.starter();
-    });   
     
-
     return server;
 };
 

@@ -1,10 +1,8 @@
 import Command, { ICmdParams } from './_command';
-import { SetupRWS } from '../install';
 import ConsoleService from '../services/ConsoleService';
 
 import { rmdir } from 'fs/promises';
 import path from 'path';
-import fs from 'fs';
 import UtilsService from '../services/UtilsService';
 const { log, warn, error, color } = ConsoleService;
 

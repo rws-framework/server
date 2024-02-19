@@ -1,4 +1,3 @@
-import { v4 as uuid } from 'uuid';
 import { FaissStore } from '@langchain/community/vectorstores/faiss';
 import { EmbeddingsInterface } from '@langchain/core/embeddings';
 import { Document } from '@langchain/core/documents';

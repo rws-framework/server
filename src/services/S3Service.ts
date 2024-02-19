@@ -1,6 +1,5 @@
 import TheService from './_service';
 import AWSService from './AWSService';
-import ZipService from './ZipService';
 import ConsoleService from './ConsoleService';
 
 const { log, warn, error, color } = ConsoleService;

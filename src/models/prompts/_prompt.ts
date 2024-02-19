@@ -2,10 +2,8 @@ import { Readable } from 'stream';
 import { PromptTemplate } from '@langchain/core/prompts';
 import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
 import { SimpleChatModel } from '@langchain/core/language_models/chat_models';
-import type { BaseLanguageModelInterface } from '@langchain/core/language_models/base';
 import { IterableReadableStream } from '@langchain/core/utils/stream';
 import { ChainValues } from '@langchain/core/utils/types';
-import { Document } from 'langchain/document';
 
 import { IContextToken } from '../../interfaces/IContextToken';
 
