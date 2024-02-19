@@ -38,7 +38,7 @@ export default abstract class TheCommand {
             fs.mkdirSync(moduleCfgDir);
         }
         
-        const filePath:string = childModule.id;
+        const filePath: string = childModule.id;
         
         const cmdDir = `${filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '')}`;        
 

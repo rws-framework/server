@@ -34,7 +34,7 @@ type JWTUsers<IUser> = {
     [socketId: string]: IUser;
 };
 
-type CookieType = {[key: string] : string};
+type CookieType = {[key: string]: string};
 
 interface IInitOpts {    
     controllerList?: Controller[];

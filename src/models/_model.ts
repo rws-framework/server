@@ -4,8 +4,8 @@ import TrackType, {IMetaOpts} from './annotations/TrackType';
 interface IModel{
     [key: string]: any;
     id: string | null;
-    save: ()=>void;
-    getCollection: ()=>string | null;
+    save: () => void;
+    getCollection: () => string | null;
 }
 
 class Model<ChildClass> implements IModel{
@@ -54,7 +54,7 @@ class Model<ChildClass> implements IModel{
 
     public async _asyncFill(data: any): Promise<ChildClass>{
         const collections_to_models: {[key: string]: any} = {};           
-        const timeSeriesIds: {[key: string] : {collection: string, hydrationField:string,ids: string[]}} = this.getTimeSeriesModelFields();
+        const timeSeriesIds: {[key: string]: {collection: string, hydrationField: string,ids: string[]}} = this.getTimeSeriesModelFields();
         
         this.loadModels().forEach((model) => {
             collections_to_models[model.getCollection()] = model;      
@@ -93,7 +93,7 @@ class Model<ChildClass> implements IModel{
 
     private getTimeSeriesModelFields()
     {
-        const timeSeriesIds: {[key: string] : {collection: string, hydrationField:string, ids: string[]}} = {};
+        const timeSeriesIds: {[key: string]: {collection: string, hydrationField: string, ids: string[]}} = {};
 
         for (const key in this as any) {
             if (this.hasOwnProperty(key)) {             
@@ -118,7 +118,7 @@ class Model<ChildClass> implements IModel{
        
         const data: any = {};
 
-        const timeSeriesIds: {[key: string] : {collection: string, hydrationField:string, ids: string[]}} = this.getTimeSeriesModelFields();
+        const timeSeriesIds: {[key: string]: {collection: string, hydrationField: string, ids: string[]}} = this.getTimeSeriesModelFields();
         const timeSeriesHydrationFields: string[] = [];
       
         for (const key in (this as any)) {      

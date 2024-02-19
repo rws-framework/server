@@ -34,12 +34,12 @@ interface IBaseLangchainHyperParams {
     temperature: number;
     topK: number;
     topP: number;
-    maxTokens:number;
+    maxTokens: number;
 }
 
 interface IConvoDebugXMLData {
     conversation: {
-        $ : {
+        $: {
             id: string
             [key: string]: string
         },
@@ -48,7 +48,7 @@ interface IConvoDebugXMLData {
 }
 
 interface IConvoDebugXMLOutput {
-    xml : IConvoDebugXMLData,
+    xml: IConvoDebugXMLData,
     path: string
 }
 

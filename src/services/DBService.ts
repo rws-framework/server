@@ -13,7 +13,7 @@ interface IDBClientCreate {
 
 class DBService extends TheService {
     private client: PrismaClient;
-    private opts:IDBClientCreate = null;
+    private opts: IDBClientCreate = null;
     private connected = false;
 
     constructor(opts: IDBClientCreate = null){

@@ -30,7 +30,7 @@ class MD5Service extends TheService {
         });
     }
 
-    async generateCliHashes(fileNames: string[]) : Promise<string[]>
+    async generateCliHashes(fileNames: string[]): Promise<string[]>
     {
         const md5Pack: string[] = [];
 

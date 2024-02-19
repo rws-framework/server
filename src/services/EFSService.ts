@@ -223,7 +223,7 @@ class EFSService extends TheService {
         }
     }   
 
-    async uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket:string, vpcId: string, subnetId: string): Promise<void>
+    async uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket: string, vpcId: string, subnetId: string): Promise<void>
     {
         const efsLoaderFunctionName = await this.processEFSLoader(vpcId, subnetId);
 
@@ -248,11 +248,11 @@ class EFSService extends TheService {
         }
     }
 
-    async processEFSLoader(vpcId:string, subnetId: string): Promise<string>
+    async processEFSLoader(vpcId: string, subnetId: string): Promise<string>
     {
         const executionDir = process.cwd();
 
-        const filePath:string = module.id;        
+        const filePath: string = module.id;        
         const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
         const moduleDir = path.resolve(cmdDir, '..', '..', '..', '..');
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;

@@ -224,7 +224,7 @@ class VPCService extends TheService{
 
         const baseThirdOctet = existingCidrs.length ? maxThirdOctet : 0;
 
-        let nextThirdOctet : number = baseThirdOctet + _SUBNET_PASS_VAL;
+        let nextThirdOctet: number = baseThirdOctet + _SUBNET_PASS_VAL;
     
         const newCidrBlock = `${baseIp.split('.').slice(0, 2).join('.')}.${nextThirdOctet }.0/${range.toString()}`;
         rwsLog(`Trying to create public subnet for "${vpcId}" VPC with "${newCidrBlock}" address`);
