@@ -9,7 +9,7 @@ const { rwsLog, log, warn, error, color } = ConsoleService;
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
+const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const moduleDir = path.resolve(path.dirname(module.id), '../..');
 
@@ -25,14 +25,14 @@ class InitCommand extends Command
         ConsoleService.log(color().green('[RWS]') + ' starting systems...');              
     
         const configPath: string = params.config || params._default || 'config/config'; 
-        let generateProjectFiles = true;
+        const generateProjectFiles = true;
 
         if(!configPath){
             ConsoleService.error('[RWS] No config path provided! Use "npx rws init path/to/config/file (from ./src)"');
             return;
         }
 
-       try{                     
+        try{                     
             const cfgData = params._rws_config;
 
             try {                              
@@ -48,31 +48,31 @@ class InitCommand extends Command
                 const workspaceRoot = UtilsService.findRootWorkspacePath(executionDir);
               
                 if(workspaceRoot !== executionDir){
-                  workspaced = true;
+                    workspaced = true;
                 }
                 
                 if(generateProjectFiles){              
                     if(workspaced){
-                    if(!fs.existsSync(`${workspaceRoot}/.eslintrc.json`)){
-                        const rcjs: string = fs.readFileSync(`${moduleDir}/.setup/_base.eslintrc.json`, 'utf-8');
-                        fs.writeFileSync(`${workspaceRoot}/.eslintrc.json`, rcjs.replace('{{backend_dir}}', executionDir));
-                        rwsLog(color().green('RWS CLI'), 'Installed eslint base workspace config file.');
-                    }
+                        if(!fs.existsSync(`${workspaceRoot}/.eslintrc.json`)){
+                            const rcjs: string = fs.readFileSync(`${moduleDir}/.setup/_base.eslintrc.json`, 'utf-8');
+                            fs.writeFileSync(`${workspaceRoot}/.eslintrc.json`, rcjs.replace('{{backend_dir}}', executionDir));
+                            rwsLog(color().green('RWS CLI'), 'Installed eslint base workspace config file.');
+                        }
                     
-                    if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
-                        fs.copyFileSync(`${moduleDir}/.setup/.eslintrc.json`, `${executionDir}/.eslintrc.json`);
-                        rwsLog(color().green('RWS CLI'), 'Installed eslint backend workspace config file.');
-                    }    
+                        if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
+                            fs.copyFileSync(`${moduleDir}/.setup/.eslintrc.json`, `${executionDir}/.eslintrc.json`);
+                            rwsLog(color().green('RWS CLI'), 'Installed eslint backend workspace config file.');
+                        }    
                     }else{
-                    if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
-                        fs.copyFileSync(`${moduleDir}/.eslintrc.json`, `${executionDir}/.eslintrc.json`);
-                        rwsLog(color().green('RWS CLI'), 'Installed eslint config file.');
-                    }  
+                        if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
+                            fs.copyFileSync(`${moduleDir}/.eslintrc.json`, `${executionDir}/.eslintrc.json`);
+                            rwsLog(color().green('RWS CLI'), 'Installed eslint config file.');
+                        }  
                     } 
                 
                     if(!fs.existsSync(`${executionDir}/tsconfig.json`)){
-                    fs.copyFileSync(`${moduleDir}/.setup/tsconfig.json`, `${executionDir}/tsconfig.json`);
-                    rwsLog(color().green('RWS CLI'), 'Installed tsconfig.');
+                        fs.copyFileSync(`${moduleDir}/.setup/tsconfig.json`, `${executionDir}/tsconfig.json`);
+                        rwsLog(color().green('RWS CLI'), 'Installed tsconfig.');
                     }
                 }
 
@@ -85,7 +85,7 @@ class InitCommand extends Command
             }            
         } catch(e: Error | any){    
             ConsoleService.log(color().red('[RWS]') + ' wrong config file path...');         
-            throw new Error(e)            
+            throw new Error(e);            
         }
     }
 

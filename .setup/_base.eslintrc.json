@@ -12,6 +12,7 @@
         "project": "{{backend_dir}}/tsconfig.json"
     },
     "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
         "indent": [
             "error",
             4

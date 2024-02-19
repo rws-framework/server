@@ -8,23 +8,23 @@ interface IRelationOpts{
     inversionModel?: string,
   }
   
-  function Relation(relatedTo: string, required: boolean = false, relationField: string = null,  relatedToField: string = 'id') {
+function Relation(relatedTo: string, required: boolean = false, relationField: string = null,  relatedToField: string = 'id') {
   
-    let metaOpts: IRelationOpts = {required};
+    const metaOpts: IRelationOpts = {required};
   
     metaOpts.relatedToField = relatedToField;      
     metaOpts.relatedTo = relatedTo;
 
     if(!relationField){
-      metaOpts.relationField = relatedTo + '_id';
+        metaOpts.relationField = relatedTo + '_id';
     } else{
-      metaOpts.relationField = relationField;
+        metaOpts.relationField = relationField;
     }  
   
     return function(target: any, key: string) {          
-      Reflect.defineMetadata(`Relation:${key}`, metaOpts, target);
+        Reflect.defineMetadata(`Relation:${key}`, metaOpts, target);
     };
-  }
+}
 
-  export default Relation;
-  export {IRelationOpts}
+export default Relation;
+export {IRelationOpts};

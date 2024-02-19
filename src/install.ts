@@ -1,13 +1,13 @@
-import getConfigService, { IAppConfig } from "./services/AppConfigService";
+import getConfigService, { IAppConfig } from './services/AppConfigService';
 import Model, { IMetaOpts } from './models/_model';
 import fs from 'fs';
 import path from 'path';
 import 'reflect-metadata';
-import DBService from "./services/DBService";
-import TimeSeriesModel from "./models/types/TimeSeriesModel";
-import ProcessService from "./services/ProcessService";
-import ConsoleService from "./services/ConsoleService";
-import UtilsService from "./services/UtilsService";
+import DBService from './services/DBService';
+import TimeSeriesModel from './models/types/TimeSeriesModel';
+import ProcessService from './services/ProcessService';
+import ConsoleService from './services/ConsoleService';
+import UtilsService from './services/UtilsService';
 
 const { rwsLog, log, warn, error, color } = ConsoleService;
 
@@ -18,8 +18,8 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
   
     // Get the prototype of the model instance
     const modelMetadatas: Record<string, {annotationType: string, metadata: any}> = Model.getModelAnnotations(constructor); // Pass the class constructor   
-    let embed = false;   
-    let modelName: string = (constructor as any)._collection;
+    const embed = false;   
+    const modelName: string = (constructor as any)._collection;
 
  
 
@@ -32,105 +32,105 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
     
     section += `model ${modelName} {\n`;
 
-    section += `\tid String @map("_id") @id @default(auto()) @db.ObjectId\n`;     
+    section += '\tid String @map("_id") @id @default(auto()) @db.ObjectId\n';     
     
     for (const key in modelMetadatas) {
-      const modelMetadata: IMetaOpts = modelMetadatas[key].metadata            
-      const requiredString = modelMetadata.required ? '' : '?';  
+        const modelMetadata: IMetaOpts = modelMetadatas[key].metadata;            
+        const requiredString = modelMetadata.required ? '' : '?';  
       
-      const annotationType: string = modelMetadatas[key].annotationType;
+        const annotationType: string = modelMetadatas[key].annotationType;
       
-      if(annotationType === 'Relation'){
-          section += `\t${key} ${modelMetadata.relatedTo}${requiredString} @relation(fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
-          section += `\t${modelMetadata.relationField} String${requiredString} @db.ObjectId\n`;
-      }else if (annotationType === 'InverseRelation'){        
-          section += `\t${key} ${modelMetadata.inversionModel}[]`;
-      }else if (annotationType === 'InverseTimeSeries'){        
-          section += `\t${key} String[] @db.ObjectId`;      
-      }else if (annotationType === 'TrackType'){        
-        const tags: string[] = modelMetadata.tags.map((item: string) => '@' + item);          
-          section += `\t${key} ${toConfigCase(modelMetadata)}${requiredString} ${tags.join(' ')}\n`;
-      }
+        if(annotationType === 'Relation'){
+            section += `\t${key} ${modelMetadata.relatedTo}${requiredString} @relation(fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
+            section += `\t${modelMetadata.relationField} String${requiredString} @db.ObjectId\n`;
+        }else if (annotationType === 'InverseRelation'){        
+            section += `\t${key} ${modelMetadata.inversionModel}[]`;
+        }else if (annotationType === 'InverseTimeSeries'){        
+            section += `\t${key} String[] @db.ObjectId`;      
+        }else if (annotationType === 'TrackType'){        
+            const tags: string[] = modelMetadata.tags.map((item: string) => '@' + item);          
+            section += `\t${key} ${toConfigCase(modelMetadata)}${requiredString} ${tags.join(' ')}\n`;
+        }
     }
 
-    section += `\n}`;
+    section += '\n}';
   
   
     return section;
 }
 
 function toConfigCase(modelType: any): string {
-  const type = modelType.type;
-  const input = type.name;  
+    const type = modelType.type;
+    const input = type.name;  
 
-  if(input == 'Number'){
-    return 'Int';
-  }
+    if(input == 'Number'){
+        return 'Int';
+    }
 
-  if(input == 'Object'){
-    return 'Json';
-  }
+    if(input == 'Object'){
+        return 'Json';
+    }
 
-  if(input == 'Date'){
-    return 'DateTime';
-  }
+    if(input == 'Date'){
+        return 'DateTime';
+    }
 
 
-  const firstChar = input.charAt(0).toUpperCase();
-  const restOfString = input.slice(1);
-  return firstChar + restOfString;
+    const firstChar = input.charAt(0).toUpperCase();
+    const restOfString = input.slice(1);
+    return firstChar + restOfString;
 }
 
 async function main(cfg: IAppConfig)
 {   
-  const AppConfigService = getConfigService(cfg);
-  const dbUrl = await AppConfigService.get('mongo_url');
-  const moduleDir = path.resolve(path.dirname(module.id), '..');
-  const executionDir = path.resolve(process.cwd());
+    const AppConfigService = getConfigService(cfg);
+    const dbUrl = await AppConfigService.get('mongo_url');
+    const moduleDir = path.resolve(path.dirname(module.id), '..');
+    const executionDir = path.resolve(process.cwd());
 
-  const dbType = 'mongodb';
+    const dbType = 'mongodb';
 
-  let template: string = `generator client {\n
+    let template: string = `generator client {\n
     provider = "prisma-client-js"\n
   }\n\n`;
 
-  template += `\ndatasource db {\n
+    template += `\ndatasource db {\n
     provider = "${dbType}"\n
     url = env("DATABASE_URL")\n    
   }\n\n`;
 
-  const usermodels = await AppConfigService.get('user_models');
+    const usermodels = await AppConfigService.get('user_models');
 
-  usermodels.forEach((model: any) => {    
-    const modelSection = generateModelSections(model);
+    usermodels.forEach((model: any) => {    
+        const modelSection = generateModelSections(model);
 
-    template += '\n\n' + modelSection;  
+        template += '\n\n' + modelSection;  
     
-    if(Model.isSubclass(model, TimeSeriesModel)){      
+        if(Model.isSubclass(model, TimeSeriesModel)){      
      
-      DBService.collectionExists(model._collection).then((exists: boolean) => {
-        if (exists){
-          return;
+            DBService.collectionExists(model._collection).then((exists: boolean) => {
+                if (exists){
+                    return;
+                }
+
+                log(color().green('[RWS Init]') + ` creating TimeSeries type collection from ${model} model`);
+
+                DBService.createTimeSeriesCollection(model._collection);    
+            });
         }
+    });
 
-        log(color().green('[RWS Init]') + ` creating TimeSeries type collection from ${model} model`);
+    const schemaPath = path.join(moduleDir, 'prisma', 'schema.prisma');
+    fs.writeFileSync(schemaPath, template);  
+    process.env.DB_URL = dbUrl;
+    // Define the command you want to run
+    await ProcessService.runShellCommand('npx prisma generate --schema='+schemaPath);  
 
-        DBService.createTimeSeriesCollection(model._collection);    
-      })
-    }
-  });
+    log(color().green('[RWS Init]') + ' prisma schema generated from ', schemaPath);
 
-  const schemaPath = path.join(moduleDir, 'prisma', 'schema.prisma');
-  fs.writeFileSync(schemaPath, template);  
-  process.env.DB_URL = dbUrl;
-  // Define the command you want to run
-  await ProcessService.runShellCommand('npx prisma generate --schema='+schemaPath);  
+    UtilsService.setRWSVar('_rws_installed', 'OK');
 
-  log(color().green('[RWS Init]') + ' prisma schema generated from ', schemaPath);
-
-  UtilsService.setRWSVar('_rws_installed', 'OK');
-
-  return;
+    return;
 }
 
 const SetupRWS = main;

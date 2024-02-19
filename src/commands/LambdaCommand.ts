@@ -1,20 +1,20 @@
 
-import Command, { ICmdParams } from "./_command";
+import Command, { ICmdParams } from './_command';
 import ConsoleService from '../services/ConsoleService';
 import AWSService from '../services/AWSService';
 import fs from 'fs';
 import path from 'path';
-import UtilsService from "../services/UtilsService";
-import EFSService from "../services/EFSService";
-import LambdaService from "../services/LambdaService";
-import VPCService from "../services/VPCService";
-import CloudWatchService from "../services/CloudWatchService";
+import UtilsService from '../services/UtilsService';
+import EFSService from '../services/EFSService';
+import LambdaService from '../services/LambdaService';
+import VPCService from '../services/VPCService';
+import CloudWatchService from '../services/CloudWatchService';
 
 const { log, warn, error, color, rwsLog } = ConsoleService;
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
+const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
 
@@ -49,7 +49,7 @@ const lambdasCfg: ILambdasLifeCycleConfig = {
             }
 
             if (!fs.existsSync(sourceArtilleryCfg)) {
-                throw `Create "artillery-config.yml" in your project root directory.`;
+                throw 'Create "artillery-config.yml" in your project root directory.';
             }
             
             rwsLog('RWS Lambda CLI | artillery | preDeploy', ' copying artillery config.');
@@ -65,7 +65,7 @@ const lambdasCfg: ILambdasLifeCycleConfig = {
             }            
         }
     }
-}
+};
 
 type ILambdaSubCommand = 'deploy' | 'delete' | string;
 
@@ -104,26 +104,26 @@ class LambdaCommand extends Command
 
             'elasticfilesystem:CreateFileSystem',
             'elasticfilesystem:DeleteFileSystem',
-            "elasticfilesystem:DescribeFileSystems",
+            'elasticfilesystem:DescribeFileSystems',
 
             'elasticfilesystem:CreateAccessPoint',
             'elasticfilesystem:DeleteAccessPoint',
-            "elasticfilesystem:DescribeAccessPoints",
+            'elasticfilesystem:DescribeAccessPoints',
 
             'elasticfilesystem:CreateMountTarget',            
-            "elasticfilesystem:DeleteMountTarget",
+            'elasticfilesystem:DeleteMountTarget',
             'elasticfilesystem:DescribeMountTargets',
 
-            "ec2:CreateSecurityGroup",    
-            "ec2:DescribeSecurityGroups",
-            "ec2:DescribeSubnets",
+            'ec2:CreateSecurityGroup',    
+            'ec2:DescribeSecurityGroups',
+            'ec2:DescribeSubnets',
 
-            "ec2:DescribeVpcs",   
+            'ec2:DescribeVpcs',   
             
-            "ec2:CreateVpcEndpoint",
-            "ec2:DescribeVpcEndpoints",
-            "ec2:ModifyVpcEndpoint",
-            "ec2:DeleteVpcEndpoint",
+            'ec2:CreateVpcEndpoint',
+            'ec2:DescribeVpcEndpoints',
+            'ec2:ModifyVpcEndpoint',
+            'ec2:DeleteVpcEndpoint',
 
             'cloudwatch:PutMetricData',
             'cloudwatch:GetMetricData'
@@ -143,28 +143,28 @@ class LambdaCommand extends Command
         }
         
         switch(lambdaCmd){
-            case 'deploy':
-                await this.deploy(params);            
-                return;
-            case 'undeploy':
-                await this.undeploy(params);            
-                return;    
-            case 'invoke':
-                await this.invoke(params);            
-                return;
-            case 'delete':
-                await this.delete(params);
-                return;    
-            case 'list':
-                await this.list(params);
-                return;    
-            case 'open-to-web':
-                await this.openToWeb(params);
-                return;        
-            default:
-                error(`[RWS Lambda CLI] "${lambdaCmd}" command is not supported in RWS Lambda CLI`);
-                log(`Try: "deploy:${lambdaCmd}", "delete:${lambdaCmd}", invoke:${lambdaCmd} or "list:${lambdaCmd}"`)
-                return;    
+        case 'deploy':
+            await this.deploy(params);            
+            return;
+        case 'undeploy':
+            await this.undeploy(params);            
+            return;    
+        case 'invoke':
+            await this.invoke(params);            
+            return;
+        case 'delete':
+            await this.delete(params);
+            return;    
+        case 'list':
+            await this.list(params);
+            return;    
+        case 'open-to-web':
+            await this.openToWeb(params);
+            return;        
+        default:
+            error(`[RWS Lambda CLI] "${lambdaCmd}" command is not supported in RWS Lambda CLI`);
+            log(`Try: "deploy:${lambdaCmd}", "delete:${lambdaCmd}", invoke:${lambdaCmd} or "list:${lambdaCmd}"`);
+            return;    
         }    
     }   
 
@@ -178,7 +178,7 @@ class LambdaCommand extends Command
         if (theAction && UtilsService.isInterface<ILambdasLifeCycleConfig>(theAction)) {            
             await theAction(params);
         }
-    }
+    };
 
     public async getLambdaParameters(params: ICmdParams): Promise<ILambdaParamsReturn>
     {
@@ -197,7 +197,7 @@ class LambdaCommand extends Command
             vpcId,
             lambdaArg,
             extraParams
-        }
+        };
     }
     
     public async invoke(params: ICmdParams)
@@ -228,7 +228,7 @@ class LambdaCommand extends Command
     {
         const listFunctionsParams: AWS.Lambda.ListFunctionsRequest = {
             MaxItems: 100,
-          };
+        };
         
         const rwsLambdaFunctions: AWS.Lambda.FunctionConfiguration[] = [];
 
@@ -236,22 +236,22 @@ class LambdaCommand extends Command
             const functionsResponse = await AWSService.getLambda().listFunctions(listFunctionsParams).promise();
         
             if (functionsResponse.Functions) {
-              for (const functionConfig of functionsResponse.Functions) {
-                if (functionConfig.FunctionName && functionConfig.FunctionName.startsWith('RWS-')) {
-                  rwsLambdaFunctions.push(functionConfig);
+                for (const functionConfig of functionsResponse.Functions) {
+                    if (functionConfig.FunctionName && functionConfig.FunctionName.startsWith('RWS-')) {
+                        rwsLambdaFunctions.push(functionConfig);
+                    }
                 }
-              }
             }
         } catch (error) {
             throw new Error(`Error listing Lambda functions: ${(error as AWS.AWSError).message}`);
         }
 
-        rwsLog('RWS Lambda Service', color().yellowBright(`RWS lambda functions list:`));    
-        rwsLog('RWS Lambda Service', color().yellowBright(`ARN  |  NAME`));  
+        rwsLog('RWS Lambda Service', color().yellowBright('RWS lambda functions list:'));    
+        rwsLog('RWS Lambda Service', color().yellowBright('ARN  |  NAME'));  
 
         rwsLambdaFunctions.map((funct: AWS.Lambda.FunctionConfiguration) => funct.FunctionArn + '  |  ' +funct.FunctionName).forEach((msg) => {
             log(msg);
-        })
+        });
     }
 
     public async deploy(params: ICmdParams)
@@ -288,7 +288,7 @@ class LambdaCommand extends Command
             let payload = {};
 
             if(lambdaArg){                       
-                let payloadPath = LambdaService.findPayload(lambdaArg);             
+                const payloadPath = LambdaService.findPayload(lambdaArg);             
 
                 payload = JSON.parse(fs.readFileSync(payloadPath, 'utf-8'));
                 
@@ -353,4 +353,4 @@ class LambdaCommand extends Command
 }
 
 export default LambdaCommand.createCommand();
-export {ILambdaParams, ILambdaParamsReturn}
+export {ILambdaParams, ILambdaParamsReturn};

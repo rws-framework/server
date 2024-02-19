@@ -1,19 +1,19 @@
-import { Server as ServerBase, Socket } from "socket.io";
-import HTTPS from "https";
-import getConfigService from "./AppConfigService";
+import { Server as ServerBase, Socket } from 'socket.io';
+import HTTPS from 'https';
+import getConfigService from './AppConfigService';
 import cors, {CorsOptions} from 'cors';
-import HTTP, { ServerResponse } from "http";
-import ITheSocket from "../interfaces/ITheSocket";
-import AuthService from "./AuthService";
+import HTTP, { ServerResponse } from 'http';
+import ITheSocket from '../interfaces/ITheSocket';
+import AuthService from './AuthService';
 import fs from 'fs';
-import expressServer, { Request, Response, Express } from "express";
-import RouterService from "./RouterService";
+import expressServer, { Request, Response, Express } from 'express';
+import RouterService from './RouterService';
 import { AxiosRequestHeaders } from 'axios';
-import Controller from "../controllers/_controller";
-import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from "../routing/routes";
-import ProcessService from "./ProcessService";
-import ConsoleService from "./ConsoleService";
-import UtilsService from "./UtilsService";
+import Controller from '../controllers/_controller';
+import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../routing/routes';
+import ProcessService from './ProcessService';
+import ConsoleService from './ConsoleService';
+import UtilsService from './UtilsService';
 import path from 'path';
 import bodyParser from 'body-parser';
 import Error404 from '../errors/Error404';
@@ -55,10 +55,10 @@ const wsLog = async (fakeError: Error, text: any, socketId: string = null, isErr
     const filePath = module.id;
     const fileName = filePath.split('/').pop();
 
-    const marker = '[RWS Websocket]'
+    const marker = '[RWS Websocket]';
 
-    logit(isError ? ConsoleService.color().red(marker) : ConsoleService.color().green(marker), `|`,`${filePath}:${await getCurrentLineNumber(fakeError)}`,`|${socketId ? ConsoleService.color().blueBright(` (${socketId})`) : ''}:`,`${text}`);
-}
+    logit(isError ? ConsoleService.color().red(marker) : ConsoleService.color().green(marker), '|',`${filePath}:${await getCurrentLineNumber(fakeError)}`,`|${socketId ? ConsoleService.color().blueBright(` (${socketId})`) : ''}:`,`${text}`);
+};
 
 type RWSServer = HTTP.Server | HTTPS.Server;
 type ServerStarter = (callback?: () => void) => Promise<void>;
@@ -82,8 +82,8 @@ class ServerService extends ServerBase {
 
         const WEBSOCKET_CORS = {
             origin: _DOMAIN,
-            methods: ["GET", "POST"]
-        }
+            methods: ['GET', 'POST']
+        };
 
         const cors_headers: string[] = ['Content-Type', 'x-csrf-token','Accept', 'Authorization', 'x-junctionapi-version'];
 
@@ -99,13 +99,13 @@ class ServerService extends ServerBase {
         this.options = opts;
 
         const corsHeadersSettings = {
-            "Access-Control-Allow-Origin": _DOMAIN, // Replace with your frontend domain
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": cors_headers.join(', '),
-            "Access-Control-Allow-Credentials": 'true'
+            'Access-Control-Allow-Origin': _DOMAIN, // Replace with your frontend domain
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': cors_headers.join(', '),
+            'Access-Control-Allow-Credentials': 'true'
         };
 
-        this.srv.on("options", (req, res) => {
+        this.srv.on('options', (req, res) => {
             res.writeHead(200, corsHeadersSettings);
             res.end();
         });
@@ -123,7 +123,7 @@ class ServerService extends ServerBase {
             origin: _DOMAIN, // Replace with the appropriate origins or set it to '*'
             methods: ['GET', 'POST', 'OPTIONS'],
             allowedHeaders: cors_headers
-        }
+        };
 
         const corsMiddleware = cors(this.corsOptions);                 
 
@@ -179,12 +179,12 @@ class ServerService extends ServerBase {
         return {
             websocket: this.ws_server,
             http: this.http_server,
-        }
+        };
     }
 
     disconnectClient = (clientSocket: Socket) => {
         clientSocket.disconnect(true);
-    }
+    };
     
     setJWTToken(socketId: string, token: string): void {
         if(token.indexOf('Bearer') > -1){
@@ -196,14 +196,14 @@ class ServerService extends ServerBase {
 
     public webServer(): RWSServer
     { 
-        return this.srv 
+        return this.srv; 
     }  
 
     static async createServerInstance(opts: IInitOpts): Promise<[RWSServer, Express]>
     {
         const app = expressServer();       
         const isSSL = getConfigService().get('features')?.ssl;
-        const options: {key?: Buffer, cert?: Buffer} = {}
+        const options: {key?: Buffer, cert?: Buffer} = {};
 
         if(isSSL){
             const sslCert = getConfigService().get('ssl_cert');
@@ -270,15 +270,15 @@ class ServerService extends ServerBase {
             this.sockets.on('connection', async (socket: Socket) => {            
                 const socketId: string = socket.id;
 
-                wsLog(new Error(), `Client connection recieved`, socketId);
+                wsLog(new Error(), 'Client connection recieved', socketId);
 
     
 
-                socket.on("disconnect",  async (reason: string) => {                    
+                socket.on('disconnect',  async (reason: string) => {                    
                     wsLog(new Error(), `Client disconnected due to ${reason}`, socketId);
                     
                     if (reason === 'transport error') {
-                        wsLog(new Error(), `Transport error`, socketId, true);
+                        wsLog(new Error(), 'Transport error', socketId, true);
                     }                    
                 });
 
@@ -289,7 +289,7 @@ class ServerService extends ServerBase {
                 
 
                 socket.on('__PING__', async () => {
-                    wsLog(new Error(), `Recieved ping... Emmiting response callback.`, socketId)
+                    wsLog(new Error(), 'Recieved ping... Emmiting response callback.', socketId);
                     socket.emit('__PONG__', '__PONG__');
                 });                
 
@@ -328,14 +328,14 @@ class ServerService extends ServerBase {
                 try{
                     _self.users[socket.id] = await AuthService.authorize<typeof UserClass>(_self.tokens[socket.id], UserClass);                    
                 } catch(e: Error | any){
-                    ConsoleService.error('Token authorization error: ', e.message)
+                    ConsoleService.error('Token authorization error: ', e.message);
                 }
             }
 
             if(!_self.users[socket.id]){
 
                 _self.disconnectClient(socket);
-                ConsoleService.error('Token unauthorized')
+                ConsoleService.error('Token unauthorized');
                 response.writeHead(403, 'Token unauthorized');
                 response.end();
                 return;
@@ -354,7 +354,7 @@ class ServerService extends ServerBase {
         if(req.headers.accept.indexOf('text/html') > -1){
             const htmlTemplate = this.processErrorTemplate(error);
 
-                response = htmlTemplate;
+            response = htmlTemplate;
         }   
       
         res.status(404).send(response);
@@ -372,25 +372,25 @@ class ServerService extends ServerBase {
     static cookies = {                
         getCookies: async(headers: AxiosRequestHeaders): Promise<CookieType> =>
         {
-          return new Promise((resolve) => {
-            resolve(headers.cookie.split(';').map((cookieEntry: string) => {
-              const [key, value] = cookieEntry.split('=');
+            return new Promise((resolve) => {
+                resolve(headers.cookie.split(';').map((cookieEntry: string) => {
+                    const [key, value] = cookieEntry.split('=');
         
-              return {
-                [key]: value
-              }
-            }))
-          }); 
+                    return {
+                        [key]: value
+                    };
+                }));
+            }); 
         },        
         getCookie: async (headers: AxiosRequestHeaders, key: string): Promise<string | null> => 
         {
-          const cookiesBin: CookieType = await ServerService.cookies.getCookies(headers);
+            const cookiesBin: CookieType = await ServerService.cookies.getCookies(headers);
         
-          if(!cookiesBin[key]){
-            return null;
-          }
+            if(!cookiesBin[key]){
+                return null;
+            }
         
-          return cookiesBin[key];
+            return cookiesBin[key];
         }        
     };
 
@@ -405,5 +405,5 @@ class ServerService extends ServerBase {
     }
 }
 
-export default ServerService
-export { WsRoutes, IHTTProute, IInitOpts, ITheSocket, IPrefixedHTTProutes, RWSHTTPRoutingEntry, RWSServer, ServerControlSet }
+export default ServerService;
+export { WsRoutes, IHTTProute, IInitOpts, ITheSocket, IPrefixedHTTProutes, RWSHTTPRoutingEntry, RWSServer, ServerControlSet };

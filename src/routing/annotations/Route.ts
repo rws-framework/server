@@ -13,7 +13,7 @@ interface IHTTProuteOpts {
 }
   
 function Route(name: string, method: RequestMethodType = 'GET', params: IHTTProuteParams = { responseType: 'json' }) {
-    let metaOpts: IHTTProuteOpts = {name, method, params};
+    const metaOpts: IHTTProuteOpts = {name, method, params};
 
     return function(target: any, key: string) {          
         Reflect.defineMetadata(`Route:${key}`, metaOpts, target);
@@ -21,4 +21,4 @@ function Route(name: string, method: RequestMethodType = 'GET', params: IHTTProu
 }
 
 export default Route;
-export {IHTTProuteOpts, RequestMethodType, IHTTProuteParams}
+export {IHTTProuteOpts, RequestMethodType, IHTTProuteParams};

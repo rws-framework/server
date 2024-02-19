@@ -1,10 +1,10 @@
-import TheService from "./_service";
-import ConsoleService from "./ConsoleService";
+import TheService from './_service';
+import ConsoleService from './ConsoleService';
 
 import path from 'path';
 import fs from 'fs';
 
-import { BlobWriter, TextReader, ZipWriter } from '@zip.js/zip.js';import { Error500 } from "../errors";
+import { BlobWriter, TextReader, ZipWriter } from '@zip.js/zip.js';import { Error500 } from '../errors';
 
 const { log, warn, error, color } = ConsoleService;
 
@@ -19,7 +19,7 @@ const defaultZipParams: IZipParams = {
     recursive: true,
     format: 'zip',
     ignore: []
-}
+};
 
 class ZipService extends TheService {
 
@@ -67,4 +67,4 @@ class ZipService extends TheService {
 }
 
 export default ZipService.getSingleton();
-export { IZipParams }
+export { IZipParams };

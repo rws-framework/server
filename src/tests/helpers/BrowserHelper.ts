@@ -32,8 +32,8 @@ class WebBrowser {
     async getCookieString(): Promise<string>
     {        
         return Object.entries(await this.getCookies())
-        .map(([name, cookie]) => `${name}=${cookie.value}`)
-        .join('; ');
+            .map(([name, cookie]) => `${name}=${cookie.value}`)
+            .join('; ');
     }
 }
 
@@ -50,6 +50,6 @@ async function create(params: IBrowserParams): Promise<WebBrowser>
 
 export default {
     create,  
-}
+};
 
-export { IBrowserParams, WebBrowser }
+export { IBrowserParams, WebBrowser };

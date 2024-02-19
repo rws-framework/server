@@ -1,11 +1,11 @@
 import { Readable } from 'stream';
-import { PromptTemplate } from "@langchain/core/prompts";
+import { PromptTemplate } from '@langchain/core/prompts';
 import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
-import { SimpleChatModel } from "@langchain/core/language_models/chat_models";
-import type { BaseLanguageModelInterface } from "@langchain/core/language_models/base";
-import { IterableReadableStream } from "@langchain/core/utils/stream";
-import { ChainValues } from "@langchain/core/utils/types";
-import { Document } from "langchain/document";
+import { SimpleChatModel } from '@langchain/core/language_models/chat_models';
+import type { BaseLanguageModelInterface } from '@langchain/core/language_models/base';
+import { IterableReadableStream } from '@langchain/core/utils/stream';
+import { ChainValues } from '@langchain/core/utils/types';
+import { Document } from 'langchain/document';
 
 import { IContextToken } from '../../interfaces/IContextToken';
 
@@ -91,7 +91,7 @@ class RWSPrompt {
 
     private onStream = (chunk: string) => {
 
-    }
+    };
 
     constructor(params: IPromptParams){
         this.input = params.input;
@@ -110,8 +110,8 @@ class RWSPrompt {
         if (!stream) {
             this.output = source;
         } else {           
-           this.output += source;
-           this.onStream(source);            
+            this.output += source;
+            this.onStream(source);            
         }
         
         return this;
@@ -207,7 +207,7 @@ class RWSPrompt {
 
     setMultiTemplate(template: PromptTemplate): RWSPrompt
     {
-        this.multiTemplate = template
+        this.multiTemplate = template;
         return this;
     }
 
@@ -218,7 +218,7 @@ class RWSPrompt {
 
     setConvo(convo: ConvoLoader<SimpleChatModel>): RWSPrompt
     {
-        this.convo = convo.setPrompt(this)        
+        this.convo = convo.setPrompt(this);        
         
         return this;
     }
@@ -242,7 +242,7 @@ class RWSPrompt {
     {
         this.sentInput = this.input;
         const returnedRWS = await executor.promptRequest(this, null, intruderPrompt, debugVars);
-        this.output = returnedRWS.readOutput()        
+        this.output = returnedRWS.readOutput();        
     }
 
     async singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt: string = null, ensureJson: boolean = false): Promise<void>
@@ -282,7 +282,7 @@ class RWSPrompt {
         for await (const event of stream) {            
             // Assuming 'event' has a specific structure. Adjust according to actual event structure.
             if ('chunk' in event && event.chunk.bytes) {
-                const chunk = JSON.parse(Buffer.from(event.chunk.bytes).toString("utf-8"));
+                const chunk = JSON.parse(Buffer.from(event.chunk.bytes).toString('utf-8'));
                 if(first){
                     console.log('chunk', chunk);
                     first = false;
@@ -369,7 +369,7 @@ class RWSPrompt {
             hyperParameters: this.hyperParameters,
             var_storage: this.varStorage,
             created_at: this.created_at.toISOString()
-        }
+        };
     }
 }
 
@@ -387,4 +387,4 @@ export {
     IChainCallOutput, 
     ChainStreamType, 
     ILLMChunk 
-}
+};

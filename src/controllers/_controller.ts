@@ -1,7 +1,7 @@
-import { Response, Request } from "express";
-import RWSService from "../services/_service";
+import { Response, Request } from 'express';
+import RWSService from '../services/_service';
 
-import AppConfig from '../services/AppConfigService'
+import AppConfig from '../services/AppConfigService';
 
 import Error404 from '../errors/Error404';
 import Error500 from '../errors/Error500';
@@ -21,7 +21,7 @@ interface IRequestParams<T>{
     req: Request
 }
 
-export {IRequestParams, IHTTProuteMethod}
+export {IRequestParams, IHTTProuteMethod};
 
 /**
  * @category Core extendable objects
@@ -48,7 +48,7 @@ export default class Controller extends RWSService {
                 const error = new Error500(e, `${__filename}::${methodName}`, params);
                 return error;
             }
-        }
+        };
     }
 
     hasError(){

@@ -2,4 +2,4 @@ interface IContextToken {
     value: string
 }
 
-export { IContextToken }
+export { IContextToken };

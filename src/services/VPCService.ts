@@ -1,6 +1,6 @@
-import AWSService from "./AWSService";
-import ConsoleService from "./ConsoleService";
-import TheService from "./_service";
+import AWSService from './AWSService';
+import ConsoleService from './ConsoleService';
+import TheService from './_service';
 
 const { log, warn, error, color, rwsLog } = ConsoleService;
 
@@ -58,13 +58,13 @@ class VPCService extends TheService{
     async getDefaultRouteTable(vpcId: string, subnetId: string = null): Promise<AWS.EC2.RouteTable>
     {
         const filters = [ {
-            Name: "vpc-id",
+            Name: 'vpc-id',
             Values: [vpcId]
-        }]
+        }];
 
         if(subnetId){
             filters.push({
-                Name: "association.subnet-id",
+                Name: 'association.subnet-id',
                 Values: [subnetId]
             });
         }
@@ -80,14 +80,14 @@ class VPCService extends TheService{
     }
 
     async createVPCEndpointIfNotExist(vpcId: string): Promise<string> {
-        const endpointName = "RWS-S3-GATE";
+        const endpointName = 'RWS-S3-GATE';
         const serviceName = `com.amazonaws.${AWSService.getRegion()}.s3`;        
     
         // Describe VPC Endpoints
         const existingEndpoints = await AWSService.getEC2().describeVpcEndpoints({
             Filters: [
                 {
-                    Name: "tag:Name",
+                    Name: 'tag:Name',
                     Values: [endpointName]
                 }
             ]
@@ -104,14 +104,14 @@ class VPCService extends TheService{
             const endpointResponse = await AWSService.getEC2().createVpcEndpoint({
                 VpcId: vpcId,
                 ServiceName: serviceName,
-                VpcEndpointType: "Gateway",
+                VpcEndpointType: 'Gateway',
                 RouteTableIds: [defaultRouteTable.RouteTableId], // Add your route table IDs here
                 TagSpecifications: [
                     {
-                        ResourceType: "vpc-endpoint",
+                        ResourceType: 'vpc-endpoint',
                         Tags: [
                             {
-                                Key: "Name",
+                                Key: 'Name',
                                 Value: endpointName
                             }
                         ]
@@ -124,8 +124,8 @@ class VPCService extends TheService{
                 log(`VPC Endpoint "${endpointName}" created with ID: ${endpointResponse.VpcEndpoint.VpcEndpointId}`);
                 return endpointResponse.VpcEndpoint.VpcEndpointId;
             } else {
-                error("Failed to create VPC Endpoint");
-                throw new Error("Failed to create VPC Endpoint");
+                error('Failed to create VPC Endpoint');
+                throw new Error('Failed to create VPC Endpoint');
             }
         } else {
             log(`VPC Endpoint "${endpointName}" already exists.`);
@@ -148,7 +148,7 @@ class VPCService extends TheService{
                     VpcEndpointIds: [vpcEndpointId]
                 }).promise()).VpcEndpoints;
 
-                rwsLog('Creating VPC Endpoint route')
+                rwsLog('Creating VPC Endpoint route');
                 // Add a route to the route table
                 await AWSService.getEC2().createRoute({
                     RouteTableId: routeTable.RouteTableId,
@@ -250,7 +250,7 @@ class VPCService extends TheService{
                 if (['InvalidSubnet.Range', 'InvalidSubnet.Conflict'].includes(err.code)) {
                     nextThirdOctet += _SUBNET_PASS_VAL;
 
-                    error(`CIDR Address taken. Retrying...`);
+                    error('CIDR Address taken. Retrying...');
 
                     return await rerun(nextThirdOctet, range);
                 } else {
@@ -260,7 +260,7 @@ class VPCService extends TheService{
         } else {
             nextThirdOctet += _SUBNET_PASS_VAL;
 
-            error(`CIDR Address already used. Retrying...`);
+            error('CIDR Address already used. Retrying...');
             return await rerun(nextThirdOctet, range);
         }
     }
@@ -280,7 +280,7 @@ class VPCService extends TheService{
             rwsLog(`NAT Gateway ${natGatewayId} is now available.`);
         } catch (err) {
             error(`Error waiting for NAT Gateway ${natGatewayId} to become available:`);
-            log(err)
+            log(err);
             throw err;
         }
     }

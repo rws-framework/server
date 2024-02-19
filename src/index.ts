@@ -1,4 +1,3 @@
-import path from 'path';
 import { Socket } from 'socket.io';
 
 import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './services/ServerService';
@@ -15,6 +14,7 @@ import AuthService from './services/AuthService';
 import S3Service from './services/S3Service';
 import ConsoleService from './services/ConsoleService';
 import ProcessService from './services/ProcessService';
+
 import LambdaService from './services/LambdaService';
 import AWSService from './services/AWSService';
 import EFSService from './services/EFSService';
@@ -34,12 +34,12 @@ import { IContextToken } from './interfaces/IContextToken';
 const RWSannotations = {
     modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, TrackType },
     routingAnnotations: { Route }
-}
-
+};
 
 import TheCommand, {ICmdParams} from './commands/_command';
 import Model, { IModel, TrackType as RWSTrackType } from './models/_model';
 import Controller, { IRequestParams} from './controllers/_controller';
+
 import TheService from './services/_service';
 import TheSocket, { JSONMessage } from './sockets/_socket';
 
@@ -109,5 +109,6 @@ export {
     IEmbeddingsHandler,
     IRWSPromptJSON,
     ISplitterParams,
-    ILLMChunk
-}
+    ILLMChunk,
+    RWSTrackType
+};

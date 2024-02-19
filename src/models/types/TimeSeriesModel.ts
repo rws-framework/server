@@ -1,14 +1,14 @@
-import RWSModel, { TrackType as RWSTrackType } from "../_model";
+import RWSModel, { TrackType as RWSTrackType } from '../_model';
 
 export default class TimeSeriesModel<ChildClass> extends RWSModel<TimeSeriesModel<ChildClass>>{
     @RWSTrackType(Number)
-    value: number;
+        value: number;
 
     @RWSTrackType(Date)
-    timestamp: Date;
+        timestamp: Date;
     
     @RWSTrackType(Object)
-    params: any;
+        params: any;
 
     constructor(data?: any) {    
         super(data);

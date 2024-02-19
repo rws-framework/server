@@ -1,7 +1,7 @@
-import TheService from "./_service";
+import TheService from './_service';
 
-import AppConfigService from "./AppConfigService";
-import ConsoleService from "./ConsoleService";
+import AppConfigService from './AppConfigService';
+import ConsoleService from './ConsoleService';
 
 import AWS from 'aws-sdk';
 
@@ -29,7 +29,7 @@ class AWSService extends TheService {
         if(!region){
             this.region = AppConfigService().get('aws_lambda_region');
         }else{
-            this.region = region
+            this.region = region;
         }
 
         // console.log(region,this.s3, this.region)
@@ -128,7 +128,7 @@ class AWSService extends TheService {
 
         try {
             const data = await this.getIAM().simulatePrincipalPolicy(params).promise();
-            for (let result of data.EvaluationResults) {
+            for (const result of data.EvaluationResults) {
                 if(result.EvalDecision !== 'allowed'){
                     allowed = false;
                     policies.push(result.EvalActionName);

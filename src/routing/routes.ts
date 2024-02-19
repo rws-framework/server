@@ -13,4 +13,4 @@ interface IPrefixedHTTProutes {
 type RWSHTTPRoutingEntry = IHTTProute | IPrefixedHTTProutes;
 
 
-export { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry }
+export { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry };

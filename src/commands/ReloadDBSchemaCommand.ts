@@ -9,7 +9,7 @@ const { log, warn, error, color } = ConsoleService;
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
+const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
 const moduleDir = path.resolve(path.dirname(module.id), '../..');
 
 

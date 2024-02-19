@@ -1,7 +1,7 @@
 import getConfig, { IAppConfig } from '../../services/AppConfigService';
 
-import { Server } from "socket.io";
-import ServerService, { ServerControlSet } from "../../services/ServerService";
+import { Server } from 'socket.io';
+import ServerService, { ServerControlSet } from '../../services/ServerService';
 import { io, Socket } from 'socket.io-client';
 
 import * as _mocha from 'mocha';
@@ -35,8 +35,8 @@ const createTestVars = (cfg: IAppConfig = null): ITestVars => {
         socket: null,
         theUser: null,
         browser: null
-    }
-}
+    };
+};
   
 const connectToWS = async (jwt_token: string, ping_event: string = '__PING__', ping_response_event: string = '__PONG__'): Promise<Socket> => {
     const headers = {
@@ -70,7 +70,7 @@ const connectToWS = async (jwt_token: string, ping_event: string = '__PING__', p
             socket.emit(ping_event);
         });        
     } catch (error: any) {
-    console.error('Error initializing socket:', error.context.responseText);
+        console.error('Error initializing socket:', error.context.responseText);
         throw error;
     }                  
 };
@@ -131,7 +131,7 @@ const startServer = async (): Promise<ServerControlSet> => {
     });
 
     const startHTTPListener = async () => new Promise<void>((resolve) => {
-      server.http.starter();
+        server.http.starter();
     });   
 
     const startWSListener = async () => new Promise<void>((resolve) => {
@@ -176,14 +176,14 @@ const setLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet, timeout
             await callbacks.after(testVars);        
         }
     });
-}
+};
 
 export default {    
     connectToWS,    
     startServer,    
     createTestVars,
-    disableLogging: () => { console.log = () => {} }
-}
+    disableLogging: () => { console.log = () => {}; }
+};
 
 const MOCHA = Object.assign(_mocha, {
     expect,
@@ -193,4 +193,4 @@ const MOCHA = Object.assign(_mocha, {
 
 export {
     ITheUser, MOCHA, ITestVars, TestCase
-}
+};

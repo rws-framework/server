@@ -1,7 +1,7 @@
 import RWSError from './_error';
 
 export default class Error500 extends RWSError {
-    name = '500 internal server error'
+    name = '500 internal server error';
 
     constructor(baseError: Error | unknown, resourcePath?: string, params: any = null){
         super(500, baseError, params);
@@ -10,6 +10,6 @@ export default class Error500 extends RWSError {
             resourcePath = __filename;
         }
 
-        this.message = `RWS resource "$${resourcePath}" has internal error`
+        this.message = `RWS resource "$${resourcePath}" has internal error`;
     }
 }

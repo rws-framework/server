@@ -1,7 +1,7 @@
-import IAppConfig from "../interfaces/IAppConfig";
+import IAppConfig from '../interfaces/IAppConfig';
 import path from 'path';
 import fs from 'fs';
-import UtilsService from "../services/UtilsService";
+import UtilsService from '../services/UtilsService';
 
 interface ICmdParams {
     [key: string]: any
@@ -45,7 +45,7 @@ export default abstract class TheCommand {
         let finalCmdDir = cmdDir;
 
         if(cmdDir.indexOf('node_modules') > -1){
-            finalCmdDir = rootPackageDir + '/' + finalCmdDir.substring(finalCmdDir.indexOf("node_modules"));
+            finalCmdDir = rootPackageDir + '/' + finalCmdDir.substring(finalCmdDir.indexOf('node_modules'));
         }
         
         
@@ -57,10 +57,10 @@ export default abstract class TheCommand {
     getSourceFilePath() {
         const err = new Error();
         if (err.stack) {
-          const match = err.stack.match(/at [^\s]+ \((.*):\d+:\d+\)/);
-          if (match && match[1]) {
-            return match[1];
-          }
+            const match = err.stack.match(/at [^\s]+ \((.*):\d+:\d+\)/);
+            if (match && match[1]) {
+                return match[1];
+            }
         }
         return '';
     }
@@ -99,8 +99,8 @@ export default abstract class TheCommand {
             apiCmd,
             apiArg,
             extraParams
-        }
+        };
     }
 }
 
-export {ICmdParams, ICmdParamsReturn}
+export {ICmdParams, ICmdParamsReturn};

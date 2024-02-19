@@ -8,17 +8,17 @@ interface InverseRelationOpts{
     inversionModel?: string,
   }
   
-  function InverseRelation(inversionModel: string) {
+function InverseRelation(inversionModel: string) {
   
-    let metaOpts: InverseRelationOpts = {
-      inversionModel: inversionModel
+    const metaOpts: InverseRelationOpts = {
+        inversionModel: inversionModel
     };
 
   
     return function(target: any, key: string) {          
-      Reflect.defineMetadata(`InverseRelation:${key}`, metaOpts, target);
+        Reflect.defineMetadata(`InverseRelation:${key}`, metaOpts, target);
     };
-  }
+}
 
-  export default InverseRelation;
-  export {InverseRelationOpts}
+export default InverseRelation;
+export {InverseRelationOpts};

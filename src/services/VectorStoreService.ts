@@ -1,7 +1,7 @@
-import RWSService from './_service'
+import RWSService from './_service';
 
-import { FaissStore } from "@langchain/community/vectorstores/faiss";
-import { EmbeddingsInterface } from "@langchain/core/embeddings";
+import { FaissStore } from '@langchain/community/vectorstores/faiss';
+import { EmbeddingsInterface } from '@langchain/core/embeddings';
 
 import RWSVectorStore, { VectorDocType } from '../models/convo/VectorStore';
 

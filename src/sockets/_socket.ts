@@ -1,7 +1,7 @@
-import { Socket } from "socket.io";
-import { DefaultEventsMap } from "socket.io/dist/typed-events";
-import ITheSocket from "../interfaces/ITheSocket";
-import ServerService from "../services/ServerService";
+import { Socket } from 'socket.io';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import ITheSocket from '../interfaces/ITheSocket';
+import ServerService from '../services/ServerService';
 
 interface JSONMessage{
     method: string,
@@ -17,10 +17,10 @@ abstract class TheSocket implements ITheSocket{
     }
 
     handleConnection(socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, routeName: string): Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> {
-        throw new Error("Method not implemented.");
+        throw new Error('Method not implemented.');
     }
     middlewareImplementation?(next: any): void {
-        throw new Error("Method not implemented.");
+        throw new Error('Method not implemented.');
     }
 
     getJson(input: string): any
@@ -42,4 +42,4 @@ abstract class TheSocket implements ITheSocket{
 }
 
 export default TheSocket;
-export {JSONMessage}
+export {JSONMessage};

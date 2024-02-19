@@ -1,10 +1,10 @@
-import TheService from "./_service";
-import AppConfigService from "./AppConfigService";
-import ConsoleService from "./ConsoleService";
+import TheService from './_service';
+import AppConfigService from './AppConfigService';
+import ConsoleService from './ConsoleService';
 import AWS from 'aws-sdk';
-import AWSService from "./AWSService";
-import LambdaService from "./LambdaService";
-import VPCService from "./VPCService";
+import AWSService from './AWSService';
+import LambdaService from './LambdaService';
+import VPCService from './VPCService';
 
 const { log, error, rwsLog } = ConsoleService;
 
@@ -31,7 +31,7 @@ class APIGatewayService extends TheService {
     }
 
     async deleteApiGateway(apiId: string): Promise<void> {        
-        await AWSService.getAPIGateway().deleteRestApi({ restApiId: apiId }).promise()        
+        await AWSService.getAPIGateway().deleteRestApi({ restApiId: apiId }).promise();        
         error('Deleted API Gateway: '+ apiId);
     }
 
@@ -46,7 +46,7 @@ class APIGatewayService extends TheService {
                 name: gatewayName + '-API',
                 description: `API Gateway for ${gatewayName}`,
                 endpointConfiguration: {
-                    types: ["REGIONAL"]
+                    types: ['REGIONAL']
                 }
             };
 
@@ -96,7 +96,7 @@ class APIGatewayService extends TheService {
             restApiId: restApiId,
             resourceId: resource.id,
             httpMethod: httpMethod,
-            authorizationType: "NONE", // Change this if you want to use an authorizer
+            authorizationType: 'NONE', // Change this if you want to use an authorizer
             apiKeyRequired: false
         }).promise();
     }    

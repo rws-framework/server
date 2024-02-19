@@ -1,11 +1,11 @@
-import TheService from "./_service";
+import TheService from './_service';
 import crypto from 'crypto';
 
 
 import path from 'path';
 import fs from 'fs';
-import TraversalService from "./TraversalService";
-import UtilsService from "./UtilsService";
+import TraversalService from './TraversalService';
+import UtilsService from './UtilsService';
 
 
 class MD5Service extends TheService {
@@ -75,7 +75,7 @@ class MD5Service extends TheService {
 
         return TraversalService.getAllFilesInFolder(cmdDirPath, [
             process.cwd() + '/' + cmdDirPath + '/index.ts'
-        ]);;
+        ]);
     }
 }
 

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, CreateAxiosDefaults } from "axios";
+import axios, { AxiosInstance, CreateAxiosDefaults } from 'axios';
 import https from 'https';
 
 import getAppConfig from '../../services/AppConfigService';
@@ -19,9 +19,9 @@ export default {
         axiosInstance.defaults.timeout = 60000; // Increase timeout to 60000ms (60 seconds)
                 
         axiosInstance.interceptors.request.use((config) => {           
-           return config;
+            return config;
         });
 
         return axiosInstance;
     }
-}
+};

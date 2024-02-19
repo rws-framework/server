@@ -5,4 +5,4 @@ import RWSError from './_error';
 
 export {
     Error403, Error404, Error500, RWSError
-}
+};

@@ -1,5 +1,5 @@
-import Route from './Route'
+import Route from './Route';
 
 export {
     Route
-}
+};

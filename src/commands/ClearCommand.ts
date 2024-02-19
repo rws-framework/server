@@ -10,7 +10,7 @@ const { log, warn, error, color } = ConsoleService;
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
+const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
 
@@ -26,12 +26,12 @@ class ClearCommand extends Command
     
 
     async removeDirRecursively(path: string) {
-    try {
-        await rmdir(path, { recursive: true });
-        console.log(`Directory at ${path} removed successfully`);
-    } catch (error) {
-        console.error(`Error while removing directory: ${error}`);
-    }
+        try {
+            await rmdir(path, { recursive: true });
+            console.log(`Directory at ${path} removed successfully`);
+        } catch (error) {
+            console.error(`Error while removing directory: ${error}`);
+        }
     }
 
     async execute(params?: ICmdParams): Promise<void>

@@ -24,10 +24,10 @@ export default class RWSError{
 
     printFullError(): void
     {
-        console.error('[RWS Error]')
+        console.error('[RWS Error]');
         console.log(`[${this.name}] ${this.message}`);
         console.log('Stack:', this.stack);
-        console.error('[/RWS Error]')
+        console.error('[/RWS Error]');
     }
 
     getMessage(): string

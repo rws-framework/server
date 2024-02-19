@@ -1,14 +1,14 @@
 
 
 
-import IAppConfig from "./interfaces/IAppConfig";
-import getConfigService, { AppConfigService } from "./services/AppConfigService";
-import ServerService, { IInitOpts, ServerControlSet } from "./services/ServerService";
-import ConsoleService from "./services/ConsoleService";
-import UtilsService from "./services/UtilsService";
+import IAppConfig from './interfaces/IAppConfig';
+import getConfigService, { AppConfigService } from './services/AppConfigService';
+import ServerService, { IInitOpts, ServerControlSet } from './services/ServerService';
+import ConsoleService from './services/ConsoleService';
+import UtilsService from './services/UtilsService';
 
-import fs from "fs";
-import ProcessService from "./services/ProcessService";
+import fs from 'fs';
+import ProcessService from './services/ProcessService';
 
 
 async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
@@ -35,7 +35,7 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
     }
 
     const executeDir: string = process.cwd();
-    const packageRootDir = UtilsService.findRootWorkspacePath(executeDir)
+    const packageRootDir = UtilsService.findRootWorkspacePath(executeDir);
     const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
     const moduleCfgFile = `${moduleCfgDir}/_rws_installed`;
 
@@ -58,16 +58,16 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
 
     const wsStart = async () => {
         return (await theServer.websocket.starter());
-    }
+    };
 
     const httpStart = async () => {
         return (await theServer.http.starter());
-    }
+    };
 
     wsStart();
     await httpStart();    
 
-    return theServer
+    return theServer;
 }
 
 export default init;

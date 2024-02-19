@@ -1,16 +1,16 @@
-import TheService from "./_service";
+import TheService from './_service';
 
 
-import ConsoleService from "./ConsoleService";
-import LambdaService from "./LambdaService";
-import AWSService from "./AWSService";
-import ProcessService from "./ProcessService";
+import ConsoleService from './ConsoleService';
+import LambdaService from './LambdaService';
+import AWSService from './AWSService';
+import ProcessService from './ProcessService';
 
 import path from 'path';
 import AWS from 'aws-sdk';
-import VPCService from "./VPCService";
+import VPCService from './VPCService';
 
-const { log, warn, error, color, rwsLog } = ConsoleService;
+const { log, error, color, rwsLog } = ConsoleService;
 
 const __STATE_WAIT_TIME = 3000; //ms
 
@@ -26,7 +26,7 @@ class EFSService extends TheService {
         super();        
     }
 
-    async getOrCreateEFS(functionName: string, vpcId: string, subnetId: string): Promise<[string, string, boolean]> 
+    async getOrCreateEFS(functionName: string, vpcId: string): Promise<[string, string, boolean]> 
     {      
         const response = await AWSService.getEFS().describeFileSystems({ CreationToken: functionName }).promise();
     
@@ -35,7 +35,7 @@ class EFSService extends TheService {
             const accessPoints = await this.getAccessPoints(fileSystemId);
 
             if(!accessPoints.length){
-                throw "No acces point in EFS for RWS lambdas"
+                throw 'No acces point in EFS for RWS lambdas';
             }
 
             log(`${color().green('[RWS Cloud FS Service]')} EFS exists:`, {
@@ -53,7 +53,7 @@ class EFSService extends TheService {
             try {
                 const response = await AWSService.getEFS().createFileSystem(params).promise();
                 await this.waitForEFS(response.FileSystemId);                
-                const fsMountId = await this.createMountTarget(response.FileSystemId, subnetId);     
+                   
                 await this.waitForFileSystemMount(response.FileSystemId);                           
                 const [accessPointId, accessPointArn] = await this.createAccessPoint(response.FileSystemId);
                 await this.waitForAccessPoint(accessPointId);
@@ -104,6 +104,7 @@ class EFSService extends TheService {
     }
 
     async waitForFileSystemMount(fileSystemId: string): Promise<boolean> {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             try {
                 log(`${color().yellowBright('[EFS Mount Listener] awaiting EFS mount change')}`);        
@@ -156,22 +157,22 @@ class EFSService extends TheService {
     async getAccessPoints(fileSystemId: string): Promise<AWS.EFS.AccessPointDescriptions | null>
     {
         try {
-          const params = {
-            FileSystemId: fileSystemId  // specify the FileSystemId to filter access points for a specific EFS
-          };
+            const params = {
+                FileSystemId: fileSystemId  // specify the FileSystemId to filter access points for a specific EFS
+            };
       
-          const response = await AWSService.getEFS().describeAccessPoints(params).promise();
-          if (response.AccessPoints && response.AccessPoints.length > 0) {
-            return response.AccessPoints;  // this will return an array of access points
-          } else {
-            log('No access points found for the specified EFS.');
-            return null;
-          }
+            const response = await AWSService.getEFS().describeAccessPoints(params).promise();
+            if (response.AccessPoints && response.AccessPoints.length > 0) {
+                return response.AccessPoints;  // this will return an array of access points
+            } else {
+                log('No access points found for the specified EFS.');
+                return null;
+            }
         } catch (err) {
-          error('Error getting access point:', error);
-          throw err;
+            error('Error getting access point:', error);
+            throw err;
         }
-      }
+    }
 
     async createAccessPoint(fileSystemId: string): Promise<[string, string]> 
     {
@@ -185,11 +186,11 @@ class EFSService extends TheService {
                 Gid: 1001
             },
             RootDirectory: {
-                Path: "/mnt/efs",  // The path where Lambda will mount the EFS.
+                Path: '/mnt/efs',  // The path where Lambda will mount the EFS.
                 CreationInfo: {
                     OwnerUid: 1001,
                     OwnerGid: 1001,
-                    Permissions: "755"
+                    Permissions: '755'
                 }
             }
         };
@@ -222,7 +223,7 @@ class EFSService extends TheService {
         }
     }   
 
-    async uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket:string, vpcId: string, subnetId: string): Promise<any>
+    async uploadToEFS(baseFunctionName: string, efsId: string, modulesS3Key: string, s3Bucket:string, vpcId: string, subnetId: string): Promise<void>
     {
         const efsLoaderFunctionName = await this.processEFSLoader(vpcId, subnetId);
 
@@ -234,7 +235,7 @@ class EFSService extends TheService {
         };
     
         try {
-            log(`${color().green(`[RWS Lambda Service]`)} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function for "${baseFunctionName}" with ${modulesS3Key} in ${s3Bucket} bucket.`);
+            log(`${color().green('[RWS Lambda Service]')} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function for "${baseFunctionName}" with ${modulesS3Key} in ${s3Bucket} bucket.`);
 
             const response = await LambdaService.invokeLambda(efsLoaderFunctionName, params);
             rwsLog('RWS Lambda Service', color().yellowBright(`"${efsLoaderFunctionName}" lambda function response:`));
@@ -259,7 +260,7 @@ class EFSService extends TheService {
         const _UNZIP_FUNCTION_NAME: string = 'efs-loader';
 
         if(!(await LambdaService.functionExists('RWS-' + _UNZIP_FUNCTION_NAME))){
-            log(`${color().green(`[RWS Lambda Service]`)} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
+            log(`${color().green('[RWS Lambda Service]')} creating EFS Loader as "${_UNZIP_FUNCTION_NAME}" lambda function.`, moduleDir);
             const zipPath = await LambdaService.archiveLambda(`${moduleDir}/lambda-functions/efs-loader`, moduleCfgDir);
 
             await LambdaService.deployLambda(_UNZIP_FUNCTION_NAME, zipPath, vpcId, subnetId, true);

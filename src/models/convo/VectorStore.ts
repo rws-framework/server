@@ -1,14 +1,14 @@
 import { v4 as uuid } from 'uuid';
-import { FaissStore } from "@langchain/community/vectorstores/faiss";
-import { EmbeddingsInterface } from "@langchain/core/embeddings";
-import { Document } from "@langchain/core/documents";
+import { FaissStore } from '@langchain/community/vectorstores/faiss';
+import { EmbeddingsInterface } from '@langchain/core/embeddings';
+import { Document } from '@langchain/core/documents';
 
 type VectorDocType = Document<Record<string, any>>[];
 
 export default class RWSVectorStore 
 {
     private faiss: FaissStore;
-    private docs: VectorDocType
+    private docs: VectorDocType;
     private embeddings: EmbeddingsInterface;
 
     constructor(docs: VectorDocType, embeddings: EmbeddingsInterface){
@@ -31,4 +31,4 @@ export default class RWSVectorStore
 
 export {
     VectorDocType
-}
+};

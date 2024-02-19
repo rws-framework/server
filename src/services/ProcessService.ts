@@ -1,12 +1,12 @@
-import TheService from "./_service";
+import TheService from './_service';
 import { execSync } from 'child_process';
 import { spawn } from 'child_process';
-import ConsoleService from "./ConsoleService";
+import ConsoleService from './ConsoleService';
 
 import readline from 'readline';
 import path from 'path';
 import os from 'os';
-import UtilsService from "./UtilsService";
+import UtilsService from './UtilsService';
 
 const { log, warn, error, color } = ConsoleService;
 
@@ -61,59 +61,59 @@ const totalMemoryGB = totalMemoryMB / 1024;
 
 class ProcessService extends TheService {
 
-  getParentPID(pid: number): number {
-    const command = `ps -o ppid= -p ${pid} | awk '{print $1}'`;
-    return parseInt(execSync(command).toString().trim(), 10);
-  }
+    getParentPID(pid: number): number {
+        const command = `ps -o ppid= -p ${pid} | awk '{print $1}'`;
+        return parseInt(execSync(command).toString().trim(), 10);
+    }
 
-  getAllProcessesIds(): number[] {
-    const startingPID = process.pid;
+    getAllProcessesIds(): number[] {
+        const startingPID = process.pid;
 
-    return [startingPID, this.getParentPID(startingPID)];
-  }
+        return [startingPID, this.getParentPID(startingPID)];
+    }
 
-  async runShellCommand(command: string, cwd: string = null,silent: boolean = false): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const [cmd, ...args] = command.split(' ');
+    async runShellCommand(command: string, cwd: string = null,silent: boolean = false): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const [cmd, ...args] = command.split(' ');
       
-      if(!cwd){
-        cwd = process.cwd();
-      }
+            if(!cwd){
+                cwd = process.cwd();
+            }
 
-      const spawned = spawn(cmd, args, { stdio: silent ? 'ignore' : 'inherit', cwd });
+            const spawned = spawn(cmd, args, { stdio: silent ? 'ignore' : 'inherit', cwd });
 
-      spawned.on('exit', (code) => {
-        if (code !== 0) {
-          return reject(new Error(`Command failed with exit code ${code}`));
-        }
-        resolve();
-      });
+            spawned.on('exit', (code) => {
+                if (code !== 0) {
+                    return reject(new Error(`Command failed with exit code ${code}`));
+                }
+                resolve();
+            });
 
-      spawned.on('error', (error) => {
-        reject(error);
-      });
-    });
-  }
-
-  sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async getInput(prompt: string): Promise<string> {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-
-    return new Promise((resolve) => {
-        rl.question(color().red('[RWS CLI Input Prompt] ' + prompt), (answer) => {
-            resolve(answer);
-            rl.close();
+            spawned.on('error', (error) => {
+                reject(error);
+            });
         });
-    });
-  }
+    }
+
+    sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async getInput(prompt: string): Promise<string> {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
+
+        return new Promise((resolve) => {
+            rl.question(color().red('[RWS CLI Input Prompt] ' + prompt), (answer) => {
+                resolve(answer);
+                rl.close();
+            });
+        });
+    }
 }
 
 export default ProcessService.getSingleton();
 
-export { IExecCmdOpts }
+export { IExecCmdOpts };

@@ -1,9 +1,9 @@
-import getConfigService from "./AppConfigService";
+import getConfigService from './AppConfigService';
 import jwt from 'jsonwebtoken';
 
 
 
-import TheService from "./_service";
+import TheService from './_service';
 
 /**
  * @notExported
@@ -24,9 +24,9 @@ class AuthService extends TheService{
                         return;
                     }
                 
-                    approve(new constructor(tokenData))
+                    approve(new constructor(tokenData));
                 });
-            })
+            });
         }
         catch(e: Error | any){           
             throw e;
