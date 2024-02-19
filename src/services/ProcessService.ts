@@ -4,29 +4,28 @@ import { spawn } from 'child_process';
 import ConsoleService from './ConsoleService';
 
 import readline from 'readline';
-import os from 'os';
 
-const { log, warn, error, color } = ConsoleService;
+const { color } = ConsoleService;
 
 interface IExecCmdOpts {
   verbose?: boolean
   _default: any | null
 }
 
-interface PM2CommandParams {
-  script: string
-  name: string // Generate a unique name for each command
-  args: string[]
-  cwd: string
-  interpreter?: string
-  exec_mode: string
-  instances: number
-  max_memory_restart: string
-  autorestart?: boolean
-  env: {
-    [key: string]: string
-  }
-}
+// interface PM2CommandParams {
+//   script: string
+//   name: string // Generate a unique name for each command
+//   args: string[]
+//   cwd: string
+//   interpreter?: string
+//   exec_mode: string
+//   instances: number
+//   max_memory_restart: string
+//   autorestart?: boolean
+//   env: {
+//     [key: string]: string
+//   }
+// }
 
 type InterpreterType = 'node' | 'none';
 
@@ -40,21 +39,21 @@ interface ICommandOpts {
   }
 }
 
-interface PM2LogPacket {
-  process: {
-    name: string;
-    pm_id: number;
-    [key: string]: any; // Additional fields
-  };
-  data: string;
-  at: Date;
-  [key: string]: any; // Additional fields
-}
+// interface PM2LogPacket {
+//   process: {
+//     name: string;
+//     pm_id: number;
+//     [key: string]: any; // Additional fields
+//   };
+//   data: string;
+//   at: Date;
+//   [key: string]: any; // Additional fields
+// }
 
-const totalMemoryBytes = os.totalmem();
-const totalMemoryKB = totalMemoryBytes / 1024;
-const totalMemoryMB = totalMemoryKB / 1024;
-const totalMemoryGB = totalMemoryMB / 1024;
+// const totalMemoryBytes = os.totalmem();
+// const totalMemoryKB = totalMemoryBytes / 1024;
+// const totalMemoryMB = totalMemoryKB / 1024;
+// const totalMemoryGB = totalMemoryMB / 1024;
 
 
 class ProcessService extends TheService {
@@ -114,4 +113,4 @@ class ProcessService extends TheService {
 
 export default ProcessService.getSingleton();
 
-export { IExecCmdOpts };
+export { IExecCmdOpts, ICommandOpts };

@@ -39,8 +39,7 @@ function TrackType(type: any, opts: ITrackerOpts = null, tags: string[] = []) {
         metaOpts.inversionModel = opts.inversionModel;  
     }
   
-    const resolvedType = typeof type === 'function' ? type() : type;
-   
+    //const resolvedType = typeof type === 'function' ? type() : type;   
     
     if(type._collection){    
         metaOpts.type = (type as any);

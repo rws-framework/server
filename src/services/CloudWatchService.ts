@@ -2,7 +2,7 @@ import { DescribeLogStreamsRequest, GetLogEventsRequest, GetLogEventsResponse, O
 import AWSService from './AWSService';
 import TheService from './_service';
 import ConsoleService from './ConsoleService';
-const { log, rwsLog, error, color } = ConsoleService;
+const { log, error, color } = ConsoleService;
 
 const _MS = 1000;
 

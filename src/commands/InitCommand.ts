@@ -5,13 +5,11 @@ import UtilsService from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
 
-const { rwsLog, log, warn, error, color } = ConsoleService;
+const { rwsLog, color } = ConsoleService;
 
 const executionDir = process.cwd();
 
 const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
-const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-const moduleDir = path.resolve(path.dirname(module.id), '../..');
 
 
 class InitCommand extends Command 

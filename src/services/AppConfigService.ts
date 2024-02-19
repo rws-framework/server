@@ -58,7 +58,7 @@ class AppConfigService extends TheService{
     }
 
     public reloadConfig(cfgString: string): AppConfigService 
-    {
+    {        
         const cfg: () => IAppConfig = (require(cfgString)).defaults; 
         this.data = cfg();
 

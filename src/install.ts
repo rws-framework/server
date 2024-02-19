@@ -9,7 +9,7 @@ import ProcessService from './services/ProcessService';
 import ConsoleService from './services/ConsoleService';
 import UtilsService from './services/UtilsService';
 
-const { rwsLog, log, warn, error, color } = ConsoleService;
+const { log, color } = ConsoleService;
 
 const {runShellCommand} = ProcessService;
 
@@ -18,7 +18,6 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
   
     // Get the prototype of the model instance
     const modelMetadatas: Record<string, {annotationType: string, metadata: any}> = Model.getModelAnnotations(constructor); // Pass the class constructor   
-    const embed = false;   
     const modelName: string = (constructor as any)._collection;
 
  
@@ -86,7 +85,6 @@ async function main(cfg: IAppConfig)
     const AppConfigService = getConfigService(cfg);
     const dbUrl = await AppConfigService.get('mongo_url');
     const moduleDir = path.resolve(path.dirname(module.id), '..');
-    const executionDir = path.resolve(process.cwd());
 
     const dbType = 'mongodb';
 

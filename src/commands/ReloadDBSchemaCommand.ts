@@ -5,7 +5,7 @@ import UtilsService from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
 
-const { log, warn, error, color } = ConsoleService;
+const { color } = ConsoleService;
 
 const executionDir = process.cwd();
 

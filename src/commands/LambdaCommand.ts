@@ -10,13 +10,12 @@ import LambdaService from '../services/LambdaService';
 import VPCService from '../services/VPCService';
 import CloudWatchService from '../services/CloudWatchService';
 
-const { log, warn, error, color, rwsLog } = ConsoleService;
+const { log, error, color, rwsLog } = ConsoleService;
 
 const executionDir = process.cwd();
 
 const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
 
 const moduleDir = path.resolve(path.dirname(module.id), '..', '..').replace('dist/', '');
 
@@ -40,7 +39,7 @@ interface ILambdasLifeCycleConfig {
 
 const lambdasCfg: ILambdasLifeCycleConfig = {
     artillery: {
-        preArchive: async (params: ILambdaParams): Promise<void> => {
+        preArchive: async (): Promise<void> => {
             const sourceArtilleryCfg = `${path.resolve(process.cwd())}/artillery-config.yml`;
             const targetArtilleryCfg = `${moduleDir}/lambda-functions/artillery/artillery-config.yml`;
 
@@ -56,7 +55,7 @@ const lambdasCfg: ILambdasLifeCycleConfig = {
 
             fs.copyFileSync(sourceArtilleryCfg, targetArtilleryCfg);
         },
-        postDeploy: async (params: ILambdaParams): Promise<void> => {        
+        postDeploy: async (): Promise<void> => {        
             const targetArtilleryCfg = `${moduleDir}/lambda-functions/artillery/artillery-config.yml`;
 
             if (fs.existsSync(targetArtilleryCfg)) {
@@ -325,15 +324,11 @@ class LambdaCommand extends Command
             return;
         }        
 
-        const lambdaParams: ILambdaParams = {
-            rwsConfig: params._rws_config,
-            subnetId: subnetId
-        };
     }
 
     public async openToWeb(params: ICmdParams)
     {
-        const {lambdaDirName} = await this.getLambdaParameters(params);                  
+        await this.getLambdaParameters(params);                  
 
         // await APIGatewayService.associateNATGatewayWithLambda('RWS-' + lambdaDirName);        
     }    

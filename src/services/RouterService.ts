@@ -115,7 +115,7 @@ class RouterService extends TheService{
 
     private addRouteToServer(actions: RouteEntry, route: IHTTProute){
  
-        const [routeMethod, appMethod, routeParams, methodName] = actions[route.name];                                
+        const [routeMethod, appMethod, routeParams] = actions[route.name];                                
       
         if(!appMethod){
             return;
@@ -225,7 +225,7 @@ class RouterService extends TheService{
     getRoute(routePath: string, routes: IHTTProute[]): IHTTProute | null
     {
 
-        const front_routes = appConfig().get('front_routes');
+        // const front_routes = appConfig().get('front_routes');
 
         const foundRoute = routes.find((item: IHTTProute) => {
             return item.path.indexOf(routePath) > -1 && !item.noParams;

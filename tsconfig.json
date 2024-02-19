@@ -14,12 +14,7 @@
     "strictNullChecks": false,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "declaration": true,
-    "paths": {
-      "rws-js-server": [
-        "./src/"
-      ]    
-    }
+    "declaration": true, 
   },
   "include": [
     "src"

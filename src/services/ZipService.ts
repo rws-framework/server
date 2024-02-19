@@ -6,7 +6,7 @@ import fs from 'fs';
 
 import { BlobWriter, TextReader, ZipWriter } from '@zip.js/zip.js';import { Error500 } from '../errors';
 
-const { log, warn, error, color } = ConsoleService;
+const { log, color } = ConsoleService;
 
 interface IZipParams {
     recursive?: boolean
@@ -15,11 +15,11 @@ interface IZipParams {
     ignore?: string[]
 }
 
-const defaultZipParams: IZipParams = {
-    recursive: true,
-    format: 'zip',
-    ignore: []
-};
+// const defaultZipParams: IZipParams = {
+//     recursive: true,
+//     format: 'zip',
+//     ignore: []
+// };
 
 class ZipService extends TheService {
 
@@ -36,7 +36,7 @@ class ZipService extends TheService {
         await zipWriter.close();
 
         // Handle the zipped content, for example, save it
-        const blob = await writer.getData();
+        // const blob = await writer.getData();
 
         log(`${color().green('[RWS Lambda Service]')} ZIP params:`);
         log(params);

@@ -16,14 +16,10 @@ import ProcessService from './ProcessService';
 import VPCService from './VPCService';
 
 
-const { log, warn, error, color, rwsLog } = ConsoleService;
+const { log, error, color, rwsLog } = ConsoleService;
 
 const MIN = 60; // 1MIN = 60s
 
-interface InvokeLambdaResponse {
-  StatusCode?: number;
-  Payload: string;
-}
 
 type InvocationTypeType = 'RequestResponse' | 'Event' | 'DryDrun';
 
@@ -113,7 +109,7 @@ class LambdaService extends TheService {
 
             await S3Service.bucketExists(s3BucketName);
 
-            const [efsId, accessPointArn, efsExisted] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId);   
+            const [ accessPointArn] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId);   
 
             log(`${color().green('[RWS Lambda Service]')} ${color().yellowBright('deploying lambda on ' + this.region)} using ${color().red(`S3://${s3BucketName}/${functionDirName}.zip`)}`);
 
@@ -401,10 +397,8 @@ class LambdaService extends TheService {
     {
         const executionDir = process.cwd();
 
-        const filePath:string = module.id;        
     
         const moduleDir = path.resolve(__dirname, '..', '..').replace('dist/', '');
-        const moduleCfgDir = `${executionDir}/node_modules/.rws`;    
 
         let payloadPath = `${executionDir}/payloads/${lambdaArg}.json`;
     

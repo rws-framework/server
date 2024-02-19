@@ -120,8 +120,8 @@ const setLoggedLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet) =
 };  
 
 const startServer = async (): Promise<ServerControlSet> => {
-    const _TESTPORT = await getConfig().get('test_port');
-    const _TESTWSPORT = await getConfig().get('test_ws_port');
+    // const _TESTPORT = await getConfig().get('test_port');
+    // const _TESTWSPORT = await getConfig().get('test_ws_port');
 
     const server = await ServerService.initializeApp({        
         controllerList: await getConfig().get('controller_list'),

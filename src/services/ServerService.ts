@@ -11,7 +11,6 @@ import RouterService from './RouterService';
 import { AxiosRequestHeaders } from 'axios';
 import Controller from '../controllers/_controller';
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../routing/routes';
-import ProcessService from './ProcessService';
 import ConsoleService from './ConsoleService';
 import UtilsService from './UtilsService';
 import path from 'path';
@@ -20,7 +19,8 @@ import Error404 from '../errors/Error404';
 import RWSError from '../errors/_error';
 import compression from 'compression';
 
-const fileUpload = require('express-fileupload');
+//@ts-expect-error no-types
+import fileUpload from 'express-fileupload';
 
 type WsRoutes = {
     [eventName: string]: new (data: any) => ITheSocket;
@@ -28,11 +28,11 @@ type WsRoutes = {
 
 type UserTokens = {
     [socketId: string]: string;
-}
+};
 
 type JWTUsers<IUser> = {
     [socketId: string]: IUser;
-}
+};
 
 type CookieType = {[key: string] : string};
 
@@ -53,7 +53,7 @@ const wsLog = async (fakeError: Error, text: any, socketId: string = null, isErr
     const logit = isError ? console.error : console.log;
   
     const filePath = module.id;
-    const fileName = filePath.split('/').pop();
+    //const fileName = filePath.split('/').pop();
 
     const marker = '[RWS Websocket]';
 
@@ -62,8 +62,8 @@ const wsLog = async (fakeError: Error, text: any, socketId: string = null, isErr
 
 type RWSServer = HTTP.Server | HTTPS.Server;
 type ServerStarter = (callback?: () => void) => Promise<void>;
-type RWSServerPair = { instance: ServerService, starter: ServerStarter }
-type ServerControlSet = { websocket: RWSServerPair, http: RWSServerPair }
+type RWSServerPair = { instance: ServerService, starter: ServerStarter };
+type ServerControlSet = { websocket: RWSServerPair, http: RWSServerPair };
 
 const MINUTE = 1000 * 60;
 
@@ -92,7 +92,7 @@ class ServerService extends ServerBase {
             transports: [opts.transport || 'websocket'],
             pingTimeout: 5*MINUTE
         }); 
-        const _self: ServerService = this;
+        
 
         this.server_app = expressApp;
         this.srv = webServer;
@@ -165,10 +165,7 @@ class ServerService extends ServerBase {
                 ConsoleService.log(ConsoleService.color().green('Websocket server' + ` is working on port ${wsPort}. SSL is ${isSSL ? 'enabled' : 'disabled'}.`));
             })};  
         }
-
-        const allProcessesIds = ProcessService.getAllProcessesIds();
-
-        const executeDir = process.cwd();     
+        
         const pacakgeDir = UtilsService.findRootWorkspacePath(process.cwd());   
         const rwsDir = `${pacakgeDir}/node_modules/.rws`;
 

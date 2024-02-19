@@ -55,7 +55,7 @@ class Model<ChildClass> implements IModel{
     public async _asyncFill(data: any): Promise<ChildClass>{
         const collections_to_models: {[key: string]: any} = {};           
         const timeSeriesIds: {[key: string] : {collection: string, hydrationField:string,ids: string[]}} = this.getTimeSeriesModelFields();
-        const _self: this = this;
+        
         this.loadModels().forEach((model) => {
             collections_to_models[model.getCollection()] = model;      
         });      
@@ -260,8 +260,7 @@ class Model<ChildClass> implements IModel{
         if(variable === 'id'){
             return true;
         }
-
-        const data = constructor.prototype as any;
+        
         const dbAnnotations = Model.getModelAnnotations(constructor);
       type AnnotationType = { annotationType: string, key: string };
 

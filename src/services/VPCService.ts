@@ -2,7 +2,7 @@ import AWSService from './AWSService';
 import ConsoleService from './ConsoleService';
 import TheService from './_service';
 
-const { log, warn, error, color, rwsLog } = ConsoleService;
+const { log, warn, error, rwsLog } = ConsoleService;
 
 
 class VPCService extends TheService{
@@ -187,7 +187,6 @@ class VPCService extends TheService{
     }
 
     calculateNextThirdOctetIncrement(range: number): number {
-        const thirdOctet = 0;
     
         // Calculate the number of addresses represented by the CIDR range
         const numAddresses = Math.pow(2, 32 - range);
@@ -212,10 +211,7 @@ class VPCService extends TheService{
     
         // Retrieve existing subnets within the VPC
         const subnets = await AWSService.getEC2().describeSubnets({ Filters: [{ Name: 'vpc-id', Values: [vpcId] }] }).promise();
-        const existingCidrs = subnets.Subnets?.map(subnet => subnet.CidrBlock).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })) || [];
-
-        // Propose a new CIDR block
-        let newCidrBlock: string;
+        const existingCidrs = subnets.Subnets?.map(subnet => subnet.CidrBlock).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })) || [];        
         
         const baseIp: string = (passedCIDRBlock ? passedCIDRBlock : vpcCidrBlock).split('/')[0];
         
@@ -230,7 +226,7 @@ class VPCService extends TheService{
 
         let nextThirdOctet : number = baseThirdOctet + _SUBNET_PASS_VAL;
     
-        newCidrBlock = `${baseIp.split('.').slice(0, 2).join('.')}.${nextThirdOctet }.0/${range.toString()}`;
+        const newCidrBlock = `${baseIp.split('.').slice(0, 2).join('.')}.${nextThirdOctet }.0/${range.toString()}`;
         rwsLog(`Trying to create public subnet for "${vpcId}" VPC with "${newCidrBlock}" address`);
 
         if (!existingCidrs.includes(newCidrBlock)) {
@@ -265,10 +261,6 @@ class VPCService extends TheService{
         }
     }
 
-    private extractThirdOctet(ip: string): number
-    {
-        return parseInt(ip.split('.')[2]);
-    }
 
     async waitForNatGatewayAvailable(natGatewayId: string): Promise<void> {
         try {

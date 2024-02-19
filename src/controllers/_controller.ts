@@ -5,8 +5,8 @@ import RWSService from '../services/_service';
 import Error404 from '../errors/Error404';
 import Error500 from '../errors/Error500';
 
-type IHTTProuteMethod  = (params: IRequestParams<any>) => any
-interface IRequestParams<T>{
+type IHTTProuteMethod  = (params: IRequestParams) => any;
+interface IRequestParams{
     query: {
         [key: string]: any
     },
@@ -32,9 +32,9 @@ export default class Controller extends RWSService {
         super();        
     }
 
-    callMethod(methodName: string): (params: IRequestParams<any>) => any
+    callMethod(methodName: string): (params: IRequestParams) => any
     {
-        return (params: IRequestParams<any>) => {                            
+        return (params: IRequestParams) => {                            
             if((!(this as any)[methodName])){
                 const error = new Error404(new Error('The method does not exist in controller.'), `${__filename}::${methodName}`);
 

@@ -29,7 +29,7 @@ abstract class TheSocket implements ITheSocket{
     
     }
 
-    sendJson(input: Object): string
+    sendJson(input: object): string
     {
         return JSON.stringify(input);
     }

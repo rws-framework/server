@@ -12,27 +12,25 @@ import ProcessService from './services/ProcessService';
 
 
 async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
-    const AppConfigService = getConfigService(cfg);
-    const port = await AppConfigService.get('port');
-    const ws_port = await AppConfigService.get('ws_port');
+    const AppConfigService = getConfigService(cfg);    
     const wsRoutes = await AppConfigService.get('ws_routes');
     const httpRoutes = await AppConfigService.get('http_routes');
     const controler_list = await AppConfigService.get('controller_list');
     const pub_dir = await AppConfigService.get('pub_dir');
     const cors_domain = await AppConfigService.get('cors_domain');
 
-    const sslCert = AppConfigService.get('ssl_cert');
-    const sslKey = AppConfigService.get('ssl_key');      
+    // const sslCert = AppConfigService.get('ssl_cert');
+    // const sslKey = AppConfigService.get('ssl_key');      
 
     if(addToConfig !== null){
         await addToConfig(AppConfigService);
     }
 
-    let https = true;
+    // let https = true;
 
-    if(!sslCert || !sslKey){
-        https = false;
-    }
+    // if(!sslCert || !sslKey){
+    //     https = false;
+    // }
 
     const executeDir: string = process.cwd();
     const packageRootDir = UtilsService.findRootWorkspacePath(executeDir);

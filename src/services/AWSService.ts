@@ -6,7 +6,7 @@ import ConsoleService from './ConsoleService';
 import AWS from 'aws-sdk';
 
 
-const { log, warn, error, color, rwsLog } = ConsoleService;
+const { log, error } = ConsoleService;
 
 
 class AWSService extends TheService {

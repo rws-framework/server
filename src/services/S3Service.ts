@@ -2,7 +2,7 @@ import TheService from './_service';
 import AWSService from './AWSService';
 import ConsoleService from './ConsoleService';
 
-const { log, warn, error, color } = ConsoleService;
+const { log, error, color } = ConsoleService;
 
 class S3Service extends TheService {
     constructor(){
@@ -36,21 +36,21 @@ class S3Service extends TheService {
 
     async downloadToString(s3key: string, bucket: string, region?: string): Promise<string>
     {
-        return new Promise(async (resolve, reject) => {
-            const s3pageResponse: AWS.S3.GetObjectOutput | null = await this.downloadObject({
+        return new Promise((resolve, reject) => {
+            this.downloadObject({
                 Key: s3key,   
                 Bucket: bucket
-            }, region);      
-
-            if (s3pageResponse.Body instanceof Buffer || s3pageResponse.Body instanceof Uint8Array) {        
-                resolve(s3pageResponse.Body.toString());
-            } else if (typeof s3pageResponse.Body === 'string') {        
-                resolve(s3pageResponse.Body);
-            } else {
-            // Handle other types or throw an error
-                console.error('Unsupported data type');
-                reject('Unsupported data type');
-            }
+            }, region).then((s3pageResponse: AWS.S3.GetObjectOutput | null) => {
+                if (s3pageResponse.Body instanceof Buffer || s3pageResponse.Body instanceof Uint8Array) {        
+                    resolve(s3pageResponse.Body.toString());
+                } else if (typeof s3pageResponse.Body === 'string') {        
+                    resolve(s3pageResponse.Body);
+                } else {
+                // Handle other types or throw an error
+                    console.error('Unsupported data type');
+                    reject('Unsupported data type');
+                }
+            });                 
         });
     }
 

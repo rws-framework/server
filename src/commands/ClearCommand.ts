@@ -2,18 +2,13 @@ import Command, { ICmdParams } from './_command';
 import ConsoleService from '../services/ConsoleService';
 
 import { rmdir } from 'fs/promises';
-import path from 'path';
 import UtilsService from '../services/UtilsService';
-const { log, warn, error, color } = ConsoleService;
+const { color } = ConsoleService;
 
 const executionDir = process.cwd();
 
 const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-const cfgPathFile = `${moduleCfgDir}/_cfg_path`;  
-
-const moduleDir = path.resolve(path.dirname(module.id), '..', '..').replace('dist', '');
-
 
 class ClearCommand extends Command 
 {

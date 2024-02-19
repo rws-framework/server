@@ -56,7 +56,7 @@ interface IChainCallOutput {
     text: string
 }
 
-interface IEmbeddingsHandler<T extends object = {}> {
+interface IEmbeddingsHandler<T extends object> {
     generateEmbeddings: (text?: string) => Promise<T>
     storeEmbeddings: (embeddings: any, convoId: string) => Promise<void>
 }
@@ -78,7 +78,7 @@ class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, 
 
     public _baseSplitterParams: ISplitterParams;
     
-    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler, convoId: string | null = null, baseSplitterParams: ISplitterParams = {
+    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler<any>, convoId: string | null = null, baseSplitterParams: ISplitterParams = {
         chunkSize:400, chunkOverlap:80, separators: ['/n/n','.']
     }){
         this.embeddings = embeddings;
@@ -398,4 +398,4 @@ class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, 
 }
 
 export default ConvoLoader;
-export { IChainCallOutput, IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams };
+export { IChainCallOutput, IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams, IBaseLangchainHyperParams };

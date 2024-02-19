@@ -5,7 +5,7 @@ import AWSService from './AWSService';
 import LambdaService from './LambdaService';
 import VPCService from './VPCService';
 
-const { log, error, rwsLog } = ConsoleService;
+const {  error, rwsLog } = ConsoleService;
 
 class APIGatewayService extends TheService {
     private region: string;    
