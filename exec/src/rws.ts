@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import { RWSAppCommands, getAppConfig, IAppConfig, RWSCommand, ICmdParams, ProcessService, ConsoleService, MD5Service, UtilsService } from '../../src/index';
+import { RWSAppCommands, getAppConfig, IAppConfig, RWSCommand, ICmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
 
-const { log, warn, error, color, rwsLog } = ConsoleService;
+const { error } = ConsoleService;
 
 
 const fs = require('fs');
@@ -40,10 +40,8 @@ if(process.argv.length > 4){
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir)
+const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-const moduleCfgFile = `${moduleCfgDir}/_cfg_path`;
-const pkgDir = path.resolve(path.dirname(module.id), '../..');
 
 function getConfig(configPath: string, cfgPathFile: string | null = null) 
 {    
@@ -61,31 +59,21 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
         UtilsService.setRWSVar(cfgPathFile, configPath);
     }                    
 
-    const pathWorkspaceToCwd = path.relative(__dirname, process.cwd());
     
     const frameworkConfigFactory: () => IAppConfig = require( '@cwd/src/' + configPath).default;
 
     return frameworkConfigFactory();
 }
 
-function copyFileSync(source: string, destination: string) {
-    try {
-        const content = fs.readFileSync(source);
-        fs.writeFileSync(destination, content);
-        console.log(`File copied from ${source} to ${destination}`);
-    } catch (error) {
-        console.error('Error occurred while copying file:', error);
-    }
-}
 
 const main = async () => {     
-    const cfgPathFile = `_cfg_path`;
+    const cfgPathFile = '_cfg_path';
     const execDir = path.resolve(path.dirname(module.id));
     const tsFile = execDir + '/rws.ts';
     let APP_CFG: IAppConfig | null = null;
 
     if (command === 'init') {
-        const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config'       
+        const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config';       
 
         const cfgData = getConfig(configPath, cfgPathFile);        
 
@@ -135,7 +123,7 @@ const main = async () => {
     error(`Unknown command: ${command}.`);
 
     return;
-}
+};
 
 main().then(() => {
     process.exit(0);
