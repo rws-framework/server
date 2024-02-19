@@ -11,7 +11,9 @@
         "sourceType": "module",
         "project": "{{backend_dir}}/tsconfig.json"
     },
+    "ignorePatterns": ["*.js"],
     "rules": {
+        "no-case-declarations": "off",
         "no-unused-vars": "off",                
         "no-prototype-builtins": "off",                
         "unused-imports/no-unused-imports": "error",

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { RWSAppCommands, getAppConfig, IAppConfig, RWSCommand, ICmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
 
 const { error } = ConsoleService;

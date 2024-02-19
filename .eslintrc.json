@@ -14,9 +14,10 @@
         "sourceType": "module",
         "project": "./tsconfig.json"
     },
-    "ignorePatterns": ["build/", "exec/vendors/", "exec/dist"],
+    "ignorePatterns": ["*.js"],
     "rules": {
-        "no-unused-vars": "off",                
+        "no-unused-vars": "off",         
+        "no-case-declarations": "off",       
         "no-prototype-builtins": "off",                
         "unused-imports/no-unused-imports": "error",
         "unused-imports/no-unused-vars": ["warn", { "vars": "all", "args": "none"}],     
