@@ -259,7 +259,7 @@ class LambdaCommand extends Command
         const {lambdaDirName, vpcId, subnetId, lambdaArg} = await this.getLambdaParameters(params);            
 
         if (lambdaDirName === 'modules') {        
-            const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId, subnetId);
+            const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId);
             LambdaService.setRegion(params._rws_config.aws_lambda_region);
             await LambdaService.deployModules(lambdaArg, efsId, vpcId,subnetId, true);        
             return;
@@ -319,7 +319,7 @@ class LambdaCommand extends Command
         const {lambdaDirName, vpcId, subnetId, lambdaArg} = await this.getLambdaParameters(params);            
 
         if (lambdaDirName === 'modules') {        
-            const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId, subnetId);
+            const [efsId] = await EFSService.getOrCreateEFS('RWS_EFS', vpcId);
             LambdaService.setRegion(params._rws_config.aws_lambda_region);
             await LambdaService.deployModules(lambdaArg, efsId, vpcId,subnetId, true);        
             return;
