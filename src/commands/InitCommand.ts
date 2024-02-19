@@ -5,7 +5,7 @@ import UtilsService from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
 
-const { log, warn, error, color } = ConsoleService;
+const { rwsLog, log, warn, error, color } = ConsoleService;
 
 const executionDir = process.cwd();
 
@@ -25,6 +25,7 @@ class InitCommand extends Command
         ConsoleService.log(color().green('[RWS]') + ' starting systems...');              
     
         const configPath: string = params.config || params._default || 'config/config'; 
+        let generateProjectFiles = true;
 
         if(!configPath){
             ConsoleService.error('[RWS] No config path provided! Use "npx rws init path/to/config/file (from ./src)"');
@@ -40,6 +41,40 @@ class InitCommand extends Command
                 if(fs.existsSync(endPrismaFilePath)){
                     fs.unlinkSync(endPrismaFilePath);
                 }                
+
+                const moduleDir = path.resolve(path.dirname(module.id), '..', '..');
+                const executionDir = path.resolve(process.cwd());
+                let workspaced = false;
+                const workspaceRoot = UtilsService.findRootWorkspacePath(executionDir);
+              
+                if(workspaceRoot !== executionDir){
+                  workspaced = true;
+                }
+                
+                if(generateProjectFiles){              
+                    if(workspaced){
+                    if(!fs.existsSync(`${workspaceRoot}/.eslintrc.json`)){
+                        const rcjs: string = fs.readFileSync(`${moduleDir}/.setup/_base.eslintrc.json`, 'utf-8');
+                        fs.writeFileSync(`${workspaceRoot}/.eslintrc.json`, rcjs.replace('{{backend_dir}}', executionDir));
+                        rwsLog(color().green('RWS CLI'), 'Installed eslint base workspace config file.');
+                    }
+                    
+                    if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
+                        fs.copyFileSync(`${moduleDir}/.setup/.eslintrc.json`, `${executionDir}/.eslintrc.json`);
+                        rwsLog(color().green('RWS CLI'), 'Installed eslint backend workspace config file.');
+                    }    
+                    }else{
+                    if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
+                        fs.copyFileSync(`${moduleDir}/.eslintrc.json`, `${executionDir}/.eslintrc.json`);
+                        rwsLog(color().green('RWS CLI'), 'Installed eslint config file.');
+                    }  
+                    } 
+                
+                    if(!fs.existsSync(`${executionDir}/tsconfig.json`)){
+                    fs.copyFileSync(`${moduleDir}/.setup/tsconfig.json`, `${executionDir}/tsconfig.json`);
+                    rwsLog(color().green('RWS CLI'), 'Installed tsconfig.');
+                    }
+                }
 
                 await SetupRWS(cfgData);
                 const prismaCfgPath = moduleDir + '/prisma/schema.prisma';        

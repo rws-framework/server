@@ -9,7 +9,7 @@ import ProcessService from "./services/ProcessService";
 import ConsoleService from "./services/ConsoleService";
 import UtilsService from "./services/UtilsService";
 
-const { log, warn, error, color } = ConsoleService;
+const { rwsLog, log, warn, error, color } = ConsoleService;
 
 const {runShellCommand} = ProcessService;
 
@@ -86,7 +86,6 @@ async function main(cfg: IAppConfig)
   const AppConfigService = getConfigService(cfg);
   const dbUrl = await AppConfigService.get('mongo_url');
   const moduleDir = path.resolve(path.dirname(module.id), '..');
-  
   const executionDir = path.resolve(process.cwd());
 
   const dbType = 'mongodb';
