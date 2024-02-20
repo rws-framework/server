@@ -276,3 +276,6 @@ class EFSService extends TheService {
 }
 
 export default EFSService.getSingleton();
+export {
+    EFSService
+};

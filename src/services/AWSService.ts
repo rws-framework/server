@@ -204,3 +204,4 @@ class AWSService extends TheService {
 }
 
 export default AWSService.getSingleton();
+export {AWSService};

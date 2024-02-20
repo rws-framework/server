@@ -89,3 +89,4 @@ class CloudWatchService extends TheService {
 }
 
 export default CloudWatchService.getSingleton();
+export { CloudWatchService };

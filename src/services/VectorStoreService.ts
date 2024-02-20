@@ -13,3 +13,4 @@ class VectorStoreService extends RWSService
 }
 
 export default VectorStoreService.getSingleton();
+export {VectorStoreService};

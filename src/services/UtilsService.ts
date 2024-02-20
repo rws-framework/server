@@ -114,3 +114,4 @@ class UtilsService extends TheService {
 }
 
 export default UtilsService.getSingleton();
+export {UtilsService};

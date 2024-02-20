@@ -469,3 +469,4 @@ class LambdaService extends TheService {
 }
 
 export default LambdaService.getSingleton();
+export { LambdaService };

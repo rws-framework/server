@@ -8,25 +8,29 @@ import {SetupRWS} from './install';
 import ITimeSeries from './models/interfaces/ITimeSeries';
 import TimeSeriesModel from './models/types/TimeSeriesModel';
 
-import ServerService, { ServerControlSet } from './services/ServerService';
-import DBService from './services/DBService';
-import AuthService from './services/AuthService';
-import S3Service from './services/S3Service';
-import ConsoleService from './services/ConsoleService';
-import ProcessService from './services/ProcessService';
+import ServerService, { ServerControlSet, RWSServerPair, RWSServerStarter } from './services/ServerService';
+import DBService, { DBService as DBServiceInstance } from './services/DBService';
+import AuthService, { AuthService as AuthServiceInstance } from './services/AuthService';
+import S3Service, {S3Service as S3ServiceInstance} from './services/S3Service';
+import ConsoleService, { ConsoleService as ConsoleServiceInstance } from './services/ConsoleService';
+import ProcessService, {ProcessService as ProcessServiceInstance} from './services/ProcessService';
 
-import LambdaService from './services/LambdaService';
-import AWSService from './services/AWSService';
-import EFSService from './services/EFSService';
-import MD5Service from './services/MD5Service';
-import TraversalService from './services/TraversalService';
-import UtilsService from './services/UtilsService';
-import VectorStoreService from './services/VectorStoreService';
+import LambdaService, { LambdaService as LambdaServiceInstance } from './services/LambdaService';
+import AWSService, { AWSService as AWSServiceInstance } from './services/AWSService';
+import EFSService, { EFSService as EFSServiceInstance } from './services/EFSService';
+import MD5Service, { MD5Service as MD5ServiceInstance } from './services/MD5Service';
+import TraversalService, { TraversalService as TraversalServiceInstance } from './services/TraversalService';
+import UtilsService, { UtilsService as UtilsServiceInstance }  from './services/UtilsService';
+import VectorStoreService, { VectorStoreService as VectorStoreServiceInstance } from './services/VectorStoreService';
+
+
 import RWSPrompt, { ILLMChunk, IRWSPromptRequestExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptStreamExecutor, IChainCallOutput, IRWSPromptJSON, ChainStreamType } from './models/prompts/_prompt';
 import RWSConvo, { IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams } from './models/convo/ConvoLoader';
 import RWSVectorStore from './models/convo/VectorStore';
+
 import { InverseRelation, InverseTimeSeries, Relation, TrackType} from './models/annotations/index';
 import { Route } from './routing/annotations/index';
+
 import getAppConfig, { IAppConfig, AppConfigService } from './services/AppConfigService';
 
 import { IContextToken } from './interfaces/IContextToken';
@@ -62,17 +66,30 @@ export {
     IModel as IRWSModel,
 
     ServerService as RWSServer,
-    DBService,
+    DBServiceInstance,
+    DBService,    
+    AuthServiceInstance,
     AuthService,
+    S3ServiceInstance,
     S3Service,
+    ConsoleServiceInstance,
     ConsoleService,
+    LambdaServiceInstance,
     LambdaService,
+    AWSServiceInstance,
     AWSService,
+    EFSServiceInstance,
     EFSService,
+    MD5ServiceInstance,
     MD5Service,
+    TraversalServiceInstance,
     TraversalService,
+    UtilsServiceInstance,
     UtilsService,
+    VectorStoreServiceInstance,
     VectorStoreService,
+    ProcessServiceInstance,
+    ProcessService,    
 
     TimeSeriesModel,
 
@@ -84,8 +101,7 @@ export {
     IContextToken,
     ServerControlSet,
             
-    Socket,      
-    ProcessService,    
+    Socket,          
     RWSannotations,
     JSONMessage as RWSJSONMessage,
     ICmdParams,      
@@ -110,5 +126,7 @@ export {
     IRWSPromptJSON,
     ISplitterParams,
     ILLMChunk,
-    RWSTrackType
+    RWSTrackType,
+    RWSServerPair,
+    RWSServerStarter
 };

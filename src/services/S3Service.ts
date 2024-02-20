@@ -101,3 +101,6 @@ class S3Service extends TheService {
 }
 
 export default S3Service.getSingleton();
+export {
+    S3Service
+};

@@ -236,3 +236,6 @@ class RouterService extends TheService{
 }
 
 export default RouterService.getSingleton();
+export {
+    RouterService
+};

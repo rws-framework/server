@@ -279,3 +279,4 @@ class VPCService extends TheService{
 }
 
 export default VPCService.getSingleton();
+export {VPCService};

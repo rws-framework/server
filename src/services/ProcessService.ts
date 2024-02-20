@@ -113,4 +113,4 @@ class ProcessService extends TheService {
 
 export default ProcessService.getSingleton();
 
-export { IExecCmdOpts, ICommandOpts };
+export { IExecCmdOpts, ICommandOpts, ProcessService };

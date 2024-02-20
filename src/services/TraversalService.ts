@@ -33,3 +33,4 @@ class TraversalService extends TheService {
 }
 
 export default TraversalService.getSingleton();
+export {TraversalService};

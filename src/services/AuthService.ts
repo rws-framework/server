@@ -30,3 +30,4 @@ class AuthService extends TheService{
 }
 
 export default AuthService.getSingleton();
+export { AuthService };

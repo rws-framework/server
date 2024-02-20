@@ -80,3 +80,4 @@ class MD5Service extends TheService {
 }
 
 export default MD5Service.getSingleton();
+export {MD5Service};

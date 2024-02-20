@@ -8,5 +8,6 @@
     "entryPointStrategy": "expand",
     "categorizeByGroup": true,
     "name": "Realtime Web Suite Server package",
-    "jsDocCompatibility": true  
+    "jsDocCompatibility": true,
+    "includes": "./src"  
 }
