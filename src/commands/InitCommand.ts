@@ -58,7 +58,8 @@ class InitCommand extends Command
                         }
                     
                         if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
-                            fs.copyFileSync(`${moduleDir}/.setup/.eslintrc.json`, `${executionDir}/.eslintrc.json`);
+                            const rcjs: string = fs.readFileSync(`${executionDir}/.setup/_base.eslintrc.json`, 'utf-8');
+                            fs.writeFileSync(`${executionDir}/.eslintrc.json`, rcjs.replace('{{backend_dir}}', executionDir));                            
                             rwsLog(color().green('RWS CLI'), 'Installed eslint backend workspace config file.');
                         }    
                     }else{

@@ -4,5 +4,8 @@
     "env": {
         "browser": false,
         "es2021": true
-    }  
+    },        
+    "parserOptions": {      
+        "project": "{{backend_dir}}/tsconfig.json"
+    } 
 }
