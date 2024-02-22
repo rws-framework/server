@@ -1,3 +1,4 @@
+import { Error500, RWSError } from '../errors';
 import {DBService, getAppConfig} from '../index';
 
 import TrackType, {IMetaOpts} from './annotations/TrackType';
@@ -327,20 +328,27 @@ class Model<ChildClass> implements IModel{
         fields: string[] | null = null
     ): Promise<ChildClass[]> {
         const collection = Reflect.get(this, '_collection');
-        const dbData = await DBService.findBy(collection, conditions, fields);
+
+        try {
+            const dbData = await DBService.findBy(collection, conditions, fields);
     
-        if (dbData.length) {
-            const instanced: ChildClass[] = [];
-    
-            for (const data of dbData) {
-                const inst: ChildClass = new (this as { new(): ChildClass })();
-                instanced.push((await inst._asyncFill(data)) as ChildClass);
+            if (dbData.length) {
+                const instanced: ChildClass[] = [];
+        
+                for (const data of dbData) {
+                    const inst: ChildClass = new (this as { new(): ChildClass })();
+                    instanced.push((await inst._asyncFill(data)) as ChildClass);
+                }
+        
+                return instanced;
             }
-    
-            return instanced;
-        }
-    
-        return [];
+        
+            return [];
+        } catch (rwsError: RWSError | any) {
+            rwsError.printFullError();
+
+            throw rwsError;
+        }        
     }
     
 

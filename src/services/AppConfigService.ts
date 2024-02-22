@@ -38,6 +38,11 @@ class AppConfigService extends TheService{
         super();    
         this.data = cfg;
     }    
+    
+    getData(): IAppConfig
+    {
+        return this.data;
+    }
 
     public get(key: keyof IAppConfig | string): any
     {     

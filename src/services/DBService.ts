@@ -5,6 +5,7 @@ import { IModel } from '../models/_model';
 import getConfig from './AppConfigService';
 import TheService from './_service';
 import ConsoleService from './ConsoleService';
+import { RWSError } from '../errors';
 
 interface IDBClientCreate {
   dbUrl?: string;
@@ -31,6 +32,8 @@ class DBService extends TheService {
         }
 
         if(!this.opts.dbUrl){
+            ConsoleService.error('NO DB CFG');
+
             return;
         }    
   
@@ -44,8 +47,9 @@ class DBService extends TheService {
             });     
 
             this.connected = true;
-        } catch (e){
-            ConsoleService.error('PRISMA CONNECTION ERROR');
+        } catch (e: Error | any){            
+            ConsoleService.error('PRISMA CONNECTION ERROR', e);            
+            throw new RWSError(e, module.id + '::connectToDB');
         }
     }
 

@@ -105,22 +105,7 @@ const setVendors = async () => {
             _tools.removeDirectory(symLinkPathExec);
         } 
 
-        // _tools.createAndLogSymlink(path.resolve(packageRootDir, 'node_modules'), symLinkPath);
-        // _tools.createAndLogSymlink(path.resolve(packageRootDir, 'node_modules'), symLinkPathExec);
-
-        await _tools.runCommand(`${packageRootDir}/node_modules/.bin/tsc`, __dirname);        
-
-        const configPath = args?.config || 'config/config';
-        
-        const webpackCmd = `${packageRootDir}/node_modules/.bin/webpack`;
-
-        // if(fs.existsSync(__dirname + '/dist/package.json')){
-        //     fs.unlinkSync(__dirname + '/dist/package.json');
-        // }
-
-        // fs.writeFileSync( __dirname + '/dist/package.json', '{"name": "rws-js-server-cfg", "version": "1.0.0" }');
-
-        // await _tools.runCommand(`${webpackCmd} --config ${__dirname}/exec.webpack.config.js`, process.cwd());             
+        await _tools.runCommand(`${packageRootDir}/node_modules/.bin/tsc`, __dirname);          
 
         console.log('[RWS CLI vendors] Done.');
     }

@@ -3,7 +3,7 @@ import { Socket } from 'socket.io';
 import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './services/ServerService';
 
 import init from './init';
-import {SetupRWS} from './install';
+import {setupPrisma, setupRWS} from './install';
 
 import ITimeSeries from './models/interfaces/ITimeSeries';
 import TimeSeriesModel from './models/types/TimeSeriesModel';
@@ -54,7 +54,8 @@ import * as RWSErrorCodes from './errors/index';
 
 export {
     init as serverInit,
-    SetupRWS,
+    setupRWS,
+    setupPrisma,
     getAppConfig,    
     AppConfigService,
 
