@@ -23,6 +23,9 @@ interface ICmdParamsReturn {
 
 export default abstract class TheCommand {
     public name: string;
+
+    public static cmdDescription: string | null = null;
+
     protected static _instances: { [key: string]: TheCommand } | null = {};
 
 
@@ -32,7 +35,9 @@ export default abstract class TheCommand {
         const rootPackageDir = UtilsService.findRootWorkspacePath(process.cwd());
         const moduleCfgDir = path.resolve(rootPackageDir, 'node_modules', '.rws');
         const cmdDirFile = `${moduleCfgDir}/_cli_cmd_dir`;       
-        
+        const cmdDirFileContents: string[] = fs.existsSync(cmdDirFile) ? fs.readFileSync(cmdDirFile, 'utf-8').split('\n') : [];
+        const startLength = cmdDirFileContents.length;
+
 
         if(!fs.existsSync(moduleCfgDir)){
             fs.mkdirSync(moduleCfgDir);
@@ -40,18 +45,17 @@ export default abstract class TheCommand {
         
         const filePath: string = childModule.id;
         
-        const cmdDir = `${filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '')}`;        
+        const cmdDir = `${path.dirname(filePath)}`;        
 
-        let finalCmdDir = cmdDir;
+        let finalCmdDir = path.resolve(cmdDir);        
 
-        if(cmdDir.indexOf('node_modules') > -1){
-            finalCmdDir = rootPackageDir + '/' + finalCmdDir.substring(finalCmdDir.indexOf('node_modules'));
+        if(!cmdDirFileContents.includes(finalCmdDir)){
+            cmdDirFileContents.push(finalCmdDir);
+        }        
+        
+        if(startLength < cmdDirFileContents.length){
+            fs.writeFileSync(cmdDirFile, cmdDirFileContents.join('\n'));
         }
-        
-        
-        if(!fs.existsSync(cmdDirFile)){
-            fs.writeFileSync(cmdDirFile, finalCmdDir);
-        }     
     }
 
     getSourceFilePath() {

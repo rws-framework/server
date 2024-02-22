@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import TraversalService from './TraversalService';
 import UtilsService from './UtilsService';
+import ConsoleService from './ConsoleService';
 
 
 class MD5Service extends TheService {
@@ -45,11 +46,12 @@ class MD5Service extends TheService {
 
     async cliClientHasChanged(consoleClientHashFile: string, tsFilename: string): Promise<boolean> 
     {
+        const moduleCfgDir = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules', '.rws');
         const generatedHash: string = fs.readFileSync(consoleClientHashFile, 'utf-8');
-   
-        const cmdFiles = this.batchGenerateCommandFileMD5(path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules', '.rws'));
+           
 
-        const currentSumHashes: string = (await this.generateCliHashes([tsFilename, ...cmdFiles])).join('/');            
+        const cmdFiles = this.batchGenerateCommandFileMD5(moduleCfgDir);    
+        const currentSumHashes = this.md5((await this.generateCliHashes([tsFilename, ...cmdFiles])).join('/'));        
 
         if (generatedHash !== currentSumHashes) {
             return true;
@@ -65,17 +67,34 @@ class MD5Service extends TheService {
             fs.mkdirSync(moduleCfgDir);
         }
 
-        if (!fs.existsSync(`${moduleCfgDir}/__rws_installed`) || !fs.existsSync(`${moduleCfgDir}/_cli_cmd_dir`)) {
+        if (!fs.existsSync(`${moduleCfgDir}/_rws_installed`) || !fs.existsSync(`${moduleCfgDir}/_cli_cmd_dir`)) {            
             return [];
         }        
 
-        const cmdDirPath = fs.readFileSync(`${moduleCfgDir}/_cli_cmd_dir`, 'utf-8');    
-    
-        //path.resolve(process.cwd()) + '/' + 
+        const cmdDirPaths: string[] = fs.readFileSync(`${moduleCfgDir}/_cli_cmd_dir`, 'utf-8').split('\n');        
+        let cmdFilesList: { [key: string]: string } = {};        
 
-        return TraversalService.getAllFilesInFolder(cmdDirPath, [
-            process.cwd() + '/' + cmdDirPath + '/index.ts'
-        ]);
+        cmdDirPaths.forEach((dirPath) => {            
+            const cmdFiles = TraversalService.getAllFilesInFolder(dirPath, [
+                /.*\/index\.ts/g,
+                /.*\/_command\.ts/g
+            ]);
+
+            cmdFiles.forEach((cmdFile: string) => {
+                const fileNameSplit: string[] = cmdFile.split('/');
+                const fileName: string = fileNameSplit[fileNameSplit.length - 1];                
+                if(!Object.keys(cmdFilesList).includes(fileName)){
+                    cmdFilesList[fileName] = cmdFile;
+                }
+            });
+        });    
+        
+        return Object.keys(cmdFilesList).map((key) => cmdFilesList[key]);
+    }
+
+    md5(input: string): string
+    {
+        return crypto.createHash('md5').update(input).digest('hex');
     }
 }
 

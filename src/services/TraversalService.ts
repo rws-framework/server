@@ -5,7 +5,7 @@ import fs from 'fs';
 
 
 class TraversalService extends TheService {
-    getAllFilesInFolder(folderPath: string, ignoreFilenames: string[] = [], recursive: boolean = false): string[] 
+    getAllFilesInFolder(folderPath: string, ignoreFilenames: RegExp[] = [], recursive: boolean = false): string[] 
     {
         const files: string[] = [];
   
@@ -17,7 +17,15 @@ class TraversalService extends TheService {
                 const entryPath = path.join(currentPath, entry.name);
   
                 if (entry.isFile()) {
-                    if(!ignoreFilenames.includes(entryPath)){
+                    let pass = true;
+
+                    ignoreFilenames.forEach((regEx: RegExp) => {                        
+                        if(regEx.test(entryPath)){
+                            pass = false;
+                        }
+                    })
+
+                    if(pass){
                         files.push(entryPath);
                     }            
                 } else if (entry.isDirectory() && recursive) {

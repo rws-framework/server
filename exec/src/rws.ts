@@ -1,6 +1,6 @@
 import { RWSAppCommands, getAppConfig, IAppConfig, RWSCommand, ICmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
 
-const { error } = ConsoleService;
+const { error, color, rwsLog } = ConsoleService;
 
 
 const fs = require('fs');
@@ -96,16 +96,19 @@ const main = async () => {
 
     const APP = getAppConfig(APP_CFG);
 
-    const commands: RWSCommand[] = [...RWSAppCommands, ...APP.get('commands')];
+    const commands: RWSCommand[] = [...RWSAppCommands, ...APP.get('commands')];    
+
+    APP_CFG.commands = commands;
 
     const theCommand = commands.find((cmd: RWSCommand) => cmd.getName() == command);
     
     commandExecutionArgs._rws_config = APP_CFG;
 
-    const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);
-    const currentSumHashes = (await MD5Service.generateCliHashes([tsFile, ...cmdFiles])).join('/');
+    const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);    
 
-    if (!savedHash || currentSumHashes !== savedHash) {
+    const currentSumHashes = MD5Service.md5((await MD5Service.generateCliHashes([tsFile, ...cmdFiles])).join('/'));
+
+    if (!savedHash || currentSumHashes !== savedHash) {        
         fs.writeFileSync(consoleClientHashFile, currentSumHashes);
     }
 

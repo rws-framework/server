@@ -13,6 +13,8 @@ const moduleDir = path.resolve(path.dirname(module.id), '..', '..');
 
 class InitCommand extends Command 
 {
+    public static cmdDescription: string | null = 'Command that builds RWS config files along with Prisma client.\nThis CMD creates schema files for Prisma from RWS model files passed to configuration.\nUsed in postinstall scripts.';
+
     constructor(){
         super('init', module);
     }

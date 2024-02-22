@@ -55,10 +55,10 @@ const totalMemoryGB = totalMemoryMB / 1024;
 
 const webpackPath = path.resolve(__dirname, '..');
 
-let packageRootDir = null;
+const packageRootDir = _tools.findRootWorkspacePath(process.cwd());
+const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 
-let moduleCfgDir = null;
-let cfgPathFile = null;
+const cfgPathFile = `${moduleCfgDir}/_cfg_path`;      
 
 const main = async () => {    
     if(fs.existsSync(cfgPathFile)){
@@ -91,7 +91,7 @@ const setVendors = async () => {
     }
 
     if(!fs.existsSync(path.resolve(__dirname, 'vendors'))){
-        packageRootDir = _tools.findRootWorkspacePath(process.cwd());
+      
         console.log('[RWS CLI vendors] Generating vendors for CLI usage...');
         
         const symLinkPath = path.resolve(__dirname, 'dist','node_modules');
@@ -114,32 +114,30 @@ const setVendors = async () => {
     MD5Service = require('./vendors/rws/services/MD5Service').default;    
 }
 
+const consoleClientHashFile = `${moduleCfgDir}/_cli_hash`;
+
+const shouldReload = async (tsFile) => 
+    (!fs.existsSync(consoleClientHashFile) 
+    || await MD5Service.cliClientHasChanged(consoleClientHashFile, tsFile)) 
+    || forceReload
+;
+
 async function generateCliClient()
-{        
-    packageRootDir = _tools.findRootWorkspacePath(process.cwd());    
-
-    moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-    cfgPathFile = `${moduleCfgDir}/_cfg_path`;      
-
+{               
     const webpackCmd = `${packageRootDir}/node_modules/.bin/webpack`;
 
     log = ConsoleService.log;
     warn = ConsoleService.warn;
     rwsError = ConsoleService.error;
-    color = ConsoleService.color;
-
-    const consoleClientHashFile = `${moduleCfgDir}/_cli_hash`;       
+    color = ConsoleService.color;        
 
     if(!fs.existsSync(moduleCfgDir)){
         fs.mkdirSync(moduleCfgDir);
     }
 
-    const tsFile = path.resolve(webpackPath, 'exec','src') + '/rws.ts';
-
-    const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);  
-
-
-    if((!fs.existsSync(consoleClientHashFile) || await MD5Service.cliClientHasChanged(consoleClientHashFile, tsFile, cmdFiles)) || forceReload){
+    const tsFile = path.resolve(webpackPath, 'exec','src') + '/rws.ts';    
+    
+    if(await shouldReload(tsFile)){
         if(forceReload){
             warn('[RWS] Forcing CLI client reload...');
         }
