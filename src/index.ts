@@ -34,6 +34,8 @@ import { Route } from './routing/annotations/index';
 import getAppConfig, { IAppConfig, AppConfigService } from './services/AppConfigService';
 
 import { IContextToken } from './interfaces/IContextToken';
+import IAuthUser from './interfaces/IAuthUser';
+import IDbUser from './interfaces/IDbUser';
 
 const RWSannotations = {
     modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, TrackType },
@@ -101,7 +103,9 @@ export {
     IAppConfig,
     IContextToken,
     ServerControlSet,
-            
+    IAuthUser,
+    IDbUser,
+    
     Socket,          
     RWSannotations,
     JSONMessage as RWSJSONMessage,

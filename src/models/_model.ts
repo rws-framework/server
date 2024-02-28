@@ -9,6 +9,29 @@ interface IModel{
     getCollection: () => string | null;
 }
 
+type DBModelFindOneType<ChildClass> = (
+    this: OpModelType<ChildClass>,
+    conditions: any,
+    fields?: string[],
+    ordering?: { [fieldName: string]: string }
+) => Promise<ChildClass | null>;
+
+type DBModelFindManyType<ChildClass> = (
+    this: OpModelType<ChildClass>,
+    conditions: any,
+    fields?: string[],
+    ordering?: { [fieldName: string]: string }
+) => Promise<ChildClass | null>;
+
+interface OpModelType<ChildClass> {
+    new(): ChildClass;
+    name: string
+    _collection: string;
+    loadModels: () => Model<any>[];
+    checkForInclusionWithThrow: (className: string) => void;
+    checkForInclusion: (className: string) => boolean;
+}
+
 class Model<ChildClass> implements IModel{
     [key: string]: any;
     @TrackType(String)
@@ -26,6 +49,8 @@ class Model<ChildClass> implements IModel{
         if(!data){
             return;    
         }
+
+        this.checkForInclusionWithThrow();
   
         if(!this.hasTimeSeries()){
             this._fill(data);
@@ -33,6 +58,30 @@ class Model<ChildClass> implements IModel{
             throw new Error('Time Series not supported in synchronous constructor. Use `await Model.create(data)` static method to instantiate this model.');
         }
     }    
+    
+    checkForInclusionWithThrow(): void
+    {
+        Model.checkForInclusionWithThrow(this.constructor.name)
+    }
+
+    static checkForInclusionWithThrow(this: OpModelType<any>, checkModelType: string): void
+    {
+        if(!this.checkForInclusion(this.name)){
+            throw new Error500(new Error('Model undefined: ' + this.name), this.name);
+        }
+    }
+
+    checkForInclusion(): boolean    
+    {                
+        return Model.checkForInclusion(this.constructor.name);        
+    }
+
+    static checkForInclusion(this: OpModelType<any>, checkModelType: string): boolean
+    {        
+        return this.loadModels().find((definedModel: Model<any>) => {
+            return definedModel.name === checkModelType
+        }) !== undefined
+    }
 
     protected _fill(data: any): Model<ChildClass>{
         for (const key in data) {
@@ -285,19 +334,46 @@ class Model<ChildClass> implements IModel{
     }
 
     public static async watchCollection<ChildClass extends Model<ChildClass>>(
-        this: { new(): ChildClass; _collection: string }, 
+        this: OpModelType<ChildClass>, 
         preRun: () => void
     ){
         const collection = Reflect.get(this, '_collection');
+        this.checkForInclusionWithThrow(this.name);
         return await DBService.watchCollection(collection, preRun);
     }
 
     public static async findOneBy<ChildClass extends Model<ChildClass>>(
-        this: { new(): ChildClass; _collection: string },
-        conditions: any
+        this: OpModelType<ChildClass>,
+        conditions: {
+            [fieldName: string]: any
+        },
+        fields: string[] | null = null,
+        ordering: { [fieldName: string]: string } = null,
+    ): Promise<ChildClass | null> {
+        this.checkForInclusionWithThrow('');
+
+        const collection = Reflect.get(this, '_collection');
+        const dbData = await DBService.findOneBy(collection, conditions, fields, ordering);
+        
+    
+        if (dbData) {
+            const inst: ChildClass = new (this as { new(): ChildClass })();
+            return await inst._asyncFill(dbData);
+        }
+    
+        return null;
+    }
+
+    public static async find<ChildClass extends Model<ChildClass>>(
+        this: OpModelType<ChildClass>,
+        id: string,        
+        fields: string[] | null = null,
+        ordering: { [fieldName: string]: string } = null
     ): Promise<ChildClass | null> {
         const collection = Reflect.get(this, '_collection');
-        const dbData = await DBService.findOneBy(collection, conditions);
+        this.checkForInclusionWithThrow(this.name);
+
+        const dbData = await DBService.findOneBy(collection, { id }, fields, ordering);
     
         if (dbData) {
             const inst: ChildClass = new (this as { new(): ChildClass })();
@@ -308,29 +384,32 @@ class Model<ChildClass> implements IModel{
     }
 
     public static async delete<ChildClass extends Model<ChildClass>>(
-        this: { new(): ChildClass; _collection: string },
+        this: OpModelType<ChildClass>,
         conditions: any
     ): Promise<void> {
         const collection = Reflect.get(this, '_collection');
+        this.checkForInclusionWithThrow(this.name);
         return await DBService.delete(collection, conditions);
     }
 
     public async delete<ChildClass extends Model<ChildClass>>(): Promise<void> {
         const collection = Reflect.get(this, '_collection');
+        this.checkForInclusionWithThrow();
         return await DBService.delete(collection, {
             id: this.id
         });  
     }    
     
     public static async findBy<ChildClass extends Model<ChildClass>>(
-        this: { new(): ChildClass; _collection: string },    
+        this: OpModelType<ChildClass>,    
         conditions: any,
-        fields: string[] | null = null
+        fields: string[] | null = null,
+        ordering: { [fieldName: string]: string } = null
     ): Promise<ChildClass[]> {
         const collection = Reflect.get(this, '_collection');
-
+        this.checkForInclusionWithThrow(this.name);
         try {
-            const dbData = await DBService.findBy(collection, conditions, fields);
+            const dbData = await DBService.findBy(collection, conditions, fields, ordering);
     
             if (dbData.length) {
                 const instanced: ChildClass[] = [];
@@ -362,11 +441,15 @@ class Model<ChildClass> implements IModel{
         return newModel;
     }
 
-    private loadModels(): Model<any>[]
+    static loadModels(): Model<any>[]
     {
         const AppConfigService = getAppConfig();
-  
         return AppConfigService.get('user_models');
+    }
+
+    loadModels(): Model<any>[]
+    {     
+        return Model.loadModels();
     }
 }
 

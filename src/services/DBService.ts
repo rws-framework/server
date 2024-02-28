@@ -145,9 +145,22 @@ class DBService extends TheService {
     }
   
 
-    async findOneBy(collection: string, conditions: any): Promise<IModel|null>
+    async findOneBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null): Promise<IModel|null>
     {    
-        return await this.getCollectionHandler(collection).findFirst({ where: conditions });
+        const params: any = { where: conditions };
+
+        if(fields){
+            params.select = {};
+            fields.forEach((fieldName: string) => {        
+                params.select[fieldName] = true;
+            });    
+        }
+
+        if(ordering){
+            params.orderBy = ordering;
+        }
+
+        return await this.getCollectionHandler(collection).findFirst(params);
     }
 
     async delete(collection: string, conditions: any): Promise<void>
@@ -156,7 +169,7 @@ class DBService extends TheService {
         return;
     }
 
-    async findBy(collection: string, conditions: any, fields: string[] | null = null): Promise<IModel[]>
+    async findBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null): Promise<IModel[]>
     {    
         const params: any ={ where: conditions };
 
@@ -165,6 +178,10 @@ class DBService extends TheService {
             fields.forEach((fieldName: string) => {        
                 params.select[fieldName] = true;
             });    
+        }
+
+        if(ordering){
+            params.orderBy = ordering;
         }
 
         return await this.getCollectionHandler(collection).findMany(params);

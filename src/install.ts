@@ -98,6 +98,8 @@ async function setupPrisma(cfg: IAppConfig, leaveFile = false)
         const modelSection = generateModelSections(model);
 
         template += '\n\n' + modelSection;  
+
+        ConsoleService.log('RWS SCHEMA BUILD', ConsoleService.color().blue('Building DB Model'), model.name);
     
         if(Model.isSubclass(model, TimeSeriesModel)){      
      

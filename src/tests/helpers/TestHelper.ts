@@ -123,7 +123,7 @@ const startServer = async (): Promise<ServerControlSet> => {
     // const _TESTPORT = await getConfig().get('test_port');
     // const _TESTWSPORT = await getConfig().get('test_ws_port');
 
-    const server = await ServerService.initializeApp({        
+    const server = await ServerService.initializeApp<any>({        
         controllerList: await getConfig().get('controller_list'),
         wsRoutes: await getConfig().get('ws_routes'),
         httpRoutes: await getConfig().get('http_routes')

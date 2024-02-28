@@ -9,9 +9,10 @@ import UtilsService from './services/UtilsService';
 
 import fs from 'fs';
 import ProcessService from './services/ProcessService';
+import IAuthUser from './interfaces/IAuthUser';
+import IDbUser from './interfaces/IDbUser';
 
-
-async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
+async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
     const AppConfigService = getConfigService(cfg);    
     const wsRoutes = await AppConfigService.get('ws_routes');
     const httpRoutes = await AppConfigService.get('http_routes');
@@ -52,7 +53,7 @@ async function init(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig:
         cors_domain: cors_domain
     },...serverOptions};
 
-    const theServer: ServerControlSet = await ServerService.initializeApp(rwsAppOpts);
+    const theServer: ServerControlSet = await ServerService.initializeApp<PassedUser>(rwsAppOpts);
 
     const wsStart = async () => {
         return (await theServer.websocket.starter());

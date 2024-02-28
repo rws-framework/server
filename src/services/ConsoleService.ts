@@ -135,7 +135,16 @@ class ConsoleService extends TheService {
             return;
         }
 
-        console.log(...obj.map((txt) => chalk.yellowBright('[RWS CLI WARNING] ' + txt)));
+        let intro = 'RWS CLI WARNING';
+
+        if(obj.length > 1 && typeof obj[0] === 'string'){
+            intro = obj[0];
+            obj = obj.filter((el: any, index: number) => index > 0);
+        }
+
+        obj = [chalk.yellow(`[${intro}]`), ...obj];
+
+        console.warn(...obj); 
     }
 
     sanitizeObject(obj: any): any {
@@ -164,9 +173,18 @@ class ConsoleService extends TheService {
     error(...obj: any[]): void {
         if (!this.isEnabled) {
             return;
+        }        
+
+        let intro = 'RWS CLI ERROR';
+
+        if(obj.length > 1 && typeof obj[0] === 'string'){
+            intro = obj[0];
+            obj = obj.filter((el: any, index: number) => index > 0);
         }
-        console.error(obj);
-        console.log(...obj.map((txt) => chalk.red('[RWS CLI ERROR] ' + txt)));  
+
+        obj = [chalk.red(`[${intro}]`), ...obj];
+
+        console.log(...obj);  
     }
 
     stopLogging(): void {

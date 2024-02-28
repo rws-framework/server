@@ -27,7 +27,7 @@ class ReloadDBSchemaCommand extends Command
 
         try {                                          
             if(isInstalled.prisma()){
-                const endPrismaFilePath = packageRootDir + 'node_modules/.prisma/client/schema.prisma';
+                const endPrismaFilePath = packageRootDir + '/node_modules/.prisma/client/schema.prisma';
                 fs.unlinkSync(endPrismaFilePath);
             }                
 
