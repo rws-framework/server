@@ -25,36 +25,19 @@ import IDbUser from '../interfaces/IDbUser';
 //@ts-expect-error no-types
 import fileUpload from 'express-fileupload';
 
+import {
+    WsRoutes,
+    UserTokens,
+    JWTUsers,
+    CookieType,
+    IInitOpts,
+    RWSServer,
+    ServerStarter,
+    RWSServerPair,
+    ServerControlSet
+} from '../interfaces/ServerTypes';
+
 const __HTTP_REQ_HISTORY_LIMIT = 50;
-
-type WsRoutes = {
-    [eventName: string]: new (data: any) => ITheSocket;
-};
-
-type UserTokens = {
-    [socketId: string]: string;
-};
-
-type JWTUsers = {
-    [socketId: string]: IDbUser;
-};
-
-type CookieType = {[key: string]: string};
-
-
-
-interface IInitOpts {    
-    controllerList?: Controller[];
-    wsRoutes?: WsRoutes,
-    httpRoutes?: IHTTProute[],
-    pub_dir?: string,
-    authorization?: boolean
-    transport?: 'polling' | 'websocket'
-    domain?: string
-    cors_domain?: string,
-    onAuthorize?: <PassedUser extends IDbUser>(user: PassedUser) => Promise<void>
-}
-
 const getCurrentLineNumber = UtilsService.getCurrentLineNumber;
 
 const wsLog = async (fakeError: Error, text: any, socketId: string = null, isError: boolean = false): Promise<void> => {
@@ -67,11 +50,6 @@ const wsLog = async (fakeError: Error, text: any, socketId: string = null, isErr
 
     logit(isError ? ConsoleService.color().red(marker) : ConsoleService.color().green(marker), '|',`${filePath}:${await getCurrentLineNumber(fakeError)}`,`|${socketId ? ConsoleService.color().blueBright(` (${socketId})`) : ''}:`,`${text}`);
 };
-
-type RWSServer = HTTP.Server | HTTPS.Server;
-type ServerStarter = (callback?: () => void) => Promise<void>;
-type RWSServerPair = { instance: ServerService, starter: ServerStarter };
-type ServerControlSet = { websocket: RWSServerPair, http: RWSServerPair };
 
 const MINUTE = 1000 * 60;
 
@@ -113,7 +91,7 @@ class ServerService extends ServerBase {
             'Access-Control-Allow-Credentials': 'true'
         };
 
-        this.srv.on('options', (req, res) => {
+        this.srv.on('options', (req: Request, res: Response) => {
             res.writeHead(200, corsHeadersSettings);
             res.end();
         });
@@ -261,7 +239,7 @@ class ServerService extends ServerBase {
                 this.tokens = {}
             }
 
-            const authPassed: boolean | null = await AuthService.authenticate(reqId, req, res, {
+            const authPassed: boolean | null = await AuthService.authenticate(reqId, req.headers.authorization, {
                 ..._DEFAULTS_USER_LIST_MANAGER,
                 set: setUser,
                 setToken,
@@ -293,7 +271,7 @@ class ServerService extends ServerBase {
         });
 
         this.use(async (socket, next ) => {
-            await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any);
+            await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'ws');
             next();
         });
 
@@ -370,7 +348,9 @@ class ServerService extends ServerBase {
                 const request: HTTP.IncomingMessage = socket.request;
                 const response: ServerResponse = new ServerResponse(request);
 
-                const passedAuth: boolean | null = await AuthService.authenticate(socket.id, request, response, {
+                const token = this.tokens[socket.id] || socket.handshake.auth.token;                
+
+                const passedAuth: boolean | null = await AuthService.authenticate(socket.id, token, {
                     getList: () => this.users,
                     get: (socketId: string) => this.users[socketId],
                     set: (socketId: string, user: IAuthUser) => {
@@ -391,22 +371,22 @@ class ServerService extends ServerBase {
                     }
                 });
 
-                if(passedAuth === false){
-                    next();
-                }else if(passedAuth === null){
+                if(passedAuth === false){                    
+                    ConsoleService.error('RWS AUTH ERROR', ConsoleService.color().blue(`[${socket.id}]`), 'Websockets token unauthorized');
+                    response.writeHead(403, 'Token unauthorized');
+                    response.end();  
+                }else if(passedAuth === null){                                 
                     ConsoleService.warn('RWS AUTH WARNING', ConsoleService.color().blue(`[${socket.id}]`), 'Websockets token is not passed');
                     response.writeHead(400, 'Bad request: No token');
                     response.end(); 
                 }else{                    
-                    ConsoleService.error('RWS AUTH ERROR', ConsoleService.color().blue(`[${socket.id}]`), 'Websockets token unauthorized');
-                    response.writeHead(403, 'Token unauthorized');
-                    response.end();                    
+                    next();
                 }
             });
         }
 
         this.use(async (socket, next ) => {
-            await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any);
+            await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'http');
             next();
         });
 

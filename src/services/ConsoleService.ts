@@ -187,6 +187,21 @@ class ConsoleService extends TheService {
         console.log(...obj);  
     }
 
+    rwsLog(...obj: string[]): void 
+    {    
+
+        let intro = 'RWS CLI ERROR';
+
+        if(obj.length > 1 && typeof obj[0] === 'string'){
+            intro = obj[0];
+            obj = obj.filter((el: any, index: number) => index > 0);
+        }
+
+        obj = [chalk.green(`[${intro}]`), ...obj];
+
+        console.log(...obj);  
+    }
+
     stopLogging(): void {
         this.isEnabled = false;
         this.disableOriginalLogFunctions();
@@ -223,12 +238,7 @@ class ConsoleService extends TheService {
         process.stdout.write('\r' + message);
     }
 
-    rwsLog(logCat: string | any[], logString: string | null | any = null): void {
-        const logName = logString ? `[${logCat}]` : '[RWS CLI]';
-        const logData = logString ? logString : logCat;
-
-        console.log(chalk.green(logName), logData);
-    }
+  
 }
 
 export default ConsoleService.getSingleton();

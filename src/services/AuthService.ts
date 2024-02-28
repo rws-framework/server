@@ -9,8 +9,8 @@ import IDbUser from '../interfaces/IDbUser';
 import Model from '../models/_model';
 
 type UserListManager = {
-    getList: () => {[clientId: string]: IDbUser}
-    get: (socketId: string) => IDbUser | null
+    getList: () => {[clientId: string]: Partial<IDbUser>}
+    get: (socketId: string) => Partial<IDbUser> | null
     set: (socketId: string, val: IAuthUser) => void
     getToken: (socketId: string) => string | null
     setToken: (socketId: string, val: string) => void
@@ -32,25 +32,30 @@ const _DEFAULTS_USER_LIST_MANAGER = {
  * @notExported
  */
 class AuthService extends TheService{
+    private user: Partial<IDbUser>
+
     constructor() {
         super();
     }
 
-    async authenticate(clientId: string, request: HTTP.IncomingMessage, response: ServerResponse, userListManager: UserListManager = _DEFAULTS_USER_LIST_MANAGER): Promise<boolean | null>
+    async authenticate(clientId: string, jwt_token: string | null = null, userListManager: UserListManager = _DEFAULTS_USER_LIST_MANAGER): Promise<boolean | null>
     {
-        const authHeader: string | null =  request.headers.authorization ? request.headers.authorization.replace('Bearer ', '') : null;            
+        jwt_token =  jwt_token.replace('Bearer ', '');            
         const UserClass = await getConfigService().get('user_class');  
 
-        if(!authHeader){                
+        if(!jwt_token){                
             return null;         
         }        
 
         if(!userListManager.get(clientId)){
             try{
-                userListManager.set(clientId, await this.authorize<typeof UserClass>(authHeader, UserClass));   
+                const userClass = await this.authorize<typeof UserClass>(jwt_token, UserClass);
+                this.setUser(userClass);
+
+                userListManager.set(clientId, userClass);   
 
                 if(!userListManager.getToken(clientId)){    
-                    userListManager.setToken(clientId, authHeader);
+                    userListManager.setToken(clientId, jwt_token);
                 }
                 
                 return true;
@@ -66,8 +71,20 @@ class AuthService extends TheService{
             return false;
         }      
     }
+    
+    setUser<T extends Partial<IDbUser>>(user: T): AuthService 
+    {
+        this.user = user;
 
-    async authorize<IUser extends { userDbModel: Model<any>, loadDbUser: () => Promise<void> }>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
+        return this;
+    }
+
+    getUser<T extends Partial<IDbUser>>(): T
+    {
+        return this.user as T;
+    }
+
+    async authorize<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
         const secretKey: string = getConfigService().get('secret_key');
             
         return await new Promise((approve, reject) => {
@@ -79,11 +96,16 @@ class AuthService extends TheService{
                 
                 const theUser: IUser = new constructor(tokenData);
             
-                (theUser as any).loadDbUser().then(() => {
-                    console.log('Loaded RWS User Model', theUser.userDbModel.id)
-                    approve(theUser);
-                });
-              
+                if(this.getUser()){
+                    approve(this.getUser() as IUser);
+                    return;
+                }else{
+                    theUser.loadDbUser().then(() => {                    
+                        ConsoleService.rwsLog('RWS AUTH LOG', ConsoleService.color().green('Loaded RWS User Model'), theUser.db.id);
+                        
+                        approve(theUser);
+                    });
+                }                            
             });
         });
     }
