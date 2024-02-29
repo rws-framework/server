@@ -72,16 +72,16 @@ class AuthService extends TheService{
         }      
     }
     
-    setUser<T extends Partial<IDbUser>>(user: T): AuthService 
+    setUser<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(user: IUser): AuthService 
     {
         this.user = user;
 
         return this;
     }
 
-    getUser<T extends Partial<IDbUser>>(): T
+    getUser<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(): IUser
     {
-        return this.user as T;
+        return this.user as IUser;
     }
 
     async authorize<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
