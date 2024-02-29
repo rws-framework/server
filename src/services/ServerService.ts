@@ -53,6 +53,12 @@ const wsLog = async (fakeError: Error, text: any, socketId: string = null, isErr
 
 const MINUTE = 1000 * 60;
 
+const _DEFAULT_SERVER_OPTS: IInitOpts = {
+    ssl_enabled: null,
+    port_http: null,
+    port_ws: null
+}
+
 class ServerService extends ServerBase {    
     private static http_server: RWSServerPair;
     private static ws_server: RWSServerPair;
@@ -122,14 +128,14 @@ class ServerService extends ServerBase {
         this.server_app.options('*', cors(this.corsOptions)); // Enable pre-flight for all routes                
     }
 
-    public static async initializeApp<PassedUser extends IDbUser>(opts: IInitOpts, UserConstructor: new () => PassedUser = null): Promise<ServerControlSet>
+    public static async initializeApp<PassedUser extends IDbUser>(opts: IInitOpts = _DEFAULT_SERVER_OPTS, UserConstructor: new () => PassedUser = null): Promise<ServerControlSet>
     {                
         if (!ServerService.http_server) { 
             const [baseHttpServer, expressHttpServer] = await ServerService.createServerInstance(opts);
            
             const http_instance = new ServerService(baseHttpServer, expressHttpServer, opts);
-            const isSSL = getConfigService().get('features')?.ssl;
-            const httpPort = getConfigService().get('port');
+            const isSSL = opts.ssl_enabled !== null ? opts.ssl_enabled : getConfigService().get('features')?.ssl;
+            const httpPort = opts.port_http || getConfigService().get('port');
             
             ServerService.http_server = { instance: await http_instance.configureHTTPServer<PassedUser>(UserConstructor), starter: http_instance.createServerStarter(httpPort, () => {
                 ConsoleService.log(ConsoleService.color().green('Request/response server' + ` is working on port ${httpPort} using HTTP${isSSL ? 'S' : ''} protocol`));
@@ -139,9 +145,9 @@ class ServerService extends ServerBase {
         if (!ServerService.ws_server) {
             const [baseWsServer, expressWsServer] = await ServerService.createServerInstance(opts);
             const ws_instance = new ServerService(baseWsServer, expressWsServer, opts);
-            const isSSL = getConfigService().get('features')?.ssl;
+            const isSSL = opts.ssl_enabled !== null ? opts.ssl_enabled : getConfigService().get('features')?.ssl;
 
-            const wsPort = getConfigService().get('ws_port');
+            const wsPort = opts.port_ws || getConfigService().get('ws_port');
 
             ServerService.ws_server = { instance: await ws_instance.configureWSServer<PassedUser>(UserConstructor), starter: ws_instance.createServerStarter(wsPort, () => {
                 ConsoleService.log(ConsoleService.color().green('Websocket server' + ` is working on port ${wsPort}. SSL is ${isSSL ? 'enabled' : 'disabled'}.`));

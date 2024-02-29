@@ -1,5 +1,6 @@
 import getConfig, { IAppConfig } from '../../services/AppConfigService';
-
+import fs from 'fs';
+import path from 'path';
 import ServerService, { ServerControlSet } from '../../services/ServerService';
 import { io, Socket } from 'socket.io-client';
 
@@ -11,6 +12,9 @@ import chaiThings from 'chai-things';
 import {WebBrowser} from './BrowserHelper';
 
 import TestCase from '../test_cases/_test_case';
+import UtilsService from '../../services/UtilsService';
+import { json } from 'body-parser';
+
 
 chai.use(chaiLike);
 chai.use(chaiThings);
@@ -120,13 +124,15 @@ const setLoggedLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet) =
 };  
 
 const startServer = async (): Promise<ServerControlSet> => {
-    // const _TESTPORT = await getConfig().get('test_port');
-    // const _TESTWSPORT = await getConfig().get('test_ws_port');
+    const _TESTPORT = await getConfig().get('test_port');
+    const _TESTWSPORT = await getConfig().get('test_ws_port');
 
     const server = await ServerService.initializeApp<any>({        
         controllerList: await getConfig().get('controller_list'),
         wsRoutes: await getConfig().get('ws_routes'),
-        httpRoutes: await getConfig().get('http_routes')
+        httpRoutes: await getConfig().get('http_routes'),
+        port_http: _TESTPORT,
+        port_ws: _TESTWSPORT
     });
     
     return server;
@@ -168,7 +174,39 @@ const setLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet, timeout
     });
 };
 
-export default {    
+const swapCfgFile = (cfgPath: string, content: object, revert: boolean = false): void => {
+    const rwsCfgDir = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()),'node_modules','.rws');
+
+    if(rwsCfgDir){
+       
+    }
+
+    if(revert){
+        fs.unlinkSync(cfgPath);
+        fs.copyFileSync(`${rwsCfgDir}/_test_tmp_cfg_bck`, cfgPath);     
+        
+        return;
+    }
+
+
+    fs.copyFileSync(cfgPath, `${rwsCfgDir}/_test_tmp_cfg_bck`);
+    fs.unlinkSync(cfgPath);
+    fs.writeFileSync(cfgPath, JSON.stringify(content, null, 2));
+    return;    
+}
+
+const strToJson = <T extends Object>(str: string): T => {
+    return JSON.parse(str) as T;
+}
+
+console.log('IMPORTED CALLBACK');
+
+
+(String.prototype as any).toJson = strToJson;
+
+export default {  
+    strToJson,
+    swapCfgFile,  
     connectToWS,    
     startServer,    
     createTestVars,

@@ -16,7 +16,7 @@ const moduleDir = path.resolve(path.dirname(module.id), '../..');
 class ReloadDBSchemaCommand extends Command 
 {
     constructor(){
-        super('reload:db:schema', module);
+        super('db:schema:reload', module);
     }
 
     async execute(params?: ICmdParams): Promise<void>

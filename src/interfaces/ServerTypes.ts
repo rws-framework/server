@@ -30,7 +30,10 @@ interface IInitOpts {
     transport?: 'polling' | 'websocket'
     domain?: string
     cors_domain?: string,
-    onAuthorize?: <PassedUser extends IDbUser>(user: PassedUser, authorizationScope: 'ws' | 'http') => Promise<void>
+    onAuthorize?: <PassedUser extends IDbUser>(user: PassedUser, authorizationScope: 'ws' | 'http') => Promise<void>,
+    port_ws?: number
+    port_http?: number
+    ssl_enabled?: boolean
 }
 
 type RWSServer = HTTP.Server | HTTPS.Server;

@@ -19,6 +19,7 @@ class DBService extends TheService {
 
     constructor(opts: IDBClientCreate = null){
         super();   
+        this.opts = opts;
     }
 
     private connectToDB(opts: IDBClientCreate = null) {
