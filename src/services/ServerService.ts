@@ -130,11 +130,13 @@ class ServerService extends ServerBase {
 
     public static async initializeApp<PassedUser extends IDbUser>(opts: IInitOpts = _DEFAULT_SERVER_OPTS, UserConstructor: new () => PassedUser = null): Promise<ServerControlSet>
     {                
+        opts = Object.assign(_DEFAULT_SERVER_OPTS, opts);
+        const isSSL = opts.ssl_enabled !== null || typeof opts.ssl_enabled === 'undefined' ? opts.ssl_enabled : getConfigService().get('features')?.ssl;
+
         if (!ServerService.http_server) { 
             const [baseHttpServer, expressHttpServer] = await ServerService.createServerInstance(opts);
            
             const http_instance = new ServerService(baseHttpServer, expressHttpServer, opts);
-            const isSSL = opts.ssl_enabled !== null ? opts.ssl_enabled : getConfigService().get('features')?.ssl;
             const httpPort = opts.port_http || getConfigService().get('port');
             
             ServerService.http_server = { instance: await http_instance.configureHTTPServer<PassedUser>(UserConstructor), starter: http_instance.createServerStarter(httpPort, () => {
@@ -144,9 +146,8 @@ class ServerService extends ServerBase {
 
         if (!ServerService.ws_server) {
             const [baseWsServer, expressWsServer] = await ServerService.createServerInstance(opts);
-            const ws_instance = new ServerService(baseWsServer, expressWsServer, opts);
-            const isSSL = opts.ssl_enabled !== null ? opts.ssl_enabled : getConfigService().get('features')?.ssl;
 
+            const ws_instance = new ServerService(baseWsServer, expressWsServer, opts);
             const wsPort = opts.port_ws || getConfigService().get('ws_port');
 
             ServerService.ws_server = { instance: await ws_instance.configureWSServer<PassedUser>(UserConstructor), starter: ws_instance.createServerStarter(wsPort, () => {
