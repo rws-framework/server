@@ -40,7 +40,10 @@ class AuthService extends TheService{
 
     async authenticate(clientId: string, jwt_token: string | null = null, userListManager: UserListManager = _DEFAULTS_USER_LIST_MANAGER): Promise<boolean | null>
     {
-        jwt_token =  jwt_token.replace('Bearer ', '');            
+        if(jwt_token){
+            jwt_token =  jwt_token.replace('Bearer ', '');            
+        }
+
         const UserClass = await getConfigService().get('user_class');  
 
         if(!jwt_token){                
