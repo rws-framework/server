@@ -1,13 +1,9 @@
 import 'reflect-metadata';
-import express, { Request, Response } from 'express';
 import TheService from './_service';
 import Controller, { IHTTProuteMethod } from '../controllers/_controller';
 import { IHTTProute, RWSHTTPRoutingEntry } from '../routing/routes';
 import { IHTTProuteParams } from '../routing/annotations/Route';
-import appConfig from './AppConfigService';
-import path from 'path';
-import { RWSError } from '../errors/index';
-import ConsoleService from './ConsoleService';
+import { AbstractServer } from '../servers/AbstractServer';
 
 
 type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction, IHTTProuteParams, string]};
@@ -18,7 +14,6 @@ interface IControllerRoutes {
   put: RouteEntry;
   delete: RouteEntry;
 }
-
 
 /**
  * 
@@ -59,7 +54,7 @@ class RouterService extends TheService{
         return annotationsData;
     }
 
-    async assignRoutes(app: express.Express, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]>
+    async assignRoutes(app: AbstractServer, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]>
     {                
         const controllerRoutes: IControllerRoutes = {
             get: {}, post: {}, put: {}, delete: {}
@@ -121,100 +116,19 @@ class RouterService extends TheService{
             return;
         }        
 
-        appMethod(route.path, async (req: Request, res: Response) => {
-            try {
-
-                const controllerMethodReturn = await routeMethod({
-                    req: req,
-                    query: req.query,
-                    params: route.noParams ? [] : req.params,
-                    data: req.body,
-                    res: res       
-                });     
-
-                res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  
-
-                let status = 200;
-
-                if(controllerMethodReturn instanceof RWSError){
-                    status = controllerMethodReturn.getCode();
-                }
-
-                this.sendResponseWithStatus(res, status, routeParams, controllerMethodReturn);          
-          
-                return;
-            }catch(err: Error | RWSError | any){   
-                let errMsg;          
-                let stack;
-
-                if(err.printFullError){
-                    err.printFullError();
-                    errMsg = err.getMessage();
-            
-                    stack = err.getStack();
-                }else{
-                    errMsg = err.message;
-                    ConsoleService.error(errMsg);
-                    console.log(err.stack); 
-                    stack = err.stack;      
-                    err.message = errMsg;     
-                }                 
-
-                const code = err.getCode ? err.getCode() : 500;
-          
-                this.sendResponseWithStatus(res, code, routeParams, {
-                    success: false,
-                    data: {
-                        error: {
-                            code: code,
-                            message: errMsg,
-                            stack
-                        }
-                    }
-                });          
-            }
-        });
+        
     }
 
-    private sendResponseWithStatus(res: Response, status: number, routeParams: IHTTProuteParams, output: any)
-    {
-        if(routeParams.responseType === 'json' || !routeParams.responseType){                
-            res.status(status).send(output);
-            return;
-        }                                              
-
-        if(routeParams.responseType === 'html' && appConfig().get('pub_dir')){          
-            res.status(status).sendFile(path.join(appConfig().get('pub_dir'),  output.template_name + '.html'));
-            return;
-        }
-
-        res.status(status).send();
-    }
-
+    
     private setControllerRoutes(
         controllerInstance: Controller, 
         controllerMetadata: Record<string, {annotationType: string, metadata: any}>, 
-        controllerRoutes: IControllerRoutes, key: string, app: express.Express): void
+        controllerRoutes: IControllerRoutes, key: string, app: AbstractServer): void
     {
         const action: IHTTProuteMethod = (controllerInstance as Controller).callMethod(key);
-        const meta = controllerMetadata[key].metadata;                                        
-        switch(meta.method) {
-        case 'GET':
-            controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.get.bind(app), meta.params, key]; 
-            break;
-
-        case 'POST':
-            controllerRoutes.post[meta.name] = [action.bind(controllerInstance), app.post.bind(app), meta.params, key];
-            break;
-
-        case 'PUT':
-            controllerRoutes.put[meta.name] = [action.bind(controllerInstance), app.put.bind(app), meta.params, key]; 
-            break;
-
-        case 'DELETE':
-            controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params, key];
-            break;  
-        }
+        const meta = controllerMetadata[key].metadata; 
+        
+        controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.getSrvApp()[meta.name].bind(app), meta.params, key];
     }
     
     hasRoute(routePath: string, routes: IHTTProute[]): boolean
@@ -237,5 +151,6 @@ class RouterService extends TheService{
 
 export default RouterService.getSingleton();
 export {
-    RouterService
+    RouterService as RouterServiceInstance,
+    IControllerRoutes
 };

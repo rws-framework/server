@@ -1,12 +1,15 @@
 import { Server as ServerBase, Socket } from 'socket.io';
+import HTTPS from 'https';
+import HTTP, { ServerResponse } from 'http';
 import getConfigService from './AppConfigService';
 import cors, {CorsOptions} from 'cors';
-import HTTP, { ServerResponse } from 'http';
 import ITheSocket from '../interfaces/ITheSocket';
 import AuthService, { _DEFAULTS_USER_LIST_MANAGER } from './AuthService';
 import fs from 'fs';
+import expressServer, { Request, Response, Express } from 'express';
 import RouterService from './RouterService';
 import { AxiosRequestHeaders } from 'axios';
+import Controller from '../controllers/_controller';
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../routing/routes';
 import ConsoleService from './ConsoleService';
 import UtilsService from './UtilsService';
@@ -18,12 +21,9 @@ import compression from 'compression';
 import IAuthUser from '../interfaces/IAuthUser';
 import MD5Service from './MD5Service';
 import IDbUser from '../interfaces/IDbUser';
-import { ExpressServer } from '../servers/ExpressServer';
 
 //@ts-expect-error no-types
 import fileUpload from 'express-fileupload';
-
-import { AbstractServer } from '../servers/AbstractServer';
 
 import {
     WsRoutes,
@@ -57,19 +57,19 @@ const _DEFAULT_SERVER_OPTS: IInitOpts = {
     ssl_enabled: null,
     port_http: null,
     port_ws: null
-};
+}
 
 class ServerService extends ServerBase {    
     private static http_server: RWSServerPair;
-    private static ws_server: RWSServerPair;       
-    
+    private static ws_server: RWSServerPair;
+    private server_app: Express; 
+    private options: IInitOpts; 
     private srv: RWSServer;
-    private options: IInitOpts;     
     private tokens: UserTokens = {};
     private users: JWTUsers = {};
     private corsOptions: CorsOptions;
 
-    constructor(webServer: RWSServer, opts: IInitOpts){ 
+    constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
         const _DOMAIN: string =  opts.cors_domain || opts.domain;
 
         const WEBSOCKET_CORS = {
@@ -79,13 +79,14 @@ class ServerService extends ServerBase {
 
         const cors_headers: string[] = ['Content-Type', 'x-csrf-token','Accept', 'Authorization', 'x-junctionapi-version'];
 
-        super(webServer.getSrvApp(), {
+        super(webServer, {
             cors: WEBSOCKET_CORS,
             transports: [opts.transport || 'websocket'],
             pingTimeout: 5*MINUTE
         }); 
         
-        
+
+        this.server_app = expressApp;
         this.srv = webServer;
         this.options = opts;
 
@@ -96,12 +97,13 @@ class ServerService extends ServerBase {
             'Access-Control-Allow-Credentials': 'true'
         };
 
-        this.webServer().on('options', (req: any, res: any) => {
+        this.srv.on('options', (req: Request, res: Response) => {
             res.writeHead(200, corsHeadersSettings);
             res.end();
         });
 
-        this.webServer().addMiddleWare((req, res, next) => {
+        this.server_app.use((req, res, next) => {
+
             Object.keys(corsHeadersSettings).forEach((key: string) => {
                 res.setHeader(key, (corsHeadersSettings as any)[key]);
             });
@@ -117,13 +119,13 @@ class ServerService extends ServerBase {
 
         const corsMiddleware = cors(this.corsOptions);                 
 
-        this.webServer().addMiddleWare(async (socket, next) => {
+        this.use(async (socket, next) => {
             const request: HTTP.IncomingMessage = socket.request;
             const response: ServerResponse = new ServerResponse(request);
             corsMiddleware(request, response, next);            
         });        
 
-        this.webServer().getSrvApp().options('*', cors(this.corsOptions)); // Enable pre-flight for all routes                 @TODO
+        this.server_app.options('*', cors(this.corsOptions)); // Enable pre-flight for all routes                
     }
 
     public static async initializeApp<PassedUser extends IDbUser>(opts: IInitOpts = _DEFAULT_SERVER_OPTS, UserConstructor: new () => PassedUser = null): Promise<ServerControlSet>
@@ -132,9 +134,9 @@ class ServerService extends ServerBase {
         const isSSL = opts.ssl_enabled !== null || typeof opts.ssl_enabled === 'undefined' ? opts.ssl_enabled : getConfigService().get('features')?.ssl;
 
         if (!ServerService.http_server) { 
-            const HTTPServer = await ServerService.createServerInstance(ExpressServer, opts);
+            const [baseHttpServer, expressHttpServer] = await ServerService.createServerInstance(opts);
            
-            const http_instance = new ServerService(HTTPServer, opts);
+            const http_instance = new ServerService(baseHttpServer, expressHttpServer, opts);
             const httpPort = opts.port_http || getConfigService().get('port');
             
             ServerService.http_server = { instance: await http_instance.configureHTTPServer<PassedUser>(UserConstructor), starter: http_instance.createServerStarter(httpPort, () => {
@@ -143,9 +145,9 @@ class ServerService extends ServerBase {
         }
 
         if (!ServerService.ws_server) {
-            const WSServer: AbstractServer = await ServerService.createServerInstance(ExpressServer, opts);
+            const [baseWsServer, expressWsServer] = await ServerService.createServerInstance(opts);
 
-            const ws_instance = new ServerService(WSServer, opts);
+            const ws_instance = new ServerService(baseWsServer, expressWsServer, opts);
             const wsPort = opts.port_ws || getConfigService().get('ws_port');
 
             ServerService.ws_server = { instance: await ws_instance.configureWSServer<PassedUser>(UserConstructor), starter: ws_instance.createServerStarter(wsPort, () => {
@@ -183,15 +185,21 @@ class ServerService extends ServerBase {
         return this.srv; 
     }  
 
-    static async createServerInstance<ServerClass>(classType: new (opts: IInitOpts) => ServerClass, opts: IInitOpts): Promise<ServerClass>
-    {       
-        return new classType(opts);
+    static async createServerInstance(opts: IInitOpts): Promise<[RWSServer, Express]>
+    {
+        const app = expressServer();       
+        const isSSL = getConfigService().get('features')?.ssl;
+       
+
+        const webServer = isSSL ? HTTPS.createServer(options, app) : HTTP.createServer(app);            
+
+        return [webServer, app];
     }
 
     createServerStarter(port: number, injected: () => void = () => {}): ServerStarter
     {
         return (async (callback: () => void = () => {}) => {            
-            this.webServer().start(port, () => {
+            this.webServer().listen(port, () => {
                 injected();
                 callback();
             });
@@ -200,12 +208,12 @@ class ServerService extends ServerBase {
 
     public async configureHTTPServer<PassedUser extends IDbUser>(UserConstructor:  new (params: any) => PassedUser = null): Promise<ServerService>
     {
-        this.webServer().addMiddleWare(async (req: any, res: any, next: () => void) => {
+        this.server_app.use(async (req: Request, res: Response, next: () => void) => {
             const reqId: string = MD5Service.md5(req.url);
             let theUser: IAuthUser = null;
             let theToken: string = null;
 
-            const setUser = (reqId: string, user: IAuthUser) => {
+            let setUser = (reqId: string, user: IAuthUser) => {
                 theUser = user;
 
                 if(UserConstructor){                   
@@ -213,20 +221,20 @@ class ServerService extends ServerBase {
                 }else{
                     this.users[reqId] = theUser;
                 }             
-            };
+            }
 
-            const setToken = (noneId: string, token: string) => {
+            let setToken = (noneId: string, token: string) => {
                 theToken = token;
 
                 this.tokens[reqId] = theToken;
-            };
-
-            if(Object.keys(this.users).length > __HTTP_REQ_HISTORY_LIMIT){
-                this.users = {};
-                this.tokens = {};
             }
 
-            const authPassed: boolean | null = await AuthService.authenticate(reqId, (req.headers as any).authorization, {
+            if(Object.keys(this.users).length > __HTTP_REQ_HISTORY_LIMIT){
+                this.users = {}
+                this.tokens = {}
+            }
+
+            const authPassed: boolean | null = await AuthService.authenticate(reqId, req.headers.authorization, {
                 ..._DEFAULTS_USER_LIST_MANAGER,
                 set: setUser,
                 setToken,
@@ -236,7 +244,7 @@ class ServerService extends ServerBase {
                 getToken: (reqId: string) => this.tokens[reqId]
             });
 
-            const authHeader: string = (req.headers as any).authorization;                        
+            const authHeader: string = req.headers.authorization;                        
         
             if(authPassed === null || authHeader === undefined){         
                 ConsoleService.warn('RWS AUTH WARNING', ConsoleService.color().blue(`[${reqId}]`), 'XHR token is not passed');       
@@ -263,21 +271,21 @@ class ServerService extends ServerBase {
         });
 
 
-        this.webServer().addMiddleWare(fileUpload());
+        this.server_app.use(fileUpload());
       
         // app.use(express.json({ limit: '200mb' }));
-        this.webServer().addMiddleWare(bodyParser.json({ limit: '200mb' }));    
+        this.server_app.use(bodyParser.json({ limit: '200mb' }));    
         
         if(getConfigService().get('features')?.routing_enabled){
             if(this.options.pub_dir){
-                this.webServer().addMiddleWare(this.webServer().getSrvApp().static(this.options.pub_dir)); //@TODO
+                this.server_app.use(expressServer.static(this.options.pub_dir));
             }     
     
-            this.webServer().getSrvApp().set('view engine', 'ejs');  //@TODO 
+            this.server_app.set('view engine', 'ejs');   
 
-            const processed_routes: IHTTProute[] = await RouterService.assignRoutes(this.webServer(), this.options.httpRoutes, this.options.controllerList);
+            const processed_routes: IHTTProute[] = await RouterService.assignRoutes(this.server_app, this.options.httpRoutes, this.options.controllerList);
 
-            this.webServer().getSrvApp().addMiddleWare((req: any, res: any, next: () => void) => {                              
+            this.server_app.use((req, res, next) => {                              
                 if(!RouterService.hasRoute(req.originalUrl, processed_routes)){
                     ServerService.on404(req, res);
                 }else{
@@ -286,15 +294,16 @@ class ServerService extends ServerBase {
             });      
         }
 
-        this.webServer().getSrvApp().addMiddleWare(compression);        
+        this.use(compression);
+        
 
         return this;
     }
 
     public async configureWSServer<PassedUser extends IDbUser>(UserConstructor:  new (params: any) => PassedUser = null): Promise<ServerService>
-    {
+    { 
         if(!getConfigService().get('features')?.ws_enabled){          
-            console.error('[RWS] Websocket server is disabled in configuration');
+            console.error('[RWS] Websocket server is disabled in configuration')
             return this;
         }
 
@@ -327,8 +336,8 @@ class ServerService extends ServerBase {
                 new SocketClass(ServerService.ws_server).handleConnection(socket, eventName);
             });
         });
-    
-        if(this.options.authorization){        
+
+        if(this.options.authorization){
         
             this.use(async (socket, next ) => {                
                 const request: HTTP.IncomingMessage = socket.request;
@@ -379,7 +388,7 @@ class ServerService extends ServerBase {
         return this;
     }
 
-    static on404(req: any, res: any): void
+    static on404(req: Request, res: Response): void
     {
         const error =  new Error404(new Error('Sorry, the page you\'re looking for doesn\'t exist.'), req.url);
 
@@ -387,7 +396,7 @@ class ServerService extends ServerBase {
         
         let response = error.getMessage();
 
-        if((req.headers).accept.indexOf('text/html') > -1){
+        if(req.headers.accept.indexOf('text/html') > -1){
             const htmlTemplate = this.processErrorTemplate(error);
 
             response = htmlTemplate;

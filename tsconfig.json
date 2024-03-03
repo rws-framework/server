@@ -15,13 +15,11 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "declaration": true, 
-    "lib": ["DOM", "ESNext", "WebWorker"], 
-
   },
   "include": [
     "src"
   ],
   "exclude": [  
-    "node_modules"  
+    "node_modules"
   ]
 }

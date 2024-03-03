@@ -1,11 +1,9 @@
-import HTTP from 'http';
-import HTTPS from 'https';
-import expressServer, { Request, Response, Express } from 'express';
 import ITheSocket from './ITheSocket';
 import IDbUser from './IDbUser';
 import Controller from '../controllers/_controller';
 import ServerService from '../services/ServerService';
 import { IHTTProute } from '../routing/routes';
+import { AbstractServer } from '../servers/AbstractServer';
 
 type WsRoutes = {
     [eventName: string]: new (data: any) => ITheSocket;
@@ -36,7 +34,7 @@ interface IInitOpts {
     ssl_enabled?: boolean
 }
 
-type RWSServer = HTTP.Server | HTTPS.Server;
+type RWSServer = AbstractServer;
 type ServerStarter = (callback?: () => void) => Promise<void>;
 type RWSServerPair = { instance: ServerService, starter: ServerStarter };
 type ServerControlSet = { websocket: RWSServerPair, http: RWSServerPair };
@@ -51,4 +49,4 @@ export {
     ServerStarter,
     RWSServerPair,
     ServerControlSet
-}
+};

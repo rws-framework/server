@@ -1,6 +1,6 @@
 import { Error500, RWSError } from '../errors';
 import {DBService, getAppConfig} from '../index';
-
+RWSError;
 import TrackType, {IMetaOpts} from './annotations/TrackType';
 interface IModel{
     [key: string]: any;
@@ -61,7 +61,7 @@ class Model<ChildClass> implements IModel{
     
     checkForInclusionWithThrow(): void
     {
-        Model.checkForInclusionWithThrow(this.constructor.name)
+        Model.checkForInclusionWithThrow(this.constructor.name);
     }
 
     static checkForInclusionWithThrow(this: OpModelType<any>, checkModelType: string): void
@@ -79,8 +79,8 @@ class Model<ChildClass> implements IModel{
     static checkForInclusion(this: OpModelType<any>, checkModelType: string): boolean
     {        
         return this.loadModels().find((definedModel: Model<any>) => {
-            return definedModel.name === checkModelType
-        }) !== undefined
+            return definedModel.name === checkModelType;
+        }) !== undefined;
     }
 
     protected _fill(data: any): Model<ChildClass>{
