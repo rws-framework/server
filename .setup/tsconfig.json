@@ -13,6 +13,7 @@
       "outDir": "dist",
       "strictNullChecks": false,    
       "allowSyntheticDefaultImports": true,
+      "lib": ["DOM", "ESNext", "WebWorker"], 
       "paths": {                 
       }
     },
