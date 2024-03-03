@@ -20,10 +20,12 @@ import MD5Service from './MD5Service';
 import IDbUser from '../interfaces/IDbUser';
 import { ExpressServer } from '../servers/ExpressServer';
 
+//temporary static EXPRESS server set (@TODO: make abstractions that can include Fastify then Bun.serve)
+import { Application as ExpressApp } from 'express';
+
 //@ts-expect-error no-types
 import fileUpload from 'express-fileupload';
 
-import { AbstractServer } from '../servers/AbstractServer';
 
 import {
     WsRoutes,
@@ -59,17 +61,18 @@ const _DEFAULT_SERVER_OPTS: IInitOpts = {
     port_ws: null
 };
 
+
 class ServerService extends ServerBase {    
     private static http_server: RWSServerPair;
     private static ws_server: RWSServerPair;       
     
-    private srv: RWSServer;
+    private srv: RWSServer<ExpressApp>;
     private options: IInitOpts;     
     private tokens: UserTokens = {};
     private users: JWTUsers = {};
     private corsOptions: CorsOptions;
 
-    constructor(webServer: RWSServer, opts: IInitOpts){ 
+    constructor(webServer: RWSServer<ExpressApp>, opts: IInitOpts){ 
         const _DOMAIN: string =  opts.cors_domain || opts.domain;
 
         const WEBSOCKET_CORS = {
@@ -79,7 +82,7 @@ class ServerService extends ServerBase {
 
         const cors_headers: string[] = ['Content-Type', 'x-csrf-token','Accept', 'Authorization', 'x-junctionapi-version'];
 
-        super(webServer.getSrvApp(), {
+        super(webServer.getHttpHandler(), {
             cors: WEBSOCKET_CORS,
             transports: [opts.transport || 'websocket'],
             pingTimeout: 5*MINUTE
@@ -96,12 +99,12 @@ class ServerService extends ServerBase {
             'Access-Control-Allow-Credentials': 'true'
         };
 
-        this.webServer().on('options', (req: any, res: any) => {
+        this.on('options', (req: any, res: any) => {
             res.writeHead(200, corsHeadersSettings);
             res.end();
         });
 
-        this.webServer().addMiddleWare((req, res, next) => {
+        this.webServer().addMiddleWare((req: any, res: any, next: () => void) => {
             Object.keys(corsHeadersSettings).forEach((key: string) => {
                 res.setHeader(key, (corsHeadersSettings as any)[key]);
             });
@@ -117,14 +120,14 @@ class ServerService extends ServerBase {
 
         const corsMiddleware = cors(this.corsOptions);                 
 
-        this.webServer().addMiddleWare(async (socket, next) => {
+        this.use(async (socket, next) => {
             const request: HTTP.IncomingMessage = socket.request;
             const response: ServerResponse = new ServerResponse(request);
             corsMiddleware(request, response, next);            
         });        
 
-        this.webServer().getSrvApp().options('*', cors(this.corsOptions)); // Enable pre-flight for all routes                 @TODO
-    }
+        this.webServer().setOptionsHandling('*', cors(this.corsOptions));        
+    }    
 
     public static async initializeApp<PassedUser extends IDbUser>(opts: IInitOpts = _DEFAULT_SERVER_OPTS, UserConstructor: new () => PassedUser = null): Promise<ServerControlSet>
     {                
@@ -143,7 +146,7 @@ class ServerService extends ServerBase {
         }
 
         if (!ServerService.ws_server) {
-            const WSServer: AbstractServer = await ServerService.createServerInstance(ExpressServer, opts);
+            const WSServer: RWSServer<ExpressApp> = await ServerService.createServerInstance(ExpressServer, opts);
 
             const ws_instance = new ServerService(WSServer, opts);
             const wsPort = opts.port_ws || getConfigService().get('ws_port');
@@ -178,14 +181,14 @@ class ServerService extends ServerBase {
         }
     }    
 
-    public webServer(): RWSServer
+    public webServer(): RWSServer<ExpressApp>
     { 
         return this.srv; 
     }  
 
-    static async createServerInstance<ServerClass>(classType: new (opts: IInitOpts) => ServerClass, opts: IInitOpts): Promise<ServerClass>
+    static async createServerInstance<ServerAppClass>(serverAppClass: new (opts: IInitOpts) => ServerAppClass, opts: IInitOpts): Promise<ServerAppClass>
     {       
-        return new classType(opts);
+        return new serverAppClass(opts);
     }
 
     createServerStarter(port: number, injected: () => void = () => {}): ServerStarter
@@ -270,14 +273,12 @@ class ServerService extends ServerBase {
         
         if(getConfigService().get('features')?.routing_enabled){
             if(this.options.pub_dir){
-                this.webServer().addMiddleWare(this.webServer().getSrvApp().static(this.options.pub_dir)); //@TODO
-            }     
-    
-            this.webServer().getSrvApp().set('view engine', 'ejs');  //@TODO 
+                this.webServer().setPublicDir(this.options.pub_dir);
+            }               
 
-            const processed_routes: IHTTProute[] = await RouterService.assignRoutes(this.webServer(), this.options.httpRoutes, this.options.controllerList);
+            const processed_routes: IHTTProute[] = await RouterService.assignRoutes<ExpressApp>(this.webServer(), this.options.httpRoutes, this.options.controllerList);
 
-            this.webServer().getSrvApp().addMiddleWare((req: any, res: any, next: () => void) => {                              
+            this.webServer().addMiddleWare((req: any, res: any, next: () => void) => {                              
                 if(!RouterService.hasRoute(req.originalUrl, processed_routes)){
                     ServerService.on404(req, res);
                 }else{
@@ -286,7 +287,7 @@ class ServerService extends ServerBase {
             });      
         }
 
-        this.webServer().getSrvApp().addMiddleWare(compression);        
+        this.webServer().addMiddleWare(compression);        
 
         return this;
     }

@@ -3,7 +3,7 @@ import IDbUser from './IDbUser';
 import Controller from '../controllers/_controller';
 import ServerService from '../services/ServerService';
 import { IHTTProute } from '../routing/routes';
-import { AbstractServer } from '../servers/AbstractServer';
+import { AbstractServer, IRWSAbstractServerRequiredParams } from '../servers/AbstractServer';
 
 type WsRoutes = {
     [eventName: string]: new (data: any) => ITheSocket;
@@ -34,7 +34,7 @@ interface IInitOpts {
     ssl_enabled?: boolean
 }
 
-type RWSServer = AbstractServer;
+type RWSServer<T extends IRWSAbstractServerRequiredParams<T>> = AbstractServer<T>;
 type ServerStarter = (callback?: () => void) => Promise<void>;
 type RWSServerPair = { instance: ServerService, starter: ServerStarter };
 type ServerControlSet = { websocket: RWSServerPair, http: RWSServerPair };

@@ -3,10 +3,21 @@ import TheService from './_service';
 import Controller, { IHTTProuteMethod } from '../controllers/_controller';
 import { IHTTProute, RWSHTTPRoutingEntry } from '../routing/routes';
 import { IHTTProuteParams } from '../routing/annotations/Route';
-import { AbstractServer } from '../servers/AbstractServer';
+import { AbstractServer, IRWSAbstractServerRequiredParams } from '../servers/AbstractServer';
 
 
 type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction, IHTTProuteParams, string]};
+
+type ControllerMetadataType = {
+    annotationType: string, 
+    metadata: AnnotationMetadataType};
+
+type AnnotationMetadataType = {
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    name: string,
+    metadata: ControllerMetadataType,
+    params?: any
+};
 
 interface IControllerRoutes {
   get: RouteEntry;
@@ -54,7 +65,7 @@ class RouterService extends TheService{
         return annotationsData;
     }
 
-    async assignRoutes(app: AbstractServer, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]>
+    async assignRoutes<ServerAppClass extends IRWSAbstractServerRequiredParams<ServerAppClass>>(app: AbstractServer<ServerAppClass>, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]>
     {                
         const controllerRoutes: IControllerRoutes = {
             get: {}, post: {}, put: {}, delete: {}
@@ -69,7 +80,7 @@ class RouterService extends TheService{
                         return;    
                     }
 
-                    this.setControllerRoutes(controllerInstance, controllerMetadata, controllerRoutes, key, app);
+                    this.setControllerRoutes<ServerAppClass>(controllerInstance, controllerMetadata, controllerRoutes, key, app);
                 });
             }
         });      
@@ -118,17 +129,17 @@ class RouterService extends TheService{
 
         
     }
-
     
-    private setControllerRoutes(
+    private setControllerRoutes<ServerAppClass extends IRWSAbstractServerRequiredParams<ServerAppClass>>(
         controllerInstance: Controller, 
-        controllerMetadata: Record<string, {annotationType: string, metadata: any}>, 
-        controllerRoutes: IControllerRoutes, key: string, app: AbstractServer): void
+        controllerMetadata: Record<string, ControllerMetadataType>, 
+        controllerRoutes: IControllerRoutes, key: string, app: AbstractServer<ServerAppClass>): void
     {
         const action: IHTTProuteMethod = (controllerInstance as Controller).callMethod(key);
-        const meta = controllerMetadata[key].metadata; 
-        
-        controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.getSrvApp()[meta.name].bind(app), meta.params, key];
+        const meta: AnnotationMetadataType = controllerMetadata[key].metadata;
+        const appMethod = app.getServerAppMethodCall(meta.method);
+
+        controllerRoutes[meta.method.toLowerCase() as keyof IControllerRoutes][meta.name] = [action.bind(controllerInstance), app.bindAppMethod(appMethod), meta.params, key];
     }
     
     hasRoute(routePath: string, routes: IHTTProute[]): boolean

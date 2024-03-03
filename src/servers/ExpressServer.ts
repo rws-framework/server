@@ -1,17 +1,17 @@
 
 import getConfigService from '../services/AppConfigService';
-import express, { Request, Response } from 'express';
-import { AbstractServer , MiddleWareType} from './AbstractServer';
+import express, { Request, Response, Application as ExpressApp, static as renderStaticFiles } from 'express';
+import { AbstractServer , MiddleWareType, RWSServerHttpHandlerType, ExchangeEventType} from './AbstractServer';
 import HTTPS from 'https';
 import HTTP from 'http';
 import { IInitOpts } from '../interfaces/ServerTypes';
 import fs from 'fs';
 import { RouterServiceInstance } from '../services/RouterService';
-import { RWSError } from '../errors';
+import { Error500, RWSError } from '../errors';
 import ConsoleService from '../services/ConsoleService';
 
-export class ExpressServer extends AbstractServer {
-    private app: express.Application;
+export class ExpressServer extends AbstractServer<ExpressApp> {
+    private app: express.Application;    
 
     constructor(options: IInitOpts) {
         super(options);
@@ -36,14 +36,28 @@ export class ExpressServer extends AbstractServer {
                 options.cert = fs.readFileSync(sslCert);       
             }   
           
-            this.webSrv = isSSL ? HTTPS.createServer(options,this.app) : HTTP.createServer(this.app);
+            this.httpHandler = isSSL ? HTTPS.createServer(options,this.app) : HTTP.createServer(this.app);
         });
     }
 
     async start(port: number, afterInit: () => void): Promise<void> {
+        if(!this.webSrv){
+            throw new Error500(new Error('RWSServer instance is not prepared.'), __filename);
+        }
+
         this.webSrv.listen(port, () => {
             afterInit();
         });
+    }
+
+    on(eventName: string, callback: ExchangeEventType<ExpressApp>): void
+    {
+        this.webSrv.on(eventName, callback);
+    }
+
+    getHttpHandler(): RWSServerHttpHandlerType
+    {
+        return this.httpHandler;
     }
 
     stop(): Promise<void> {
@@ -111,5 +125,11 @@ export class ExpressServer extends AbstractServer {
         this.getSrvApp().use((req: Request, res: Response, next: () => void) => {
             onCatch(req, res, next);
         });
+    }
+
+    setPublicDir(pub_dir: string): void
+    {
+        this.addMiddleWare(renderStaticFiles(pub_dir));
+        this.getSrvApp().set('view engine', 'ejs');
     }
 }

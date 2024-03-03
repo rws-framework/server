@@ -3,35 +3,70 @@ import { IInitOpts } from '../interfaces/ServerTypes';
 import { IHTTProuteParams } from '../routing/annotations/Route';
 import appConfig from '../services/AppConfigService';
 import path from 'path';
+import { IRequestParams } from '../controllers/_controller';
 
 export type MiddleWareType = (req: any, res: any, next: () => void) => void;
-export type ExchangeEventType = (req: any, res: any) => void;
 
-export abstract class AbstractServer {
+export interface RWSCorsOptions { //cors opts interface @TODO: impement in configs
+    origin?: string | undefined;
+    methods?: string | string[] | undefined;
+    allowedHeaders?: string | string[] | undefined;
+    exposedHeaders?: string | string[] | undefined;
+    credentials?: boolean | undefined;
+    maxAge?: number | undefined;
+    preflightContinue?: boolean | undefined;
+    optionsSuccessStatus?: number | undefined;
+}
+
+export type RWSServerHttpHandlerType = {
+    [key: string]: any
+};
+//Application<Record<string, any>>
+export type ExchangeEventType<ParentServerClass> = (parent: ParentServerClass) => void;
+
+export interface IRWSAbstractServerRequiredParams<ParentServerClass> {
+    on: (eventName: string, callback: ExchangeEventType<ParentServerClass>) => void
+    options(wildCard: string, optionsHandler: MiddleWareType): void
+}
+
+export abstract class AbstractServer<ServerAppClass extends IRWSAbstractServerRequiredParams<ServerAppClass>> {
     protected options: IInitOpts;
-    protected webSrv: any;
+    protected webSrv: ServerAppClass;
+    protected httpHandler: RWSServerHttpHandlerType;
 
     constructor(options: IInitOpts) {
         this.options = options;
     }
 
-    abstract start(port: number, afterInit: () => void): Promise<void>;
-    abstract stop(): Promise<void>;
-    abstract addRoute(controllerRoutes: IControllerRoutes, method: string, handler: (req: any, res: any) => void, routeParams: any, key: string): void;
-    abstract prepare(): Promise<void>;
-    abstract addMiddleWare(onCatch: MiddleWareType): void;
+    public abstract start(port: number, afterInit: () => void): Promise<void>;
+    public abstract stop(): Promise<void>;
+    public abstract addRoute(controllerRoutes: IControllerRoutes, method: string, handler: (req: any, res: any) => void, routeParams: any, key: string): void;
+    public abstract prepare(): Promise<void>;
+    public abstract addMiddleWare(onCatch: MiddleWareType): void;
+    public abstract getHttpHandler(): RWSServerHttpHandlerType;
+    public abstract setPublicDir(pub_dir: string): void;    
 
-    getSrvApp(): any
+    public on(eventName: string, callback: ExchangeEventType<ServerAppClass>): void
     {
-        return this.webSrv;
+        this.webSrv.on(eventName, callback);
+    }    
+
+    public getServerAppMethodCall(method: string): (params: IRequestParams) => any
+    {
+        return ((this.getSrvApp())[method.toLocaleLowerCase() as keyof ServerAppClass]) as (params: IRequestParams) => any;
     }
 
-    on(eventName: string, callback: ExchangeEventType)
+    public bindAppMethod(appMethod: (params: IRequestParams) => any): (params: IRequestParams) => any
     {
-        return this.webSrv.on(eventName, callback);
+        return appMethod.bind(this.getSrvApp());
     }
 
-    sendResponseWithStatus(res: any, status: number, routeParams: IHTTProuteParams, output: any)
+    public setOptionsHandling(wildCard: string, optionsHandler: MiddleWareType): void
+    {
+        this.getSrvApp().options(wildCard, optionsHandler);
+    }
+
+    protected sendResponseWithStatus(res: any, status: number, routeParams: IHTTProuteParams, output: any)
     {
         if(routeParams.responseType === 'json' || !routeParams.responseType){                
             res.status(status).send(output);
@@ -46,5 +81,8 @@ export abstract class AbstractServer {
         res.status(status).send();
     }
 
-
+    protected getSrvApp(): ServerAppClass
+    {
+        return this.webSrv;
+    }
 }
