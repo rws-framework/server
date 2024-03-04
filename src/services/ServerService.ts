@@ -203,68 +203,70 @@ class ServerService extends ServerBase {
 
     public async configureHTTPServer<PassedUser extends IDbUser>(UserConstructor:  new (params: any) => PassedUser = null): Promise<ServerService>
     {
-        this.webServer().addMiddleWare(async (req: any, res: any, next: () => void) => {
-            const reqId: string = MD5Service.md5(req.url);
-            let theUser: IAuthUser = null;
-            let theToken: string = null;
+        if(this.options.authorization){
+            this.webServer().addMiddleWare(async (req: any, res: any, next: () => void) => {
+                const reqId: string = MD5Service.md5(req.url);
+                let theUser: IAuthUser = null;
+                let theToken: string = null;
 
-            const setUser = (reqId: string, user: IAuthUser) => {
-                theUser = user;
+                const setUser = (reqId: string, user: IAuthUser) => {
+                    theUser = user;
 
-                if(UserConstructor){                   
-                    this.users[reqId] = new UserConstructor(theUser);
-                }else{
-                    this.users[reqId] = theUser;
-                }             
-            };
+                    if(UserConstructor){                   
+                        this.users[reqId] = new UserConstructor(theUser);
+                    }else{
+                        this.users[reqId] = theUser;
+                    }             
+                };
 
-            const setToken = (noneId: string, token: string) => {
-                theToken = token;
+                const setToken = (noneId: string, token: string) => {
+                    theToken = token;
 
-                this.tokens[reqId] = theToken;
-            };
+                    this.tokens[reqId] = theToken;
+                };
 
-            if(Object.keys(this.users).length > __HTTP_REQ_HISTORY_LIMIT){
-                this.users = {};
-                this.tokens = {};
-            }
+                if(Object.keys(this.users).length > __HTTP_REQ_HISTORY_LIMIT){
+                    this.users = {};
+                    this.tokens = {};
+                }
 
-            const authPassed: boolean | null = await AuthService.authenticate(reqId, (req.headers as any).authorization, {
-                ..._DEFAULTS_USER_LIST_MANAGER,
-                set: setUser,
-                setToken,
-                getList: () => this.users,
-                get: (reqId: string) => this.users[reqId],     
-                getTokenList: () => this.tokens,
-                getToken: (reqId: string) => this.tokens[reqId]
+                const authPassed: boolean | null = await AuthService.authenticate(reqId, (req.headers as any).authorization, {
+                    ..._DEFAULTS_USER_LIST_MANAGER,
+                    set: setUser,
+                    setToken,
+                    getList: () => this.users,
+                    get: (reqId: string) => this.users[reqId],     
+                    getTokenList: () => this.tokens,
+                    getToken: (reqId: string) => this.tokens[reqId]
+                });
+
+                const authHeader: string = (req.headers as any).authorization;                        
+            
+                if(authPassed === null || authHeader === undefined){         
+                    ConsoleService.warn('RWS AUTH WARNING', ConsoleService.color().blue(`[${reqId}]`), 'XHR token is not passed');       
+                    res.writeHead(400, 'Bad request: No token passed');
+                    res.end();
+                    
+                    return;
+                }   
+
+                if(authPassed === false){                            
+                    ConsoleService.error('RWS AUTH ERROR', ConsoleService.color().blue(`[${reqId}]`), 'XHR token unauthorized');
+                    res.writeHead(403, 'Token unauthorized');
+                    res.end();
+                    
+                    return;
+                }   
+                
+                next();
             });
 
-            const authHeader: string = (req.headers as any).authorization;                        
-        
-            if(authPassed === null || authHeader === undefined){         
-                ConsoleService.warn('RWS AUTH WARNING', ConsoleService.color().blue(`[${reqId}]`), 'XHR token is not passed');       
-                res.writeHead(400, 'Bad request: No token passed');
-                res.end();
-                
-                return;
-            }   
+            this.use(async (socket, next ) => {
+                await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'ws');
+                next();
+            });
 
-            if(authPassed === false){                            
-                ConsoleService.error('RWS AUTH ERROR', ConsoleService.color().blue(`[${reqId}]`), 'XHR token unauthorized');
-                res.writeHead(403, 'Token unauthorized');
-                res.end();
-                
-                return;
-            }   
-            
-            next();
-        });
-
-        this.use(async (socket, next ) => {
-            await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'ws');
-            next();
-        });
-
+        }
 
         this.webServer().addMiddleWare(fileUpload());
       

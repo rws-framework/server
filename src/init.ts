@@ -9,7 +9,6 @@ import UtilsService from './services/UtilsService';
 
 import fs from 'fs';
 import ProcessService from './services/ProcessService';
-import IAuthUser from './interfaces/IAuthUser';
 import IDbUser from './interfaces/IDbUser';
 
 async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
