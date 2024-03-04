@@ -6,6 +6,7 @@ export default interface IAppConfig {
         routing_enabled?: boolean
         test_routes?: boolean
         ssl?: boolean
+        auth?: boolean
     } 
     mongo_url: string
     mongo_db: string

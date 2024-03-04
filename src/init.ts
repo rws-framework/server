@@ -49,7 +49,8 @@ async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: 
         httpRoutes: httpRoutes,
         controllerList: controler_list,
         pub_dir: pub_dir,
-        domain: `http${(await AppConfigService.get('features')?.ssl ? 's' : '')}://${await AppConfigService.get('domain')}`,
+        domain: `http${(AppConfigService.get('features')?.ssl ? 's' : '')}://${AppConfigService.get('domain')}`,
+        authorization: AppConfigService.get('features')?.auth,
         cors_domain: cors_domain
     },...serverOptions};
 
