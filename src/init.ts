@@ -2,7 +2,7 @@
 
 
 import IAppConfig from './interfaces/IAppConfig';
-import getConfigService, { AppConfigService } from './services/AppConfigService';
+import getConfigService, {AppConfigService} from './services/AppConfigService';
 import ServerService, { IInitOpts, ServerControlSet } from './services/ServerService';
 import ConsoleService from './services/ConsoleService';
 import UtilsService from './services/UtilsService';

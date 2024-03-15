@@ -9,7 +9,6 @@ import fs from 'fs';
 import expressServer, { Request, Response, Express } from 'express';
 import RouterService from './RouterService';
 import { AxiosRequestHeaders } from 'axios';
-import Controller from '../controllers/_controller';
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../routing/routes';
 import ConsoleService from './ConsoleService';
 import UtilsService from './UtilsService';
@@ -57,7 +56,7 @@ const _DEFAULT_SERVER_OPTS: IInitOpts = {
     ssl_enabled: null,
     port_http: null,
     port_ws: null
-}
+};
 
 class ServerService extends ServerBase {    
     private static http_server: RWSServerPair;
@@ -220,67 +219,72 @@ class ServerService extends ServerBase {
 
     public async configureHTTPServer<PassedUser extends IDbUser>(UserConstructor:  new (params: any) => PassedUser = null): Promise<ServerService>
     {
-        this.server_app.use(async (req: Request, res: Response, next: () => void) => {
-            const reqId: string = MD5Service.md5(req.url);
-            let theUser: IAuthUser = null;
-            let theToken: string = null;
+        if(this.options.authorization){
+            this.server_app.use(async (req: Request, res: Response, next: () => void) => {
+                const reqId: string = MD5Service.md5(req.url);
+                let theUser: IAuthUser = null;
+                let theToken: string = null;
 
-            let setUser = (reqId: string, user: IAuthUser) => {
-                theUser = user;
+                const setUser = (reqId: string, user: IAuthUser) => {
+                    theUser = user;
 
-                if(UserConstructor){                   
-                    this.users[reqId] = new UserConstructor(theUser);
-                }else{
-                    this.users[reqId] = theUser;
-                }             
-            }
+                    if(UserConstructor){                   
+                        this.users[reqId] = new UserConstructor(theUser);
+                    }else{
+                        this.users[reqId] = theUser;
+                    }             
+                };
 
-            let setToken = (noneId: string, token: string) => {
-                theToken = token;
+                const setToken = (noneId: string, token: string) => {
+                    theToken = token;
 
-                this.tokens[reqId] = theToken;
-            }
+                    this.tokens[reqId] = theToken;
+                };
 
-            if(Object.keys(this.users).length > __HTTP_REQ_HISTORY_LIMIT){
-                this.users = {}
-                this.tokens = {}
-            }
+                if(Object.keys(this.users).length > __HTTP_REQ_HISTORY_LIMIT){
+                    this.users = {};
+                    this.tokens = {};
+                }
 
-            const authPassed: boolean | null = await AuthService.authenticate(reqId, req.headers.authorization, {
-                ..._DEFAULTS_USER_LIST_MANAGER,
-                set: setUser,
-                setToken,
-                getList: () => this.users,
-                get: (reqId: string) => this.users[reqId],     
-                getTokenList: () => this.tokens,
-                getToken: (reqId: string) => this.tokens[reqId]
-            });
+                const authPassed: boolean | null = await AuthService.authenticate(reqId, req.headers.authorization, {
+                    ..._DEFAULTS_USER_LIST_MANAGER,
+                    set: setUser,
+                    setToken,
+                    getList: () => this.users,
+                    get: (reqId: string) => this.users[reqId],     
+                    getTokenList: () => this.tokens,
+                    getToken: (reqId: string) => this.tokens[reqId]
+                });
 
-            const authHeader: string = req.headers.authorization;                        
+                const authHeader: string = req.headers.authorization;                        
         
-            if(authPassed === null || authHeader === undefined){         
-                ConsoleService.warn('RWS AUTH WARNING', ConsoleService.color().blue(`[${reqId}]`), 'XHR token is not passed');       
-                res.writeHead(400, 'Bad request: No token passed');
-                res.end();
+                if(authPassed === null || authHeader === undefined){         
+                    ConsoleService.warn('RWS AUTH WARNING', ConsoleService.color().blue(`[${reqId}]`), 'XHR token is not passed');       
+                    res.writeHead(400, 'Bad request: No token passed');
+                    res.end();
                 
-                return;
-            }   
+                    return;
+                }   
 
-            if(authPassed === false){                            
-                ConsoleService.error('RWS AUTH ERROR', ConsoleService.color().blue(`[${reqId}]`), 'XHR token unauthorized');
-                res.writeHead(403, 'Token unauthorized');
-                res.end();
+                if(authPassed === false){                            
+                    ConsoleService.error('RWS AUTH ERROR', ConsoleService.color().blue(`[${reqId}]`), 'XHR token unauthorized');
+                    res.writeHead(403, 'Token unauthorized');
+                    res.end();
                 
-                return;
-            }   
+                    return;
+                }   
             
-            next();
-        });
+                next();
+            });
+    
 
-        this.use(async (socket, next ) => {
-            await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'ws');
-            next();
-        });
+            this.use(async (socket, next ) => {
+                if(this.options.onAuthorize){
+                    await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'ws');
+                }
+                next();
+            });
+        }
 
 
         this.server_app.use(fileUpload());
@@ -315,7 +319,7 @@ class ServerService extends ServerBase {
     public async configureWSServer<PassedUser extends IDbUser>(UserConstructor:  new (params: any) => PassedUser = null): Promise<ServerService>
     { 
         if(!getConfigService().get('features')?.ws_enabled){          
-            console.error('[RWS] Websocket server is disabled in configuration')
+            console.error('[RWS] Websocket server is disabled in configuration');
             return this;
         }
 
@@ -346,11 +350,7 @@ class ServerService extends ServerBase {
             Object.keys(this.options.wsRoutes).forEach((eventName) => {                
                 const SocketClass = this.options.wsRoutes[eventName];    
                 
-                try {
-                    new SocketClass(ServerService.ws_server).handleConnection(socket, eventName);
-                } catch (e: Error | any){                    
-                    throw e;
-                }
+                new SocketClass(ServerService.ws_server).handleConnection(socket, eventName);
             });
         });
 
@@ -398,7 +398,9 @@ class ServerService extends ServerBase {
         }
 
         this.use(async (socket, next ) => {
-            await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'http');
+            if(this.options.onAuthorize){
+                await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'http');
+            }
             next();
         });
 
