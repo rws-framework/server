@@ -110,8 +110,8 @@ const setVendors = async () => {
         console.log('[RWS CLI vendors] Done.');
     }
     
-    ConsoleService = require('./vendors/rws/services/ConsoleService').default;
-    MD5Service = require('./vendors/rws/services/MD5Service').default;    
+    ConsoleService = require('./vendors/ConsoleService').default;
+    MD5Service = require('./vendors/MD5Service').default;    
 }
 
 const consoleClientHashFile = `${moduleCfgDir}/_cli_hash`;

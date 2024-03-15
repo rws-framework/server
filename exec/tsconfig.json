@@ -8,12 +8,11 @@
     "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
+    "sourceMap": false,
     "resolveJsonModule": true,
-    "outDir": "./vendors/rws",
-    "strictNullChecks": false,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
-    "declaration": true,
+    "outDir": "vendors",
+    "strictNullChecks": false,    
+    "allowSyntheticDefaultImports": true,      
     "paths": {
       "rws-js-server": [
         "../src"
@@ -21,7 +20,10 @@
     }
   },
   "include": [
-    "../src"
+    "../src/services/MD5Service.ts",
+    "../src/services/ConsoleService.ts",
   ],
-  "exclude": []
+  "exclude": [
+    "node_modules"
+  ]
 }
