@@ -1,6 +1,6 @@
 {
   "name": "rws-js-server",
-  "version": "2.15.7",
+  "version": "2.16.0",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -37,8 +37,7 @@
     "jsonwebtoken": "^9.0.2",
     "kcors": "^2.2.2",
     "kerberos": "^2.0.1",
-    "langchain": "^0.1.5",
-    "lodash": "^4.17.21",
+    "langchain": "^0.1.27",    
     "md5": "^2.3.0",
     "mongodb": "^5.7.0",
     "mongodb-client-encryption": "^2.8.0",
@@ -74,8 +73,7 @@
     "@types/crypto-js": "^4.1.1",
     "@types/express": "^4.17.13",
     "@types/express-fileupload": "^1.4.4",
-    "@types/jsonwebtoken": "^9.0.5",
-    "@types/lodash": "^4.14.202",
+    "@types/jsonwebtoken": "^9.0.5",    
     "@types/mocha": "^10.0.1",
     "@types/pino": "^7.0.5",
     "@types/pino-pretty": "^5.0.0",

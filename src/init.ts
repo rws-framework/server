@@ -9,7 +9,6 @@ import UtilsService from './services/UtilsService';
 
 import fs from 'fs';
 import ProcessService from './services/ProcessService';
-import IAuthUser from './interfaces/IAuthUser';
 import IDbUser from './interfaces/IDbUser';
 
 async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
@@ -49,8 +48,8 @@ async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: 
         httpRoutes: httpRoutes,
         controllerList: controler_list,
         pub_dir: pub_dir,
-        authorization: (AppConfigService.get('features')?.authorization) || false,
         domain: `http${(AppConfigService.get('features')?.ssl ? 's' : '')}://${AppConfigService.get('domain')}`,
+        authorization: AppConfigService.get('features')?.auth,
         cors_domain: cors_domain
     },...serverOptions};
 
