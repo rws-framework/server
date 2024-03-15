@@ -344,8 +344,13 @@ class ServerService extends ServerBase {
             });                
 
             Object.keys(this.options.wsRoutes).forEach((eventName) => {                
-                const SocketClass = this.options.wsRoutes[eventName];                
-                new SocketClass(ServerService.ws_server).handleConnection(socket, eventName);
+                const SocketClass = this.options.wsRoutes[eventName];    
+                
+                try {
+                    new SocketClass(ServerService.ws_server).handleConnection(socket, eventName);
+                } catch (e: Error | any){                    
+                    throw e;
+                }
             });
         });
 

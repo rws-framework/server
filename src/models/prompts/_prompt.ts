@@ -1,7 +1,7 @@
 import { Readable } from 'stream';
 import { PromptTemplate } from '@langchain/core/prompts';
 import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
-import { SimpleChatModel } from '@langchain/core/language_models/chat_models';
+import { BedrockChat } from '@langchain/community/chat_models/bedrock/web';
 import { IterableReadableStream } from '@langchain/core/utils/stream';
 import { ChainValues } from '@langchain/core/utils/types';
 
@@ -214,14 +214,14 @@ class RWSPrompt {
         return this.multiTemplate;
     }
 
-    setConvo(convo: ConvoLoader<SimpleChatModel>): RWSPrompt
+    setConvo(convo: ConvoLoader<BedrockChat>): RWSPrompt
     {
         this.convo = convo.setPrompt(this);        
         
         return this;
     }
 
-    getConvo<T extends SimpleChatModel>(): ConvoLoader<T>
+    getConvo<T extends BedrockChat>(): ConvoLoader<T>
     {
         return this.convo;
     }

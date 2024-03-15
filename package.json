@@ -37,7 +37,7 @@
     "jsonwebtoken": "^9.0.2",
     "kcors": "^2.2.2",
     "kerberos": "^2.0.1",
-    "langchain": "^0.1.5",    
+    "langchain": "^0.1.27",    
     "md5": "^2.3.0",
     "mongodb": "^5.7.0",
     "mongodb-client-encryption": "^2.8.0",

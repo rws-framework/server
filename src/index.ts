@@ -47,7 +47,7 @@ import Model, { IModel, TrackType as RWSTrackType } from './models/_model';
 import Controller, { IRequestParams} from './controllers/_controller';
 
 import TheService from './services/_service';
-import TheSocket, { JSONMessage } from './sockets/_socket';
+import TheSocket, { JSONMessage, BaseWsResponse, ErrorWsResponse } from './sockets/_socket';
 
 import RWSAppCommands from './commands/index';
 import * as RWSTestSuite from './tests/index';
@@ -121,6 +121,8 @@ export {
     RWSPrompt,    
     RWSErrorCodes,
     ChainStreamType,
+
+    BaseWsResponse, ErrorWsResponse,
 
     IRWSPromptRequestExecutor,
     IRWSSinglePromptRequestExecutor,
