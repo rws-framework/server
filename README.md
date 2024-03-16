@@ -1,6 +1,9 @@
 # Realtime Web Suit server setup and configuration guide
 
-Realtime Web Suit is a flexible fullstack-server for seting up web servers, WebSocket servers and more while keeping it in sync with your frontend. (TBA: RWS Prisma models + RWS Custom CLI Engine + Nest + Nest-Front routing mapper)
+Realtime Web Suit is a flexible fullstack-server for seting up web servers, WebSocket servers and more while keeping it in sync with your frontend. 
+
+
+*(TBA: RWS Prisma models + RWS Custom CLI Engine + Nest + Nest-RWS front routing mapper)*
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
