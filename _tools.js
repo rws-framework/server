@@ -39,10 +39,10 @@ function getActiveWorkSpaces(currentPath, mode = 'all') {
           return true;
         }
 
-        let rwsPkgName = 'rws-js-server';
+        let rwsPkgName = '@rws-framework/server';
 
         if(mode === 'frontend'){
-          rwsPkgName = 'rws-js-client';
+          rwsPkgName = '@rws-framework/client';
         }
 
         let hasDesiredPackage = false;
