@@ -1,6 +1,6 @@
-# RWS-JS Server Setup and Configuration Guide
+# Realtime Web Suit server setup and configuration guide
 
-RWS-JS is a flexible server for fullstack Realtime Web Suite framework that you can use to set up web servers, WebSocket servers, and more in sync with your frontend. The application's configuration is crucial for its successful operation. In this guide, you'll learn how to create and configure an RWS-JS server application.
+Realtime Web Suit is a flexible fullstack-server for seting up web servers, WebSocket servers and more while keeping it in sync with your frontend. (TBA: RWS Prisma models + RWS Custom CLI Engine + Nest + Nest-Front routing mapper)
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)

@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",  
   "private": false,
-  "version": "2.16.2",
+  "version": "2.16.4",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
