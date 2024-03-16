@@ -15,7 +15,7 @@
     "strictNullChecks": false,    
     "allowSyntheticDefaultImports": true,      
     "paths": {
-      "rws-js-server": [
+      "@rws-framework/server": [
         "../src"
       ]
     }

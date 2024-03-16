@@ -37,7 +37,7 @@ const externals = (declaredCodeBase, nodeModules, externalOptions = null) => ({c
     ];
 
     const inc_list = [
-      'rws-js-server',
+      '@rws-framework/server',
       ...codeBase, 
       ...theOptions.conditions.request_based.include
     ];
@@ -48,7 +48,7 @@ const externals = (declaredCodeBase, nodeModules, externalOptions = null) => ({c
 
     const not_inc_list = [...theOptions.conditions.request_based.exclude];
 
-    const exceptions_context = [path.resolve(nodeModules, 'rws-js-server'), ...theOptions.conditions.context_based.exceptions];
+    const exceptions_context = [path.resolve(nodeModules, '@rws-framework/server'), ...theOptions.conditions.context_based.exceptions];
 
     const exceptions = [...[
        path.resolve(moduleDir, 'exec')     

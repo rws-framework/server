@@ -20,7 +20,7 @@ module.exports = {
     resolve: {
       modules: modules_setup,
       alias: {                 
-      //  'rws-js-server': '../../src/'
+      //  '@rws-framework/server': '../../src/'
       },
       extensions: ['.ts', '.js', '.node'],      
     },
@@ -42,7 +42,7 @@ module.exports = {
                 }
               }
             ],
-            exclude: /\.d\.ts$/,//node_modules\/(?!rws-js-server)|
+            exclude: /\.d\.ts$/,//node_modules\/(?!@rws-framework/server)|
           },       
           {
               test: /\.node$/,

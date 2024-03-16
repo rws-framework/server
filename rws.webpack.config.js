@@ -102,7 +102,7 @@ const RWSWebpackWrapper = (config) => {
               }
             }
           ],
-          exclude: /node_modules\/(?!rws-js-server)|\.d\.ts$/,
+          exclude: /node_modules\/(?!@rws-framework/server)|\.d\.ts$/,
         },       
         {
             test: /\.node$/,

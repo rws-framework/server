@@ -46,7 +46,7 @@ npm install -g yarn
 ### Install package
 
 ```bash
-yarn add rws-js-server
+yarn add @rws-framework/server
 ```
 
 ### Package file
@@ -67,7 +67,7 @@ yarn add rws-js-server
         "puppeteer": "^21.0.3",
         "readable-stream": "^4.5.2",
         "reflect-metadata": "^0.2.1",
-        "rws-js-server": "*",
+        "@rws-framework/server": "*",
         "ts-transformer-keys": "^0.4.4",
         "tsconfig-paths-webpack-plugin": "^4.1.0",
         "typescript": "^5.3.3",
@@ -146,7 +146,7 @@ const path = require('path');
 const keysTransformer = require('ts-transformer-keys/transformer').default;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
-const  RWSWebPackSettings  = require('rws-js-server/rws.webpack.config');
+const  RWSWebPackSettings  = require('@rws-framework/server/rws.webpack.config');
 
 RWSWebPackSettings.resolve.plugins = [
   new TsconfigPathsPlugin({configFile: './tsconfig.json'})
@@ -218,7 +218,7 @@ module.exports = {
             }
           }
         ],
-        exclude: /node_modules\/(?!rws-js-server)/,
+        exclude: /node_modules\/(?!@rws-framework/server)/,
       },       
       {
           test: /\.node$/,
@@ -232,7 +232,7 @@ module.exports = {
     warningsFilter: webpackFilters,
   },
   externals: [nodeExternals({
-    allowlist: ['rws-js-server'],
+    allowlist: ['@rws-framework/server'],
   })],
 };
 ```
@@ -244,7 +244,7 @@ Define the connection details for your MongoDB instance and server configuration
 **src/config/config.ts**:
 
 ```typescript
-import { ConsoleService, IAppConfig } from "rws-js-server";
+import { ConsoleService, IAppConfig } from "@rws-framework/server";
 
 import JWTUser from "../user/model";
 import { getModels } from "../models";
@@ -315,7 +315,7 @@ export default (): IAppConfig => {
 ***A sample command***:
 
 ```typescript
-import { ICmdParams, RWSCommand } from 'rws-js-server';
+import { ICmdParams, RWSCommand } from '@rws-framework/server';
 
 class HelloCommand extends RWSCommand {
     constructor(){
@@ -379,7 +379,7 @@ export function getModels(): any[] {
 RWSModel example: 
 
 ```typescript
-import { RWSannotations, RWSModel } from "rws-js-server";
+import { RWSannotations, RWSModel } from "@rws-framework/server";
 
 import ITimeTracker from "./interfaces/ITimeTracker";
 import 'reflect-metadata';
@@ -470,7 +470,7 @@ import routes from './routing/routes';
 *"path"* is request path
 
 ```typescript
-import {IHTTPRoute} from "rws-js-server";
+import {IHTTPRoute} from "@rws-framework/server";
 
 export default (): IHTTPRoute[] => {
     return [
@@ -499,7 +499,7 @@ import {
     RWSannotations, 
     RWSController, 
     IRequestParams 
-} from "rws-js-server";
+} from "@rws-framework/server";
 
 const { Route } = RWSannotations.routingAnnotations;
 class HomeController extends RWSController{
@@ -562,7 +562,7 @@ those routes goes to config file in "ws_routes" field
 
 ## Running the Server
 
-Create a new index.ts file in the root of your project. This file will import the serverInit function from rws-js-server, and your configuration function from config.ts.
+Create a new index.ts file in the root of your project. This file will import the serverInit function from @rws-framework/server, and your configuration function from config.ts.
 
 **serverInit() takes in IAppConfig interface:**
 
@@ -742,7 +742,7 @@ class DBService extends TheService {
 ### index.ts from your root/src directory##:
 
 ```typescript
-import { serverInit, ConsoleService, getAppConfig } from "rws-js-server";
+import { serverInit, ConsoleService, getAppConfig } from "@rws-framework/server";
 import config from './config/config'
 import BedrockService from "./services/BedrockService";
 
