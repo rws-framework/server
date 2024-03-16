@@ -21,7 +21,6 @@
     }
   },
   "include": [
-    "../src/services/MD5Service.ts",
-    "../src/services/ConsoleService.ts",
+    "../src/services"
   ]
 }
