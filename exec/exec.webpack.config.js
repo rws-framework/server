@@ -50,7 +50,7 @@ module.exports = {
                   ]
               })
             },
-            exclude: /node_modules\/(?!@rws-framework/server)|\.d\.ts$/,
+            exclude: /node_modules\/(?!\@rws-framework\/server)|\.d\.ts$/,
           },
           {
               test: /\.node$/,
