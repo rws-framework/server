@@ -6,8 +6,6 @@ import path from 'path';
 import fs from 'fs';
 import TraversalService from './TraversalService';
 import UtilsService from './UtilsService';
-import ConsoleService from './ConsoleService';
-
 
 class MD5Service extends TheService {
     async calculateFileMD5(filePath: string): Promise<string> 

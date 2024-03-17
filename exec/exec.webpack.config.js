@@ -1,11 +1,9 @@
 const path = require('path');
 const keysTransformer = require('ts-transformer-keys/transformer').default;
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const webpackFilters = require('../webpackFilters');
 const rootDir = process.cwd();
-const nodeExternals = require('webpack-node-externals');
-const UtilsService = require('../_tools');
-const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')
+const { rwsPath } = require('@rws-framework/console');
+const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()), 'node_modules')
 const modules_setup = [rootPackageNodeModules];
 const {rwsExternals} = require('../_rws_externals');
 const buildDir = path.resolve(process.cwd(), 'build');
@@ -28,8 +26,7 @@ module.exports = {
       symlinks: false,
       modules: modules_setup,
       alias: {                 
-        '@cwd' : process.cwd()
-      //  '@rws-framework/server': '../src'
+        '@cwd' : process.cwd()      
       },
       extensions: ['.ts', '.js', '.node'],      
     },
@@ -42,7 +39,7 @@ module.exports = {
               allowTsInNodeModules: true,
               configFile: path.resolve(__dirname, 'exec.tsconfig.json'), 
               // compilerOptions: {
-              //   baseUrl: UtilsService.findRootWorkspacePath(process.cwd())
+              //   baseUrl: rwsPath..findRootWorkspacePath(process.cwd())
               // },             
               getCustomTransformers: program => ({
                   before: [

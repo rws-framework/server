@@ -1,11 +1,13 @@
 import TheService from './_service';
 import fs from 'fs';
 import path from 'path';
+import { rwsPath } from '@rws-framework/console';
 
 import { SourceMapConsumer, RawSourceMap  } from 'source-map';
 
 class UtilsService extends TheService {  
     private _startTime: [number, number];
+    findRootWorkspacePath = rwsPath.findRootWorkspacePath;
 
     startExecTimeRecord()
     {
@@ -61,22 +63,6 @@ class UtilsService extends TheService {
         }
 
         fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
-    }
-
-    findRootWorkspacePath(currentPath: string): string
-    {  
-        const parentPackageJsonPath = path.join(currentPath + '/..', 'package.json');        
-        const parentPackageDir = path.dirname(parentPackageJsonPath);
-
-        if (fs.existsSync(parentPackageJsonPath)) {
-            const packageJson = JSON.parse(fs.readFileSync(parentPackageJsonPath, 'utf-8'));
-
-            if (packageJson.workspaces) {
-                return this.findRootWorkspacePath(parentPackageDir);
-            }
-        }
-
-        return currentPath;
     }
 
     async getCurrentLineNumber(error: Error = null): Promise<number> {

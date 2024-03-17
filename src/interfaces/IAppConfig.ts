@@ -1,4 +1,6 @@
-import { RWSHTTPRoutingEntry, WsRoutes, RWSController, RWSCommand } from '../index';
+import { RWSHTTPRoutingEntry, WsRoutes } from '../services/ServerService';
+import RWSController from '../controllers/_controller';
+import RWSCommand from '../commands/_command';
 
 export default interface IAppConfig {   
     features?: {

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const tools = require('./_tools');
+const { rwsPath } = require('@rws-framework/console');
 
 const _defaultOpts = {
   mode: 'all',
@@ -28,7 +28,7 @@ const externals = (declaredCodeBase, nodeModules, externalOptions = null) => ({c
 
     const moduleDir = path.resolve(path.dirname(module.id));    
 
-    const codeBase = tools.getActiveWorkSpaces(declaredCodeBase, theOptions.mode);  
+    const codeBase = rwsPath.getActiveWorkSpaces(declaredCodeBase, theOptions.mode);  
     
 
     const inc_list_context = [

@@ -1,6 +1,5 @@
 import HTTP from 'http';
 import HTTPS from 'https';
-import expressServer, { Request, Response, Express } from 'express';
 import ITheSocket from './ITheSocket';
 import IDbUser from './IDbUser';
 import Controller from '../controllers/_controller';

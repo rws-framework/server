@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": "../",
+    "baseUrl": "./",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "target": "ES2018",
@@ -15,12 +15,10 @@
     "strictNullChecks": false,    
     "allowSyntheticDefaultImports": true,      
     "paths": {
-      "@rws-framework/server": [
-        "../src"
-      ]
     }
   },
   "include": [
-    "../src/services"
+    "../src/services/ConsoleService.ts",
+    "../src/services/MD5Service.ts",    
   ]
 }

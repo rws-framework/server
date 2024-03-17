@@ -2,10 +2,10 @@ const path = require('path');
 const keysTransformer = require('ts-transformer-keys/transformer').default;
 const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
-const UtilsService = require('./_tools');
 const {rwsExternals} = require('./_rws_externals');
+const { rwsPath } = require('@rws-framework/console');
 
-const rootPackageNodeModules = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules')
+const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()), 'node_modules')
 
 // console.log(modules_setup)s;
 /**

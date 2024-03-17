@@ -1,5 +1,7 @@
 import { Error500, RWSError } from '../errors';
-import {DBService, getAppConfig} from '../index';
+
+import DBService from '../services/DBService';
+import getAppConfig from '../services/AppConfigService';
 
 import TrackType, {IMetaOpts} from './annotations/TrackType';
 interface IModel{

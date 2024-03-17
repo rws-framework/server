@@ -15,9 +15,7 @@
     "sourceMap": true,
     "declaration": true,
     "paths": {
-      "@cwd": [
-        "./"
-      ]    
+      
     }
   },
   "include": [
