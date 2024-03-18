@@ -6,9 +6,7 @@ const { rwsPath } = require('@rws-framework/console');
 const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()), 'node_modules')
 const modules_setup = [rootPackageNodeModules];
 const {rwsExternals} = require('../_rws_externals');
-const buildDir = path.resolve(process.cwd(), 'build');
-
-const relFromBuild = path.relative(buildDir, __dirname);
+const buildDir = path.resolve(__dirname, 'dist', 'vendors', 'build', 'cli');
 
 // console.log('WHERE', path.resolve(__dirname) + '/src/rws.ts');
 

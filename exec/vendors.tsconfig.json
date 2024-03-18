@@ -11,17 +11,13 @@
     "esModuleInterop": true,
     "sourceMap": false,
     "resolveJsonModule": true,
-    "outDir": "vendors",
+    "outDir": "dist/vendors/src",
     "strictNullChecks": false,    
     "allowSyntheticDefaultImports": true,      
     "paths": {
     }
   },
   "include": [
-    "../src/services/ConsoleService.ts",
-    "../src/services/MD5Service.ts",    
-    "../src/services/_service.ts",
-    "../src/services/TraversalService.ts",
-    "../src/services/UtilsService.ts"  
+    "../src"
   ]
 }

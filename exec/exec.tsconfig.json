@@ -12,8 +12,8 @@
     "outDir": "./dist/exec",
     "strictNullChecks": false,
     "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
-    "declaration": true,
+    "sourceMap": false,
+    "declaration": false,
     "paths": {
       
     }

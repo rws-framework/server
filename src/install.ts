@@ -13,7 +13,7 @@ const { log, color, rwsLog } = ConsoleService;
 
 const {runShellCommand} = ProcessService;
 
-const moduleDir = path.resolve(path.dirname(module.id), '..');
+const moduleDir = UtilsService.findPackageDir(__dirname);
 const executionDir = path.resolve(process.cwd());
 const workspaceRoot = UtilsService.findRootWorkspacePath(executionDir);
 

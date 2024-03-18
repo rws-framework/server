@@ -8,10 +8,11 @@ import { SourceMapConsumer, RawSourceMap  } from 'source-map';
 class UtilsService extends TheService {  
     private _startTime: [number, number];
     findRootWorkspacePath = rwsPath.findRootWorkspacePath;
+    findPackageDir = rwsPath.findPackageDir;
 
     startExecTimeRecord()
     {
-        this._startTime = process.hrtime();
+        this._startTime = process.hrtime() ;
     }
 
     endExecTimeRecord(): number
