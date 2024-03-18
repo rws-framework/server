@@ -114,7 +114,7 @@ const RWSWebpackWrapper = (config) => {
     stats: {
       warningsFilter: webpackFilters,
     },
-    externals: rwsExternals(executionDir, rootPackageNodeModules, mergeCodeBaseOptions)   
+    // externals: rwsExternals(executionDir, rootPackageNodeModules, mergeCodeBaseOptions)   
   }
 
   return cfgExport;
