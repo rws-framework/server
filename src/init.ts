@@ -1,6 +1,4 @@
-
-
-
+import { join } from 'path';
 import IAppConfig from './interfaces/IAppConfig';
 import getConfigService, {AppConfigService} from './services/AppConfigService';
 import ServerService, { IInitOpts, ServerControlSet } from './services/ServerService';
@@ -10,8 +8,11 @@ import UtilsService from './services/UtilsService';
 import fs from 'fs';
 import ProcessService from './services/ProcessService';
 import IDbUser from './interfaces/IDbUser';
+import { INestApplication } from '@nestjs/common';
+import { FastifyAdapter} from '@nestjs/platform-fastify';
 
-async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
+
+async function init<PassedUser extends IDbUser, T extends FastifyAdapter>(app: T, cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
     const AppConfigService = getConfigService(cfg);    
     const wsRoutes = await AppConfigService.get('ws_routes');
     const httpRoutes = await AppConfigService.get('http_routes');
@@ -24,7 +25,20 @@ async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: 
 
     if(addToConfig !== null){
         await addToConfig(AppConfigService);
-    }
+    }    
+    
+    app.useStaticAssets({
+        root: pub_dir,
+        prefix: '/public/',
+      });
+      app.setViewEngine({
+        engine: {
+          handlebars: require('handlebars'),
+        },
+        templates: join(__dirname, '..', 'views'),
+      });
+
+    await app.listen(3000);
 
     // let https = true;
 

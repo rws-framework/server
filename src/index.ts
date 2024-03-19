@@ -44,24 +44,27 @@ const RWSannotations = {
 
 import TheCommand, {ICmdParams} from './commands/_command';
 import Model, { IModel, TrackType as RWSTrackType } from './models/_model';
-import Controller, { IRequestParams} from './controllers/_controller';
+import common, { Controller, Get, Post, Delete, Put } from '@nestjs/common';
+import core from '@nestjs/core';
 
 import TheService from './services/_service';
 import TheSocket, { JSONMessage, BaseWsResponse, ErrorWsResponse } from './sockets/_socket';
 
 import RWSAppCommands from './commands/index';
-import * as RWSTestSuite from './tests/index';
 
 import * as RWSErrorCodes from './errors/index';
 
-export {
+const NEST = {
+    common,
+    core
+};
+
+export {    
     init as serverInit,
     setupRWS,
     setupPrisma,
     getAppConfig,    
-    AppConfigService,
-
-    Controller as RWSController,
+    AppConfigService,        
     TheService as RWSService,
     TheSocket as RWSSocket,
     TheCommand as RWSCommand,
@@ -97,7 +100,6 @@ export {
     TimeSeriesModel,
 
     WsRoutes,
-    IRequestParams,
     ITheSocket,    
     ITimeSeries,
     IAppConfig,
@@ -114,7 +116,6 @@ export {
     IPrefixedHTTProutes,
     RWSHTTPRoutingEntry,
     RWSAppCommands,
-    RWSTestSuite,  
     
     RWSVectorStore,
     RWSConvo,
@@ -135,5 +136,8 @@ export {
     ILLMChunk,
     RWSTrackType,
     RWSServerPair,
-    RWSServerStarter
+    RWSServerStarter,
+
+    NEST,
+    Controller, Get, Post, Delete, Put
 };
