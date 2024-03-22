@@ -62,7 +62,7 @@ const externals = (declaredCodeBase, nodeModules, externalOptions = null) => ({c
    const excludedCondition = (regexList(not_inc_list_context).test(context));
    const contextExceptionCondition = regexList(exceptions_context).test(context) && request[0] === '.';
    const requestExceptionCondition = (regexList(exceptions).test(request));
-   console.log('to-output', request)
+   
     if ( 
       (includedCondition
       && !excludedCondition)
