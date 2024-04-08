@@ -190,7 +190,7 @@ class ConsoleService extends TheService {
     rwsLog(...obj: string[]): void 
     {    
 
-        let intro = 'RWS CLI ERROR';
+        let intro = 'RWS CLI';
 
         if(obj.length > 1 && typeof obj[0] === 'string'){
             intro = obj[0];
