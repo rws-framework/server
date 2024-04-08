@@ -70,7 +70,7 @@ const RWSWebpackWrapper = (config) => {
     },
     mode: isDev ? 'development' : 'production',
     target: 'node',
-    devtool: config.devtool || 'source-map',
+    devtool: config.devtool || 'inline-source-map',
     output: {
       path: config.outputDir,
       filename: config.outputFileName,
