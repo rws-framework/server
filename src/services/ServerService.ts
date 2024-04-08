@@ -21,7 +21,7 @@ import IAuthUser from '../interfaces/IAuthUser';
 import MD5Service from './MD5Service';
 import IDbUser from '../interfaces/IDbUser';
 
-//@ts-expect-error no-types
+//@ts-ignore
 import fileUpload from 'express-fileupload';
 
 import {
