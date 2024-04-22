@@ -3,17 +3,19 @@ import ConsoleService from '../services/ConsoleService';
 
 import { rmdir } from 'fs/promises';
 import UtilsService from '../services/UtilsService';
+import { rwsPath } from '@rws-framework/console';
+
 const { color } = ConsoleService;
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
+const packageRootDir = rwsPath.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 
 class ClearCommand extends Command 
 {
     constructor(){
-        super('clear', module);
+        super('clear');
     }
 
     

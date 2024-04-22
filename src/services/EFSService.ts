@@ -9,6 +9,7 @@ import ProcessService from './ProcessService';
 import path from 'path';
 import AWS from 'aws-sdk';
 import VPCService from './VPCService';
+import { rwsPath } from '@rws-framework/console';
 
 const { log, error, color, rwsLog } = ConsoleService;
 
@@ -251,10 +252,7 @@ class EFSService extends TheService {
     async processEFSLoader(vpcId: string, subnetId: string): Promise<string>
     {
         const executionDir = process.cwd();
-
-        const filePath: string = module.id;        
-        const cmdDir = filePath.replace('./', '').replace(/\/[^/]*\.ts$/, '');
-        const moduleDir = path.resolve(cmdDir, '..', '..', '..', '..');
+        const moduleDir = rwsPath.findPackageDir(executionDir);
         const moduleCfgDir = `${executionDir}/node_modules/.rws`;
 
         const _UNZIP_FUNCTION_NAME: string = 'efs-loader';

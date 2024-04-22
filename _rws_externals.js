@@ -38,6 +38,7 @@ const externals = (declaredCodeBase, nodeModules, externalOptions = null) => ({c
 
     const inc_list = [
       '@rws-framework/server',
+      '@rws-framework/console',
       ...codeBase, 
       ...theOptions.conditions.request_based.include
     ];
@@ -69,7 +70,7 @@ const externals = (declaredCodeBase, nodeModules, externalOptions = null) => ({c
       || (requestExceptionCondition || contextExceptionCondition)
     ) {
       //merging to output
-     
+
       return callback();
     }
     

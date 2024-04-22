@@ -5,19 +5,18 @@ import UtilsService from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
 import CMDListCommand from './CMDListCommand';
+import { rwsPath } from '@rws-framework/console';
 
 const { rwsLog, color, log } = ConsoleService;
 
 const executionDir = process.cwd();
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
-const moduleDir = path.resolve(path.dirname(module.id), '..', '..');    
 
 class HelpCommand extends Command
 {
     public static cmdDescription: string | null = 'List of available rws commands.';
 
     constructor(){
-        super('help', module);
+        super('help');
     }
 
     async execute(params?: ICmdParams): Promise<void>

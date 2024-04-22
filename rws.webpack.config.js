@@ -70,11 +70,11 @@ const RWSWebpackWrapper = (config) => {
     },
     mode: isDev ? 'development' : 'production',
     target: 'node',
-    devtool: config.devtool || 'inline-source-map',
+    devtool: isDev ? (config.devtool || 'inline-source-map') : false,
     output: {
       path: config.outputDir,
       filename: config.outputFileName,
-      sourceMapFilename: '[file].map',
+      sourceMapFilename: '[file].map' ,
     },
     resolve: {
       extensions: ['.ts', '.js'],
@@ -102,7 +102,7 @@ const RWSWebpackWrapper = (config) => {
               }
             }
           ],
-          exclude: /node_modules\/(?!\@rws-framework\/server)|\.d\.ts$/,
+          exclude: /node_modules\/(?!\@rws-framework\/.*)|\.d\.ts$/,
         },       
         {
             test: /\.node$/,
@@ -114,7 +114,13 @@ const RWSWebpackWrapper = (config) => {
     stats: {
       warningsFilter: webpackFilters,
     },
-    externals: rwsExternals(executionDir, rootPackageNodeModules, mergeCodeBaseOptions)   
+    optimization: {      
+      minimize: false
+  }    
+  }
+  cfgExport.externals = rwsExternals(executionDir, rootPackageNodeModules, mergeCodeBaseOptions);
+  if(isDev){
+    
   }
 
   return cfgExport;

@@ -2,21 +2,19 @@ import Command, { ICmdParams } from './_command';
 import { setupRWS, setupPrisma } from '../install';
 import ConsoleService from '../services/ConsoleService';
 import UtilsService from '../services/UtilsService';
+import { rwsPath } from '@rws-framework/console';
+
 import path from 'path';
 import fs from 'fs';
 
 const { rwsLog, color } = ConsoleService;
-
-const executionDir = process.cwd();
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
-const moduleDir = path.resolve(path.dirname(module.id), '..', '..');    
 
 class InitCommand extends Command 
 {
     public static cmdDescription: string | null = 'Command that builds RWS config files along with Prisma client.\nThis CMD creates schema files for Prisma from RWS model files passed to configuration.\nUsed in postinstall scripts.';
 
     constructor(){
-        super('init', module);
+        super('init');
     }
 
     async execute(params?: ICmdParams): Promise<void>

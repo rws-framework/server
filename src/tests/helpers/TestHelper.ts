@@ -14,6 +14,7 @@ import {WebBrowser} from './BrowserHelper';
 import TestCase from '../test_cases/_test_case';
 import UtilsService from '../../services/UtilsService';
 import { json } from 'body-parser';
+import { rwsPath } from '@rws-framework/console';
 
 
 chai.use(chaiLike);
@@ -175,7 +176,7 @@ const setLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet, timeout
 };
 
 const swapCfgFile = (cfgPath: string, content: object, revert: boolean = false): void => {
-    const rwsCfgDir = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()),'node_modules','.rws');
+    const rwsCfgDir = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()),'node_modules','.rws');
 
     if(rwsCfgDir){
        

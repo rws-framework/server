@@ -35,19 +35,16 @@ import {
     RWSServerPair,
     ServerControlSet
 } from '../interfaces/ServerTypes';
+import { rwsPath } from '@rws-framework/console';
 
 const __HTTP_REQ_HISTORY_LIMIT = 50;
-const getCurrentLineNumber = UtilsService.getCurrentLineNumber;
 
 const wsLog = async (fakeError: Error, text: any, socketId: string = null, isError: boolean = false): Promise<void> => {
     const logit = isError ? console.error : console.log;
-  
-    const filePath = module.id;
-    //const fileName = filePath.split('/').pop();
 
     const marker = '[RWS Websocket]';
 
-    logit(isError ? ConsoleService.color().red(marker) : ConsoleService.color().green(marker), '|',`${filePath}:${await getCurrentLineNumber(fakeError)}`,`|${socketId ? ConsoleService.color().blueBright(` (${socketId})`) : ''}:`,`${text}`);
+    logit(isError ? ConsoleService.color().red(marker) : ConsoleService.color().green(marker), '|',`${socketId ? ConsoleService.color().blueBright(` (${socketId})`) : ''}:`,`${text}`);
 };
 
 const MINUTE = 1000 * 60;
@@ -154,7 +151,7 @@ class ServerService extends ServerBase {
             })};  
         }
         
-        const pacakgeDir = UtilsService.findRootWorkspacePath(process.cwd());   
+        const pacakgeDir = rwsPath.findRootWorkspacePath(process.cwd());   
         const rwsDir = `${pacakgeDir}/node_modules/.rws`;
 
         if(!fs.existsSync(rwsDir)){

@@ -9,15 +9,16 @@ import EFSService from '../services/EFSService';
 import LambdaService from '../services/LambdaService';
 import VPCService from '../services/VPCService';
 import CloudWatchService from '../services/CloudWatchService';
+import { rwsPath } from '@rws-framework/console';
 
 const { log, error, color, rwsLog } = ConsoleService;
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
+const packageRootDir = rwsPath.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 
-const moduleDir = path.resolve(path.dirname(module.id), '..', '..').replace('dist/', '');
+const moduleDir = rwsPath.findPackageDir(executionDir);
 
 interface ILambdaParams {
     rwsConfig?: any
@@ -82,7 +83,7 @@ interface ILambdaParamsReturn {
 class LambdaCommand extends Command 
 {
     constructor(){
-        super('lambda', module);
+        super('lambda');
     }
 
     async execute(params?: ICmdParams): Promise<void>

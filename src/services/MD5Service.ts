@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import TraversalService from './TraversalService';
 import UtilsService from './UtilsService';
+import { rwsPath } from '@rws-framework/console';
 
 class MD5Service extends TheService {
     async calculateFileMD5(filePath: string): Promise<string> 
@@ -44,7 +45,7 @@ class MD5Service extends TheService {
 
     async cliClientHasChanged(consoleClientHashFile: string, tsFilename: string): Promise<boolean> 
     {
-        const moduleCfgDir = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules', '.rws');
+        const moduleCfgDir = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()), 'node_modules', '.rws');
         const generatedHash: string = fs.readFileSync(consoleClientHashFile, 'utf-8');
            
 

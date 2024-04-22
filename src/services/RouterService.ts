@@ -23,10 +23,7 @@ interface IControllerRoutes {
 /**
  * 
  */
-class RouterService extends TheService{
-    constructor() {
-        super();
-    }
+class RouterService extends TheService{  
 
     static responseTypeToMIME(responseType: string){
         switch (responseType){

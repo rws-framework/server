@@ -2,6 +2,7 @@ import IAppConfig from '../interfaces/IAppConfig';
 import path from 'path';
 import fs from 'fs';
 import UtilsService from '../services/UtilsService';
+import { rwsPath } from '@rws-framework/console';
 
 interface ICmdParams {
     [key: string]: any
@@ -29,10 +30,12 @@ export default abstract class TheCommand {
     protected static _instances: { [key: string]: TheCommand } | null = {};
 
 
-    constructor(name: string, childModule: {id: string, loaded: boolean, exports: any, paths: any[], children: any[]}){
+    constructor(name: string){
         this.name = name;
 
-        const rootPackageDir = UtilsService.findRootWorkspacePath(process.cwd());
+        const rootPackageDir = rwsPath.findRootWorkspacePath(process.cwd());
+        const packageDir = rwsPath.findPackageDir(process.cwd());
+
         const moduleCfgDir = path.resolve(rootPackageDir, 'node_modules', '.rws');
         const cmdDirFile = `${moduleCfgDir}/_cli_cmd_dir`;       
         const cmdDirFileContents: string[] = fs.existsSync(cmdDirFile) ? fs.readFileSync(cmdDirFile, 'utf-8').split('\n') : [];
@@ -43,7 +46,8 @@ export default abstract class TheCommand {
             fs.mkdirSync(moduleCfgDir);
         }
         
-        const filePath: string = childModule.id;
+
+        const filePath: string = `${packageDir}/src/commands/${(this.constructor as any).className}.ts`;
         
         const cmdDir = `${path.dirname(filePath)}`;        
 

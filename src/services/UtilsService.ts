@@ -7,8 +7,6 @@ import { SourceMapConsumer, RawSourceMap  } from 'source-map';
 
 class UtilsService extends TheService {  
     private _startTime: [number, number];
-    findRootWorkspacePath = rwsPath.findRootWorkspacePath;
-    findPackageDir = rwsPath.findPackageDir;
 
     startExecTimeRecord()
     {
@@ -40,7 +38,7 @@ class UtilsService extends TheService {
 
     getRWSVar(fileName: string): string | null
     {
-        const packageDir = this.findRootWorkspacePath(process.cwd());    
+        const packageDir = rwsPath.findRootWorkspacePath(process.cwd());    
         const moduleCfgDir = `${packageDir}/node_modules/.rws`;
 
         if(!fs.existsSync(`${moduleCfgDir}/${fileName}`)){
@@ -56,7 +54,7 @@ class UtilsService extends TheService {
   
     setRWSVar(fileName: string, value: string)
     {
-        const packageDir = this.findRootWorkspacePath(process.cwd());    
+        const packageDir = rwsPath.findRootWorkspacePath(process.cwd());    
         const moduleCfgDir = `${packageDir}/node_modules/.rws`;
 
         if(!fs.existsSync(moduleCfgDir)){

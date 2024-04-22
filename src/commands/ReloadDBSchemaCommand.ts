@@ -4,19 +4,19 @@ import ConsoleService from '../services/ConsoleService';
 import UtilsService from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
+import { rwsPath } from '@rws-framework/console';
 
 const { color } = ConsoleService;
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
-const moduleDir = path.resolve(path.dirname(module.id), '../..');
+const packageRootDir = rwsPath.findRootWorkspacePath(executionDir);
 
 
 class ReloadDBSchemaCommand extends Command 
 {
     constructor(){
-        super('db:schema:reload', module);
+        super('db:schema:reload');
     }
 
     async execute(params?: ICmdParams): Promise<void>

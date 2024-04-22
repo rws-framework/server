@@ -4,19 +4,19 @@ import ConsoleService from '../services/ConsoleService';
 import UtilsService from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
+import { rwsPath } from '@rws-framework/console';
 
 const { rwsLog, color, log } = ConsoleService;
 
 const executionDir = process.cwd();
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
-const moduleDir = path.resolve(path.dirname(module.id), '..', '..');    
+
 
 class CMDListCommand extends Command 
 {
     public static cmdDescription: string | null = 'List of available rws commands.';
 
     constructor(){
-        super('help:cmd:list', module);
+        super('help:cmd:list');
     }
 
     async execute(params?: ICmdParams): Promise<void>

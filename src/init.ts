@@ -10,6 +10,7 @@ import UtilsService from './services/UtilsService';
 import fs from 'fs';
 import ProcessService from './services/ProcessService';
 import IDbUser from './interfaces/IDbUser';
+import { rwsPath } from '@rws-framework/console';
 
 async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: IInitOpts = {}, addToConfig: (configService: AppConfigService) => Promise<void> = null){    
     const AppConfigService = getConfigService(cfg);    
@@ -33,7 +34,7 @@ async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: 
     // }
 
     const executeDir: string = process.cwd();
-    const packageRootDir = UtilsService.findRootWorkspacePath(executeDir);
+    const packageRootDir = rwsPath.findRootWorkspacePath(executeDir);
     const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
     const moduleCfgFile = `${moduleCfgDir}/_rws_installed`;
 

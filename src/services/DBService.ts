@@ -50,7 +50,7 @@ class DBService extends TheService {
             this.connected = true;
         } catch (e: Error | any){            
             ConsoleService.error('PRISMA CONNECTION ERROR', e);            
-            throw new RWSError(e, module.id + '::connectToDB');
+            throw new RWSError(e, 'PRISMA CONNECTION ERROR');
         }
     }
 
