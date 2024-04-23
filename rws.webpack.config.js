@@ -3,48 +3,28 @@ const keysTransformer = require('ts-transformer-keys/transformer').default;
 const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
 const {rwsExternals} = require('./_rws_externals');
-const { rwsPath } = require('@rws-framework/console');
+const { rwsPath, RWSConfigBuilder } = require('@rws-framework/console');
 
 const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()), 'node_modules')
 
-// console.log(modules_setup)s;
-/**
- *  The RWS webpack configurator.
- * 
- *  Example usage in importing file:
- * 
- *  RWSWebpackWrapper({
-    dev: true,    
-    tsConfigPath: executionDir + '/tsconfig.json',
-    entry: `${executionDir}/src/index.ts`,
-    executionDir: executionDir,
-    publicDir:  path.resolve(executionDir, 'public'),
-    outputDir:  path.resolve(executionDir, 'build'),
-    outputFileName: 'rws.server.js',
-    plugins: [],
-    resolvePlugins: [],
-    nodeModules: [__dirname + '/node_modules'],
-    mergedCodeBaseOptions: {
-      mode: 'backend',
-      conditions: {
-        request_based: {
-          include: [],
-          exclude: [],
-          exceptions: []
-        },
-        context_based: {
-          include: [],
-          exclude: [],
-          exceptions: []
-        }
-      }
-    }
-  });
- */
 const RWSWebpackWrapper = (config) => {
   const executionDir = config.executionDir || process.cwd();
 
-  const isDev = config.dev;
+  const BuildConfigurator = new RWSConfigBuilder(executionDir + '/.rws.json', {
+    dev: false,  
+    tsConfigPath: executionDir + '/tsconfig.json',
+    entry: `${executionDir}/src/index.ts`,
+    executionDir: executionDir,  
+    outputDir:  path.resolve(executionDir, 'build'),
+    outputFileName: 'rws.server.js'
+  });
+
+  const isDev = BuildConfigurator.get('dev') || config.dev;
+  const cfgEntry = BuildConfigurator.get('entry') || config.entry;
+  const cfgOutputDir = BuildConfigurator.get('outputDir') || config.outputDir;
+  const outputFileName = BuildConfigurator.get('outputFileName') || config.outputFileName;
+
+  console.log(isDev);
   
   const aliases = config.aliases = {};
 
@@ -66,14 +46,14 @@ const RWSWebpackWrapper = (config) => {
   const cfgExport = {
     context: executionDir,
     entry: {      
-      main_rws: config.entry
+      main_rws: cfgEntry
     },
     mode: isDev ? 'development' : 'production',
     target: 'node',
     devtool: isDev ? (config.devtool || 'inline-source-map') : false,
     output: {
-      path: config.outputDir,
-      filename: config.outputFileName,
+      path: cfgOutputDir,
+      filename: outputFileName,
       sourceMapFilename: '[file].map' ,
     },
     resolve: {
