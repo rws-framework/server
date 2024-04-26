@@ -12,8 +12,6 @@ import chaiThings from 'chai-things';
 import {WebBrowser} from './BrowserHelper';
 
 import TestCase from '../test_cases/_test_case';
-import UtilsService from '../../services/UtilsService';
-import { json } from 'body-parser';
 import { rwsPath } from '@rws-framework/console';
 
 
@@ -194,13 +192,11 @@ const swapCfgFile = (cfgPath: string, content: object, revert: boolean = false):
     fs.unlinkSync(cfgPath);
     fs.writeFileSync(cfgPath, JSON.stringify(content, null, 2));
     return;    
-}
+};
 
 const strToJson = <T extends Object>(str: string): T => {
     return JSON.parse(str) as T;
-}
-
-console.log('IMPORTED CALLBACK');
+};
 
 
 (String.prototype as any).toJson = strToJson;

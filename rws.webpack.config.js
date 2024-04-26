@@ -1,4 +1,5 @@
 const path = require('path');
+const chalk = require('chalk');
 const keysTransformer = require('ts-transformer-keys/transformer').default;
 const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
@@ -24,7 +25,7 @@ const RWSWebpackWrapper = (config) => {
   const cfgOutputDir = BuildConfigurator.get('outputDir') || config.outputDir;
   const outputFileName = BuildConfigurator.get('outputFileName') || config.outputFileName;
 
-  console.log(isDev);
+  console.log('Build mode:', chalk.red(isDev ? 'development' : 'production'));
   
   const aliases = config.aliases = {};
 
