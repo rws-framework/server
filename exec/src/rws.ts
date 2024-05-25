@@ -1,5 +1,5 @@
 import { RWSAppCommands, getAppConfig, IAppConfig, RWSCommand, ICmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
-
+import { rwsPath } from '@rws-framework/console';
 const { error, color, rwsLog } = ConsoleService;
 
 
@@ -38,7 +38,7 @@ if(process.argv.length > 4){
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
+const packageRootDir = rwsPath.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 
 function getConfig(configPath: string, cfgPathFile: string | null = null) 
@@ -66,8 +66,8 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
 
 const main = async () => {     
     const cfgPathFile = '_cfg_path';
-    const execDir = path.resolve(path.dirname(module.id));
-    const tsFile = execDir + '/rws.ts';
+    const execDir = path.resolve(rwsPath.findPackageDir(__dirname), 'exec');
+    const tsFile = path.resolve(execDir,'src') + '/rws.ts';
     let APP_CFG: IAppConfig | null = null;
 
     if (command === 'init') {

@@ -64,10 +64,12 @@ abstract class TheSocket implements ITheSocket{
         return this.getJson(input).msg as T
     }
 
-    throwError(method: string, socket: Socket, error: Error): void
+    throwError(method: string, socket: Socket, error: Error | any): void
     {        
+        console.log(JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))));
+
         socket.emit(method, this.sendJson({
-            error: error,
+            error: JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))),
             success: false
         }));
     }

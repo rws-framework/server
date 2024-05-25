@@ -10,13 +10,15 @@ import {ConsoleService} from './services/ConsoleService';
 import {UtilsService} from './services/UtilsService';
 
 import TimeSeriesModel from './models/types/TimeSeriesModel';
-
+import { rwsPath } from '@rws-framework/console';
 
 const { log, color, rwsLog } = ConsoleService;
 
-const moduleDir = UtilsService.findPackageDir(__dirname);
+
+
+const moduleDir = rwsPath.findPackageDir(__dirname);
 const executionDir = path.resolve(process.cwd());
-const workspaceRoot = UtilsService.findRootWorkspacePath(executionDir);
+const workspaceRoot = rwsPath.findRootWorkspacePath(executionDir);
 
 const _RWS_INSTALED_TXT: string = 'OK';
 
@@ -138,7 +140,7 @@ async function setupPrisma(cfg: IAppConfig, leaveFile = false, services: {
 
 async function setupRWS(cfg: IAppConfig, generateProjectFiles: boolean = true): Promise<void>
 {
-    const packageRootDir: string = UtilsService.findRootWorkspacePath(process.cwd());
+    const packageRootDir: string = rwsPath.findRootWorkspacePath(process.cwd());
     const endPrismaFilePath = packageRootDir + 'node_modules/.prisma/client/schema.prisma';
 
     if(fs.existsSync(endPrismaFilePath)){

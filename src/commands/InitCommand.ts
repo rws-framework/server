@@ -2,6 +2,8 @@ import Command, { ICmdParams } from './_command';
 import { setupRWS, setupPrisma } from '../install';
 import {ConsoleService} from '../services/ConsoleService';
 import {UtilsService} from '../services/UtilsService';
+import { rwsPath } from '@rws-framework/console';
+
 import path from 'path';
 import fs from 'fs';
 
@@ -14,7 +16,7 @@ class InitCommand extends Command
     public static cmdDescription: string | null = 'Command that builds RWS config files along with Prisma client.\nThis CMD creates schema files for Prisma from RWS model files passed to configuration.\nUsed in postinstall scripts.';
 
     constructor(private utilsService: UtilsService, private consoleService: ConsoleService){
-        super('init', module);
+        super('init');
 
         this.packageRootDir = this.utilsService.findRootWorkspacePath(executionDir);
         this.moduleDir = path.resolve(path.dirname(module.id), '..', '..');  

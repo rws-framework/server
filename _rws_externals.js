@@ -38,6 +38,7 @@ const externals = (declaredCodeBase, nodeModules, externalOptions = null) => ({c
 
     const inc_list = [
       '@rws-framework/server',
+      '@rws-framework/console',
       ...codeBase, 
       ...theOptions.conditions.request_based.include
     ];
@@ -48,7 +49,7 @@ const externals = (declaredCodeBase, nodeModules, externalOptions = null) => ({c
 
     const not_inc_list = [...theOptions.conditions.request_based.exclude];
 
-    const exceptions_context = [path.resolve(nodeModules, '@rws-framework/server'), ...theOptions.conditions.context_based.exceptions];
+    const exceptions_context = [...theOptions.conditions.context_based.exceptions];
 
     const exceptions = [...[
        path.resolve(moduleDir, 'exec')     
@@ -62,13 +63,14 @@ const externals = (declaredCodeBase, nodeModules, externalOptions = null) => ({c
    const excludedCondition = (regexList(not_inc_list_context).test(context));
    const contextExceptionCondition = regexList(exceptions_context).test(context) && request[0] === '.';
    const requestExceptionCondition = (regexList(exceptions).test(request));
-
+   
     if ( 
       (includedCondition
       && !excludedCondition)
       || (requestExceptionCondition || contextExceptionCondition)
     ) {
       //merging to output
+
       return callback();
     }
     

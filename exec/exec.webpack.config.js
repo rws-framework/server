@@ -12,9 +12,9 @@ const buildDir = path.resolve(__dirname, 'dist', 'vendors', 'build', 'cli');
 
 module.exports = {
     entry: path.resolve(__dirname) + '/src/rws.ts',
-    mode: 'development',
+    mode: 'production',
     target: 'node',
-    devtool: 'source-map',
+    devtool: false,
     // context: process.cwd(),
     output: {
       path: buildDir,
@@ -51,10 +51,13 @@ module.exports = {
               test: /\.node$/,
               use: 'node-loader',
             }        
-        ],
+        ],        
     },  
     stats: {
       warningsFilter: webpackFilters,
     },
-    externals: rwsExternals(process.cwd(), rootPackageNodeModules)
+    externals: rwsExternals(process.cwd(), rootPackageNodeModules),
+    optimization: {      
+      minimize: false
+    }    
 };

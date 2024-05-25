@@ -5,6 +5,7 @@ import {UtilsService} from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
 import CMDListCommand from './CMDListCommand';
+import { rwsPath } from '@rws-framework/console';
 
 const executionDir = process.cwd();
 
@@ -15,7 +16,7 @@ class HelpCommand extends Command
     public static cmdDescription: string | null = 'List of available rws commands.';
 
     constructor(private utilsService: UtilsService, private consoleService: ConsoleService){
-        super('help', module);
+        super('help');
 
         this.packageRootDir = this.utilsService.findRootWorkspacePath(executionDir);
         this.moduleDir = path.resolve(path.dirname(module.id), '..', '..');  

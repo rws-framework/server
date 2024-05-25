@@ -2,6 +2,8 @@ import Command, { ICmdParams } from './_command';
 import { rmdir } from 'fs/promises';
 import {ConsoleService} from '../services/ConsoleService';
 import {UtilsService} from '../services/UtilsService';
+import { rwsPath } from '@rws-framework/console';
+
 import path from 'path';
 
 const executionDir = process.cwd();
@@ -12,7 +14,7 @@ class ClearCommand extends Command
     moduleCfgDir: string;
 
     constructor(private utilsService: UtilsService, private consoleService: ConsoleService){
-        super('clear', module);
+        super('clear');
 
         this.packageRootDir = this.utilsService.findRootWorkspacePath(executionDir);
         this.moduleCfgDir = `${this.packageRootDir}/node_modules/.rws`;    

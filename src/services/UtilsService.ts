@@ -9,8 +9,6 @@ import { SourceMapConsumer, RawSourceMap  } from 'source-map';
 @Injectable()
 class UtilsService {  
     private _startTime: [number, number];
-    findRootWorkspacePath = rwsPath.findRootWorkspacePath;
-    findPackageDir = rwsPath.findPackageDir;
 
     static findRootWorkspacePath = rwsPath.findRootWorkspacePath;
     static findPackageDir = rwsPath.findPackageDir;
@@ -45,7 +43,7 @@ class UtilsService {
 
     static getRWSVar(fileName: string): string | null
     {
-        const packageDir = this.findRootWorkspacePath(process.cwd());    
+        const packageDir = rwsPath.findRootWorkspacePath(process.cwd());    
         const moduleCfgDir = `${packageDir}/node_modules/.rws`;
 
         if(!fs.existsSync(`${moduleCfgDir}/${fileName}`)){
@@ -61,7 +59,7 @@ class UtilsService {
   
     static setRWSVar(fileName: string, value: string)
     {
-        const packageDir = this.findRootWorkspacePath(process.cwd());    
+        const packageDir = rwsPath.findRootWorkspacePath(process.cwd());    
         const moduleCfgDir = `${packageDir}/node_modules/.rws`;
 
         if(!fs.existsSync(moduleCfgDir)){

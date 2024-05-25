@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import {TraversalService} from './TraversalService';
 import {UtilsService} from './UtilsService';
+import { rwsPath } from '@rws-framework/console';
 
 @Injectable()
 class MD5Service {
@@ -48,7 +49,7 @@ class MD5Service {
 
     async cliClientHasChanged(consoleClientHashFile: string, tsFilename: string): Promise<boolean> 
     {
-        const moduleCfgDir = path.resolve(this.utilsService.findRootWorkspacePath(process.cwd()), 'node_modules', '.rws');
+        const moduleCfgDir = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()), 'node_modules', '.rws');
         const generatedHash: string = fs.readFileSync(consoleClientHashFile, 'utf-8');
            
 

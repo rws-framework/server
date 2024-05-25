@@ -109,7 +109,7 @@ async function generateCliClient(command, args)
 
     if(!fs.existsSync(moduleCfgDir)){
         fs.mkdirSync(moduleCfgDir);
-    }
+    }    
 
     const tsFile = path.resolve(webpackPath, 'exec','src') + '/rws.ts';    
     
