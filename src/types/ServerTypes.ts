@@ -2,8 +2,6 @@ import HTTP from 'http';
 import HTTPS from 'https';
 import ITheSocket from './ITheSocket';
 import IDbUser from './IDbUser';
-import Controller from '../controllers/_controller';
-import ServerService from '../helpers/ServerBuilder';
 import { IHTTProute } from '../routing/routes';
 
 type WsRoutes = {
@@ -20,8 +18,7 @@ type JWTUsers = {
 
 type CookieType = {[key: string]: string};
 
-interface IInitOpts {    
-    controllerList?: Controller[];
+interface IInitOpts {        
     wsRoutes?: WsRoutes,
     httpRoutes?: IHTTProute[],
     pub_dir?: string,
@@ -37,8 +34,8 @@ interface IInitOpts {
 
 type RWSServer = HTTP.Server | HTTPS.Server;
 type ServerStarter = (callback?: () => void) => Promise<void>;
-type RWSServerPair = { instance: ServerService, starter: ServerStarter };
-type ServerControlSet = { websocket: RWSServerPair, http: RWSServerPair };
+type RWSServerPair<T> = { instance: T, starter: ServerStarter };
+type ServerControlSet<T> = { websocket: RWSServerPair<T>, http: RWSServerPair<T> };
 
 export {
     WsRoutes,

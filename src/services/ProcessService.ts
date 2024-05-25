@@ -38,6 +38,7 @@ class ProcessService {
     }
 
     runShellCommand: (command: string, cwd?: string | null, silent?: boolean) => Promise<void> = rwsShell.runCommand;
+    static runShellCommand: (command: string, cwd?: string | null, silent?: boolean) => Promise<void> = rwsShell.runCommand;
 
     sleep(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));

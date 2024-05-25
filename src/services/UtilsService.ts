@@ -12,6 +12,9 @@ class UtilsService {
     findRootWorkspacePath = rwsPath.findRootWorkspacePath;
     findPackageDir = rwsPath.findPackageDir;
 
+    static findRootWorkspacePath = rwsPath.findRootWorkspacePath;
+    static findPackageDir = rwsPath.findPackageDir;
+
     startExecTimeRecord()
     {
         this._startTime = process.hrtime() ;
@@ -40,7 +43,7 @@ class UtilsService {
         return typeof func === 'function';
     }
 
-    getRWSVar(fileName: string): string | null
+    static getRWSVar(fileName: string): string | null
     {
         const packageDir = this.findRootWorkspacePath(process.cwd());    
         const moduleCfgDir = `${packageDir}/node_modules/.rws`;
@@ -56,7 +59,7 @@ class UtilsService {
         }
     }   
   
-    setRWSVar(fileName: string, value: string)
+    static setRWSVar(fileName: string, value: string)
     {
         const packageDir = this.findRootWorkspacePath(process.cwd());    
         const moduleCfgDir = `${packageDir}/node_modules/.rws`;
@@ -66,6 +69,16 @@ class UtilsService {
         }
 
         fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
+    }
+
+    getRWSVar(fileName: string): string | null
+    {
+        return UtilsService.getRWSVar(fileName);
+    }   
+  
+    setRWSVar(fileName: string, value: string)
+    {
+        UtilsService.setRWSVar(fileName, value);
     }
 
     async getCurrentLineNumber(error: Error = null): Promise<number> {

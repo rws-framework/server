@@ -4,12 +4,12 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableConfig, Runnable } from '@langchain/core/runnables';
 import { BaseMessage } from '@langchain/core/messages';
 import { BaseLanguageModelInput } from '@langchain/core/language_models/base';
-import VectorStoreService from '../../services/VectorStoreService';
-import ConsoleService from '../../services/ConsoleService';
+import {VectorStoreService} from '../../services/VectorStoreService';
+import {ConsoleService} from '../../services/ConsoleService';
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
 import { Document } from 'langchain/document';
 import { v4 as uuid } from 'uuid';
-import getAppConfig from '../../services/AppConfigService';
+import {AppConfigService} from '../../services/AppConfigService';
 import { BaseChain, ConversationChain } from 'langchain/chains';
 import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from '../prompts/_prompt';
 
@@ -19,6 +19,7 @@ import { ChainValues } from '@langchain/core/utils/types';
 import xml2js from 'xml2js';
 import fs from 'fs';
 import path from 'path';
+import { InjectServices } from '../../helpers/InjectServices';
 
 interface ISplitterParams {
     chunkSize: number
@@ -61,6 +62,7 @@ interface IEmbeddingsHandler<T extends object> {
     storeEmbeddings: (embeddings: any, convoId: string) => Promise<void>
 }
 
+@InjectServices([VectorStoreService])
 class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, RunnableConfig>> {
     private loader: TextLoader;
     private docSplitter: RecursiveCharacterTextSplitter;    
@@ -75,6 +77,9 @@ class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, 
     private llmChat: LLMChat;
     private chatConstructor: new (config: any) => LLMChat;
     private thePrompt: RWSPrompt;
+
+    vectorStoreService: VectorStoreService;
+    configService: AppConfigService;
 
     public _baseSplitterParams: ISplitterParams;
     
@@ -141,7 +146,7 @@ class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, 
             }
         }
         
-        this.store = await VectorStoreService.createStore(this.docs, await this.embeddings.generateEmbeddings());
+        this.store = await this.vectorStoreService.createStore(this.docs, await this.embeddings.generateEmbeddings());
     }
 
     getId(): string {
@@ -168,10 +173,10 @@ class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, 
 
         this.llmChat = new this.chatConstructor({
             streaming: true,
-            region: getAppConfig().get('aws_bedrock_region'),  
+            region: this.configService.get('aws_bedrock_region'),  
             credentials: {  
-                accessKeyId: getAppConfig().get('aws_access_key'),  
-                secretAccessKey: getAppConfig().get('aws_secret_key'),  
+                accessKeyId: this.configService.get('aws_access_key'),  
+                secretAccessKey: this.configService.get('aws_secret_key'),  
             },  
             model: 'anthropic.claude-v2',            
             maxTokens: prompt.getHyperParameter<number>('max_tokens_to_sample'),

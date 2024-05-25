@@ -1,6 +1,6 @@
 import { Injectable, Module } from '@rws-framework/server/nest';
 import IAppConfig from '../types/IAppConfig';
-import { Error500 } from 'src/errors';
+import { Error500 } from '../errors';
 import { IRWSModule, RWSModuleType } from '../types/IRWSModule';
 
 const AppDefaultConfig: IAppConfig = {

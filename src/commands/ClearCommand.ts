@@ -1,22 +1,22 @@
 import Command, { ICmdParams } from './_command';
-import ConsoleService from '../services/ConsoleService';
-
 import { rmdir } from 'fs/promises';
-import UtilsService from '../services/UtilsService';
-const { color } = ConsoleService;
+import {ConsoleService} from '../services/ConsoleService';
+import {UtilsService} from '../services/UtilsService';
+import path from 'path';
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
-const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
-
 class ClearCommand extends Command 
 {
-    constructor(){
-        super('clear', module);
-    }
+    packageRootDir: string;
+    moduleCfgDir: string;
 
-    
+    constructor(private utilsService: UtilsService, private consoleService: ConsoleService){
+        super('clear', module);
+
+        this.packageRootDir = this.utilsService.findRootWorkspacePath(executionDir);
+        this.moduleCfgDir = `${this.packageRootDir}/node_modules/.rws`;    
+    }
 
     async removeDirRecursively(path: string) {
         try {
@@ -29,11 +29,11 @@ class ClearCommand extends Command
 
     async execute(params?: ICmdParams): Promise<void>
     {
-        ConsoleService.log('clearing systems...');              
+        this.consoleService.log('clearing systems...');              
     
-        await this.removeDirRecursively(moduleCfgDir);
+        await this.removeDirRecursively(this.moduleCfgDir);
 
-        ConsoleService.log(color().green('[RWS]') + ' systems cleared. Use npx rws init to reinitialize.');              
+        this.consoleService.log(this.consoleService.color().green('[RWS]') + ' systems cleared. Use npx rws init to reinitialize.');              
     }
 
     

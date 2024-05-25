@@ -6,4 +6,4 @@ export interface IRWSModule {
 
 }
 
-export type RWSModuleType = NestModulesType & IRWSModule[];
+export type RWSModuleType = NestModulesType | IRWSModule;

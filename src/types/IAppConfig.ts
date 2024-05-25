@@ -1,4 +1,3 @@
-import { RWSHTTPRoutingEntry, WsRoutes } from '../helpers/ServerBuilder';
 import RWSCommand from '../commands/_command';
 import { RWSModuleType } from './IRWSModule';
 
@@ -23,8 +22,8 @@ export default interface IAppConfig {
     user_class: any
     user_models: any[]
     modules: RWSModuleType[],
-    ws_routes: WsRoutes
-    http_routes: RWSHTTPRoutingEntry[] 
+    ws_routes: any
+    http_routes: any
     front_routes?: Record<string, unknown>[],
     commands?: RWSCommand[]
     aws_lambda_region?: string

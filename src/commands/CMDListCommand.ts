@@ -1,32 +1,32 @@
 import Command, { ICmdParams } from './_command';
 import { setupRWS, setupPrisma } from '../install';
-import ConsoleService from '../services/ConsoleService';
-import UtilsService from '../services/UtilsService';
+import {ConsoleService} from '../services/ConsoleService';
+import {UtilsService} from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
 
-const { rwsLog, color, log } = ConsoleService;
-
 const executionDir = process.cwd();
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
-const moduleDir = path.resolve(path.dirname(module.id), '..', '..');    
 
 class CMDListCommand extends Command 
 {
+    packageRootDir: string;
+    moduleDir: string;
     public static cmdDescription: string | null = 'List of available rws commands.';
 
-    constructor(){
+    constructor(private utilsService: UtilsService, private consoleService: ConsoleService){
         super('help:cmd:list', module);
+        this.packageRootDir = this.utilsService.findRootWorkspacePath(executionDir);
+        this.moduleDir = path.resolve(path.dirname(module.id), '..', '..');    
     }
 
     async execute(params?: ICmdParams): Promise<void>
     {
-        rwsLog(color().green('RWS'), 'Commands list:');
+        this.consoleService.rwsLog(this.consoleService.color().green('RWS'), 'Commands list:');
         const cfgData = params._rws_config;
 
         cfgData.commands.forEach((cmd: Command) => {
             const description: string | null = (cmd.constructor as any).cmdDescription;
-            log(`${color().yellow('rws ' + cmd.getName())}${description ? (color().blue(' ' + description)) : ''}`);
+            this.consoleService.log(`${this.consoleService.color().yellow('rws ' + cmd.getName())}${description ? (this.consoleService.color().blue(' ' + description)) : ''}`);
         });
     }
 

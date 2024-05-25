@@ -23,19 +23,15 @@ class ConsoleService {
     }
 
 
-    color(): Chalk {
+    static color(): Chalk {
         return chalk;
     }
 
-    log(...obj: any[]): void {
-        if (!this.isEnabled) {
-            return;
-        }
-
+    static log(...obj: any[]): void {
         const _self = this;
 
         let typeBucket: any[] = [];
-        let lastType: string = null;
+        let lastType: string | null = null;
 
         obj.forEach((elem: any, index: number) => {
             const elemType = typeof elem;
@@ -47,7 +43,7 @@ class ConsoleService {
                 } else {
 
                     typeBucket.forEach((bucketElement) => {
-                        _self.prettyPrintObject(bucketElement);
+                        ConsoleService.prettyPrintObject(bucketElement);
                     });
                 }
 
@@ -57,7 +53,7 @@ class ConsoleService {
                     if (elemType === 'string') {
                         console.log(elem);
                     } else {
-                        _self.prettyPrintObject(elem);
+                        ConsoleService.prettyPrintObject(elem);
                     }
                     return;
                 }
@@ -68,9 +64,49 @@ class ConsoleService {
             lastType = elemType; // Update the lastType for the next iteration
         });
     } 
+    
+    static warn(...obj: any[]): void {
 
+        let intro = 'RWS CLI WARNING';
 
-    colorObject(obj: any): string {
+        if(obj.length > 1 && typeof obj[0] === 'string'){
+            intro = obj[0];
+            obj = obj.filter((el: any, index: number) => index > 0);
+        }
+
+        obj = [chalk.yellow(`[${intro}]`), ...obj];
+
+        console.warn(...obj); 
+    }    
+
+    static error(...obj: any[]): void {
+        let intro = 'RWS CLI ERROR';
+
+        if(obj.length > 1 && typeof obj[0] === 'string'){
+            intro = obj[0];
+            obj = obj.filter((el: any, index: number) => index > 0);
+        }
+
+        obj = [chalk.red(`[${intro}]`), ...obj];
+
+        console.log(...obj);  
+    }
+
+    static rwsLog(...obj: string[]): void 
+    {    
+        let intro = 'RWS CLI ERROR';
+
+        if(obj.length > 1 && typeof obj[0] === 'string'){
+            intro = obj[0];
+            obj = obj.filter((el: any, index: number) => index > 0);
+        }
+
+        obj = [chalk.green(`[${intro}]`), ...obj];
+
+        console.log(...obj);  
+    }
+
+    static colorObject(obj: any): string {
         const _JSON_COLORS: IJSONColors = {
             'keys': 'green',
             'objectValue': 'magenta',
@@ -128,26 +164,7 @@ class ConsoleService {
         return coloredLines.join('\n'); // Join the colored lines and return as a single string
     }
 
-
-
-    warn(...obj: any[]): void {
-        if (!this.isEnabled) {
-            return;
-        }
-
-        let intro = 'RWS CLI WARNING';
-
-        if(obj.length > 1 && typeof obj[0] === 'string'){
-            intro = obj[0];
-            obj = obj.filter((el: any, index: number) => index > 0);
-        }
-
-        obj = [chalk.yellow(`[${intro}]`), ...obj];
-
-        console.warn(...obj); 
-    }
-
-    sanitizeObject(obj: any): any {
+    static sanitizeObject(obj: any): any {
         const sensitiveKeys = ['mongo_url', 'mongo_db', 'ssl_cert', 'ssl_key', 'secret_key', 'aws_access_key', 'aws_secret_key'];
     
         const sanitizedObj = { ...obj }; // Create a shallow copy of the object
@@ -161,45 +178,47 @@ class ConsoleService {
         return sanitizedObj;
     }
 
-    getPino(): PinoLogger
+    static getPino(): PinoLogger
     {
         return pino(pinoPretty());
     }
 
-    prettyPrintObject(obj: any): void {
+    static prettyPrintObject(obj: any): void {
         this.getPino().info(this.colorObject(this.sanitizeObject(obj)));
     }
 
-    error(...obj: any[]): void {
-        if (!this.isEnabled) {
-            return;
-        }        
+    color(): Chalk {
+        return ConsoleService.color();
+    }
 
-        let intro = 'RWS CLI ERROR';
-
-        if(obj.length > 1 && typeof obj[0] === 'string'){
-            intro = obj[0];
-            obj = obj.filter((el: any, index: number) => index > 0);
+    log(...obj: any[]): void {
+        if(this.isEnabled){
+            ConsoleService.log(...obj);
         }
+    } 
+    
+    warn(...obj: any[]): void {
+        if(this.isEnabled){
+            ConsoleService.warn(...obj);
+        }
+    }    
 
-        obj = [chalk.red(`[${intro}]`), ...obj];
-
-        console.log(...obj);  
+    error(...obj: any[]): void {
+        if(this.isEnabled){
+            ConsoleService.error(...obj);
+        } 
     }
 
     rwsLog(...obj: string[]): void 
     {    
+        if(this.isEnabled){
+            ConsoleService.rwsLog(...obj);
+        } 
+    }
 
-        let intro = 'RWS CLI ERROR';
-
-        if(obj.length > 1 && typeof obj[0] === 'string'){
-            intro = obj[0];
-            obj = obj.filter((el: any, index: number) => index > 0);
-        }
-
-        obj = [chalk.green(`[${intro}]`), ...obj];
-
-        console.log(...obj);  
+    getPino(): PinoLogger
+    {
+        return ConsoleService.getPino();
     }
 
     stopLogging(): void {

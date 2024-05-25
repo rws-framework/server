@@ -1,14 +1,14 @@
 import { Socket } from 'socket.io';
 
-import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './helpers/ServerBuilder';
+// import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './helpers/ServerBuilder';
 
-import init from './init';
+import runNest from './runNest';
 import {setupPrisma, setupRWS} from './install';
 
 import ITimeSeries from './models/types/ITimeSeries';
 import TimeSeriesModel from './models/types/TimeSeriesModel';
 
-import ServerService, { ServerControlSet, RWSServerPair, RWSServerStarter } from './helpers/ServerBuilder';
+// import ServerService, { ServerControlSet, RWSServerPair, RWSServerStarter } from './helpers/ServerBuilder';
 
 import { DBService } from './services/DBService';
 import { AuthService } from './services/AuthService';
@@ -24,8 +24,7 @@ import RWSPrompt, { ILLMChunk, IRWSPromptRequestExecutor, IRWSSinglePromptReques
 import RWSConvo, { IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams } from './models/convo/ConvoLoader';
 import RWSVectorStore from './models/convo/VectorStore';
 
-import { InverseRelation, InverseTimeSeries, Relation, TrackType as RWSTrackType} from './models/annotations/index';
-import { Route } from './routing/annotations/index';
+import { InverseRelation, InverseTimeSeries, Relation, TrackType as RWSTrackType} from './models/decorators/index';
 
 import { IAppConfig, AppConfigService, AppConfigModule } from './services/AppConfigService';
 
@@ -34,9 +33,7 @@ import IAuthUser from './types/IAuthUser';
 import IDbUser from './types/IDbUser';
 
 const RWSannotations = {
-    modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, RWSTrackType },
-    routingAnnotations: { Route }
-};
+    modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, RWSTrackType }};
 
 import TheCommand, {ICmdParams} from './commands/_command';
 import TheService from './services/_service';
@@ -50,7 +47,7 @@ import Model, { IModel } from './models/_model';
 import { ZipService } from './services/ZipService';
 
 export {    
-    init as serverInit,
+    runNest as serverInit,
     setupRWS,
     setupPrisma,
     AppConfigModule,    
@@ -60,7 +57,7 @@ export {
     Model as RWSModel,
     IModel as IRWSModel,
 
-    ServerService as RWSServer,    
+    // ServerService as RWSServer,    
     DBService,        
     AuthService,        
     ConsoleService,             
@@ -73,12 +70,12 @@ export {
 
     TimeSeriesModel,
 
-    WsRoutes,
-    ITheSocket,    
+    // WsRoutes,
+    // ITheSocket,    
     ITimeSeries,
     IAppConfig,
     IContextToken,
-    ServerControlSet,
+    // ServerControlSet,
     IAuthUser,
     IDbUser,
     
@@ -86,9 +83,9 @@ export {
     RWSannotations,
     JSONMessage as RWSJSONMessage,
     ICmdParams,      
-    IHTTProute,
-    IPrefixedHTTProutes,
-    RWSHTTPRoutingEntry,
+    // IHTTProute,
+    // IPrefixedHTTProutes,
+    // RWSHTTPRoutingEntry,
     RWSAppCommands,
     
     RWSVectorStore,
@@ -109,8 +106,8 @@ export {
     ISplitterParams,
     ILLMChunk,
     RWSTrackType,
-    RWSServerPair,
-    RWSServerStarter,
+    // RWSServerPair,
+    // RWSServerStarter,
 
     NEST,
     RWSController

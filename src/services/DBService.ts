@@ -20,8 +20,6 @@ class DBService {
 
     constructor(private configService: AppConfigService){}
 
-  
-
     private connectToDB(opts: IDBClientCreate = null) {
         if(opts){
             this.opts = opts;
@@ -242,7 +240,7 @@ class DBService {
         return (this.client[collection as keyof PrismaClient] as any);
     }
 
-    private setOpts(opts: IDBClientCreate = null): DBService
+    private setOpts(opts: IDBClientCreate = null): this
     {    
         this.opts = opts;
         return this;

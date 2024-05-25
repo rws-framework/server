@@ -1,7 +1,7 @@
 import Command, { ICmdParams } from './_command';
 import { setupPrisma, isInstalled } from '../install';
-import ConsoleService from '../services/ConsoleService';
-import UtilsService from '../services/UtilsService';
+import {ConsoleService} from '../services/ConsoleService';
+import {UtilsService} from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
 
@@ -9,16 +9,18 @@ const { color } = ConsoleService;
 
 const executionDir = process.cwd();
 
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
-const moduleDir = path.resolve(path.dirname(module.id), '../..');
-
-
 class ReloadDBSchemaCommand extends Command 
 {
-    constructor(){
-        super('db:schema:reload', module);
-    }
+    packageRootDir: string;
+    moduleDir: string;
+    public static cmdDescription: string | null = 'Command that builds RWS config files along with Prisma client.\nThis CMD creates schema files for Prisma from RWS model files passed to configuration.\nUsed in postinstall scripts.';
 
+    constructor(private utilsService: UtilsService, private consoleService: ConsoleService){
+        super('db:schema:reload', module);
+
+        this.packageRootDir = this.utilsService.findRootWorkspacePath(executionDir);
+        this.moduleDir = path.resolve(path.dirname(module.id), '..', '..');  
+    }
     async execute(params?: ICmdParams): Promise<void>
     {
         ConsoleService.log(color().green('[RWS]') + ' reloading Prisma DB schema...');                      
@@ -27,7 +29,7 @@ class ReloadDBSchemaCommand extends Command
 
         try {                                          
             if(isInstalled.prisma()){
-                const endPrismaFilePath = packageRootDir + '/node_modules/.prisma/client/schema.prisma';
+                const endPrismaFilePath = this.packageRootDir + '/node_modules/.prisma/client/schema.prisma';
                 fs.unlinkSync(endPrismaFilePath);
             }                
 

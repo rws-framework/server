@@ -1,33 +1,34 @@
 import Command, { ICmdParams } from './_command';
 import { setupRWS, setupPrisma } from '../install';
-import ConsoleService from '../services/ConsoleService';
-import UtilsService from '../services/UtilsService';
+import {ConsoleService} from '../services/ConsoleService';
+import {UtilsService} from '../services/UtilsService';
 import path from 'path';
 import fs from 'fs';
 
-const { rwsLog, color } = ConsoleService;
-
 const executionDir = process.cwd();
-const packageRootDir = UtilsService.findRootWorkspacePath(executionDir);
-const moduleDir = path.resolve(path.dirname(module.id), '..', '..');    
 
 class InitCommand extends Command 
 {
+    packageRootDir: string;
+    moduleDir: string;
     public static cmdDescription: string | null = 'Command that builds RWS config files along with Prisma client.\nThis CMD creates schema files for Prisma from RWS model files passed to configuration.\nUsed in postinstall scripts.';
 
-    constructor(){
+    constructor(private utilsService: UtilsService, private consoleService: ConsoleService){
         super('init', module);
+
+        this.packageRootDir = this.utilsService.findRootWorkspacePath(executionDir);
+        this.moduleDir = path.resolve(path.dirname(module.id), '..', '..');  
     }
 
     async execute(params?: ICmdParams): Promise<void>
     {
-        ConsoleService.log(color().green('[RWS]') + ' starting systems...');              
+        this.consoleService.log(this.consoleService.color().green('[RWS]') + ' starting systems...');              
     
         const configPath: string = params.config || params._default || 'config/config'; 
         const generateProjectFiles = true;
 
         if(!configPath){
-            ConsoleService.error('[RWS] No config path provided! Use "npx rws init path/to/config/file (from ./src)"');
+            this.consoleService.error('[RWS] No config path provided! Use "npx rws init path/to/config/file (from ./src)"');
             return;
         }
 
@@ -39,12 +40,12 @@ class InitCommand extends Command
 
                 await setupPrisma(cfgData);
                 
-                ConsoleService.log(color().green('[RWS]') + ' systems initialized.'); 
+                this.consoleService.log(this.consoleService.color().green('[RWS]') + ' systems initialized.'); 
             } catch (error) {
-                ConsoleService.error('Error while initiating RWS server installation:', error);
+                this.consoleService.error('Error while initiating RWS server installation:', error);
             }            
         } catch(e: Error | any){    
-            ConsoleService.log(color().red('[RWS]') + ' wrong config file path...');         
+            this.consoleService.log(this.consoleService.color().red('[RWS]') + ' wrong config file path...');         
             throw new Error(e);            
         }
     }

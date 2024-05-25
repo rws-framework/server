@@ -24,3 +24,4 @@ export default async function bootstrap(cfg: IAppConfig) {
   const app = await NestFactory.create(RWSModule.forRoot(cfg));
   await app.listen(cfg.port);
 }
+

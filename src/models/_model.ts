@@ -1,14 +1,18 @@
 import { Error500, RWSError } from '../errors';
+import { Inject, Injectable, ExecutionContext, createParamDecorator } from '@nestjs/common';
+import {DBService} from '../services/DBService';
+import { AppConfigService } from '../services/AppConfigService';
 
-import DBService from '../services/DBService';
-import getAppConfig from '../services/AppConfigService';
+import TrackType, {IMetaOpts} from './decorators/TrackType';
+import { InjectServices } from '../helpers/InjectServices';
 
-import TrackType, {IMetaOpts} from './annotations/TrackType';
 interface IModel{
     [key: string]: any;
     id: string | null;
     save: () => void;
     getCollection: () => string | null;
+    configService?: AppConfigService;
+    dbService?: DBService;
 }
 
 type DBModelFindOneType<ChildClass> = (
@@ -26,23 +30,34 @@ type DBModelFindManyType<ChildClass> = (
 ) => Promise<ChildClass | null>;
 
 interface OpModelType<ChildClass> {
-    new(): ChildClass;
-    name: string
+    new(data?: any | null): ChildClass;
+    name: string 
     _collection: string;
     loadModels: () => Model<any>[];
     checkForInclusionWithThrow: (className: string) => void;
     checkForInclusion: (className: string) => boolean;
+    configService?: AppConfigService;
+    dbService?: DBService;
 }
 
+const ModelServices = [AppConfigService, DBService];
+
+@InjectServices(ModelServices, ModelServices)
 class Model<ChildClass> implements IModel{
+    configService: AppConfigService
+    dbService: DBService
+
+    static configService: AppConfigService
+    static dbService: DBService
+
     [key: string]: any;
     @TrackType(String)
-        id: string;
+    id: string;
     static _collection: string = null;
 
     static _BANNED_KEYS = ['_collection'];
 
-    constructor(data?: any) {    
+    constructor(data: any) {    
         if(!this.getCollection()){
             throw new Error('Model must have a collection defined');
         
@@ -207,7 +222,7 @@ class Model<ChildClass> implements IModel{
         if (this.id) {
             this.preUpdate();
 
-            updatedModelData = await DBService.update(data, this.getCollection());
+            updatedModelData = await this.dbService.update(data, this.getCollection());
 
             await this._asyncFill(updatedModelData);
             this.postUpdate();
@@ -217,7 +232,7 @@ class Model<ChildClass> implements IModel{
             const timeSeriesModel = await import('./types/TimeSeriesModel');      
             const isTimeSeries = this instanceof timeSeriesModel.default;
 
-            updatedModelData = await DBService.insert(data, this.getCollection(), isTimeSeries);      
+            updatedModelData = await this.dbService.insert(data, this.getCollection(), isTimeSeries);      
 
             await this._asyncFill(updatedModelData);   
 
@@ -341,7 +356,7 @@ class Model<ChildClass> implements IModel{
     ){
         const collection = Reflect.get(this, '_collection');
         this.checkForInclusionWithThrow(this.name);
-        return await DBService.watchCollection(collection, preRun);
+        return await this.dbService.watchCollection(collection, preRun);
     }
 
     public static async findOneBy<ChildClass extends Model<ChildClass>>(
@@ -355,7 +370,7 @@ class Model<ChildClass> implements IModel{
         this.checkForInclusionWithThrow('');
 
         const collection = Reflect.get(this, '_collection');
-        const dbData = await DBService.findOneBy(collection, conditions, fields, ordering);
+        const dbData = await this.dbService.findOneBy(collection, conditions, fields, ordering);
         
     
         if (dbData) {
@@ -375,7 +390,7 @@ class Model<ChildClass> implements IModel{
         const collection = Reflect.get(this, '_collection');
         this.checkForInclusionWithThrow(this.name);
 
-        const dbData = await DBService.findOneBy(collection, { id }, fields, ordering);
+        const dbData = await this.dbService.findOneBy(collection, { id }, fields, ordering);
     
         if (dbData) {
             const inst: ChildClass = new (this as { new(): ChildClass })();
@@ -391,13 +406,13 @@ class Model<ChildClass> implements IModel{
     ): Promise<void> {
         const collection = Reflect.get(this, '_collection');
         this.checkForInclusionWithThrow(this.name);
-        return await DBService.delete(collection, conditions);
+        return await this.dbService.delete(collection, conditions);
     }
 
     public async delete<ChildClass extends Model<ChildClass>>(): Promise<void> {
         const collection = Reflect.get(this, '_collection');
         this.checkForInclusionWithThrow();
-        return await DBService.delete(collection, {
+        return await this.dbService.delete(collection, {
             id: this.id
         });  
     }    
@@ -411,7 +426,7 @@ class Model<ChildClass> implements IModel{
         const collection = Reflect.get(this, '_collection');
         this.checkForInclusionWithThrow(this.name);
         try {
-            const dbData = await DBService.findBy(collection, conditions, fields, ordering);
+            const dbData = await this.dbService.findBy(collection, conditions, fields, ordering);
     
             if (dbData.length) {
                 const instanced: ChildClass[] = [];
@@ -444,9 +459,8 @@ class Model<ChildClass> implements IModel{
     }
 
     static loadModels(): Model<any>[]
-    {
-        const AppConfigService = getAppConfig();
-        return AppConfigService.get('user_models');
+    {        
+        return this.configService.get('user_models');
     }
 
     loadModels(): Model<any>[]

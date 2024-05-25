@@ -1,4 +1,4 @@
-import LambdaCommand from './LambdaCommand';
+import LambdaCommand from '../../../aws-tools/src/commands/LambdaCommand';
 import InitCommand from './InitCommand';
 import ClearCommand from './ClearCommand';
 import ReloadDBSchemaCommand from './ReloadDBSchemaCommand';

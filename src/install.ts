@@ -1,17 +1,18 @@
-import getConfigService, { IAppConfig } from './services/AppConfigService';
+import { AppConfigService, IAppConfig } from './services/AppConfigService';
 import Model, { IMetaOpts } from './models/_model';
 import fs from 'fs';
 import path from 'path';
 import 'reflect-metadata';
-import DBService from './services/DBService';
+
+import {DBService} from './services/DBService';
+import {ProcessService} from './services/ProcessService';
+import {ConsoleService} from './services/ConsoleService';
+import {UtilsService} from './services/UtilsService';
+
 import TimeSeriesModel from './models/types/TimeSeriesModel';
-import ProcessService from './services/ProcessService';
-import ConsoleService from './services/ConsoleService';
-import UtilsService from './services/UtilsService';
+
 
 const { log, color, rwsLog } = ConsoleService;
-
-const {runShellCommand} = ProcessService;
 
 const moduleDir = UtilsService.findPackageDir(__dirname);
 const executionDir = path.resolve(process.cwd());
@@ -76,10 +77,13 @@ function toConfigCase(modelType: any): string {
     return firstChar + restOfString;
 }
 
-async function setupPrisma(cfg: IAppConfig, leaveFile = false)
-{   
-    const AppConfigService = getConfigService(cfg);
-    const dbUrl = await AppConfigService.get('mongo_url');    
+async function setupPrisma(cfg: IAppConfig, leaveFile = false, services: {
+    dbService: DBService,    
+    processService: ProcessService,
+    configService: AppConfigService
+} = { dbService: null, processService: null, configService: null})
+{       
+    const dbUrl = await services.configService.get('mongo_url');    
 
     const dbType = 'mongodb';
 
@@ -92,7 +96,7 @@ async function setupPrisma(cfg: IAppConfig, leaveFile = false)
     url = env("DATABASE_URL")\n    
   }\n\n`;
 
-    const usermodels = await AppConfigService.get('user_models');
+    const usermodels = await services.configService.get('user_models');
 
     usermodels.forEach((model: any) => {    
         const modelSection = generateModelSections(model);
@@ -103,14 +107,14 @@ async function setupPrisma(cfg: IAppConfig, leaveFile = false)
     
         if(Model.isSubclass(model, TimeSeriesModel)){      
      
-            DBService.collectionExists(model._collection).then((exists: boolean) => {
+            services.dbService.collectionExists(model._collection).then((exists: boolean) => {
                 if (exists){
                     return;
                 }
 
                 log(color().green('[RWS Init]') + ` creating TimeSeries type collection from ${model} model`);
 
-                DBService.createTimeSeriesCollection(model._collection);    
+                services.dbService.createTimeSeriesCollection(model._collection);    
             });
         }
     });
@@ -183,5 +187,6 @@ const isInstalled = {
     prisma: (): boolean => fs.existsSync(path.resolve(`${nodeModulesDir}`, '.prisma', 'client', 'schema.prisma'))
 }
 
-export {setupPrisma, setupRWS, isInstalled, runShellCommand, _RWS_INSTALED_TXT};
+const runShellCommand = ProcessService.runShellCommand;
 
+export {setupPrisma, setupRWS, isInstalled, runShellCommand, _RWS_INSTALED_TXT};

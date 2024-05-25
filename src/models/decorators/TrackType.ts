@@ -13,7 +13,7 @@ interface ITrackerOpts{
     tags: string[]
   }
   
-function TrackType(type: any, opts: ITrackerOpts = null, tags: string[] = []) {
+function TrackType(type: any, opts: ITrackerOpts | null = null, tags: string[] = []) {
     if(!opts){
         opts = {
             required: false
