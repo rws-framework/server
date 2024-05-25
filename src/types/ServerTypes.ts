@@ -3,7 +3,7 @@ import HTTPS from 'https';
 import ITheSocket from './ITheSocket';
 import IDbUser from './IDbUser';
 import Controller from '../controllers/_controller';
-import ServerService from '../services/ServerService';
+import ServerService from '../helpers/ServerBuilder';
 import { IHTTProute } from '../routing/routes';
 
 type WsRoutes = {

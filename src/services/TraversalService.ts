@@ -1,10 +1,9 @@
-import TheService from './_service';
-
 import path from 'path';
 import fs from 'fs';
+import { Injectable } from '@rws-framework/server/nest';  
 
 
-class TraversalService extends TheService {
+class TraversalService {
     getAllFilesInFolder(folderPath: string, ignoreFilenames: RegExp[] = [], recursive: boolean = false): string[] 
     {
         const files: string[] = [];
@@ -40,5 +39,4 @@ class TraversalService extends TheService {
     }
 }
 
-export default TraversalService.getSingleton();
 export {TraversalService};

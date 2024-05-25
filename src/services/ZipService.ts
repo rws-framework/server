@@ -1,12 +1,11 @@
 import TheService from './_service';
-import ConsoleService from './ConsoleService';
+import { ConsoleService } from './ConsoleService';
+import { Injectable } from '@rws-framework/server/nest';  
 
 import path from 'path';
 import fs from 'fs';
 
 import { BlobReader, BlobWriter, ZipWriter } from '@zip.js/zip.js';import { Error500 } from '../errors';
-
-const { log, color } = ConsoleService;
 
 interface IZipParams {
     recursive?: boolean
@@ -15,11 +14,9 @@ interface IZipParams {
     ignore?: string[]
 }
 
-class ZipService extends TheService {
-
-    constructor() {
-        super();        
-    }   
+@Injectable()
+class ZipService {
+    constructor(private consoleService: ConsoleService){}
 
     async addFileToZip(zipWriter: ZipWriter<Blob>, filePath: string, zipPath: string, params: IZipParams){
         const data = new Uint8Array(fs.readFileSync(filePath));
@@ -53,7 +50,7 @@ class ZipService extends TheService {
             const blob = await writer.getData();
             fs.writeFileSync(outputPath, Buffer.from(await blob.arrayBuffer()));
     
-            log(`${color().green('[RWS Lambda Service]')} ZIP created at: ${outputPath}`);
+            this.consoleService.log(`${this.consoleService.color().green('[RWS Lambda Service]')} ZIP created at: ${outputPath}`);
             return outputPath;
         } catch (e: Error | any) {
             throw new Error500('ZIP process error: ' + e.message);
@@ -78,5 +75,4 @@ class ZipService extends TheService {
     }
 }
 
-export default ZipService.getSingleton();
 export { IZipParams, ZipService };

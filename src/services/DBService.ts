@@ -1,34 +1,34 @@
 import { PrismaClient } from '@prisma/client';
 import { Collection, Db, MongoClient } from 'mongodb';
-import ITimeSeries from '../models/interfaces/ITimeSeries';
+import ITimeSeries from '../models/types/ITimeSeries';
 import { IModel } from '../models/_model';
-import getConfig from './AppConfigService';
-import TheService from './_service';
-import ConsoleService from './ConsoleService';
+import {AppConfigService} from './AppConfigService';
+import {ConsoleService} from './ConsoleService';
 import { RWSError } from '../errors';
+import { Injectable } from '@rws-framework/server/nest';
 
 interface IDBClientCreate {
   dbUrl?: string;
   dbName?: string;
 }
 
-class DBService extends TheService {
+@Injectable()
+class DBService {
     private client: PrismaClient;
     private opts: IDBClientCreate = null;
     private connected = false;
 
-    constructor(opts: IDBClientCreate = null){
-        super();   
-        this.opts = opts;
-    }
+    constructor(private configService: AppConfigService){}
+
+  
 
     private connectToDB(opts: IDBClientCreate = null) {
         if(opts){
             this.opts = opts;
         }else{
             this.opts = {
-                dbUrl: getConfig().get('mongo_url'),        
-                dbName: getConfig().get('mongo_db'),
+                dbUrl: this.configService.get('mongo_url'),        
+                dbName: this.configService.get('mongo_db'),
             };
         }
 
@@ -56,7 +56,7 @@ class DBService extends TheService {
 
     private async createBaseMongoClient(): Promise<MongoClient>
     {
-        const dbUrl = this.opts?.dbUrl || getConfig().get('mongo_url');
+        const dbUrl = this.opts?.dbUrl || this.configService.get('mongo_url');
         const client = new MongoClient(dbUrl);
     
         await client.connect();
@@ -67,7 +67,7 @@ class DBService extends TheService {
 
     private async createBaseMongoClientDB(): Promise<Db>
     {
-        const dbName = this.opts?.dbName || getConfig().get('mongo_db');
+        const dbName = this.opts?.dbName || this.configService.get('mongo_db');
         const client = await this. createBaseMongoClient();
         return client.db(dbName);
     }
@@ -190,7 +190,7 @@ class DBService extends TheService {
 
     async collectionExists(collection_name: string): Promise<boolean>
     {
-        const dbUrl = this.opts?.dbUrl || getConfig().get('mongo_url');
+        const dbUrl = this.opts?.dbUrl || this.configService.get('mongo_url');
         const client = new MongoClient(dbUrl);
 
         try {
@@ -241,7 +241,12 @@ class DBService extends TheService {
 
         return (this.client[collection as keyof PrismaClient] as any);
     }
+
+    private setOpts(opts: IDBClientCreate = null): DBService
+    {    
+        this.opts = opts;
+        return this;
+    }
 }
 
-export default DBService.getSingleton();
-export { DBService };
+export { DBService, IDBClientCreate };

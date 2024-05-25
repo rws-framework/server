@@ -1,5 +1,7 @@
-import TheService from './_service';
-import IAppConfig from '../interfaces/IAppConfig';
+import { Injectable, Module } from '@rws-framework/server/nest';
+import IAppConfig from '../types/IAppConfig';
+import { Error500 } from 'src/errors';
+import { IRWSModule, RWSModuleType } from '../types/IRWSModule';
 
 const AppDefaultConfig: IAppConfig = {
     mongo_url: null,
@@ -14,7 +16,7 @@ const AppDefaultConfig: IAppConfig = {
     secret_key: null,
     user_class: null,
     user_models: [],
-    controller_list: [],
+    modules: [],
     ws_routes: {},
     http_routes: [],
     commands: [],
@@ -26,26 +28,40 @@ const AppDefaultConfig: IAppConfig = {
     pub_dir: null
 };
 
-class AppConfigService extends TheService{
+@Injectable()
+class AppConfigService {   
     private _custom_data: {
     [key: string]: any
   } = {};
   
     private data: IAppConfig; // Add type assertion here  
-    private cfgString: string;
-
-    constructor(cfg: IAppConfig) {
-        super();    
+    private _initialized = false;
+    
+    init(cfg: IAppConfig): AppConfigService 
+    {
         this.data = cfg;
-    }    
+
+        this._initialized = true;
+        return this;
+    }
+
+    private _checkInit(){
+        if(!this._initialized){
+            throw new Error500(new Error("AppConfigService was not initialized. Tun .init(cfg) on the service instance."));
+        }
+    }
     
     getData(): IAppConfig
     {
+        this._checkInit();
+
         return this.data;
     }
 
     public get(key: keyof IAppConfig | string): any
     {     
+        this._checkInit();
+
         if(key in this.data && this.data[key as keyof IAppConfig] !== null){
             return this.data[key as keyof IAppConfig];
         }
@@ -70,20 +86,16 @@ class AppConfigService extends TheService{
         return this;
     }
 
-    public static getConfigSingleton<T extends new (...args: any[]) => TheService>(this: T, cfg?: IAppConfig): AppConfigService
+    getModules(): RWSModuleType[] 
     {
-        const className = this.name;
-        const instanceExists = TheService._instances[className];
-    
-        if (cfg) {                
-            TheService._instances[className] = new this(cfg);        
-        }else if(!instanceExists && !cfg){
-            TheService._instances[className] = new this(AppDefaultConfig);           
-        }
-
-        return TheService._instances[className] as AppConfigService;
-    }  
+        return this.data['modules'];
+    }
 }
 
-export default (cfg?: IAppConfig): AppConfigService => AppConfigService.getConfigSingleton(cfg);
-export { IAppConfig, AppConfigService };
+@Module({
+    providers: [AppConfigService],
+    exports: [AppConfigService],
+})
+export class AppConfigModule {}
+
+export { IAppConfig, AppConfigService, AppDefaultConfig };

@@ -1,10 +1,10 @@
-import RWSService from './_service';
-
 import { EmbeddingsInterface } from '@langchain/core/embeddings';
+import { Injectable } from '@rws-framework/server/nest';  
 
 import RWSVectorStore, { VectorDocType } from '../models/convo/VectorStore';
 
-class VectorStoreService extends RWSService
+@Injectable()
+class VectorStoreService
 {
     async createStore(docs: VectorDocType, embeddings: EmbeddingsInterface): Promise<RWSVectorStore>
     {        
@@ -12,5 +12,4 @@ class VectorStoreService extends RWSService
     }    
 }
 
-export default VectorStoreService.getSingleton();
 export {VectorStoreService};

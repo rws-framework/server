@@ -5,7 +5,7 @@ import { BedrockChat } from '@langchain/community/chat_models/bedrock/web';
 import { IterableReadableStream } from '@langchain/core/utils/stream';
 import { ChainValues } from '@langchain/core/utils/types';
 
-import { IContextToken } from '../../interfaces/IContextToken';
+import { IContextToken } from '../../types/IContextToken';
 
 interface IPromptHyperParameters {
     temperature: number,

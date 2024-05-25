@@ -1,12 +1,14 @@
-import getConfigService from './AppConfigService';
-import ConsoleService from './ConsoleService';
+import { Injectable } from '@rws-framework/server/nest';
+
 import jwt from 'jsonwebtoken';
-import TheService from './_service';
-import IAuthUser from '../interfaces/IAuthUser';
+
+import IAuthUser from '../types/IAuthUser';
 import HTTP, { ServerResponse } from 'http';
 import { Error403 } from '../errors';
-import IDbUser from '../interfaces/IDbUser';
+import IDbUser from '../types/IDbUser';
 import Model from '../models/_model';
+import { AppConfigService } from './AppConfigService';
+import { ConsoleService } from './ConsoleService';
 
 type UserListManager = {
     getList: () => {[clientId: string]: Partial<IDbUser>}
@@ -28,15 +30,11 @@ const _DEFAULTS_USER_LIST_MANAGER = {
     disconnectClient: (socketId: string) => {}
 }
 
-/**
- * @notExported
- */
-class AuthService extends TheService{
+@Injectable()
+class AuthService {
     private user: Partial<IDbUser>
 
-    constructor() {
-        super();
-    }
+    constructor(private configService: AppConfigService, private consoleService: ConsoleService) {}
 
     async authenticate(clientId: string, jwt_token: string | null = null, userListManager: UserListManager = _DEFAULTS_USER_LIST_MANAGER): Promise<boolean | null>
     {
@@ -44,7 +42,7 @@ class AuthService extends TheService{
             jwt_token =  jwt_token.replace('Bearer ', '');            
         }
 
-        const UserClass = await getConfigService().get('user_class');  
+        const UserClass = await this.configService.get('user_class');  
 
         if(!jwt_token){                
             return null;         
@@ -63,7 +61,7 @@ class AuthService extends TheService{
                 
                 return true;
             } catch(e: Error | any){
-                ConsoleService.error('RWS AUTH ERROR', e.message);
+                this.consoleService.error('RWS AUTH ERROR', e.message);
 
                 return false;
             }
@@ -88,7 +86,7 @@ class AuthService extends TheService{
     }
 
     async authorize<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
-        const secretKey: string = getConfigService().get('secret_key');
+        const secretKey: string = this.configService.get('secret_key');
             
         return await new Promise((approve, reject) => {
             jwt.verify(token, secretKey, (error, tokenData) => {
@@ -104,7 +102,7 @@ class AuthService extends TheService{
                     return;
                 }else{
                     theUser.loadDbUser().then(() => {                    
-                        ConsoleService.rwsLog('RWS AUTH LOG', ConsoleService.color().green('Loaded RWS User Model'), theUser.db.id);
+                        this.consoleService.rwsLog('RWS AUTH LOG', this.consoleService.color().green('Loaded RWS User Model'), theUser.db.id);
                         
                         approve(theUser);
                     });
@@ -114,5 +112,4 @@ class AuthService extends TheService{
     }
 }
 
-export default AuthService.getSingleton();
 export { AuthService, _DEFAULTS_USER_LIST_MANAGER };

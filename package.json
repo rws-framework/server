@@ -135,8 +135,7 @@
     "typedoc-plugin-mermaid": "^1.10.0",
     "typedoc-plugin-not-exported": "^0.1.6",
     "typedoc-plugin-rename-defaults": "^0.6.5",
-    "typedoc-theme-hierarchy": "^4.1.0",
-    "typescript": "^5.1.6",
+    "typedoc-theme-hierarchy": "^4.1.0",    
     "webpack": "^5.75.0",
     "webpack-cli": "^5.1.4",
     "webpack-node-externals": "^3.0.0"

@@ -1,13 +1,17 @@
-import TheService from './_service';
+import { Injectable } from '@rws-framework/server/nest';  
 import crypto from 'crypto';
-
-
 import path from 'path';
 import fs from 'fs';
-import TraversalService from './TraversalService';
-import UtilsService from './UtilsService';
+import {TraversalService} from './TraversalService';
+import {UtilsService} from './UtilsService';
 
-class MD5Service extends TheService {
+@Injectable()
+class MD5Service {
+    constructor(
+        private traversalService: TraversalService,         
+        private utilsService: UtilsService
+    ) {}
+
     async calculateFileMD5(filePath: string): Promise<string> 
     {
     
@@ -44,7 +48,7 @@ class MD5Service extends TheService {
 
     async cliClientHasChanged(consoleClientHashFile: string, tsFilename: string): Promise<boolean> 
     {
-        const moduleCfgDir = path.resolve(UtilsService.findRootWorkspacePath(process.cwd()), 'node_modules', '.rws');
+        const moduleCfgDir = path.resolve(this.utilsService.findRootWorkspacePath(process.cwd()), 'node_modules', '.rws');
         const generatedHash: string = fs.readFileSync(consoleClientHashFile, 'utf-8');
            
 
@@ -73,7 +77,7 @@ class MD5Service extends TheService {
         let cmdFilesList: { [key: string]: string } = {};        
 
         cmdDirPaths.forEach((dirPath) => {            
-            const cmdFiles = TraversalService.getAllFilesInFolder(dirPath, [
+            const cmdFiles = this.traversalService.getAllFilesInFolder(dirPath, [
                 /.*\/index\.ts/g,
                 /.*\/_command\.ts/g
             ]);
@@ -96,5 +100,4 @@ class MD5Service extends TheService {
     }
 }
 
-export default MD5Service.getSingleton();
 export {MD5Service};

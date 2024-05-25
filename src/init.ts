@@ -1,13 +1,13 @@
 import { join } from 'path';
-import IAppConfig from './interfaces/IAppConfig';
+import IAppConfig from './types/IAppConfig';
 import getConfigService, {AppConfigService} from './services/AppConfigService';
-import ServerService, { IInitOpts, ServerControlSet } from './services/ServerService';
+import ServerService, { IInitOpts, ServerControlSet } from './helpers/ServerBuilder';
 import ConsoleService from './services/ConsoleService';
 import UtilsService from './services/UtilsService';
 
 import fs from 'fs';
 import ProcessService from './services/ProcessService';
-import IDbUser from './interfaces/IDbUser';
+import IDbUser from './types/IDbUser';
 import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter} from '@nestjs/platform-fastify';
 

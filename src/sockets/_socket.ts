@@ -1,7 +1,7 @@
 import { Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-import ITheSocket from '../interfaces/ITheSocket';
-import ServerService from '../services/ServerService';
+import ITheSocket from '../types/ITheSocket';
+import ServerService from '../helpers/ServerBuilder';
 
 interface JSONMessage{
     method: string;

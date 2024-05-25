@@ -1,4 +1,5 @@
-import TheService from './_service';
+import { Injectable } from '@rws-framework/server/nest';
+
 import chalk, { Chalk } from 'chalk';
 import pino, { Logger as PinoLogger } from 'pino';
 import pinoPretty from 'pino-pretty'; // Import pino-pretty
@@ -7,13 +8,12 @@ interface IJSONColors {
   [codeLement: string]: keyof Chalk
 }
 
-class ConsoleService extends TheService {
+@Injectable()
+class ConsoleService {
     private isEnabled: boolean = true;
     private originalLogMethods?: any = null;
 
-    constructor() {
-        super();
-
+    constructor() {        
         this.log = this.log.bind(this);
         this.error = this.error.bind(this);
         this.warn = this.warn.bind(this);
@@ -241,7 +241,7 @@ class ConsoleService extends TheService {
   
 }
 
-export default ConsoleService.getSingleton();
+
 export {
     ConsoleService
 };

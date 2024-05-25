@@ -1,6 +1,6 @@
-import { RWSHTTPRoutingEntry, WsRoutes } from '../services/ServerService';
-import RWSController from '../controllers/_controller';
+import { RWSHTTPRoutingEntry, WsRoutes } from '../helpers/ServerBuilder';
 import RWSCommand from '../commands/_command';
+import { RWSModuleType } from './IRWSModule';
 
 export default interface IAppConfig {   
     features?: {
@@ -22,7 +22,7 @@ export default interface IAppConfig {
     secret_key: string
     user_class: any
     user_models: any[]
-    controller_list: RWSController[]
+    modules: RWSModuleType[],
     ws_routes: WsRoutes
     http_routes: RWSHTTPRoutingEntry[] 
     front_routes?: Record<string, unknown>[],

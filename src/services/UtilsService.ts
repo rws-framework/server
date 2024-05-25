@@ -2,10 +2,12 @@ import TheService from './_service';
 import fs from 'fs';
 import path from 'path';
 import { rwsPath } from '@rws-framework/console';
+import { Injectable } from '@rws-framework/server/nest';  
 
 import { SourceMapConsumer, RawSourceMap  } from 'source-map';
 
-class UtilsService extends TheService {  
+@Injectable()
+class UtilsService {  
     private _startTime: [number, number];
     findRootWorkspacePath = rwsPath.findRootWorkspacePath;
     findPackageDir = rwsPath.findPackageDir;
@@ -100,5 +102,4 @@ class UtilsService extends TheService {
     }
 }
 
-export default UtilsService.getSingleton();
 export {UtilsService};

@@ -1,27 +1,24 @@
 import { Server as ServerBase, Socket } from 'socket.io';
 import HTTPS from 'https';
-import getConfigService from './AppConfigService';
 import cors, {CorsOptions} from 'cors';
 import HTTP, { ServerResponse } from 'http';
-import ITheSocket from '../interfaces/ITheSocket';
-import AuthService, { _DEFAULTS_USER_LIST_MANAGER } from './AuthService';
+import ITheSocket from '../types/ITheSocket';
+import { AuthService, _DEFAULTS_USER_LIST_MANAGER } from '../services/AuthService';
 import fs from 'fs';
 import expressServer, { Request, Response, Express } from 'express';
-import RouterService from './RouterService';
 import { AxiosRequestHeaders } from 'axios';
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../routing/routes';
-import ConsoleService from './ConsoleService';
-import UtilsService from './UtilsService';
+import { ConsoleService } from '../services/ConsoleService';
+import { UtilsService } from '../services/UtilsService';
 import path from 'path';
 import bodyParser from 'body-parser';
 import Error404 from '../errors/Error404';
 import RWSError from '../errors/_error';
 import compression from 'compression';
-import IAuthUser from '../interfaces/IAuthUser';
-import MD5Service from './MD5Service';
-import IDbUser from '../interfaces/IDbUser';
+import IAuthUser from '../types/IAuthUser';
+import { MD5Service } from '../services/MD5Service';
+import IDbUser from '../types/IDbUser';
 
-//@ts-expect-error no-types
 import fileUpload from 'express-fileupload';
 
 import {
@@ -34,21 +31,10 @@ import {
     ServerStarter,
     RWSServerPair,
     ServerControlSet
-} from '../interfaces/ServerTypes';
+} from '../types/ServerTypes';
+import { AppConfigService } from 'src/services/AppConfigService';
 
 const __HTTP_REQ_HISTORY_LIMIT = 50;
-const getCurrentLineNumber = UtilsService.getCurrentLineNumber;
-
-const wsLog = async (fakeError: Error, text: any, socketId: string = null, isError: boolean = false): Promise<void> => {
-    const logit = isError ? console.error : console.log;
-  
-    const filePath = module.id;
-    //const fileName = filePath.split('/').pop();
-
-    const marker = '[RWS Websocket]';
-
-    logit(isError ? ConsoleService.color().red(marker) : ConsoleService.color().green(marker), '|',`${filePath}:${await getCurrentLineNumber(fakeError)}`,`|${socketId ? ConsoleService.color().blueBright(` (${socketId})`) : ''}:`,`${text}`);
-};
 
 const MINUTE = 1000 * 60;
 
@@ -58,7 +44,19 @@ const _DEFAULT_SERVER_OPTS: IInitOpts = {
     port_ws: null
 };
 
-class ServerService extends ServerBase {    
+type ServerBuilderServices = {
+    authService: AuthService,
+    consoleService: ConsoleService,
+    utilsService: UtilsService,
+    md5Service: MD5Service,
+    configService: AppConfigService, 
+}
+
+function wsLog(error: Error, msg: any, wsClientId: string, something: boolean = false){
+    console.log(`[RWS Websocket (wsId: ${wsClientId})]`, msg);
+}
+
+class ServerBuilder extends ServerBase {    
     private static http_server: RWSServerPair;
     private static ws_server: RWSServerPair;
     private server_app: Express; 
@@ -68,7 +66,7 @@ class ServerService extends ServerBase {
     private users: JWTUsers = {};
     private corsOptions: CorsOptions;
 
-    constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts){ 
+    constructor(webServer: RWSServer, expressApp: Express, opts: IInitOpts, private services: ServerBuilderServices){ 
         const _DOMAIN: string =  opts.cors_domain || opts.domain;
 
         const WEBSOCKET_CORS = {
@@ -127,34 +125,34 @@ class ServerService extends ServerBase {
         this.server_app.options('*', cors(this.corsOptions)); // Enable pre-flight for all routes                
     }
 
-    public static async initializeApp<PassedUser extends IDbUser>(opts: IInitOpts = _DEFAULT_SERVER_OPTS, UserConstructor: new () => PassedUser = null): Promise<ServerControlSet>
+    public static async initializeApp<PassedUser extends IDbUser>(opts: IInitOpts = _DEFAULT_SERVER_OPTS, UserConstructor: new () => PassedUser = null, services: ServerBuilderServices): Promise<ServerControlSet>
     {                
         opts = Object.assign(_DEFAULT_SERVER_OPTS, opts);
-        const isSSL = opts.ssl_enabled !== null || typeof opts.ssl_enabled === 'undefined' ? opts.ssl_enabled : getConfigService().get('features')?.ssl;
+        const isSSL = opts.ssl_enabled !== null || typeof opts.ssl_enabled === 'undefined' ? opts.ssl_enabled : services.configService.get('features')?.ssl;
 
-        if (!ServerService.http_server) { 
-            const [baseHttpServer, expressHttpServer] = await ServerService.createServerInstance(opts);
+        if (!ServerBuilder.http_server) { 
+            const [baseHttpServer, expressHttpServer] = await ServerBuilder.createServerInstance(opts, services);
            
-            const http_instance = new ServerService(baseHttpServer, expressHttpServer, opts);
-            const httpPort = opts.port_http || getConfigService().get('port');
+            const http_instance = new ServerBuilder(baseHttpServer, expressHttpServer, opts, services);
+            const httpPort = opts.port_http || services.configService.get('port');
             
-            ServerService.http_server = { instance: await http_instance.configureHTTPServer<PassedUser>(UserConstructor), starter: http_instance.createServerStarter(httpPort, () => {
-                ConsoleService.log(ConsoleService.color().green('Request/response server' + ` is working on port ${httpPort} using HTTP${isSSL ? 'S' : ''} protocol`));
+            ServerBuilder.http_server = { instance: await http_instance.configureHTTPServer<PassedUser>(UserConstructor), starter: http_instance.createServerStarter(httpPort, () => {
+                services.consoleService.log(services.consoleService.color().green('Request/response server' + ` is working on port ${httpPort} using HTTP${isSSL ? 'S' : ''} protocol`));
             })};  
         }
 
-        if (!ServerService.ws_server) {
-            const [baseWsServer, expressWsServer] = await ServerService.createServerInstance(opts);
+        if (!ServerBuilder.ws_server) {
+            const [baseWsServer, expressWsServer] = await ServerBuilder.createServerInstance(opts, services);
 
-            const ws_instance = new ServerService(baseWsServer, expressWsServer, opts);
-            const wsPort = opts.port_ws || getConfigService().get('ws_port');
+            const ws_instance = new ServerBuilder(baseWsServer, expressWsServer, opts, services);
+            const wsPort = opts.port_ws || services.configService.get('ws_port');
 
-            ServerService.ws_server = { instance: await ws_instance.configureWSServer<PassedUser>(UserConstructor), starter: ws_instance.createServerStarter(wsPort, () => {
-                ConsoleService.log(ConsoleService.color().green('Websocket server' + ` is working on port ${wsPort}. SSL is ${isSSL ? 'enabled' : 'disabled'}.`));
+            ServerBuilder.ws_server = { instance: await ws_instance.configureWSServer<PassedUser>(UserConstructor), starter: ws_instance.createServerStarter(wsPort, () => {
+                services.consoleService.log(services.consoleService.color().green('Websocket server' + ` is working on port ${wsPort}. SSL is ${isSSL ? 'enabled' : 'disabled'}.`));
             })};  
         }
         
-        const pacakgeDir = UtilsService.findRootWorkspacePath(process.cwd());   
+        const pacakgeDir = services.utilsService.findRootWorkspacePath(process.cwd());   
         const rwsDir = `${pacakgeDir}/node_modules/.rws`;
 
         if(!fs.existsSync(rwsDir)){
@@ -184,15 +182,15 @@ class ServerService extends ServerBase {
         return this.srv; 
     }  
 
-    static async createServerInstance(opts: IInitOpts): Promise<[RWSServer, Express]>
+    static async createServerInstance(opts: IInitOpts, services: any): Promise<[RWSServer, Express]>
     {
         const app = expressServer();       
-        const isSSL = getConfigService().get('features')?.ssl;
+        const isSSL = services.configService.get('features')?.ssl;
         const options: {key?: Buffer, cert?: Buffer} = {};
 
         if(isSSL){
-            const sslCert = getConfigService().get('ssl_cert');
-            const sslKey = getConfigService().get('ssl_key');  
+            const sslCert = services.configService.get('ssl_cert');
+            const sslKey = services.configService.get('ssl_key');  
 
             if( !sslKey || !sslCert || !fs.existsSync(sslCert) || !fs.existsSync(sslKey)){
                 throw new Error('SSL keys set in config do not exist.');
@@ -217,11 +215,11 @@ class ServerService extends ServerBase {
         }).bind(this);
     }
 
-    public async configureHTTPServer<PassedUser extends IDbUser>(UserConstructor:  new (params: any) => PassedUser = null): Promise<ServerService>
+    public async configureHTTPServer<PassedUser extends IDbUser>(UserConstructor:  new (params: any) => PassedUser = null): Promise<ServerBuilder>
     {
         if(this.options.authorization){
             this.server_app.use(async (req: Request, res: Response, next: () => void) => {
-                const reqId: string = MD5Service.md5(req.url);
+                const reqId: string = this.services.md5Service.md5(req.url);
                 let theUser: IAuthUser = null;
                 let theToken: string = null;
 
@@ -246,7 +244,7 @@ class ServerService extends ServerBase {
                     this.tokens = {};
                 }
 
-                const authPassed: boolean | null = await AuthService.authenticate(reqId, req.headers.authorization, {
+                const authPassed: boolean | null = await this.services.authService.authenticate(reqId, req.headers.authorization, {
                     ..._DEFAULTS_USER_LIST_MANAGER,
                     set: setUser,
                     setToken,
@@ -259,7 +257,7 @@ class ServerService extends ServerBase {
                 const authHeader: string = req.headers.authorization;                        
         
                 if(authPassed === null || authHeader === undefined){         
-                    ConsoleService.warn('RWS AUTH WARNING', ConsoleService.color().blue(`[${reqId}]`), 'XHR token is not passed');       
+                    this.services.consoleService.warn('RWS AUTH WARNING', this.services.consoleService.color().blue(`[${reqId}]`), 'XHR token is not passed');       
                     res.writeHead(400, 'Bad request: No token passed');
                     res.end();
                 
@@ -267,7 +265,7 @@ class ServerService extends ServerBase {
                 }   
 
                 if(authPassed === false){                            
-                    ConsoleService.error('RWS AUTH ERROR', ConsoleService.color().blue(`[${reqId}]`), 'XHR token unauthorized');
+                    this.services.consoleService.error('RWS AUTH ERROR', this.services.consoleService.color().blue(`[${reqId}]`), 'XHR token unauthorized');
                     res.writeHead(403, 'Token unauthorized');
                     res.end();
                 
@@ -292,22 +290,12 @@ class ServerService extends ServerBase {
         // app.use(express.json({ limit: '200mb' }));
         this.server_app.use(bodyParser.json({ limit: '200mb' }));    
         
-        if(getConfigService().get('features')?.routing_enabled){
+        if(this.services.configService.get('features')?.routing_enabled){
             if(this.options.pub_dir){
                 this.server_app.use(expressServer.static(this.options.pub_dir));
             }     
     
-            this.server_app.set('view engine', 'ejs');   
-
-            const processed_routes: IHTTProute[] = await RouterService.assignRoutes(this.server_app, this.options.httpRoutes, this.options.controllerList);
-
-            this.server_app.use((req, res, next) => {                              
-                if(!RouterService.hasRoute(req.originalUrl, processed_routes)){
-                    ServerService.on404(req, res);
-                }else{
-                    next();
-                }            
-            });      
+            this.server_app.set('view engine', 'ejs');           
         }
 
         this.use(compression);
@@ -316,9 +304,9 @@ class ServerService extends ServerBase {
         return this;
     }
 
-    public async configureWSServer<PassedUser extends IDbUser>(UserConstructor:  new (params: any) => PassedUser = null): Promise<ServerService>
+    public async configureWSServer<PassedUser extends IDbUser>(UserConstructor:  new (params: any) => PassedUser = null): Promise<ServerBuilder>
     { 
-        if(!getConfigService().get('features')?.ws_enabled){          
+        if(!this.services.configService.get('features')?.ws_enabled){          
             console.error('[RWS] Websocket server is disabled in configuration');
             return this;
         }
@@ -350,7 +338,7 @@ class ServerService extends ServerBase {
             Object.keys(this.options.wsRoutes).forEach((eventName) => {                
                 const SocketClass = this.options.wsRoutes[eventName];    
                 
-                new SocketClass(ServerService.ws_server).handleConnection(socket, eventName);
+                new SocketClass(ServerBuilder.ws_server).handleConnection(socket, eventName);
             });
         });
 
@@ -362,7 +350,7 @@ class ServerService extends ServerBase {
 
                 const token = this.tokens[socket.id] || socket.handshake.auth.token;                
 
-                const passedAuth: boolean | null = await AuthService.authenticate(socket.id, token, {
+                const passedAuth: boolean | null = await this.services.authService.authenticate(socket.id, token, {
                     getList: () => this.users,
                     get: (socketId: string) => this.users[socketId],
                     set: (socketId: string, user: IAuthUser) => {
@@ -384,11 +372,11 @@ class ServerService extends ServerBase {
                 });
 
                 if(passedAuth === false){                    
-                    ConsoleService.error('RWS AUTH ERROR', ConsoleService.color().blue(`[${socket.id}]`), 'Websockets token unauthorized');
+                    this.services.consoleService.error('RWS AUTH ERROR', this.services.consoleService.color().blue(`[${socket.id}]`), 'Websockets token unauthorized');
                     response.writeHead(403, 'Token unauthorized');
                     response.end();  
                 }else if(passedAuth === null){                                 
-                    ConsoleService.warn('RWS AUTH WARNING', ConsoleService.color().blue(`[${socket.id}]`), 'Websockets token is not passed');
+                    this.services.consoleService.warn('RWS AUTH WARNING', this.services.consoleService.color().blue(`[${socket.id}]`), 'Websockets token is not passed');
                     response.writeHead(400, 'Bad request: No token');
                     response.end(); 
                 }else{                    
@@ -448,7 +436,7 @@ class ServerService extends ServerBase {
         },        
         getCookie: async (headers: AxiosRequestHeaders, key: string): Promise<string | null> => 
         {
-            const cookiesBin: CookieType = await ServerService.cookies.getCookies(headers);
+            const cookiesBin: CookieType = await ServerBuilder.cookies.getCookies(headers);
         
             if(!cookiesBin[key]){
                 return null;
@@ -469,5 +457,16 @@ class ServerService extends ServerBase {
     }
 }
 
-export default ServerService;
-export { WsRoutes, IHTTProute, IInitOpts, ITheSocket, IPrefixedHTTProutes, RWSHTTPRoutingEntry, RWSServer, RWSServerPair, ServerControlSet, ServerStarter as RWSServerStarter };
+export { 
+    ServerBuilder, 
+    WsRoutes, 
+    IHTTProute, 
+    IInitOpts, 
+    ITheSocket, 
+    IPrefixedHTTProutes, 
+    RWSHTTPRoutingEntry, 
+    RWSServer, 
+    RWSServerPair, 
+    ServerControlSet, 
+    ServerStarter as RWSServerStarter 
+};

@@ -1,11 +1,8 @@
-import TheService from './_service';
 import { execSync } from 'child_process';
-import ConsoleService from './ConsoleService';
-
+import {ConsoleService} from './ConsoleService';
+import { Injectable } from '@rws-framework/server/nest';  
 import readline from 'readline';
 import { rwsShell } from '@rws-framework/console';
-
-const { color } = ConsoleService;
 
 interface IExecCmdOpts {
   verbose?: boolean
@@ -24,7 +21,10 @@ interface ICommandOpts {
   }
 }
 
-class ProcessService extends TheService {
+@Injectable()
+class ProcessService {
+
+    constructor(private consoleService: ConsoleService){}
 
     getParentPID(pid: number): number {
         const command = `ps -o ppid= -p ${pid} | awk '{print $1}'`;
@@ -50,14 +50,12 @@ class ProcessService extends TheService {
         });
 
         return new Promise((resolve) => {
-            rl.question(color().red('[RWS CLI Input Prompt] ' + prompt), (answer) => {
+            rl.question(this.consoleService.color().red('[RWS CLI Input Prompt] ' + prompt), (answer) => {
                 resolve(answer);
                 rl.close();
             });
         });
     }
 }
-
-export default ProcessService.getSingleton();
 
 export { IExecCmdOpts, ICommandOpts, ProcessService };
