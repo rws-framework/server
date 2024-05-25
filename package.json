@@ -21,7 +21,7 @@
     "@nestjs/platform-express": "^10.3.2",
     "@nestjs/platform-fastify": "^10.3.4",
     "@prisma/client": "^5.1.1",
-    "@rws-framework/console": "^0.1.*",
+    "@rws-framework/console": "*",
     "@zip.js/zip.js": "^2.7.34",
     "aws-amplify": "^6.0.16",
     "aws-crt": "^1.15.20",
