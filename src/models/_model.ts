@@ -425,10 +425,12 @@ class Model<ChildClass> implements IModel{
             }
         
             return [];
-        } catch (rwsError: RWSError | any) {
+        } catch (error: Error | any) {
+            const rwsError = new RWSError(error);
+            
             rwsError.printFullError();
 
-            throw rwsError;
+            throw new Error('findBy error ocurred');
         }        
     }
     
