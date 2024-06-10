@@ -8,6 +8,8 @@ import { Error403 } from '../errors';
 import IDbUser from '../interfaces/IDbUser';
 import Model from '../models/_model';
 
+interface IAuthUserTokenManager { db: Model<any>, loadDbUser: () => Promise<Model<any>> }
+
 type UserListManager = {
     getList: () => {[clientId: string]: Partial<IDbUser>}
     get: (socketId: string) => Partial<IDbUser> | null
@@ -75,22 +77,22 @@ class AuthService extends TheService{
         }      
     }
     
-    setUser<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(user: IUser): AuthService 
+    setUser<IUser extends IAuthUserTokenManager>(user: IUser): AuthService 
     {
         this.user = user;
 
         return this;
     }
 
-    getUser<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(): IUser
+    getUser<IUser extends IAuthUserTokenManager>(): IUser | null
     {
-        return this.user as IUser;
+        return this.user as IUser || null;
     }
 
-    async authorize<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
+    async authorize<IUser extends IAuthUserTokenManager>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
         const secretKey: string = getConfigService().get('secret_key');
             
-        return await new Promise((approve, reject) => {
+        return await new Promise((approve: (user: IUser) => void, reject) => {
             jwt.verify(token, secretKey, (error, tokenData) => {
                 if (error) {                        
                     reject(error);
@@ -98,15 +100,18 @@ class AuthService extends TheService{
                 }
                 
                 const theUser: IUser = new constructor(tokenData);
+
             
                 if(this.getUser()){
                     approve(this.getUser() as IUser);
                     return;
-                }else{
-                    theUser.loadDbUser().then(() => {                    
-                        ConsoleService.rwsLog('RWS AUTH LOG', ConsoleService.color().green('Loaded RWS User Model'), theUser.db.id);
+                }else{                                    
+                    theUser.loadDbUser().then((userModel: Model<any>) => {                                            
+                        ConsoleService.rwsLog('RWS AUTH LOG', ConsoleService.color().green('Loaded RWS User Model'), userModel.id);
                         
                         approve(theUser);
+                    }).catch((e: Error | unknown) => {
+                        reject(e);
                     });
                 }                            
             });

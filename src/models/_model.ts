@@ -4,6 +4,8 @@ import DBService from '../services/DBService';
 import getAppConfig from '../services/AppConfigService';
 
 import TrackType, {IMetaOpts} from './annotations/TrackType';
+import IDbUser from '../interfaces/IDbUser';
+
 interface IModel{
     [key: string]: any;
     id: string | null;
@@ -11,27 +13,21 @@ interface IModel{
     getCollection: () => string | null;
 }
 
-type DBModelFindOneType<ChildClass> = (
-    this: OpModelType<ChildClass>,
-    conditions: any,
-    fields?: string[],
-    ordering?: { [fieldName: string]: string }
-) => Promise<ChildClass | null>;
-
-type DBModelFindManyType<ChildClass> = (
-    this: OpModelType<ChildClass>,
-    conditions: any,
-    fields?: string[],
-    ordering?: { [fieldName: string]: string }
-) => Promise<ChildClass | null>;
-
 interface OpModelType<ChildClass> {
     new(): ChildClass;
     name: string
     _collection: string;
-    loadModels: () => Model<any>[];
+    loadModels: () => { [key: string]: Model<any> };
     checkForInclusionWithThrow: (className: string) => void;
     checkForInclusion: (className: string) => boolean;
+    getCollection(): string | null;
+
+    // find<ChildClass>(
+    //     this: OpModelType<ChildClass>,
+    //     id: string,        
+    //     fields: string[] | null,
+    //     ordering: { [fieldName: string]: string }
+    // ): IDbUser;
 }
 
 class Model<ChildClass> implements IModel{
@@ -80,7 +76,7 @@ class Model<ChildClass> implements IModel{
 
     static checkForInclusion(this: OpModelType<any>, checkModelType: string): boolean
     {        
-        return this.loadModels().find((definedModel: Model<any>) => {
+        return Object.values(this.loadModels()).find((definedModel: Model<any>) => {
             return definedModel.name === checkModelType
         }) !== undefined
     }
@@ -108,7 +104,7 @@ class Model<ChildClass> implements IModel{
         const collections_to_models: {[key: string]: any} = {};           
         const timeSeriesIds: {[key: string]: {collection: string, hydrationField: string,ids: string[]}} = this.getTimeSeriesModelFields();
         
-        this.loadModels().forEach((model) => {
+        Object.values(this.loadModels()).forEach((model) => {
             collections_to_models[model.getCollection()] = model;      
         });      
 
@@ -445,13 +441,13 @@ class Model<ChildClass> implements IModel{
         return newModel;
     }
 
-    static loadModels(): Model<any>[]
+    static loadModels(): { [key: string]: Model<any> }
     {
         const AppConfigService = getAppConfig();
         return AppConfigService.get('user_models');
     }
 
-    loadModels(): Model<any>[]
+    loadModels(): { [key: string]: Model<any> }
     {     
         return Model.loadModels();
     }
@@ -460,4 +456,4 @@ class Model<ChildClass> implements IModel{
 
 
 export default Model;
-export { IModel, TrackType, IMetaOpts };
+export { IModel, TrackType, IMetaOpts, OpModelType };

@@ -2,6 +2,8 @@ import { RWSHTTPRoutingEntry, WsRoutes } from '../services/ServerService';
 import RWSController from '../controllers/_controller';
 import RWSCommand from '../commands/_command';
 
+import { OpModelType } from '../models/_model';
+
 export default interface IAppConfig {   
     features?: {
         ws_enabled?: boolean
@@ -21,7 +23,7 @@ export default interface IAppConfig {
     ssl_key: string
     secret_key: string
     user_class: any
-    user_models: any[]
+    user_models: {[key: string]: OpModelType<any>}
     controller_list: RWSController[]
     ws_routes: WsRoutes
     http_routes: RWSHTTPRoutingEntry[] 

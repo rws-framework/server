@@ -447,10 +447,40 @@ class TimeTracker extends RWSModel<TimeTracker> implements ITimeTracker {
 export default TimeTracker;
 ```
 
+### Relations in DB
+
+**n:1**
+
+The binding collection:
+
+```typescript
+  
+class BookBind extends RWSModel<BookBind> {  
+  static _collection = 'book_bind_collection_name';
+
+  @Relation('book_collection_name')
+  book: Book;
+}
+```
+
+
+The bound collection:
+
+```typescript
+  
+class Book extends RWSModel<BookBind> {  
+  static _collection = 'book_collection_name';
+
+  // without 2nd parameter the field would be named "book" (model classname to lowercase)
+  @InverseRelation('book_bind_collection_name', 'inversed_field_name_or_null') 
+  bookBinds: BookBind[]
+}
+```
+
 **AFTER EVERY MODEL FIELD CHANGE RUN:**
 
 ```shell
-yarn rws init
+yarn rws db:schema:reload -r=1
 ```
 
 this will update prisma schema for async DB Calls with new fields and their types

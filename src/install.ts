@@ -34,18 +34,20 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
         const modelMetadata: IMetaOpts = modelMetadatas[key].metadata;            
         const requiredString = modelMetadata.required ? '' : '?';  
       
-        const annotationType: string = modelMetadatas[key].annotationType;
+        const annotationType: string = modelMetadatas[key].annotationType;        
       
         if(annotationType === 'Relation'){
             section += `\t${key} ${modelMetadata.relatedTo}${requiredString} @relation(fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
             section += `\t${modelMetadata.relationField} String${requiredString} @db.ObjectId\n`;
         }else if (annotationType === 'InverseRelation'){        
             section += `\t${key} ${modelMetadata.inversionModel}[]`;
+            console.log({modelMetadata, xxx: modelMetadatas[key]});
+
         }else if (annotationType === 'InverseTimeSeries'){        
             section += `\t${key} String[] @db.ObjectId`;      
         }else if (annotationType === 'TrackType'){        
             const tags: string[] = modelMetadata.tags.map((item: string) => '@' + item);          
-            section += `\t${key} ${toConfigCase(modelMetadata)}${requiredString} ${tags.join(' ')}\n`;
+            section += `\t${key} ${toConfigCase(modelMetadata, requiredString)} ${tags.join(' ')}\n`;
         }
     }
 
@@ -55,22 +57,49 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
     return section;
 }
 
-function toConfigCase(modelType: any): string {
+function toConfigCase(modelType: any, requiredString: string): string {
     const type = modelType.type;
-    const input = type.name;  
+    const input: string = type.name;  
 
-    if(input == 'Number'){
-        return 'Int';
+    let processed: string | null = null;
+
+    switch(input){
+        case 'Number':
+            processed = 'Int';
+            break;
+
+        case 'Object':
+            processed = 'Json';
+            break;    
+
+        case 'Date':
+            processed = 'DateTime';
+            break;
+
+        case 'Number':
+            break;
+        default:
+            if(input.indexOf('Array') > -1){
+                if(input.indexOf('<') > -1){
+                    const extractedArrayType = input.match(/Array<([^>]+)>/)?.[1] || null;
+        
+                    if(extractedArrayType){
+                        processed = `${extractedArrayType}[]`;
+                        requiredString = '';
+                    }else{
+                        processed = 'Json';
+                    }
+                }else{
+                    processed = 'String[]';
+                    requiredString = '';
+                }
+            }
+            break;    
+    }    
+
+    if(processed){
+        return processed + requiredString
     }
-
-    if(input == 'Object'){
-        return 'Json';
-    }
-
-    if(input == 'Date'){
-        return 'DateTime';
-    }
-
 
     const firstChar = input.charAt(0).toUpperCase();
     const restOfString = input.slice(1);
@@ -95,7 +124,7 @@ async function setupPrisma(cfg: IAppConfig, leaveFile = false)
 
     const usermodels = await AppConfigService.get('user_models');
 
-    usermodels.forEach((model: any) => {    
+    Object.values(usermodels).forEach((model: any) => {    
         const modelSection = generateModelSections(model);
 
         template += '\n\n' + modelSection;  

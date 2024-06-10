@@ -13,7 +13,7 @@ const AppDefaultConfig: IAppConfig = {
     ssl_key: null,
     secret_key: null,
     user_class: null,
-    user_models: [],
+    user_models: {},
     controller_list: [],
     ws_routes: {},
     http_routes: [],
