@@ -6,6 +6,7 @@ interface ITrackerOpts{
     relatedToField?: string,
     relatedTo?: string,
     inversionModel?: string,
+    subType?: any
   }
   
   interface IMetaOpts extends ITrackerOpts{

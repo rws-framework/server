@@ -23,6 +23,7 @@ import TraversalService, { TraversalService as TraversalServiceInstance } from '
 import UtilsService, { UtilsService as UtilsServiceInstance }  from './services/UtilsService';
 import VectorStoreService, { VectorStoreService as VectorStoreServiceInstance } from './services/VectorStoreService';
 
+import { ControllerActionResponse, ControllerActionErrorResponse } from './types/ControllerTypes';
 
 import RWSPrompt, { ILLMChunk, IRWSPromptRequestExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptStreamExecutor, IChainCallOutput, IRWSPromptJSON, ChainStreamType } from './models/prompts/_prompt';
 import RWSConvo, { IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams } from './models/convo/ConvoLoader';
@@ -121,6 +122,9 @@ export {
     RWSPrompt,    
     RWSErrorCodes,
     ChainStreamType,
+
+    ControllerActionResponse,
+    ControllerActionErrorResponse,
 
     BaseWsResponse, ErrorWsResponse,
 

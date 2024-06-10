@@ -1,3 +1,4 @@
+import Error500 from '../../src/errors/Error500';
 import { RWSAppCommands, getAppConfig, IAppConfig, RWSCommand, ICmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
 import { rwsPath } from '@rws-framework/console';
 const { error, color, rwsLog } = ConsoleService;
@@ -68,26 +69,18 @@ const main = async () => {
     const cfgPathFile = '_cfg_path';
     const execDir = path.resolve(rwsPath.findPackageDir(__dirname), 'exec');
     const tsFile = path.resolve(execDir,'src') + '/rws.ts';
-    let APP_CFG: IAppConfig | null = null;
 
-    if (command === 'init') {
-        const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config';       
+    const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config';       
 
-        const cfgData = getConfig(configPath, cfgPathFile);        
+    const cfgData = getConfig(configPath, cfgPathFile);        
 
-        APP_CFG = cfgData;
-    }
+    const APP_CFG: IAppConfig | null = cfgData;
 
     let savedHash = null;
     const consoleClientHashFile = `${moduleCfgDir}/_cli_hash`;
 
     if (fs.existsSync(`${moduleCfgDir}/_cli_hash`)) {
         savedHash = fs.readFileSync(consoleClientHashFile, 'utf-8');
-    }
-
-    if(!APP_CFG){
-        APP_CFG = getConfig('config/config', cfgPathFile);    
-                
     }
 
     if(!APP_CFG){

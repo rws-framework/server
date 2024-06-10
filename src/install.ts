@@ -40,14 +40,13 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
             section += `\t${key} ${modelMetadata.relatedTo}${requiredString} @relation(fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
             section += `\t${modelMetadata.relationField} String${requiredString} @db.ObjectId\n`;
         }else if (annotationType === 'InverseRelation'){        
-            section += `\t${key} ${modelMetadata.inversionModel}[]`;
-            console.log({modelMetadata, xxx: modelMetadatas[key]});
+            section += `\t${key} ${modelMetadata.inversionModel}[]`;            
 
         }else if (annotationType === 'InverseTimeSeries'){        
             section += `\t${key} String[] @db.ObjectId`;      
-        }else if (annotationType === 'TrackType'){        
+        }else if (annotationType === 'TrackType'){    
             const tags: string[] = modelMetadata.tags.map((item: string) => '@' + item);          
-            section += `\t${key} ${toConfigCase(modelMetadata, requiredString)} ${tags.join(' ')}\n`;
+            section += `\t${key} ${toConfigCase(modelMetadata, requiredString, modelMetadata.subType)} ${tags.join(' ')}\n`;
         }
     }
 
@@ -57,7 +56,7 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
     return section;
 }
 
-function toConfigCase(modelType: any, requiredString: string): string {
+function toConfigCase(modelType: any, requiredString: string, subType: any = null): string {
     const type = modelType.type;
     const input: string = type.name;  
 
@@ -78,22 +77,17 @@ function toConfigCase(modelType: any, requiredString: string): string {
 
         case 'Number':
             break;
-        default:
-            if(input.indexOf('Array') > -1){
-                if(input.indexOf('<') > -1){
-                    const extractedArrayType = input.match(/Array<([^>]+)>/)?.[1] || null;
-        
-                    if(extractedArrayType){
-                        processed = `${extractedArrayType}[]`;
-                        requiredString = '';
-                    }else{
-                        processed = 'Json';
-                    }
+        case 'Array':            
+                if(subType){                    
+                    processed = toConfigCase(subType, requiredString) + '[]';
+                    requiredString = '';
                 }else{
-                    processed = 'String[]';
+                    processed = 'Json[]';
                     requiredString = '';
                 }
-            }
+            break;
+        default:
+           
             break;    
     }    
 
@@ -103,7 +97,7 @@ function toConfigCase(modelType: any, requiredString: string): string {
 
     const firstChar = input.charAt(0).toUpperCase();
     const restOfString = input.slice(1);
-    return firstChar + restOfString;
+    return firstChar + restOfString + requiredString;
 }
 
 async function setupPrisma(cfg: IAppConfig, leaveFile = false)

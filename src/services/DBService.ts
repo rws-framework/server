@@ -5,7 +5,7 @@ import { IModel } from '../models/_model';
 import getConfig from './AppConfigService';
 import TheService from './_service';
 import ConsoleService from './ConsoleService';
-import { RWSError } from '../errors';
+import { RWSError, Error500 } from '../errors';
 
 interface IDBClientCreate {
   dbUrl?: string;
@@ -50,11 +50,11 @@ class DBService extends TheService {
             this.connected = true;
         } catch (e: Error | any){            
             ConsoleService.error('PRISMA CONNECTION ERROR', e);            
-            throw new RWSError(e, 'PRISMA CONNECTION ERROR');
+            throw new Error500(e, 'PRISMA CONNECTION ERROR');
         }
     }
 
-    private async createBaseMongoClient(): Promise<MongoClient>
+    async createBaseMongoClient(): Promise<MongoClient>
     {
         const dbUrl = this.opts?.dbUrl || getConfig().get('mongo_url');
         const client = new MongoClient(dbUrl);
@@ -65,10 +65,14 @@ class DBService extends TheService {
 
     }
 
-    private async createBaseMongoClientDB(): Promise<Db>
+    async createBaseMongoClientDB(client: MongoClient = null): Promise<Db>
     {
         const dbName = this.opts?.dbName || getConfig().get('mongo_db');
-        const client = await this. createBaseMongoClient();
+
+        if(!client){
+            client = await this.createBaseMongoClient();
+        }
+        
         return client.db(dbName);
     }
 
@@ -139,14 +143,14 @@ class DBService extends TheService {
             where: {
                 id: model_id,
             },
-            data: data,
+            data: data    
         });    
 
         return await this.findOneBy(collection, { id: model_id });
     }
   
 
-    async findOneBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null): Promise<IModel|null>
+    async findOneBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null, include: {[key: string]: boolean} = null): Promise<IModel|null>
     {    
         const params: any = { where: conditions };
 
@@ -155,10 +159,18 @@ class DBService extends TheService {
             fields.forEach((fieldName: string) => {        
                 params.select[fieldName] = true;
             });    
+
+            if(include){
+                params.select = {...(params.select), ...include}
+            }
         }
 
         if(ordering){
             params.orderBy = ordering;
+        }
+
+        if(!fields && include){
+            params.include = include;
         }
 
         return await this.getCollectionHandler(collection).findFirst(params);
@@ -170,7 +182,7 @@ class DBService extends TheService {
         return;
     }
 
-    async findBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null): Promise<IModel[]>
+    async findBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null, include: {[key: string]: boolean} = null): Promise<IModel[]>
     {    
         const params: any ={ where: conditions };
 
@@ -179,10 +191,18 @@ class DBService extends TheService {
             fields.forEach((fieldName: string) => {        
                 params.select[fieldName] = true;
             });    
+
+            if(include){
+                params.select = {...(params.select), ...include}
+            }
         }
 
         if(ordering){
             params.orderBy = ordering;
+        }
+
+        if(!fields && include){            
+            params.include = include;
         }
 
         return await this.getCollectionHandler(collection).findMany(params);

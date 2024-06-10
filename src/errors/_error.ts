@@ -1,4 +1,4 @@
-export default class RWSError{
+export default abstract class RWSError{
     protected baseError: Error | any;
     protected name: string;
     protected message: string;
@@ -20,6 +20,11 @@ export default class RWSError{
         if(this.baseError.stack){
             this.stack = baseError.stack;
         }
+    }
+
+    static make(error: Error)
+    {
+        console.log(this);    
     }
 
     printFullError(): void
