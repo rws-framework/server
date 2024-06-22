@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "2.21.6",
+  "version": "2.21.7",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -17,7 +17,7 @@
     "@google-cloud/compute": "^4.0.1",
     "@mongodb-js/zstd": "^1.1.0",
     "@prisma/client": "^5.1.1",
-    "@rws-framework/console": "^0.3.5",
+    "@rws-framework/console": "^0.3.6",
     "@zip.js/zip.js": "^2.7.34",
     "aws-amplify": "^6.0.16",
     "aws-crt": "^1.15.20",

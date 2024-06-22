@@ -1,5 +1,5 @@
-import { TextLoader } from 'langchain/document_loaders/fs/text';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { TextLoader } from '@langchain/community/document_loaders/fs/unstructured';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters/index';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableConfig, Runnable } from '@langchain/core/runnables';
 import { BaseMessage } from '@langchain/core/messages';
@@ -7,12 +7,12 @@ import { BaseLanguageModelInput } from '@langchain/core/language_models/base';
 import VectorStoreService from '../../services/VectorStoreService';
 import ConsoleService from '../../services/ConsoleService';
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/community/document';
 import { v4 as uuid } from 'uuid';
 import getAppConfig from '../../services/AppConfigService';
-import { BaseChain, ConversationChain } from 'langchain/chains';
+import { BaseChain, ConversationChain } from '@langchain/community/chains';
 import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from '../prompts/_prompt';
-import { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Error500 } from '../../errors';
 import { ChainValues } from '@langchain/core/utils/types';
 
