@@ -12,7 +12,7 @@ import { v4 as uuid } from 'uuid';
 import getAppConfig from '../../services/AppConfigService';
 import { BaseChain, ConversationChain } from 'langchain/chains';
 import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from '../prompts/_prompt';
-
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { Error500 } from '../../errors';
 import { ChainValues } from '@langchain/core/utils/types';
 
@@ -61,7 +61,7 @@ interface IEmbeddingsHandler<T extends object> {
     storeEmbeddings: (embeddings: any, convoId: string) => Promise<void>
 }
 
-class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, RunnableConfig>> {
+class ConvoLoader<LLMChat extends BaseChatModel> {
     private loader: TextLoader;
     private docSplitter: RecursiveCharacterTextSplitter;    
 
