@@ -81,9 +81,7 @@ const setVendors = async () => {
             removeDirectory(symLinkPathExec);
         } 
 
-        console.log({packageRootDir})
-
-        await runCommand(`${packageRootDir}/node_modules/.bin/tsc -p vendors.tsconfig.json`, path.resolve(__dirname, '..'));          
+        await runCommand(`npx tsc -p vendors.tsconfig.json`, path.resolve(__dirname, '..'));          
 
         console.log('[RWS CLI vendors] Done.');
     }
