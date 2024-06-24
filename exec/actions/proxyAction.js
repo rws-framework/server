@@ -81,7 +81,7 @@ const setVendors = async () => {
             removeDirectory(symLinkPathExec);
         } 
 
-        await runCommand(`npm run build:cli`, path.resolve(__dirname, '..'));          
+        await runCommand(`yarn build:cli`, path.resolve(__dirname, '..'));          
 
         console.log('[RWS CLI vendors] Done.');
     }

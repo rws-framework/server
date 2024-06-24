@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "2.21.10",
+  "version": "2.21.11",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -113,7 +113,7 @@
     "tsc": "^2.0.4",
     "tsconfig-paths": "^4.2.0",
     "tsconfig-paths-webpack-plugin": "^4.1.0",
-    "typedoc": "^0.24.8",
+    "typedoc": "^0.26.2",
     "typedoc-plugin-mermaid": "^1.10.0",
     "typedoc-plugin-not-exported": "^0.1.6",
     "typedoc-plugin-rename-defaults": "^0.6.5",
