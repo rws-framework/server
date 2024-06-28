@@ -1,27 +1,25 @@
 #!/usr/bin/env node
 
 const path = require('path');
+const chalk = require('chalk');
 const fs = require('fs');
-const { rwsShell, rwsPath, rwsFS, rwsArgsHelper, RWSManagedConsole } = require('@rws-framework/console');
-
-
+const { rwsShell, rwsPath } = require('@rws-framework/console');
 let forceReload = false;
-
-
 
 const runCommand = rwsShell.runCommand;
 const findRootWorkspacePath = rwsPath.findRootWorkspacePath;
+const findPackagePath = rwsPath.findPackageDir;
 const removeDirectory = rwsPath.removeDirectory;
 
 
 let ConsoleService = null;
 let MD5Service = null;
 
-const os = require('os');
-const webpackPath = path.resolve(__dirname, '..', '..');
-
 const packageRootDir = findRootWorkspacePath(process.cwd());
-const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
+const webpackPath = findPackagePath(__dirname);
+const nodeModulesDir = path.resolve(packageRootDir, 'node_modules');
+const moduleCfgDir = `${nodeModulesDir}/.rws`;
+
 const cfgPathFile = `${moduleCfgDir}/_cfg_path`;   
 
 module.exports = async (output) => {
@@ -33,7 +31,7 @@ module.exports = async (output) => {
     const lineArgs = args && args.length && Array.isArray(args) ? args.join(' ') : '';
     const cfgConfigArg = args[0];
 
-    if(commandOptions.reload){
+    if(commandOptions.reload || command2map === 'init'){
         forceReload = true;
     }
 
@@ -44,9 +42,9 @@ module.exports = async (output) => {
     }
 
     await setVendors();    
-    await generateCliClient();        
+    await generateCliClient();           
 
-    log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`, `${webpackPath}/exec/dist/rws.js ${command2map} ${lineArgs}`);  
+    log(`${color().green('[RWS]')} generated CLI client executing ${ConsoleService.color().blue(command2map)} command with params: ${lineArgs ? lineArgs : '""'}`);  
 
     // const relpath = path.relative(__dirname, 'dist',)
 
@@ -60,34 +58,25 @@ module.exports = async (output) => {
 }
 
 const setVendors = async () => {    
-    if(forceReload){
-        console.warn('[RWS] Forcing CLI vendors reload...');
+    const distDir = path.resolve(webpackPath, 'exec', 'dist');
+    const vendorsDir = path.resolve(distDir, 'vendors');
 
-        removeDirectory(`${__dirname}/dist/vendors`);    
+    if(forceReload){
+        console.log(chalk.green('[RWS CLI vendors]'), chalk.yellow('Forcing CLI vendors reload...'));
+
+        removeDirectory(vendorsDir);    
     }
 
-    if(!fs.existsSync(path.resolve(__dirname, 'dist', 'vendors'))){
-      
-        console.log('[RWS CLI vendors] Generating vendors for CLI usage...');
-        
-        const symLinkPath = path.resolve(__dirname, 'dist','node_modules');
-        const symLinkPathExec = path.resolve(__dirname, 'node_modules');
+    if(!fs.existsSync(vendorsDir + '/src')){
+        console.log(chalk.green('[RWS CLI vendors]'), chalk.yellow('Generating vendors for CLI usage...'));        
 
-        if(fs.existsSync(symLinkPath)){
-            removeDirectory(symLinkPath);
-        }   
-        
-        if(fs.existsSync(symLinkPathExec)){
-            removeDirectory(symLinkPathExec);
-        } 
+        await runCommand(`yarn build:cli`, webpackPath);      
 
-        await runCommand(`yarn build:cli`, path.resolve(__dirname, '..'));          
-
-        console.log('[RWS CLI vendors] Done.');
+        console.log(chalk.green('[RWS  CLI vendors]'), chalk.green('CLI vendors reload complete.'));
     }
     
-    ConsoleService = require('../dist/vendors/src/services/ConsoleService').default;
-    MD5Service = require('../dist/vendors/src/services/MD5Service').default;    
+    ConsoleService = require(`${webpackPath}/exec/dist/vendors/src/services/ConsoleService`).default;
+    MD5Service = require(`${webpackPath}/exec/dist/vendors/src/services/MD5Service`).default;    
 }
 
 const consoleClientHashFile = `${moduleCfgDir}/_cli_hash`;
@@ -100,7 +89,7 @@ const shouldReload = async (tsFile) =>
 
 async function generateCliClient(command, args)
 {               
-    const webpackCmd = `${packageRootDir}/node_modules/.bin/webpack`;
+    const webpackCmd = `${nodeModulesDir}/.bin/webpack`;
 
     log = ConsoleService.log;
     warn = ConsoleService.warn;

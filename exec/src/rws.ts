@@ -59,7 +59,7 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
     }                    
 
     
-    const frameworkConfigFactory: () => IAppConfig = require( '@cwd/src/' + configPath).default;
+    const frameworkConfigFactory: () => IAppConfig = require( '@clientWorkDir/src/' + configPath).default;
 
     return frameworkConfigFactory();
 }

@@ -118,12 +118,13 @@ async function setupPrisma(cfg: IAppConfig, leaveFile = false)
 
     const usermodels = await AppConfigService.get('user_models');
 
+    ConsoleService.log('RWS SCHEMA BUILD', ConsoleService.color().blue('Building DB Models:'));
     Object.values(usermodels).forEach((model: any) => {    
         const modelSection = generateModelSections(model);
 
-        template += '\n\n' + modelSection;  
+        template += '\n\n' + modelSection;          
 
-        ConsoleService.log('RWS SCHEMA BUILD', ConsoleService.color().blue('Building DB Model'), model.name);
+        console.log(ConsoleService.color().yellow(model.name));
     
         if(Model.isSubclass(model, TimeSeriesModel)){      
      
