@@ -61,13 +61,19 @@ const setVendors = async () => {
     const distDir = path.resolve(webpackPath, 'exec', 'dist');
     const vendorsDir = path.resolve(distDir, 'vendors');
 
+    if(!fs.existsSync(distDir)){
+        fs.mkdirSync(distDir);
+    }
+
     if(forceReload){
         console.log(chalk.green('[RWS CLI vendors]'), chalk.yellow('Forcing CLI vendors reload...'));
 
-        removeDirectory(vendorsDir);    
+        if(fs.existsSync(path.join(vendorsDir, '/src'))){
+            removeDirectory(vendorsDir);  
+        }  
     }
 
-    if(!fs.existsSync(vendorsDir + '/src')){
+    if(!fs.existsSync(path.join(vendorsDir, '/src'))){
         console.log(chalk.green('[RWS CLI vendors]'), chalk.yellow('Generating vendors for CLI usage...'));        
 
         await runCommand(`yarn build:cli`, webpackPath);      
