@@ -40,7 +40,7 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
             section += `\t${key} ${modelMetadata.relatedTo}${requiredString} @relation(fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
             section += `\t${modelMetadata.relationField} String${requiredString} @db.ObjectId\n`;
         }else if (annotationType === 'InverseRelation'){        
-            section += `\t${key} ${modelMetadata.inversionModel}[]`;            
+            section += `\t${key} ${modelMetadata.inversionModel}[]\n`;            
 
         }else if (annotationType === 'InverseTimeSeries'){        
             section += `\t${key} String[] @db.ObjectId`;      
