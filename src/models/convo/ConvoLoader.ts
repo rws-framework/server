@@ -104,34 +104,41 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
         const splitDir = ConvoLoader.debugSplitDir(this.getId());
 
         if(!fs.existsSync(splitDir)){
-            console.log(`Split dir ${ConsoleService.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
-            this.loader = new TextLoader(filePath);
+            try {
+                console.log(`Split dir ${ConsoleService.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
+                this.loader = new TextLoader(filePath);
 
-            this.docSplitter = new RecursiveCharacterTextSplitter({
-                chunkSize: params.chunkSize, // The size of the chunk that should be split.
-                chunkOverlap: params.chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
-                separators: params.separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
-            });
+                this.docSplitter = new RecursiveCharacterTextSplitter({
+                    chunkSize: params.chunkSize, // The size of the chunk that should be split.
+                    chunkOverlap: params.chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
+                    separators: params.separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
+                });
 
-            fs.mkdirSync(splitDir, { recursive: true });
-            
-            const orgDocs = await this.loader.load();
-            const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
+                fs.mkdirSync(splitDir, { recursive: true });
+                
+                const orgDocs = await this.loader.load();
+                const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
 
-            const avgCharCountPre = this.avgDocLength(orgDocs);
-            const avgCharCountPost = this.avgDocLength(splitDocs);
+                console.log({orgDocs, splitDocs, filePath});            
 
-            logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
-            logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
-            logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
+                const avgCharCountPre = this.avgDocLength(orgDocs);
+                const avgCharCountPost = this.avgDocLength(splitDocs);
 
-            this.docs = splitDocs;            
+                logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
+                logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
+                logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
 
-            let i = 0;
-            this.docs.forEach((doc: Document) => {
-                fs.writeFileSync(this.debugSplitFile(i), doc.pageContent);
-                i++;
-            });
+                this.docs = splitDocs;            
+
+                let i = 0;
+                this.docs.forEach((doc: Document) => {
+                    fs.writeFileSync(this.debugSplitFile(i), doc.pageContent);
+                    i++;
+                });
+            }catch(e: Error | unknown){
+                fs.rmdirSync(splitDir);
+                throw new Error500(e);
+            }
         }else{
             const splitFiles = fs.readdirSync(splitDir);
             

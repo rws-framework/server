@@ -148,7 +148,7 @@ class RouterService extends TheService{
                     err.printFullError();
                     errMsg = err.getMessage();
             
-                    stack = err.getStack();
+                    stack = (err as any).stack;
                 }else{
                     errMsg = err.message;
                     ConsoleService.error(errMsg);

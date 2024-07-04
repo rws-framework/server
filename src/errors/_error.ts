@@ -16,9 +16,13 @@ export default abstract class RWSError{
         }else {
             this.baseError = baseError;
         }        
-
+        console.log(this.baseError.stack)
         if(this.baseError.stack){
             this.stack = baseError.stack;
+            this.message = baseError.message;
+        }else{
+            this.message =  baseError;
+            this.stack =  'Empty';
         }
     }
 
