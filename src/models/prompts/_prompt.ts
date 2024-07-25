@@ -41,12 +41,12 @@ interface IPromptEnchantment {
 type IPromptSender = (prompt: RWSPrompt) => Promise<void>;
 
 interface IRWSPromptRequestExecutor {
-    promptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>
+    promptRequest: (prompt: RWSPrompt, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>
 }
 
 
 interface IRWSSinglePromptRequestExecutor {
-    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, ensureJson?: boolean, debugVars?: any) => Promise<RWSPrompt>
+    singlePromptRequest: (prompt: RWSPrompt, intruderPrompt?: string | null, ensureJson?: boolean, debugVars?: any) => Promise<RWSPrompt>
 }
 
 
@@ -239,13 +239,13 @@ class RWSPrompt {
     async requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt: string = null, debugVars: any = {}): Promise<void>
     {
         this.sentInput = this.input;
-        const returnedRWS = await executor.promptRequest(this, null, intruderPrompt, debugVars);
+        const returnedRWS = await executor.promptRequest(this, intruderPrompt, debugVars);
         this.output = returnedRWS.readOutput();        
     }
 
     async singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt: string = null, ensureJson: boolean = false): Promise<void>
     {        
-        await executor.singlePromptRequest(this, null, intruderPrompt, ensureJson);
+        await executor.singlePromptRequest(this, intruderPrompt, ensureJson);
         this.sentInput = this.input;
     }
 

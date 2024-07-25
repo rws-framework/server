@@ -57,10 +57,18 @@ class Model<ChildClass> implements IModel {
     }
 
     checkForInclusionWithThrow(): void {
+        if(this.constructor.name === 'Model'){
+            return;
+        }
+
         Model.checkForInclusionWithThrow(this.constructor.name)
     }
 
     static checkForInclusionWithThrow(this: OpModelType<any>, checkModelType: string): void {
+        if(this.name === 'Model'){
+            return;
+        }
+
         if (!this.checkForInclusion(this.name)) {
             throw new Error500(new Error('Model undefined: ' + this.name), this.name);
         }

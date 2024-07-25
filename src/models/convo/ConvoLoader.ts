@@ -117,9 +117,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
                 fs.mkdirSync(splitDir, { recursive: true });
                 
                 const orgDocs = await this.loader.load();
-                const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
-
-                console.log({orgDocs, splitDocs, filePath});            
+                const splitDocs = await this.docSplitter.splitDocuments(orgDocs);                
 
                 const avgCharCountPre = this.avgDocLength(orgDocs);
                 const avgCharCountPost = this.avgDocLength(splitDocs);
