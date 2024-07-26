@@ -403,17 +403,14 @@ class ServerService extends ServerBase {
 
     async getUser<IUser extends IAuthUserTokenManager>(jwtSource: Socket | Request | string): Promise<IDbUser | null>
     {
+
         let jwtToken: string = null;
 
         if(jwtSource instanceof Socket){
             jwtToken = jwtSource.handshake.auth.token;
-        }
-
-        if(jwtSource instanceof Request && jwtSource.headers.has('Authorization')){
-            jwtToken = jwtSource.headers.get('Authorization').replace('Bearer ', '');
-        }
-
-        if(typeof jwtSource === 'string'){
+        }else if((jwtSource as any).headers.authorization){            
+            jwtToken = (jwtSource as any).headers.authorization.replace('Bearer ', '');
+        }else if(typeof jwtSource === 'string'){
             jwtToken = jwtSource;
         }
 
