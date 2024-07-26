@@ -4,6 +4,8 @@ import RWSService from '../services/_service';
 
 import Error404 from '../errors/Error404';
 import Error500 from '../errors/Error500';
+import Model from '../models/_model';
+import IDbUser from '../interfaces/IDbUser';
 
 type IHTTProuteMethod  = (params: IRequestParams) => any;
 interface IRequestParams{
@@ -17,7 +19,8 @@ interface IRequestParams{
         [key: string]: any
     },
     res: Response,
-    req: Request
+    req: Request,
+    user?: IDbUser
 }
 
 export {IRequestParams, IHTTProuteMethod};

@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
-import ITheSocket from '../interfaces/ITheSocket';
+import ITheSocket, { TheSocketParams } from '../interfaces/ITheSocket';
 import ServerService from '../services/ServerService';
 
 interface JSONMessage{
@@ -31,7 +31,7 @@ abstract class TheSocket implements ITheSocket{
         this.server = server;
     }
 
-    handleConnection(socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, routeName: string): Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> {
+    handleConnection(socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, routeName: string, params: TheSocketParams = null): Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> {
         throw new Error('Method not implemented.');
     }
     middlewareImplementation?(next: any): void {

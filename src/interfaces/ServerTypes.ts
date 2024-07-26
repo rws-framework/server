@@ -15,7 +15,7 @@ type UserTokens = {
 };
 
 type JWTUsers = {
-    [socketId: string]: Partial<IDbUser>;
+    [socketId: string]: IDbUser;
 };
 
 type CookieType = {[key: string]: string};

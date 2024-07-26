@@ -8,6 +8,8 @@ import appConfig from './AppConfigService';
 import path from 'path';
 import { RWSError } from '../errors/index';
 import ConsoleService from './ConsoleService';
+import AuthService from './AuthService';
+import ServerService from './ServerService';
 
 
 type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction, IHTTProuteParams, string]};
@@ -126,7 +128,8 @@ class RouterService extends TheService{
                     query: req.query,
                     params: route.noParams ? [] : req.params,
                     data: req.body,
-                    res: res       
+                    res: res,
+                    user: await ServerService.http_server.instance.getUser(req)
                 });     
 
                 res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  
@@ -234,5 +237,5 @@ class RouterService extends TheService{
 
 export default RouterService.getSingleton();
 export {
-    RouterService
+    RouterService,
 };

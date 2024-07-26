@@ -20,6 +20,7 @@ import compression from 'compression';
 import IAuthUser from '../interfaces/IAuthUser';
 import MD5Service from './MD5Service';
 import IDbUser from '../interfaces/IDbUser';
+import { IAuthUserTokenManager } from '../interfaces/IAuthUserTokenManager';
 
 //@ts-ignore
 import fileUpload from 'express-fileupload';
@@ -56,8 +57,8 @@ const _DEFAULT_SERVER_OPTS: IInitOpts = {
 };
 
 class ServerService extends ServerBase {    
-    private static http_server: RWSServerPair;
-    private static ws_server: RWSServerPair;
+    public static http_server: RWSServerPair;
+    public static ws_server: RWSServerPair;
     private server_app: Express; 
     private options: IInitOpts; 
     private srv: RWSServer;
@@ -219,20 +220,21 @@ class ServerService extends ServerBase {
         if(this.options.authorization){
             this.server_app.use(async (req: Request, res: Response, next: () => void) => {
                 const reqId: string = MD5Service.md5(req.url);
-                let theUser: IAuthUser = null;
+                
+                let theUser: IDbUser = null;
                 let theToken: string = null;
 
-                const setUser = (reqId: string, user: IAuthUser) => {
+                const setUser = (user: IDbUser) => {                    
                     theUser = user;
-
+                    
                     if(UserConstructor){                   
-                        this.users[reqId] = new UserConstructor(theUser);
+                        this.users[theUser.mongoId] = new UserConstructor(theUser);
                     }else{
-                        this.users[reqId] = theUser;
+                        this.users[theUser.mongoId] = theUser;
                     }             
                 };
 
-                const setToken = (noneId: string, token: string) => {
+                const setToken = (reqId: string, token: string) => {
                     theToken = token;
 
                     this.tokens[reqId] = theToken;
@@ -243,16 +245,16 @@ class ServerService extends ServerBase {
                     this.tokens = {};
                 }
 
-                const authPassed: boolean | null = await AuthService.authenticate(reqId, req.headers.authorization, {
+                const authPassed: boolean | null = await AuthService.authenticate(req.headers.authorization, {
                     ..._DEFAULTS_USER_LIST_MANAGER,
                     set: setUser,
                     setToken,
                     getList: () => this.users,
-                    get: (reqId: string) => this.users[reqId],     
+                    get: (userId: string) => this.users[userId],     
                     getTokenList: () => this.tokens,
-                    getToken: (reqId: string) => this.tokens[reqId]
-                });
-
+                    getToken: (userId: string) => this.tokens[userId]
+                });                
+            
                 const authHeader: string = req.headers.authorization;                        
         
                 if(authPassed === null || authHeader === undefined){         
@@ -269,18 +271,11 @@ class ServerService extends ServerBase {
                     res.end();
                 
                     return;
-                }   
+                }           
             
                 next();
             });
     
-
-            this.use(async (socket, next ) => {
-                if(this.options.onAuthorize){
-                    await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'ws');
-                }
-                next();
-            });
         }
 
 
@@ -323,11 +318,11 @@ class ServerService extends ServerBase {
         this.sockets.on('connection', async (socket: Socket) => {            
             const socketId: string = socket.id;
 
-            wsLog(new Error(), 'Client connection recieved', socketId);
+            wsLog(new Error(), 'Client connection recieved: ' + socketId);
 
             socket.on('disconnect',  async (reason: string) => {                    
                 wsLog(new Error(), `Client disconnected due to ${reason}`, socketId);
-                
+             
                 if (reason === 'transport error') {
                     wsLog(new Error(), 'Transport error', socketId, true);
                 }                    
@@ -344,11 +339,13 @@ class ServerService extends ServerBase {
                 socket.emit('__PONG__', '__PONG__');
             });                
 
-            Object.keys(this.options.wsRoutes).forEach((eventName) => {                
+            for (const eventName of Object.keys(this.options.wsRoutes)){                
                 const SocketClass = this.options.wsRoutes[eventName];    
                 
-                new SocketClass(ServerService.ws_server).handleConnection(socket, eventName);
-            });
+                new SocketClass(ServerService.ws_server).handleConnection(socket, eventName, {
+                    user: await ServerService.ws_server.instance.getUser(socket)
+                });
+            }
         });
 
         if(this.options.authorization){
@@ -357,23 +354,23 @@ class ServerService extends ServerBase {
                 const request: HTTP.IncomingMessage = socket.request;
                 const response: ServerResponse = new ServerResponse(request);
 
-                const token = this.tokens[socket.id] || socket.handshake.auth.token;                
+                const token = socket.handshake.auth.token;                
 
-                const passedAuth: boolean | null = await AuthService.authenticate(socket.id, token, {
+                const passedAuth: boolean | null = await AuthService.authenticate(token, {
                     getList: () => this.users,
-                    get: (socketId: string) => this.users[socketId],
-                    set: (socketId: string, user: IAuthUser) => {
+                    get: (userId: string) => this.users[userId],
+                    set: (user: IDbUser) => {
                         if(UserConstructor){
-                            this.users[socketId] = new UserConstructor(user);
+                            this.users[user.mongoId] = new UserConstructor(user);
                         }else{
-                            this.users[socketId] = user;
+                            this.users[user.mongoId] = user;
                         }
                        
                     },
                     getTokenList: () => this.tokens,
-                    getToken: (socketId: string) => this.tokens[socketId],
-                    setToken: (socketId: string, token: string) => {
-                        this.tokens[socketId] = token;
+                    getToken: (userId: string) => this.tokens[userId],
+                    setToken: (userId: string, token: string) => {
+                        this.tokens[userId] = token;
                     },
                     disconnectClient: () => {
                         this.disconnectClient(socket);
@@ -396,12 +393,38 @@ class ServerService extends ServerBase {
 
         this.use(async (socket, next ) => {
             if(this.options.onAuthorize){
-                await this.options.onAuthorize<PassedUser>(this.users[socket.id] as any, 'http');
+                await this.options.onAuthorize<PassedUser>(await this.getUser(socket) as PassedUser, 'http');
             }
             next();
         });
 
         return this;
+    }
+
+    async getUser<IUser extends IAuthUserTokenManager>(jwtSource: Socket | Request | string): Promise<IDbUser | null>
+    {
+        let jwtToken: string = null;
+
+        if(jwtSource instanceof Socket){
+            jwtToken = jwtSource.handshake.auth.token;
+        }
+
+        if(jwtSource instanceof Request && jwtSource.headers.has('Authorization')){
+            jwtToken = jwtSource.headers.get('Authorization').replace('Bearer ', '');
+        }
+
+        if(typeof jwtSource === 'string'){
+            jwtToken = jwtSource;
+        }
+
+        if(!jwtToken){
+            return null;
+        }
+
+        const UserClass = await getConfigService().get('user_class');  
+        const parsed = await AuthService.authorize(jwtToken, UserClass);
+
+        return AuthService.getUser(this.users, parsed.db.id);
     }
 
     static on404(req: Request, res: Response): void
@@ -429,6 +452,7 @@ class ServerService extends ServerBase {
             .replace('{{error_stack_trace}}',  error.getStackTraceString() !== '' ? `<h4>Stack trace:</h4><pre>${error.getStackTraceString()}</pre>` : '')
         ;
     }
+    
 
     static cookies = {                
         getCookies: async(headers: AxiosRequestHeaders): Promise<CookieType> =>
