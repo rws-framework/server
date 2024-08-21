@@ -1,7 +1,6 @@
-import getConfig, { IAppConfig } from '../../services/AppConfigService';
+import { IAppConfig } from '../../services/AppConfigService';
 import fs from 'fs';
 import path from 'path';
-import ServerService, { ServerControlSet } from '../../services/ServerService';
 import { io, Socket } from 'socket.io-client';
 
 import * as _mocha from 'mocha';
@@ -9,9 +8,7 @@ import chai, { expect } from 'chai';
 import chaiLike from 'chai-like';
 import chaiThings from 'chai-things';
 
-import {WebBrowser} from './BrowserHelper';
 
-import TestCase from '../test_cases/_test_case';
 import { rwsPath } from '@rws-framework/console';
 
 
@@ -26,12 +23,12 @@ interface ITheUser {
 interface ITestVars {
     theUser: ITheUser | null,
     socket: Socket | null,
-    server: ServerControlSet | null,
-    browser: WebBrowser | null
+    server: any,
+    browser: any | null
 }
 
 const createTestVars = (cfg: IAppConfig = null): ITestVars => { 
-    getConfig(cfg);
+    // getConfig(cfg);
     return {
         server: null,
         socket: null,
@@ -122,19 +119,8 @@ const setLoggedLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet) =
     });
 };  
 
-const startServer = async (): Promise<ServerControlSet> => {
-    const _TESTPORT = await getConfig().get('test_port');
-    const _TESTWSPORT = await getConfig().get('test_ws_port');
-
-    const server = await ServerService.initializeApp<any>({        
-        controllerList: await getConfig().get('controller_list'),
-        wsRoutes: await getConfig().get('ws_routes'),
-        httpRoutes: await getConfig().get('http_routes'),
-        port_http: _TESTPORT,
-        port_ws: _TESTWSPORT
-    });
-    
-    return server;
+const startServer = async (): Promise<any> => {
+    return;
 };
 
 const setLifeCycle = (testVars: ITestVars, callbacks?: LoginCallbackSet, timeouts?: { before?: number, beforeEach?: number, after?: number }): void => {
@@ -217,5 +203,5 @@ const MOCHA = Object.assign(_mocha, {
 });
 
 export {
-    ITheUser, MOCHA, ITestVars, TestCase
+    ITheUser, MOCHA, ITestVars
 };

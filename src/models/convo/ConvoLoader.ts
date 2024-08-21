@@ -3,7 +3,6 @@ import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableConfig, Runnable } from '@langchain/core/runnables';
 import { BaseMessage } from '@langchain/core/messages';
-import { BaseLanguageModelInput } from '@langchain/core/language_models/base';
 import {VectorStoreService} from '../../services/VectorStoreService';
 import {ConsoleService} from '../../services/ConsoleService';
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
@@ -20,6 +19,9 @@ import xml2js from 'xml2js';
 import fs from 'fs';
 import path from 'path';
 import { InjectServices } from '../../helpers/InjectServices';
+import { BaseChatModel, BaseChatModelCallOptions  } from "@langchain/core/language_models/chat_models";
+import { AIMessageChunk } from "@langchain/core/messages";
+import { BaseLanguageModelInterface, BaseLanguageModelInput } from '@langchain/core/language_models/base';
 
 interface ISplitterParams {
     chunkSize: number
@@ -62,8 +64,10 @@ interface IEmbeddingsHandler<T extends object> {
     storeEmbeddings: (embeddings: any, convoId: string) => Promise<void>
 }
 
+type LLMType = BaseLanguageModelInterface | Runnable<BaseLanguageModelInput, string> | Runnable<BaseLanguageModelInput, BaseMessage>;
+
 @InjectServices([VectorStoreService])
-class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, RunnableConfig>> {
+class ConvoLoader<LLMChat extends BaseChatModel> {
     private loader: TextLoader;
     private docSplitter: RecursiveCharacterTextSplitter;    
 
@@ -81,7 +85,7 @@ class ConvoLoader<LLMChat extends Runnable<BaseLanguageModelInput, BaseMessage, 
     vectorStoreService: VectorStoreService;
     configService: AppConfigService;
 
-    public _baseSplitterParams: ISplitterParams;
+    public _baseSplitterParams: ISplitterParams;    
     
     constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler<any>, convoId: string | null = null, baseSplitterParams: ISplitterParams = {
         chunkSize:400, chunkOverlap:80, separators: ['/n/n','.']

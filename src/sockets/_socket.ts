@@ -26,8 +26,8 @@ interface SocketWsResponse<T> extends BaseResponse<T> {
 abstract class TheSocket implements ITheSocket{
     protected server: any;
 
-    constructor(server: any) {        
-        this.server = server;
+    setServer(server: any){
+      this.server = server;
     }
 
     handleConnection(socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, routeName: string): Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> {

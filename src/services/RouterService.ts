@@ -1,16 +1,19 @@
 import 'reflect-metadata';
 import express, { Request, Response } from 'express';
 import TheService from './_service';
-import Controller, { IHTTProuteMethod } from '../controllers/_controller';
+
 import { IHTTProute, RWSHTTPRoutingEntry } from '../routing/routes';
 import { IHTTProuteParams } from '../routing/annotations/Route';
-import appConfig from './AppConfigService';
+
 import path from 'path';
 import { RWSError } from '../errors/index';
-import ConsoleService from './ConsoleService';
+import { ConsoleService } from './ConsoleService';
+import { Injectable } from '@rws-framework/server/nest';  
+import { AppConfigService } from './AppConfigService';
+import { Controller } from '@nestjs/common/interfaces';
 
 
-type RouteEntry = {[key: string]: [IHTTProuteMethod, CallableFunction, IHTTProuteParams, string]};
+type RouteEntry = {[key: string]: [any, CallableFunction, IHTTProuteParams, string]};
 
 interface IControllerRoutes {
   get: RouteEntry;
@@ -20,10 +23,12 @@ interface IControllerRoutes {
 }
 
 
-/**
- * 
- */
-class RouterService extends TheService{  
+
+@Injectable()
+class RouterService{  
+
+    constructor(private configService: AppConfigService, private consoleService: ConsoleService){}
+
 
     static responseTypeToMIME(responseType: string){
         switch (responseType){
@@ -32,26 +37,26 @@ class RouterService extends TheService{
         }    
     }
 
-    getRouterAnnotations(constructor: typeof Controller): Record<string, {annotationType: string, metadata: any}> {    
+    getRouterAnnotations(constructor:  Controller): Record<string, {annotationType: string, metadata: any}> {    
         const annotationsData: Record<string, {annotationType: string, metadata: any}> = {};
   
-        const propertyKeys: string[] = Reflect.getMetadataKeys(constructor.prototype).map((item: string): string => {
-            return item.split(':')[1];
-        });
+        // const propertyKeys: string[] = Reflect.getMetadataKeys(constructor.prototype).map((item: string): string => {
+        //     return item.split(':')[1];
+        // });
         
-        propertyKeys.forEach(key => {
-            const annotations: string[] = ['Route'];
+        // propertyKeys.forEach(key => {
+        //     const annotations: string[] = ['Route'];
   
-            annotations.forEach(annotation => {
-                const metadataKey = `${annotation}:${String(key)}`;
+        //     annotations.forEach(annotation => {
+        //         const metadataKey = `${annotation}:${String(key)}`;
           
-                const meta = Reflect.getMetadata(metadataKey, constructor.prototype);
+        //         const meta = Reflect.getMetadata(metadataKey, constructor.prototype);
             
-                if (meta) {
-                    annotationsData[String(key)] = {annotationType: annotation, metadata: meta};
-                }
-            });                 
-        });
+        //         if (meta) {
+        //             annotationsData[String(key)] = {annotationType: annotation, metadata: meta};
+        //         }
+        //     });                 
+        // });
   
         return annotationsData;
     }
@@ -63,7 +68,7 @@ class RouterService extends TheService{
         };        
 
         controllerList.forEach((controllerInstance: Controller) => {          
-            const controllerMetadata: Record<string, {annotationType: string, metadata: any}> = this.getRouterAnnotations(controllerInstance.constructor as typeof Controller);
+            const controllerMetadata: Record<string, {annotationType: string, metadata: any}> = this.getRouterAnnotations(controllerInstance.constructor as Controller);
           
             if(controllerMetadata){            
                 Object.keys(controllerMetadata).forEach((key: string) => {
@@ -151,8 +156,8 @@ class RouterService extends TheService{
                     stack = err.getStack();
                 }else{
                     errMsg = err.message;
-                    ConsoleService.error(errMsg);
-                    console.log(err.stack); 
+                    this.consoleService.error(errMsg);
+                    this.consoleService.log(err.stack); 
                     stack = err.stack;      
                     err.message = errMsg;     
                 }                 
@@ -180,8 +185,8 @@ class RouterService extends TheService{
             return;
         }                                              
 
-        if(routeParams.responseType === 'html' && appConfig().get('pub_dir')){          
-            res.status(status).sendFile(path.join(appConfig().get('pub_dir'),  output.template_name + '.html'));
+        if(routeParams.responseType === 'html' && this.configService.get('pub_dir')){          
+            res.status(status).sendFile(path.join(this.configService.get('pub_dir'),  output.template_name + '.html'));
             return;
         }
 
@@ -193,7 +198,7 @@ class RouterService extends TheService{
         controllerMetadata: Record<string, {annotationType: string, metadata: any}>, 
         controllerRoutes: IControllerRoutes, key: string, app: express.Express): void
     {
-        const action: IHTTProuteMethod = (controllerInstance as Controller).callMethod(key);
+        const action: any = (params: any) => {}//(controllerInstance as Controller).callMethod(key);
         const meta = controllerMetadata[key].metadata;                                        
         switch(meta.method) {
         case 'GET':
@@ -232,7 +237,6 @@ class RouterService extends TheService{
     }
 }
 
-export default RouterService.getSingleton();
 export {
     RouterService
 };
