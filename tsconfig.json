@@ -17,7 +17,7 @@
   },
   "include": [
     "src"
-, "../aws-tools/src/commands/LambdaCommand.ts"  ],
+  ],
   "exclude": [  
     "node_modules"  
   ]

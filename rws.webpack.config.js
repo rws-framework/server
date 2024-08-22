@@ -27,9 +27,11 @@ const RWSWebpackWrapper = (config) => {
 
   console.log('Build mode:', chalk.red(isDev ? 'development' : 'production'));
   
-  const aliases = config.aliases = {};
 
   const modules_setup =  config.nodeModules || [rootPackageNodeModules];
+  const aliases = config.aliases = {}
+
+  
 
   const overridePlugins = config.plugins || []
   const overrideResolvePlugins = config.resolvePlugins || []
@@ -60,9 +62,7 @@ const RWSWebpackWrapper = (config) => {
     resolve: {
       extensions: ['.ts', '.js'],
       modules: modules_setup,
-      alias: {              
-        ...aliases
-      },      
+      alias: aliases,
       plugins: WEBPACK_RESOLVE_PLUGINS
     },
     module: {
@@ -100,7 +100,13 @@ const RWSWebpackWrapper = (config) => {
       minimize: false
   }    
   }
-  cfgExport.externals = rwsExternals(executionDir, rootPackageNodeModules, mergeCodeBaseOptions);
+  cfgExport.externals = {
+    // List dependencies you want to exclude from the bundle
+    'express': 'commonjs express',
+    '@nestjs/core': 'commonjs @nestjs/core',
+    '@nestjs/common': 'commonjs @nestjs/common',
+    // Add other packages you want to externalize
+  }
   if(isDev){
     
   }
