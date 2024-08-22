@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "3.2.1-alpha",
+  "version": "3.2.2-alpha",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -140,7 +140,9 @@
   "files": [
     "rws.webpack.config.js",
     "src/index.ts",
-    "nest/"
+    "nest/",
+    "exec/console.js",
+    "webpackFilters.js"
   ],
   "jest": {
     "moduleFileExtensions": [
