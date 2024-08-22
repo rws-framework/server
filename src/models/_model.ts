@@ -1,7 +1,7 @@
 import { Error500, RWSError } from '../errors';
 import { Inject, Injectable, ExecutionContext, createParamDecorator } from '@nestjs/common';
 import {DBService} from '../services/DBService';
-import { AppConfigService } from '../services/AppConfigService';
+import { AppConfigService } from '../index';
 
 import TrackType, {IMetaOpts} from './decorators/TrackType';
 import { InjectServices } from '../helpers/InjectServices';

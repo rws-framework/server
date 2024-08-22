@@ -7,7 +7,7 @@ import HTTP, { ServerResponse } from 'http';
 import { Error403 } from '../errors';
 import IDbUser from '../types/IDbUser';
 import Model from '../models/_model';
-import { AppConfigService } from './AppConfigService';
+import {AppConfigService} from '../index';
 import { ConsoleService } from './ConsoleService';
 
 type UserListManager = {

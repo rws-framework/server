@@ -1,27 +1,51 @@
 import { NestFactory, Module } from '@rws-framework/server/nest';
-import { AppConfigService, AppConfigModule, IAppConfig } from '@rws-framework/server';
+import { AppConfigService,  IAppConfig, IDbUser } from '@rws-framework/server';
 
-import { DynamicModule } from '@nestjs/common';
+import { DynamicModule, Inject, Type } from '@nestjs/common';
 import { IRWSModule, NestModulesType, RWSModuleType } from './types/IRWSModule';
+import { CommandModule } from 'nestjs-command';
+import { ConfigModule } from '@nestjs/config';
 
+type ServerOpts = {
+  authorization?: true, 
+  transport?: string, 
+  onAuthorize?: <T extends IDbUser>(user: T, authorizationScope: 'ws' | 'http') => Promise<void>
+}
 
-@Module({})
+const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
+  ConfigModule.forRoot({
+    isGlobal: true,
+    load: [ () => cfg ]
+  }), 
+  CommandModule,  
+];
+
+const providers: any[] = [];
+
 export class RWSModule {
-  static async forRoot(cfg: IAppConfig): Promise<DynamicModule> {
-    const appContext = await NestFactory.createApplicationContext(AppConfigModule);
-    const configService = (appContext.get(AppConfigService) as AppConfigService).init(cfg);
-    const modules: RWSModuleType[] = configService.getModules();
+  constructor(private configService: AppConfigService){
 
+  }
+
+  static cfgData: IAppConfig;
+  
+  static async forRoot(cfg: IAppConfig): Promise<DynamicModule> {       
     return {
       module: RWSModule,
-      imports: modules as unknown as NestModulesType,
-      providers: [AppConfigService],
+      imports: [...baseModules(cfg)] as unknown as NestModulesType,
+      providers: providers,
     };
+  }
+
+  onModuleInit() {    
+    console.log('RWSModule has been initialized', this.configService);
   }
 }
 
-export default async function bootstrap(cfg: IAppConfig) {
-  const app = await NestFactory.create(RWSModule.forRoot(cfg));
-  await app.listen(cfg.port);
+export default async function bootstrap(nestModule:any , cfgRunner: () => IAppConfig, opts: ServerOpts = {}) {
+  const rwsOptions = cfgRunner();
+  const app = await NestFactory.create(nestModule.forRoot(rwsOptions));
+  
+  await app.listen(rwsOptions.port);
 }
 

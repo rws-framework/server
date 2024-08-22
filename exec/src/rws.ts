@@ -1,4 +1,4 @@
-import { RWSAppCommands, getAppConfig, IAppConfig, RWSCommand, ICmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
+import { RWSAppCommands, AppConfigService, IAppConfig, RWSCommand, ICmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
 import { rwsPath } from '@rws-framework/console';
 const { error, color, rwsLog } = ConsoleService;
 
@@ -86,8 +86,7 @@ const main = async () => {
     }
 
     if(!APP_CFG){
-        APP_CFG = getConfig('config/config', cfgPathFile);    
-                
+        APP_CFG = getConfig('config/config', cfgPathFile);                
     }
 
     if(!APP_CFG){
@@ -95,7 +94,6 @@ const main = async () => {
     }    
 
     const APP = getAppConfig(APP_CFG);
-
     const commands: RWSCommand[] = [...RWSAppCommands, ...APP.get('commands')];    
 
     APP_CFG.commands = commands;

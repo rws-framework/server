@@ -1,4 +1,4 @@
-import { AppConfigService, IAppConfig } from './services/AppConfigService';
+import IAppConfig from './types/IAppConfig';
 import Model, { IMetaOpts } from './models/_model';
 import fs from 'fs';
 import path from 'path';
@@ -8,7 +8,7 @@ import {DBService} from './services/DBService';
 import {ProcessService} from './services/ProcessService';
 import {ConsoleService} from './services/ConsoleService';
 import {UtilsService} from './services/UtilsService';
-
+import { AppConfigService } from './index';
 import TimeSeriesModel from './models/types/TimeSeriesModel';
 import { rwsPath } from '@rws-framework/console';
 

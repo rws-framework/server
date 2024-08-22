@@ -3,13 +3,21 @@ import common, {
     Get, Post, Delete, Put,
     Module  
 } from '@nestjs/common';
-
+import { Command, Positional } from 'nestjs-command';
 import core, { NestFactory } from '@nestjs/core';
 import { Controller } from '../src/controller';
 
+const NestRoute = {
+    Get, Post, Delete, Put
+}
+
+const CLI = { Command, Positional }
+
 export {    
     common, core, 
-    Controller, Get, Post, Delete, Put,
+    Controller, 
+    NestRoute,
+    CLI,
     Injectable,
     NestFactory, Module
 };

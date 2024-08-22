@@ -8,7 +8,7 @@ import {ConsoleService} from '../../services/ConsoleService';
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
 import { Document } from 'langchain/document';
 import { v4 as uuid } from 'uuid';
-import {AppConfigService} from '../../services/AppConfigService';
+import {AppConfigService} from '../../index';
 import { BaseChain, ConversationChain } from 'langchain/chains';
 import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from '../prompts/_prompt';
 
@@ -87,7 +87,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
 
     public _baseSplitterParams: ISplitterParams;    
     
-    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler<any>, convoId: string | null = null, baseSplitterParams: ISplitterParams = {
+    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler<any> | null = null, convoId: string | null = null, baseSplitterParams: ISplitterParams = {
         chunkSize:400, chunkOverlap:80, separators: ['/n/n','.']
     }){
         this.embeddings = embeddings;
@@ -110,6 +110,11 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
 
     async splitDocs(filePath: string, params: ISplitterParams)
     {
+
+        if(!this.embeddings){
+            throw new Error500('No embeddings provided for ConvoLoader\'s constructor. ConvoLoader.splitDocs aborting...');
+        }
+
         const splitDir = ConvoLoader.debugSplitDir(this.getId());
 
         if(!fs.existsSync(splitDir)){

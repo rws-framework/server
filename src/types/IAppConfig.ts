@@ -1,4 +1,4 @@
-import RWSCommand from '../commands/_command';
+
 import { RWSModuleType } from './IRWSModule';
 
 export default interface IAppConfig {   
@@ -25,7 +25,6 @@ export default interface IAppConfig {
     ws_routes: any
     http_routes: any
     front_routes?: Record<string, unknown>[],
-    commands?: RWSCommand[]
     aws_lambda_region?: string
     aws_access_key?: string
     aws_secret_key?: string

@@ -51,7 +51,7 @@ const RWSWebpackWrapper = (config) => {
     },
     mode: isDev ? 'development' : 'production',
     target: 'node',
-    devtool: isDev ? (config.devtool || 'inline-source-map') : false,
+    devtool: isDev ? 'source-map' : false,
     output: {
       path: cfgOutputDir,
       filename: outputFileName,
@@ -92,9 +92,10 @@ const RWSWebpackWrapper = (config) => {
       ],
     },
     plugins: WEBPACK_PLUGINS ,
-    stats: {
-      warningsFilter: webpackFilters,
-    },
+    // stats: {
+    //   warningsFilter: webpackFilters,
+    // },
+    ignoreWarnings: webpackFilters,
     optimization: {      
       minimize: false
   }    

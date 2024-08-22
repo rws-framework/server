@@ -1,3 +1,4 @@
+import 'source-map-support/register';
 import { Socket } from 'socket.io';
 
 // import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './helpers/ServerBuilder';
@@ -26,8 +27,8 @@ import RWSVectorStore from './models/convo/VectorStore';
 
 import { InverseRelation, InverseTimeSeries, Relation, TrackType as RWSTrackType} from './models/decorators/index';
 
-import { IAppConfig, AppConfigService, AppConfigModule } from './services/AppConfigService';
-
+import IAppConfig from './types/IAppConfig';
+import { ConfigService as AppConfigService} from '@nestjs/config';
 import { IContextToken } from './types/IContextToken';
 import IAuthUser from './types/IAuthUser';
 import IDbUser from './types/IDbUser';
@@ -35,25 +36,23 @@ import IDbUser from './types/IDbUser';
 const RWSannotations = {
     modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, RWSTrackType }};
 
-import TheCommand, {ICmdParams} from './commands/_command';
+// import TheCommand, {ICmdParams} from './commands/_command';
 import TheService from './services/_service';
 import TheSocket, { JSONMessage, BaseWsResponse, ErrorWsResponse } from './sockets/_socket';
 import { RWSController } from './controller';
-import RWSAppCommands from './commands';
 
 import * as RWSErrorCodes from './errors';
 import * as NEST from '../nest';
 import Model, { IModel } from './models/_model';
 import { ZipService } from './services/ZipService';
-
+import { RWSModule, } from './runNest';
 export {    
+    AppConfigService,
+    RWSModule,
     runNest as serverInit,
     setupRWS,
-    setupPrisma,
-    AppConfigModule,    
-    AppConfigService,            
-    TheSocket as RWSSocket,
-    TheCommand as RWSCommand,
+    setupPrisma,         
+    TheSocket as RWSSocket,    
     Model as RWSModel,
     IModel as IRWSModel,
 
@@ -70,23 +69,16 @@ export {
 
     TimeSeriesModel,
 
-    // WsRoutes,
-    // ITheSocket,    
     ITimeSeries,
     IAppConfig,
     IContextToken,
-    // ServerControlSet,
+    
     IAuthUser,
     IDbUser,
     
     Socket,          
     RWSannotations,
-    JSONMessage as RWSJSONMessage,
-    ICmdParams,      
-    // IHTTProute,
-    // IPrefixedHTTProutes,
-    // RWSHTTPRoutingEntry,
-    RWSAppCommands,
+    JSONMessage as RWSJSONMessage,        
     
     RWSVectorStore,
     RWSConvo,
