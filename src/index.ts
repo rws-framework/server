@@ -33,12 +33,14 @@ import { IContextToken } from './types/IContextToken';
 import IAuthUser from './types/IAuthUser';
 import IDbUser from './types/IDbUser';
 
+import { RWSFillService } from './services/RWSFillService';
+
 const RWSannotations = {
     modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, RWSTrackType }};
 
 // import TheCommand, {ICmdParams} from './commands/_command';
 import TheService from './services/_service';
-import TheSocket, { JSONMessage, BaseWsResponse, ErrorWsResponse } from './sockets/_socket';
+import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse } from './gateways/_gateway';
 import { RWSController } from './controller';
 
 import * as RWSErrorCodes from './errors';
@@ -47,12 +49,13 @@ import Model, { IModel } from './models/_model';
 import { ZipService } from './services/ZipService';
 import { RWSModule, } from './runNest';
 export {    
+    RWSFillService,
     AppConfigService,
     RWSModule,
     runNest as serverInit,
     setupRWS,
     setupPrisma,         
-    TheSocket as RWSSocket,    
+    RWSGateway,    
     Model as RWSModel,
     IModel as IRWSModel,
 

@@ -1,10 +1,10 @@
 import { NestFactory, Module } from '@rws-framework/server/nest';
-import { AppConfigService,  IAppConfig, IDbUser } from '@rws-framework/server';
+import { AppConfigService,  AuthService,  ConsoleService,  IAppConfig, IDbUser, RWSFillService, UtilsService } from '@rws-framework/server';
 
-import { DynamicModule, Inject, Type } from '@nestjs/common';
+import { DynamicModule, forwardRef, Inject, Type } from '@nestjs/common';
 import { IRWSModule, NestModulesType, RWSModuleType } from './types/IRWSModule';
 import { CommandModule } from 'nestjs-command';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 type ServerOpts = {
   authorization?: true, 
@@ -20,25 +20,21 @@ const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<Dyna
   CommandModule,  
 ];
 
-const providers: any[] = [];
-
+@Module({})
 export class RWSModule {
-  constructor(private configService: AppConfigService){
-
-  }
-
   static cfgData: IAppConfig;
   
   static async forRoot(cfg: IAppConfig): Promise<DynamicModule> {       
     return {
       module: RWSModule,
       imports: [...baseModules(cfg)] as unknown as NestModulesType,
-      providers: providers,
+      providers: [ConfigService, UtilsService, ConsoleService, AuthService],  
+      exports: [ConfigService, UtilsService, ConsoleService, AuthService],    
     };
   }
 
   onModuleInit() {    
-    console.log('RWSModule has been initialized', this.configService);
+    console.log('RWSModule has been initialized');
   }
 }
 

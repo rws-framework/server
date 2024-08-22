@@ -1,6 +1,6 @@
 import { Server as ServerBase, Socket } from 'socket.io';
 import { AppConfigService } from './AppConfigService';
-import ITheSocket from '../types/ITheSocket';
+import ITheSocket from '../types/ITheGateway';
 
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../routing/routes';
 import { ConsoleService } from './ConsoleService';

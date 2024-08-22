@@ -1,6 +1,6 @@
 import HTTP from 'http';
 import HTTPS from 'https';
-import ITheSocket from './ITheSocket';
+import ITheSocket from './ITheGateway';
 import IDbUser from './IDbUser';
 import { IHTTProute } from '../routing/routes';
 

@@ -7,8 +7,8 @@ import HTTP, { ServerResponse } from 'http';
 import { Error403 } from '../errors';
 import IDbUser from '../types/IDbUser';
 import Model from '../models/_model';
-import {AppConfigService} from '../index';
 import { ConsoleService } from './ConsoleService';
+import { ConfigService } from '@nestjs/config';
 
 type UserListManager = {
     getList: () => {[clientId: string]: Partial<IDbUser>}
@@ -34,7 +34,7 @@ const _DEFAULTS_USER_LIST_MANAGER = {
 class AuthService {
     private user: Partial<IDbUser>
 
-    constructor(private configService: AppConfigService, private consoleService: ConsoleService) {}
+    constructor(private configService: ConfigService, private consoleService: ConsoleService) {}
 
     async authenticate(clientId: string, jwt_token: string | null = null, userListManager: UserListManager = _DEFAULTS_USER_LIST_MANAGER): Promise<boolean | null>
     {
