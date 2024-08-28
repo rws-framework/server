@@ -196,24 +196,29 @@ class RouterService extends TheService{
         controllerMetadata: Record<string, {annotationType: string, metadata: any}>, 
         controllerRoutes: IControllerRoutes, key: string, app: express.Express): void
     {
-        const action: IHTTProuteMethod = (controllerInstance as Controller).callMethod(key);
-        const meta = controllerMetadata[key].metadata;                                        
+        const action: IHTTProuteMethod = (params: any) => {
+            console.log(ConsoleService.color().blueBright(`[${(new Date()).toISOString()}]`) + ` Detected request: "${ConsoleService.color().yellowBright(params.req.originalUrl)}" with payload: `, params.data);
+            return (controllerInstance as Controller).callMethod(key)(params);
+        };
+
+        const meta = controllerMetadata[key].metadata;                 
+
         switch(meta.method) {
-        case 'GET':
-            controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.get.bind(app), meta.params, key]; 
-            break;
+            case 'GET':
+                controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.get.bind(app), meta.params, key]; 
+                break;
 
-        case 'POST':
-            controllerRoutes.post[meta.name] = [action.bind(controllerInstance), app.post.bind(app), meta.params, key];
-            break;
+            case 'POST':
+                controllerRoutes.post[meta.name] = [action.bind(controllerInstance), app.post.bind(app), meta.params, key];
+                break;
 
-        case 'PUT':
-            controllerRoutes.put[meta.name] = [action.bind(controllerInstance), app.put.bind(app), meta.params, key]; 
-            break;
+            case 'PUT':
+                controllerRoutes.put[meta.name] = [action.bind(controllerInstance), app.put.bind(app), meta.params, key]; 
+                break;
 
-        case 'DELETE':
-            controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params, key];
-            break;  
+            case 'DELETE':
+                controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params, key];
+                break;  
         }
     }
     

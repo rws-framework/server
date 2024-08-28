@@ -67,7 +67,7 @@ abstract class TheSocket implements ITheSocket{
 
     throwError(method: string, socket: Socket, error: Error | any): void
     {        
-        console.log(JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))));
+        console.log({method})
 
         socket.emit(method, this.sendJson({
             error: JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))),
