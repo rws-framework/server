@@ -23,9 +23,9 @@ class ClearCommand extends Command
     async removeDirRecursively(path: string) {
         try {
             await rmdir(path, { recursive: true });
-            console.log(`Directory at ${path} removed successfully`);
+            ConsoleService.log(`Directory at ${path} removed successfully`);
         } catch (error) {
-            console.error(`Error while removing directory: ${error}`);
+            ConsoleService.error(`Error while removing directory: ${error}`);
         }
     }
 

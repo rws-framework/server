@@ -2,6 +2,7 @@ import { Socket } from 'socket.io';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import ITheSocket, { TheSocketParams } from '../interfaces/ITheSocket';
 import ServerService from '../services/ServerService';
+import ConsoleService from '../services/ConsoleService';
 
 interface JSONMessage{
     method: string;
@@ -67,7 +68,7 @@ abstract class TheSocket implements ITheSocket{
 
     throwError(method: string, socket: Socket, error: Error | any): void
     {        
-        console.log({method})
+        ConsoleService.log({method})
 
         socket.emit(method, this.sendJson({
             error: JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))),

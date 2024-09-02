@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { rwsPath } from '@rws-framework/console';
 
-const { rwsLog, color, log } = ConsoleService;
+const { log, color } = ConsoleService;
 
 const executionDir = process.cwd();
 
@@ -21,7 +21,7 @@ class CMDListCommand extends Command
 
     async execute(params?: ICmdParams): Promise<void>
     {
-        rwsLog(color().green('RWS'), 'Commands list:');
+        log(color().green('RWS'), 'Commands list:');
         const cfgData = params._rws_config;
 
         cfgData.commands.forEach((cmd: Command) => {

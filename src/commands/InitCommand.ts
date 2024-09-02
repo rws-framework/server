@@ -7,7 +7,7 @@ import { rwsPath } from '@rws-framework/console';
 import path from 'path';
 import fs from 'fs';
 
-const { rwsLog, color } = ConsoleService;
+const { log, color } = ConsoleService;
 
 class InitCommand extends Command 
 {

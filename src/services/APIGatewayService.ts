@@ -5,7 +5,7 @@ import AWSService from './AWSService';
 import LambdaService from './LambdaService';
 import VPCService from './VPCService';
 
-const {  error, rwsLog } = ConsoleService;
+const {  error, log } = ConsoleService;
 
 class APIGatewayService extends TheService {
     private region: string;    
@@ -101,7 +101,7 @@ class APIGatewayService extends TheService {
     }    
 
     async associateNATGatewayWithLambda(lambdaFunctionName: string): Promise<void> {
-        rwsLog(`Creating NAT Gateway for "${lambdaFunctionName}" lambda function`);
+        log(`Creating NAT Gateway for "${lambdaFunctionName}" lambda function`);
 
         const lambdaConfig: AWS.Lambda.FunctionConfiguration = {...(await LambdaService.getLambdaFunction(lambdaFunctionName)).Configuration};
         const privateSubnetId = lambdaConfig.VpcConfig.SubnetIds[0];
@@ -137,7 +137,7 @@ class APIGatewayService extends TheService {
                 NatGatewayId: natGateway.NatGateway.NatGatewayId
             }).promise();
 
-            rwsLog('Lambda function associated with NAT Gateway successfully.');
+            log('Lambda function associated with NAT Gateway successfully.');
 
         } catch(e: Error | any){
             error(e.code, e.message);

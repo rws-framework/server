@@ -32,7 +32,7 @@ class AWSService extends TheService {
             this.region = region;
         }
 
-        // console.log(region,this.s3, this.region)
+        // ConsoleService.log(region,this.s3, this.region)
 
         if(!this.s3 && this.region){
             this.s3 = new AWS.S3({

@@ -23,7 +23,13 @@ const AppDefaultConfig: IAppConfig = {
     aws_secret_key: null,
     aws_lambda_role: null,
     aws_lambda_bucket: null,
-    pub_dir: null
+    pub_dir: null,
+    features:{
+        ssl: false,
+        auth: false,
+        logging: true,
+        routing_enabled: true
+    }
 };
 
 class AppConfigService extends TheService{
@@ -75,8 +81,12 @@ class AppConfigService extends TheService{
         const className = this.name;
         const instanceExists = TheService._instances[className];
     
-        if (cfg) {                
-            TheService._instances[className] = new this(cfg);        
+        if (cfg) {                                    
+            const newCfg = {...AppDefaultConfig,...cfg};
+
+            newCfg.features = {...AppDefaultConfig.features, ...cfg.features};                        
+            console.log({newCfg})
+            TheService._instances[className] = new this(newCfg);                       
         }else if(!instanceExists && !cfg){
             TheService._instances[className] = new this(AppDefaultConfig);           
         }

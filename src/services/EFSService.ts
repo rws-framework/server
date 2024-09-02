@@ -11,7 +11,7 @@ import AWS from 'aws-sdk';
 import VPCService from './VPCService';
 import { rwsPath } from '@rws-framework/console';
 
-const { log, error, color, rwsLog } = ConsoleService;
+const { log, error, color } = ConsoleService;
 
 const __STATE_WAIT_TIME = 3000; //ms
 
@@ -239,7 +239,7 @@ class EFSService extends TheService {
             log(`${color().green('[RWS Lambda Service]')} invoking EFS Loader as "${efsLoaderFunctionName}" lambda function for "${baseFunctionName}" with ${modulesS3Key} in ${s3Bucket} bucket.`);
 
             const response = await LambdaService.invokeLambda(efsLoaderFunctionName, params);
-            rwsLog('RWS Lambda Service', color().yellowBright(`"${efsLoaderFunctionName}" lambda function response:`));
+            log('RWS Lambda Service', color().yellowBright(`"${efsLoaderFunctionName}" lambda function response:`));
             log(response);            
             return;// JSON.parse(response.Response.Payload as string);
         } catch (error) {

@@ -16,7 +16,7 @@ import ProcessService from './ProcessService';
 import VPCService from './VPCService';
 
 
-const { log, error, color, rwsLog } = ConsoleService;
+const { log, error, color } = ConsoleService;
 
 const MIN = 60; // 1MIN = 60s
 
@@ -186,9 +186,9 @@ class LambdaService extends TheService {
                         Handler: _HANDLER
                     }, (err, data) => {
                         if (err) {
-                            console.log(err, err.stack);
+                            ConsoleService.log(err, err.stack);
                         } else {
-                            console.log(data);
+                            ConsoleService.log(data);
                         }
                     }).promise();
 
@@ -199,11 +199,11 @@ class LambdaService extends TheService {
                     //   Key: s3params.Key
                     // });
 
-                    // rwsLog('Deleting S3 Object after deploy: ' + color().red(`s3://${s3params.Bucket}/${s3params.Key}`));
+                    // log('Deleting S3 Object after deploy: ' + color().red(`s3://${s3params.Bucket}/${s3params.Key}`));
                 }
             }
       
-            rwsLog('RWS Lambda Service', `lambda function "${lambdaFunctionName}" has been ${functionDidExist ? 'created' : 'updated'}`);
+            log('RWS Lambda Service', `lambda function "${lambdaFunctionName}" has been ${functionDidExist ? 'created' : 'updated'}`);
 
             const npmPackage = this.getNPMPackage(functionDirName);
 
@@ -260,11 +260,11 @@ class LambdaService extends TheService {
             const oldDir = process.cwd();
             process.chdir(`${moduleDir}/lambda-functions/${functionName}`);
 
-            rwsLog(`installing ${functionName} modules...`);
+            log(`installing ${functionName} modules...`);
 
             await ProcessService.runShellCommand('npm install', null, true);
 
-            rwsLog(color().green(`${functionName} modules have been installed.`));      
+            log(color().green(`${functionName} modules have been installed.`));      
 
             process.chdir(oldDir);
 
@@ -295,7 +295,7 @@ class LambdaService extends TheService {
             //   Key: s3params.Key
             // });
 
-            // rwsLog('Deleting S3 Object after module deploy: ' + color().red(`s3://${s3params.Bucket}/${s3params.Key}`));
+            // log('Deleting S3 Object after module deploy: ' + color().red(`s3://${s3params.Bucket}/${s3params.Key}`));
         }   
     }  
 
@@ -403,14 +403,14 @@ class LambdaService extends TheService {
         let payloadPath = `${executionDir}/payloads/${lambdaArg}.json`;
     
         if(!fs.existsSync(payloadPath)){
-            rwsLog(color().yellowBright(`No payload file in "${payloadPath}"`));      
+            log(color().yellowBright(`No payload file in "${payloadPath}"`));      
             const rwsPayloadPath = `${moduleDir}/payloads/${lambdaArg}.json`;
 
             if(!fs.existsSync(rwsPayloadPath)){                    
-                rwsLog(color().red(`Found the payload file in "${rwsPayloadPath}"`));    
+                log(color().red(`Found the payload file in "${rwsPayloadPath}"`));    
                 throw new Error('No payload');
             }else{
-                rwsLog(color().green(`No payload file in "${payloadPath}"`));      
+                log(color().green(`No payload file in "${payloadPath}"`));      
 
                 payloadPath = rwsPayloadPath;
             }                                
@@ -438,20 +438,20 @@ class LambdaService extends TheService {
     async setupGatewayForWebLambda(lambdaFunctionName: string, vpcId: string): Promise<void>
     {
 
-        rwsLog('Creating API Gateway for Web Lambda...');
+        log('Creating API Gateway for Web Lambda...');
         const restApiId = await APIGatewayService.createApiGateway(lambdaFunctionName);
         const resource = await APIGatewayService.createResource(restApiId, lambdaFunctionName);
 
         const httpMethods = ['GET', 'POST', 'PUT', 'DELETE'];
         const apiMethods = [];
 
-        rwsLog('Pushing methods to API Gateway resource.');
+        log('Pushing methods to API Gateway resource.');
 
         for (const methodKey in httpMethods){
             apiMethods.push(await APIGatewayService.createMethod(restApiId, resource, httpMethods[methodKey]));
         }    
 
-        rwsLog(`Integrating API Gateway resource with "${color().yellowBright(lambdaFunctionName)}" lambda function.`);
+        log(`Integrating API Gateway resource with "${color().yellowBright(lambdaFunctionName)}" lambda function.`);
 
         for (const apiMethodKey in apiMethods){
             const apiMethod: AWS.APIGateway.Method = apiMethods[apiMethodKey];
@@ -463,7 +463,7 @@ class LambdaService extends TheService {
             stageName: 'prod'
         }).promise();    
 
-        rwsLog(`API Gateway "${color().yellowBright(lambdaFunctionName+'-API')}" deployed.`);
+        log(`API Gateway "${color().yellowBright(lambdaFunctionName+'-API')}" deployed.`);
 
     }
 }

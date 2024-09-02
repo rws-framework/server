@@ -2,6 +2,10 @@ import TheService from './_service';
 import chalk, { Chalk } from 'chalk';
 import pino, { Logger as PinoLogger } from 'pino';
 import pinoPretty from 'pino-pretty'; // Import pino-pretty
+import moment from 'moment';
+import { rwsPath } from '@rws-framework/console';
+import fs from 'fs';
+import getAppConfig from './AppConfigService';
 
 interface IJSONColors {
   [codeLement: string]: keyof Chalk
@@ -10,6 +14,8 @@ interface IJSONColors {
 class ConsoleService extends TheService {
     private isEnabled: boolean = true;
     private originalLogMethods?: any = null;
+
+    private listeners: {[listenerName: string]: (logLine: string) => Promise<void>} = {}
 
     constructor() {
         super();
@@ -27,48 +33,58 @@ class ConsoleService extends TheService {
         return chalk;
     }
 
-    log(...obj: any[]): void {
+    async addLogListener(callbackListenerName: string, callback: (logLine: string) => Promise<void>){
+        this.listeners[callbackListenerName] = callback;
+    }
+
+    log(...obj: any[]){
         if (!this.isEnabled) {
             return;
         }
-
+    
+        let lines: string[] = [];
         const _self = this;
-
+    
         let typeBucket: any[] = [];
         let lastType: string = null;
 
         obj.forEach((elem: any, index: number) => {
             const elemType = typeof elem;
             const isLast: boolean = index == obj.length - 1;
-
+    
             if (((lastType === null && obj.length === 1) || (lastType !== null && lastType !== elemType)) || isLast) {
-                if (lastType === 'string') {
-                    console.log(typeBucket.join(' '));
-                } else {
-
-                    typeBucket.forEach((bucketElement) => {
-                        _self.prettyPrintObject(bucketElement);
-                    });
-                }
-
-                typeBucket = [];
-
-                if (isLast) {
-                    if (elemType === 'string') {
-                        console.log(elem);
+                if(lastType){
+                    if (lastType === 'string') {
+                        lines.push(typeBucket.join(' '));
+                        typeBucket = [];
                     } else {
-                        _self.prettyPrintObject(elem);
-                    }
+                        lines.push(_self.prettyPrintObject(elem));
+                    }                   
+                }           
+    
+                if (isLast) {
+                    lines.push(elem);
                     return;
                 }
-            }
-
-            typeBucket.push(elem);
-
-            lastType = elemType; // Update the lastType for the next iteration
+            }else{
+                lastType = elemType; // Update the lastType for the next iteration
+                typeBucket.push(elem);
+            }                  
+           
         });
-    } 
+            
+        console.log(this.getDateString(), ...lines);
+        
+        this.postLog(lines);
+    }
 
+    postLog(lines: string[]) {
+        this.writeToLogFile([this.getDateString(), ...lines]);
+
+        for(const listenerName of Object.keys(this.listeners)){
+            this.listeners[listenerName](this.squishLines(lines));
+        }
+    }
 
     colorObject(obj: any): string {
         const _JSON_COLORS: IJSONColors = {
@@ -142,7 +158,7 @@ class ConsoleService extends TheService {
             obj = obj.filter((el: any, index: number) => index > 0);
         }
 
-        obj = [chalk.yellow(`[${intro}]`), ...obj];
+        obj = [this.getDateString(), chalk.yellow(`[${intro}]`), ...obj];
 
         console.warn(...obj); 
     }
@@ -166,8 +182,8 @@ class ConsoleService extends TheService {
         return pino(pinoPretty());
     }
 
-    prettyPrintObject(obj: any): void {
-        this.getPino().info(this.colorObject(this.sanitizeObject(obj)));
+    prettyPrintObject(obj: any): string {
+        return this.colorObject(this.sanitizeObject(obj));
     }
 
     error(...obj: any[]): void {
@@ -184,22 +200,7 @@ class ConsoleService extends TheService {
 
         obj = [chalk.red(`[${intro}]`), ...obj];
 
-        console.log(...obj);  
-    }
-
-    rwsLog(...obj: string[]): void 
-    {    
-
-        let intro = 'RWS CLI';
-
-        if(obj.length > 1 && typeof obj[0] === 'string'){
-            intro = obj[0];
-            obj = obj.filter((el: any, index: number) => index > 0);
-        }
-
-        obj = [chalk.green(`[${intro}]`), ...obj];
-
-        console.log(...obj);  
+        console.log(...obj);
     }
 
     stopLogging(): void {
@@ -226,6 +227,12 @@ class ConsoleService extends TheService {
         console.error = (...args: string[]) => { };
     };
 
+    public overrideGlobalLogs = () => {
+        console.log = this.log;
+        console.warn = this.warn;
+        console.error = this.error;
+    };
+
     private restoreOriginalLogFunctions = () => {
         const originalF = this.originalLogMethods;
 
@@ -234,11 +241,56 @@ class ConsoleService extends TheService {
         console.error = originalF.error;
     };
 
-    updateLogLine(message: string) {
-        process.stdout.write('\r' + message);
+    private getDateString(): string
+    {
+        return chalk.blue(`[${moment().format('Y-MM-DD H:m:s')}]`);
     }
 
-  
+    updateLogLine(message: string) {
+        process.stdout.write('\r' + message);
+    }  
+
+    stripAnsiCodes(text: any): string {
+       try {
+        if(typeof text !== 'string'){
+            text = JSON.stringify(text);
+        }
+
+        // This regex matches all ANSI color codes
+        const ansiRegex = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
+        return text.replace(ansiRegex, '');
+
+       } catch (e: Error | unknown){        
+          this.error(e);
+       }  
+    }
+
+    squishLines(lines: string[]): string
+    {
+        return lines.map((line: any) => typeof line !== 'string' ? JSON.stringify(line, null, 2) : line).map((line: any) => this.stripAnsiCodes(line)).join(' ')
+    }
+
+    writeToLogFile(lines: string[]) {
+        if(!getAppConfig().get('features').logging){
+            return;
+        }
+
+        
+        const logsPath = getAppConfig().get('logs_directory') || rwsPath.findRootWorkspacePath(process.cwd()) + '/node_modules/.rws/logs';
+        const logFile = `${logsPath}/rws_log_${moment().format('Y_MM_DD')}.log`;
+    
+        if (!fs.existsSync(logsPath)) {
+            fs.mkdirSync(logsPath, { recursive: true });
+        }
+
+        const logContent = this.squishLines(lines) + '\n';
+    
+        fs.appendFile(logFile, logContent, (err) => {
+            if (err) {
+                console.error('Error writing to log file:', err);
+            }
+        });
+    }    
 }
 
 export default ConsoleService.getSingleton();

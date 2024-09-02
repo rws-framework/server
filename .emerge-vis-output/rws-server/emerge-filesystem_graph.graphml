@@ -199,7 +199,7 @@
   <key id="d62" for="node" attr.name="metric_tag_rws" attr.type="float" />
   <key id="d61" for="node" attr.name="metric_tag_cfgdata" attr.type="float" />
   <key id="d60" for="node" attr.name="metric_tag_endprismafilepath" attr.type="float" />
-  <key id="d59" for="node" attr.name="metric_tag_rwslog" attr.type="float" />
+  <key id="d59" for="node" attr.name="metric_tag_log" attr.type="float" />
   <key id="d58" for="node" attr.name="metric_tag_icmdparams" attr.type="float" />
   <key id="d57" for="node" attr.name="metric_tag_cmd" attr.type="float" />
   <key id="d56" for="node" attr.name="metric_tag_command" attr.type="float" />

@@ -155,7 +155,7 @@ class RouterService extends TheService{
                 }else{
                     errMsg = err.message;
                     ConsoleService.error(errMsg);
-                    console.log(err.stack); 
+                    ConsoleService.log(err.stack); 
                     stack = err.stack;      
                     err.message = errMsg;     
                 }                 
@@ -197,7 +197,7 @@ class RouterService extends TheService{
         controllerRoutes: IControllerRoutes, key: string, app: express.Express): void
     {
         const action: IHTTProuteMethod = (params: any) => {
-            console.log(ConsoleService.color().blueBright(`[${(new Date()).toISOString()}]`) + ` Detected request: "${ConsoleService.color().yellowBright(params.req.originalUrl)}" with payload: `, params.data);
+            ConsoleService.log(`Detected request: "${ConsoleService.color().yellowBright(params.req.originalUrl)}" with payload: `, params.data);
             return (controllerInstance as Controller).callMethod(key)(params);
         };
 

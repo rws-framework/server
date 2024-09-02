@@ -27,7 +27,7 @@ interface ISplitterParams {
 }
 
 const logConvo = (txt: string) => {
-    ConsoleService.rwsLog(ConsoleService.color().blueBright(txt));
+    ConsoleService.log(ConsoleService.color().blueBright(txt));
 };
 
 interface IBaseLangchainHyperParams {
@@ -105,7 +105,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
 
         if(!fs.existsSync(splitDir)){
             try {
-                console.log(`Split dir ${ConsoleService.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
+                ConsoleService.log(`Split dir ${ConsoleService.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
                 this.loader = new TextLoader(filePath);
 
                 this.docSplitter = new RecursiveCharacterTextSplitter({
@@ -218,7 +218,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
     {           
         // const _self = this;
         // const chain = this.chain() as ConversationChain;  
-        // console.log('call stream');      
+        // ConsoleService.log('call stream');      
         // const stream = await chain.call(values, [{
         //         handleLLMNewToken(token: string) {
         //             yield token;
@@ -226,7 +226,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
         //     }
         // ]);
         
-        // console.log('got stream');
+        // ConsoleService.log('got stream');
 
 
 
@@ -261,9 +261,9 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
 
     async similaritySearch(query: string, splitCount: number): Promise<string>
     {
-        console.log('Store is ready. Searching for embedds...');            
+        ConsoleService.log('Store is ready. Searching for embedds...');            
         const texts = await this.getStore().getFaiss().similaritySearchWithScore(`${query}`, splitCount);
-        console.log('Found best parts: ' + texts.length);
+        ConsoleService.log('Found best parts: ' + texts.length);
         return texts.map(([doc, score]: [any, number]) => `${doc['pageContent']}`).join('\n\n');    
     }
     
@@ -283,7 +283,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
             this.debugSave(callData);
         
         }catch(error: Error | unknown){
-            console.log(error);
+            ConsoleService.log(error);
         }
     }
 

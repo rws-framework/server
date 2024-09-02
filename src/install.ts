@@ -10,7 +10,7 @@ import ConsoleService from './services/ConsoleService';
 import UtilsService from './services/UtilsService';
 import { rwsPath } from '@rws-framework/console';
 
-const { log, color, rwsLog } = ConsoleService;
+const { log, color } = ConsoleService;
 
 const {runShellCommand} = ProcessService;
 
@@ -124,7 +124,7 @@ async function setupPrisma(cfg: IAppConfig, leaveFile = false)
 
         template += '\n\n' + modelSection;          
 
-        console.log(ConsoleService.color().yellow(model.name));
+        ConsoleService.log(ConsoleService.color().yellow(model.name));
     
         if(Model.isSubclass(model, TimeSeriesModel)){      
      
@@ -178,24 +178,24 @@ async function setupRWS(cfg: IAppConfig, generateProjectFiles: boolean = true): 
             if(!fs.existsSync(`${workspaceRoot}/.eslintrc.json`)){
                 const rcjs: string = fs.readFileSync(`${moduleDir}/.setup/_base.eslintrc.json`, 'utf-8');
                 fs.writeFileSync(`${workspaceRoot}/.eslintrc.json`, rcjs.replace('{{backend_dir}}', executionDir));
-                rwsLog(color().green('RWS CLI'), 'Installed eslint base workspace config file.');
+                log(color().green('RWS CLI'), 'Installed eslint base workspace config file.');
             }
         
             if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
                 const rcjs: string = fs.readFileSync(`${moduleDir}/.setup/_base.eslintrc.json`, 'utf-8');
                 fs.writeFileSync(`${executionDir}/.eslintrc.json`, rcjs.replace('{{backend_dir}}', executionDir));                            
-                rwsLog(color().green('RWS CLI'), 'Installed eslint backend workspace config file.');
+                log(color().green('RWS CLI'), 'Installed eslint backend workspace config file.');
             }    
         }else{
             if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
                 fs.copyFileSync(`${moduleDir}/.eslintrc.json`, `${executionDir}/.eslintrc.json`);
-                rwsLog(color().green('RWS CLI'), 'Installed eslint config file.');
+                log(color().green('RWS CLI'), 'Installed eslint config file.');
             }  
         } 
     
         if(!fs.existsSync(`${executionDir}/tsconfig.json`)){
             fs.copyFileSync(`${moduleDir}/.setup/tsconfig.json`, `${executionDir}/tsconfig.json`);
-            rwsLog(color().green('RWS CLI'), 'Installed tsconfig.');
+            log(color().green('RWS CLI'), 'Installed tsconfig.');
         }
     }
     return;

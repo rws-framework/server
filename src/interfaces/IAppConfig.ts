@@ -11,7 +11,9 @@ export default interface IAppConfig {
         test_routes?: boolean
         ssl?: boolean
         auth?: boolean
+        logging?: boolean
     } 
+    logs_directory?: string,
     mongo_url: string
     mongo_db: string
     port: number

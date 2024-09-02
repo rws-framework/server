@@ -4,7 +4,7 @@ import ConvoLoader, { IChainCallOutput } from '../convo/ConvoLoader';
 import { BedrockChat } from '@langchain/community/chat_models/bedrock/web';
 import { IterableReadableStream } from '@langchain/core/utils/stream';
 import { ChainValues } from '@langchain/core/utils/types';
-
+import ConsoleService from '../../services/ConsoleService';
 import { IContextToken } from '../../interfaces/IContextToken';
 
 interface IPromptHyperParameters {
@@ -282,7 +282,7 @@ class RWSPrompt {
             if ('chunk' in event && event.chunk.bytes) {
                 const chunk = JSON.parse(Buffer.from(event.chunk.bytes).toString('utf-8'));
                 if(first){
-                    console.log('chunk', chunk);
+                    ConsoleService.log('chunk', chunk);
                     first = false;
                 }
 

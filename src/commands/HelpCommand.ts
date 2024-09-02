@@ -7,7 +7,7 @@ import fs from 'fs';
 import CMDListCommand from './CMDListCommand';
 import { rwsPath } from '@rws-framework/console';
 
-const { rwsLog, color, log } = ConsoleService;
+const { log, color } = ConsoleService;
 
 const executionDir = process.cwd();
 
@@ -21,7 +21,7 @@ class HelpCommand extends Command
 
     async execute(params?: ICmdParams): Promise<void>
     {
-        rwsLog(color().green('RWS'), 'RWS CLI help manual\n\n');
+        log(color().green('RWS'), 'RWS CLI help manual\n\n');
         
         await CMDListCommand.execute(params);
     }

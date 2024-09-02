@@ -11,7 +11,7 @@ import VPCService from '../services/VPCService';
 import CloudWatchService from '../services/CloudWatchService';
 import { rwsPath } from '@rws-framework/console';
 
-const { log, error, color, rwsLog } = ConsoleService;
+const { log, error, color } = ConsoleService;
 
 const executionDir = process.cwd();
 
@@ -21,7 +21,7 @@ const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 const moduleDir = rwsPath.findPackageDir(executionDir);
 
 interface ILambdaParams {
-    rwsConfig?: any
+    rwsConfig?: any    
     subnetId?: string
 }
 
@@ -52,7 +52,7 @@ const lambdasCfg: ILambdasLifeCycleConfig = {
                 throw 'Create "artillery-config.yml" in your project root directory.';
             }
             
-            rwsLog('RWS Lambda CLI | artillery | preDeploy', ' copying artillery config.');
+            log('RWS Lambda CLI | artillery | preDeploy', ' copying artillery config.');
 
             fs.copyFileSync(sourceArtilleryCfg, targetArtilleryCfg);
         },
@@ -61,7 +61,7 @@ const lambdasCfg: ILambdasLifeCycleConfig = {
 
             if (fs.existsSync(targetArtilleryCfg)) {
                 fs.unlinkSync(targetArtilleryCfg);
-                rwsLog('RWS Lambda CLI | artillery | postDeploy', 'artillery config cleaned up');
+                log('RWS Lambda CLI | artillery | postDeploy', 'artillery config cleaned up');
             }            
         }
     }
@@ -134,7 +134,7 @@ class LambdaCommand extends Command
             log(PermissionCheck.policies);
             return;
         }else{
-            rwsLog(color().green('AWS IAM Role is eligible for operations.'));
+            log(color().green('AWS IAM Role is eligible for operations.'));
         }
 
         if(!!extraParams && !!extraParams.redeploy_loader){            
@@ -216,7 +216,7 @@ class LambdaCommand extends Command
 
         const logsTimeout = await CloudWatchService.printLogsForLambda(`RWS-${lambdaDirName}`);
 
-        rwsLog('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));            
+        log('RWS Lambda Service', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode}):`));            
 
         if(response.InvocationType === 'RequestResponse'){
             log(response.Response.Payload);
@@ -246,8 +246,8 @@ class LambdaCommand extends Command
             throw new Error(`Error listing Lambda functions: ${(error as AWS.AWSError).message}`);
         }
 
-        rwsLog('RWS Lambda Service', color().yellowBright('RWS lambda functions list:'));    
-        rwsLog('RWS Lambda Service', color().yellowBright('ARN  |  NAME'));  
+        log('RWS Lambda Service', color().yellowBright('RWS lambda functions list:'));    
+        log('RWS Lambda Service', color().yellowBright('ARN  |  NAME'));  
 
         rwsLambdaFunctions.map((funct: AWS.Lambda.FunctionConfiguration) => funct.FunctionArn + '  |  ' +funct.FunctionName).forEach((msg) => {
             log(msg);
@@ -294,7 +294,7 @@ class LambdaCommand extends Command
                 
                 const response = await LambdaService.invokeLambda(lambdaDirName, payload);
 
-                rwsLog('RWS Lambda Deploy Invoke', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode})`));    
+                log('RWS Lambda Deploy Invoke', color().yellowBright(`"RWS-${lambdaDirName}" lambda function response (Code: ${response.Response.StatusCode})`));    
 
                 if(response.Response.Payload.toString()){
                     const responseData = JSON.parse(response.Response.Payload.toString());

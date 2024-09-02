@@ -80,7 +80,7 @@
   <key id="d179" for="node" attr.name="metric_tag_fullpath" attr.type="float" />
   <key id="d178" for="node" attr.name="metric_tag_zipwriter" attr.type="float" />
   <key id="d177" for="node" attr.name="metric_tag_help" attr.type="float" />
-  <key id="d176" for="node" attr.name="metric_tag_rwslog" attr.type="float" />
+  <key id="d176" for="node" attr.name="metric_tag_log" attr.type="float" />
   <key id="d175" for="node" attr.name="metric_tag_cmd" attr.type="float" />
   <key id="d174" for="node" attr.name="metric_tag_description" attr.type="float" />
   <key id="d173" for="node" attr.name="metric_tag_setupprisma" attr.type="float" />

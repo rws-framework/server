@@ -97,7 +97,7 @@ class AuthService extends TheService{
 
             
                 theUser.loadDbUser().then((userModel: Model<any>) => {                                            
-                    ConsoleService.rwsLog('RWS AUTH LOG', ConsoleService.color().green('Loaded RWS User Model'), userModel.id);
+                    ConsoleService.log('RWS AUTH LOG', ConsoleService.color().green('Loaded RWS User Model'), userModel.id);
                     
                     approve(theUser);
                 }).catch((e: Error | unknown) => {

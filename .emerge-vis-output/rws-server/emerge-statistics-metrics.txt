@@ -162,7 +162,7 @@ the following local metrics were collected in ts check
 |                                              | tag_cmd: 0.3110478260329925                                  |
 |                                              | tag_icmdparams: 0.2275187578457805                           |
 |                                              | tag_executiondir: 0.21950804670828558                        |
-|                                              | tag_rwslog: 0.2122614770222114                               |
+|                                              | tag_log: 0.2122614770222114                               |
 |                                              | fan-in-dependency-graph: 2                                   |
 |                                              | fan-out-dependency-graph: 6                                  |
 |                                              | file_result_dependency_graph_louvain-modularity-in-file: 2   |
@@ -210,7 +210,7 @@ the following local metrics were collected in ts check
 |                                              | tag_icmdparams: 0.3033548630374356                           |
 |                                              | tag_command: 0.3033548630374356                              |
 |                                              | tag_executiondir: 0.292674037408129                          |
-|                                              | tag_rwslog: 0.28301205535695967                              |
+|                                              | tag_log: 0.28301205535695967                              |
 |                                              | tag_color: 0.2515703840002825                                |
 |                                              | tag_help: 0.22791466473481942                                |
 |                                              | tag_helpcommand: 0.2073628380308962                          |

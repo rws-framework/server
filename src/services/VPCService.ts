@@ -2,7 +2,7 @@ import AWSService from './AWSService';
 import ConsoleService from './ConsoleService';
 import TheService from './_service';
 
-const { log, warn, error, rwsLog } = ConsoleService;
+const { log, warn, error } = ConsoleService;
 
 
 class VPCService extends TheService{
@@ -15,7 +15,7 @@ class VPCService extends TheService{
             if (response.Vpcs && response.Vpcs.length > 0) {                
                 return [await this.getSubnetIdForVpc(response.Vpcs[0].VpcId), response.Vpcs[0].VpcId];
             } else {
-                console.log('No default VPC found.');
+                ConsoleService.log('No default VPC found.');
             }
         } catch (error) {
             console.error('Error fetching default VPC:', error);
@@ -148,7 +148,7 @@ class VPCService extends TheService{
                     VpcEndpointIds: [vpcEndpointId]
                 }).promise()).VpcEndpoints;
 
-                rwsLog('Creating VPC Endpoint route');
+                log('Creating VPC Endpoint route');
                 // Add a route to the route table
                 await AWSService.getEC2().createRoute({
                     RouteTableId: routeTable.RouteTableId,
@@ -227,7 +227,7 @@ class VPCService extends TheService{
         let nextThirdOctet: number = baseThirdOctet + _SUBNET_PASS_VAL;
     
         const newCidrBlock = `${baseIp.split('.').slice(0, 2).join('.')}.${nextThirdOctet }.0/${range.toString()}`;
-        rwsLog(`Trying to create public subnet for "${vpcId}" VPC with "${newCidrBlock}" address`);
+        log(`Trying to create public subnet for "${vpcId}" VPC with "${newCidrBlock}" address`);
 
         if (!existingCidrs.includes(newCidrBlock)) {
             try {
@@ -236,7 +236,7 @@ class VPCService extends TheService{
                     CidrBlock: newCidrBlock
                 }).promise();  
                 
-                rwsLog(`Created public subnet "${subnet.Subnet.SubnetId}" for "${vpcId}" VPC with "${newCidrBlock}" address`);
+                log(`Created public subnet "${subnet.Subnet.SubnetId}" for "${vpcId}" VPC with "${newCidrBlock}" address`);
 
                 return subnet;
             } catch (err: Error | any) {
@@ -264,12 +264,12 @@ class VPCService extends TheService{
 
     async waitForNatGatewayAvailable(natGatewayId: string): Promise<void> {
         try {
-            rwsLog(`Waiting for NAT Gateway ${natGatewayId}...`);
+            log(`Waiting for NAT Gateway ${natGatewayId}...`);
 
             await AWSService.getEC2().waitFor('natGatewayAvailable', {
                 NatGatewayIds: [natGatewayId]
             }).promise();
-            rwsLog(`NAT Gateway ${natGatewayId} is now available.`);
+            log(`NAT Gateway ${natGatewayId} is now available.`);
         } catch (err) {
             error(`Error waiting for NAT Gateway ${natGatewayId} to become available:`);
             log(err);

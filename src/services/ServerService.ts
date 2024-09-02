@@ -11,7 +11,6 @@ import RouterService from './RouterService';
 import { AxiosRequestHeaders } from 'axios';
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../routing/routes';
 import ConsoleService from './ConsoleService';
-import UtilsService from './UtilsService';
 import path from 'path';
 import bodyParser from 'body-parser';
 import Error404 from '../errors/Error404';
@@ -41,7 +40,7 @@ import { rwsPath } from '@rws-framework/console';
 const __HTTP_REQ_HISTORY_LIMIT = 50;
 
 const wsLog = async (fakeError: Error, text: any, socketId: string = null, isError: boolean = false): Promise<void> => {
-    const logit = isError ? console.error : console.log;
+    const logit = isError ? ConsoleService.error : ConsoleService.log;
 
     const marker = '[RWS Websocket]';
 

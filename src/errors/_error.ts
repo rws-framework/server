@@ -16,7 +16,7 @@ export default abstract class RWSError{
         }else {
             this.baseError = baseError;
         }        
-        console.log(this.baseError.stack)
+        console.error(this.baseError.stack)
         if(this.baseError.stack){
             this.stack = baseError.stack;
             this.message = baseError.message;
@@ -28,7 +28,7 @@ export default abstract class RWSError{
 
     static make(error: Error)
     {
-        console.log(this);    
+        console.error(this);    
     }
 
     printFullError(): void

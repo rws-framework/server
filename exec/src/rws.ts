@@ -1,7 +1,7 @@
 import Error500 from '../../src/errors/Error500';
 import { RWSAppCommands, getAppConfig, IAppConfig, RWSCommand, ICmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
 import { rwsPath } from '@rws-framework/console';
-const { error, color, rwsLog } = ConsoleService;
+const { error, color, log } = ConsoleService;
 
 
 const fs = require('fs');
