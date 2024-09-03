@@ -15,7 +15,7 @@ class ConsoleService extends TheService {
     private isEnabled: boolean = true;
     private originalLogMethods?: any = null;
 
-    private listeners: {[listenerName: string]: (logLine: string) => Promise<void>} = {}
+    private listeners: {[listenerName: string]: (logLine: string, type: string) => Promise<void>} = {}
 
     constructor() {
         super();
@@ -78,11 +78,11 @@ class ConsoleService extends TheService {
         this.postLog(lines);
     }
 
-    postLog(lines: string[]) {
+    postLog(lines: string[], type: string = 'log') {
         this.writeToLogFile([this.getDateString(), ...lines]);
 
         for(const listenerName of Object.keys(this.listeners)){
-            this.listeners[listenerName](this.squishLines(lines));
+            this.listeners[listenerName](this.squishLines(lines), type);
         }
     }
 
@@ -158,9 +158,10 @@ class ConsoleService extends TheService {
             obj = obj.filter((el: any, index: number) => index > 0);
         }
 
-        obj = [this.getDateString(), chalk.yellow(`[${intro}]`), ...obj];
+        obj = [chalk.yellow(`[${intro}]`), ...obj];
 
-        console.warn(...obj); 
+        console.warn(this.getDateString(), ...obj); 
+        this.postLog(obj, 'warn');
     }
 
     sanitizeObject(obj: any): any {
@@ -200,7 +201,8 @@ class ConsoleService extends TheService {
 
         obj = [chalk.red(`[${intro}]`), ...obj];
 
-        console.log(...obj);
+        console.log(this.getDateString(), ...obj);
+        this.postLog(obj, 'error');
     }
 
     stopLogging(): void {
