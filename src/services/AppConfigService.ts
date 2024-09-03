@@ -84,8 +84,7 @@ class AppConfigService extends TheService{
         if (cfg) {                                    
             const newCfg = {...AppDefaultConfig,...cfg};
 
-            newCfg.features = {...AppDefaultConfig.features, ...cfg.features};                        
-            console.log({newCfg})
+            newCfg.features = {...AppDefaultConfig.features, ...cfg.features};
             TheService._instances[className] = new this(newCfg);                       
         }else if(!instanceExists && !cfg){
             TheService._instances[className] = new this(AppDefaultConfig);           
