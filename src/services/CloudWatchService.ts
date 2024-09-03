@@ -181,40 +181,40 @@ class CloudWatchService extends TheService {
 
     async logGroupExists(logGroupName: string): Promise<boolean> {
         const cloudWatchLogs = AWSService.getCloudWatch();
-
-
-        try {
-          const response = await cloudWatchLogs.describeLogGroups({
-            logGroupNamePrefix: logGroupName
-          }).promise();
-      
-          return response.logGroups?.some(group => group.logGroupName === logGroupName) || false;
-        } catch (error: AWSError | unknown) {
-          console.log('CHEECK group', {logGroupName})
-
-            console.error('Unexpected error logGroupExists:', error);
-      
-          throw error;
-        }
+        return new Promise(async (resolve, reject) => {
+          setTimeout(async () => {
+            try {
+              const response = await cloudWatchLogs.describeLogGroups({
+                logGroupNamePrefix: logGroupName
+              }).promise();
+          
+              return response.logGroups?.some(group => group.logGroupName === logGroupName) || false;
+            } catch (error: AWSError | unknown) {
+                console.error('Unexpected error logGroupExists:', error);      
+              throw error;
+            }
+          }, 300);
+        });
       }
 
       async logStreamExists(logGroupName: string, logStreamName: string): Promise<boolean> {
         const cloudWatchLogs = AWSService.getCloudWatch();
-
-        try {
-          const response = await cloudWatchLogs.describeLogStreams({
-            logGroupName: logGroupName,
-            logStreamNamePrefix: logStreamName
-          }).promise();
-      
-          return response.logStreams?.some(stream => stream.logStreamName === logStreamName) || false;
-        } catch (error: AWSError | unknown) {
-          console.log('CHEECK stream', {logStreamName})
-
-            console.error('Unexpected error logStreamExists:', error);
-      
-          throw error;
-        }
+        return new Promise(async (resolve, reject) => {
+          setTimeout(async () => {
+            try {
+              const response = await cloudWatchLogs.describeLogStreams({
+                logGroupName: logGroupName,
+                logStreamNamePrefix: logStreamName
+              }).promise();
+          
+              return response.logStreams?.some(stream => stream.logStreamName === logStreamName) || false;
+            } catch (error: AWSError | unknown) {
+                console.error('Unexpected error logStreamExists:', error);
+          
+              throw error;
+            }
+          }, 300);
+        });
       }
 }
 

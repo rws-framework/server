@@ -243,7 +243,7 @@ class ConsoleService extends TheService {
 
     private getDateString(): string
     {
-        return chalk.blue(`[${moment().format('Y-MM-DD H:m:s')}]`);
+        return chalk.blue(`[${moment().format('Y-MM-DD H:mm:ss')}]`);
     }
 
     updateLogLine(message: string) {
