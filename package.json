@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "3.2.6-alpha",
+  "version": "3.2.7-alpha",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -15,7 +15,7 @@
   "dependencies": {
     "@aws-sdk/credential-providers": "^3.363.0",
     "@google-cloud/compute": "^4.0.1",
-    "@mongodb-js/zstd": "^1.1.0",
+    "@mongodb-js/zstd": "^1.2.0",
     "@nestjs/common": "^10.3.2",
     "@nestjs/core": "^10.3.2",
     "@nestjs/microservices": "^10.3.8",
@@ -48,8 +48,8 @@
     "@langchain/core": "^0.2.27",
     "langchain": "^0.2.16",
     "md5": "^2.3.0",
-    "mongodb": "^5.7.0",
-    "mongodb-client-encryption": "^2.8.0",
+    "mongodb": "^6.8.1",
+    "mongodb-client-encryption": "^6.1.0",
     "napi-rs": "^0.3.10",
     "nestjs-command": "^3.1.4",
     "node-loader": "^2.0.0",
