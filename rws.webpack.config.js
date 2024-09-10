@@ -1,6 +1,5 @@
 const path = require('path');
 const chalk = require('chalk');
-const keysTransformer = require('ts-transformer-keys/transformer').default;
 const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
 const {rwsExternals} = require('./_rws_externals');
