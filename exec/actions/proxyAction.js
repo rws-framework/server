@@ -31,7 +31,7 @@ module.exports = async (output) => {
     const lineArgs = args && args.length && Array.isArray(args) ? args.join(' ') : '';
     const cfgConfigArg = args[0];
 
-    if(commandOptions.reload || command2map === 'init'){
+    if(commandOptions.reload || command2map === 'init' || command2map === 'db:schema:reload'){
         forceReload = true;
     }
 

@@ -28,7 +28,7 @@ export default abstract class TheCommand {
     public static cmdDescription: string | null = null;
 
     protected static _instances: { [key: string]: TheCommand } | null = {};
-
+    static forceRebuild = false;
 
     constructor(name: string){
         this.name = name;

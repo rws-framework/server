@@ -15,6 +15,8 @@ const packageRootDir = rwsPath.findRootWorkspacePath(executionDir);
 
 class ReloadDBSchemaCommand extends Command 
 {
+    static forceRebuild = true;
+
     constructor(){
         super('db:schema:reload');
     }
