@@ -197,7 +197,7 @@ class RouterService extends TheService{
         controllerRoutes: IControllerRoutes, key: string, app: express.Express): void
     {
         const action: IHTTProuteMethod = (params: any) => {
-            ConsoleService.log(`Detected request: "${ConsoleService.color().yellowBright(params.req.originalUrl)}" with payload: `, params.data);
+            ConsoleService.log(`Detected request: "${ConsoleService.color().yellowBright(params.req.originalUrl)}" for method "${key}" with payload: `, params.data);
             return (controllerInstance as Controller).callMethod(key)(params);
         };
 

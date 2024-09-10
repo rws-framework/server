@@ -122,40 +122,36 @@ class CloudWatchService extends TheService {
     }
   }
 
-  async log(message: string, logGroupName: string = null, logStreamName: string = null): Promise<PutLogEventsResponse | AWSError> {
+  async perpareGroupAndStream(groupName: string | null, streamName: string | null): Promise<[string,string]>
+  {
+    if(groupName && streamName){
+      return [groupName, streamName];
+    }
+
+    if(!groupName){
+      groupName = `RWS_backend_server`;
+    }
+
+    if(!streamName){
+      streamName = `${getAppConfig().get('domain').replace(/\./g, '_')}_logs`;
+    }
+
+    if (!(await this.logGroupExists(groupName))) {
+      await this.createLogGroup(groupName);
+    }
+
+    if (!(await this.logStreamExists(groupName, streamName))) {
+      await this.createLogStream(groupName, streamName);
+    }
+
+    return [groupName, streamName]
+  }
+
+  async log(message: string, logGroup: string, logStream: string): Promise<void> {
     const cloudWatchLogs = AWSService.getCloudWatch();
     const outputEvent: OutputLogEvent = null;
 
-    let logGroup = this.logGroupName;
-    let logStream = this.logStreamName;
-
-    if (logGroupName) {
-      logGroup = logGroupName;
-    }
-
-    if (logStreamName) {
-      logStream = logStreamName;
-    }
-
-    if (logGroup === null || logStream === null) {
-      //throw new Error404(`No log group data exists in service`, __filename);
-      logGroup = `RWS_backend_server`;
-      logStream = `${getAppConfig().get('domain').replace('.', '_')}_logs`;
-      this.logGroupName = logGroup;
-      this.logStreamName = logStream;
-    }
-
-    try {
-      if (!this.lastLogGroupName && !(await this.logGroupExists(logGroup))) {
-        await this.createLogGroup(logGroup);
-        this.lastLogGroupName = logGroup;
-      }
-
-      if (!this.lastLogStreamName && !(await this.logStreamExists(logGroup, logStream))) {
-        await this.createLogStream(logGroup, logStream);
-        this.lastLogStreamName = logStream;
-      }
-
+    try {   
       const params: PutLogEventsRequest = {
         logGroupName: logGroup,
         logStreamName: logStream,
@@ -167,11 +163,13 @@ class CloudWatchService extends TheService {
         ]
       };
 
-      const result = await cloudWatchLogs.putLogEvents(params).promise();
-      return result;
+      try {           
+        await cloudWatchLogs.putLogEvents(params).promise()   
+      } catch(e){
+          console.error(e);
+      }
     } catch (error: AWSError | unknown) {
-      console.error('Unexpected error putting log events:', error);
-      throw error;
+      console.error('Unexpected error putting log events:', error);      
     }
   }
 
