@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "2.23.7",
+  "version": "2.23.8",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -20,7 +20,7 @@
     "langchain": "^0.2.6",
     "@mongodb-js/zstd": "^1.1.0",
     "@prisma/client": "^5.1.1",
-    "@rws-framework/console": "^0.3.8",
+    "@rws-framework/console": "^0.3.9",
     "@zip.js/zip.js": "^2.7.34",    
     "aws-crt": "^1.15.20",
     "aws-sdk": "^2.1448.0",

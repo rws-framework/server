@@ -26,9 +26,11 @@ module.exports = async (output) => {
     const program = output.program;
     const commandOptions = output.options;    
     const command2map = output.command;
-    const args = output.rawArgs || [];    
-    
-    const lineArgs = args && args.length && Array.isArray(args) ? args.join(' ') : '';
+    const args = output.rawArgs || []; 
+        
+
+    const lineArgs = process.argv.splice(3).filter((item) => !(item.indexOf('-') > -1 || item.indexOf('--') > -1));    
+
     const cfgConfigArg = args[0];
 
     if(commandOptions.reload || command2map === 'init' || command2map === 'db:schema:reload'){

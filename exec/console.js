@@ -8,9 +8,9 @@ const log = console.log;
 
 const bootstrap = rwsConsole.rwsCli.bootstrap(['proxy'], __dirname + '/actions');
 
-(async () => {
+(async () => {  
     await bootstrap.run({
-        proxy: true,
+        proxy: true,        
         options: [{
             short: 'r',
             long: 'reload'

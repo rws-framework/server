@@ -28,12 +28,14 @@ if (cmdParamString && cmdParamString.indexOf('=') > -1) {
     commandExecutionArgs._default = cmdParamString;
 }
 
-if(process.argv.length > 4){
-    for(let i =  4; i <= process.argv.length-1;i++){
+if(process.argv.length > 3){
+    for(let i = 3; i <= process.argv.length-1;i++){
         const parameter: string = process.argv[i].replace('--', '').replace('-', '_');
         const valuePair: string[] = parameter.split('=');
 
-        commandExecutionArgs._extra_args[valuePair[0]] = valuePair.length > 1 ? valuePair[1] : true;
+        if(valuePair && valuePair[0]){
+            commandExecutionArgs._extra_args[valuePair[0]] = valuePair.length > 1 ? valuePair[1] : true;
+        }
     }
 }
 
@@ -43,7 +45,8 @@ const packageRootDir = rwsPath.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 
 function getConfig(configPath: string, cfgPathFile: string | null = null) 
-{    
+{            
+    console.log({configPath})
     if(cfgPathFile === null){
         cfgPathFile = configPath;
 
@@ -72,7 +75,7 @@ const main = async () => {
 
     const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config';       
 
-    const cfgData = getConfig(configPath, cfgPathFile);        
+    const cfgData = command === 'init' ? getConfig(configPath,  cfgPathFile) :  getConfig(UtilsService.getRWSVar(cfgPathFile) as string);
 
     const APP_CFG: IAppConfig | null = cfgData;
 
