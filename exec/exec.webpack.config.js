@@ -1,5 +1,5 @@
 const path = require('path');
-const keysTransformer = require('ts-transformer-keys/transformer').default;
+// const keysTransformer = require('ts-transformer-keys/transformer').default;
 const webpackFilters = require('../webpackFilters');
 const { rwsPath } = require('@rws-framework/console');
 const rootWorkspace = rwsPath.findRootWorkspacePath(process.cwd());
@@ -35,15 +35,7 @@ module.exports = {
             loader: 'ts-loader',
             options: {              
               allowTsInNodeModules: true,
-              configFile: path.resolve(__dirname, 'exec.tsconfig.json'), 
-              // compilerOptions: {
-              //   baseUrl: rwsPath..findRootWorkspacePath(process.cwd())
-              // },             
-              getCustomTransformers: program => ({
-                  before: [
-                      keysTransformer(program)
-                  ]
-              })
+              configFile: path.resolve(__dirname, 'exec.tsconfig.json'),           
             },
             exclude: /node_modules\/(?!\@rws-framework\/server)|\.d\.ts$/,
           },
