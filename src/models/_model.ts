@@ -74,7 +74,24 @@ class Model<ChildClass> implements IModel{
         }else{
             throw new Error('Time Series not supported in synchronous constructor. Use `await Model.create(data)` static method to instantiate this model.');
         }
-    }    
+    }  
+    
+    static services: {[serviceName: string]: object} = {};
+
+    static fillService(serviceName: string, service: any): void
+    {
+        this.services[serviceName] = service;
+    }
+
+    static getServiceDeps(): {[serviceName: string]: object}
+    {
+        return {};
+    }
+
+    static getService<T>(serviceName: string): T
+    {
+        return this.services[serviceName] as T;
+    }
     
     checkForInclusionWithThrow(): void
     {

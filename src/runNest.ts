@@ -1,5 +1,5 @@
 import { NestFactory, Module } from '@rws-framework/server/nest';
-import { AppConfigService,  AuthService,  ConsoleService,  IAppConfig, IDbUser, RWSFillService, UtilsService } from '@rws-framework/server';
+import { AppConfigService,  AuthService,  ConsoleService,  IAppConfig, IDbUser, RWSFillService, RWSModel, UtilsService } from '@rws-framework/server';
 
 import { DynamicModule, forwardRef, Inject, Type } from '@nestjs/common';
 import { IRWSModule, NestModulesType, RWSModuleType } from './types/IRWSModule';
@@ -41,6 +41,10 @@ export class RWSModule {
 export default async function bootstrap(nestModule:any , cfgRunner: () => IAppConfig, opts: ServerOpts = {}) {
   const rwsOptions = cfgRunner();
   const app = await NestFactory.create(nestModule.forRoot(rwsOptions));
+
+  const appConfig: AppConfigService = app.get(AppConfigService);
+  const rwsModels = appConfig.get<RWSModel<any>[]>('user_models');
+  console.log(rwsModels);
   
   await app.listen(rwsOptions.port);
 }

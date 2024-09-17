@@ -1,4 +1,5 @@
 
+import RWSModel from '../models/_model';
 import { RWSModuleType } from './IRWSModule';
 
 export default interface IAppConfig {   
@@ -18,11 +19,12 @@ export default interface IAppConfig {
     test_ws_port?: number
     ssl_cert: string
     ssl_key: string
+    logs_directory?: string
     secret_key: string
     user_class: any
-    user_models: any[]
+    user_models?: {[modelName: string]: any}
     modules: RWSModuleType[],
-    ws_routes: any
+    ws_routes?: any
     http_routes: any
     front_routes?: Record<string, unknown>[],
     aws_lambda_region?: string

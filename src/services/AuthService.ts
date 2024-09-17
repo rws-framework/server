@@ -80,7 +80,7 @@ class AuthService {
         return this;
     }
 
-    getUser<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(): IUser
+    getUser<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(req: any = null): IUser
     {
         return this.user as IUser;
     }

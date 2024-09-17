@@ -1,11 +1,11 @@
 import HTTP from 'http';
 import HTTPS from 'https';
-import ITheSocket from './ITheGateway';
+import {ITheGateway} from './ITheGateway';
 import IDbUser from './IDbUser';
 import { IHTTProute } from '../routing/routes';
 
 type WsRoutes = {
-    [eventName: string]: new (data: any) => ITheSocket;
+    [eventName: string]: new (data: any) => ITheGateway;
 };
 
 type UserTokens = {

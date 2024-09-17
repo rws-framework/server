@@ -1,6 +1,6 @@
 import { Server as ServerBase, Socket } from 'socket.io';
-import { AppConfigService } from './AppConfigService';
-import ITheSocket from '../types/ITheGateway';
+import { AppConfigService } from '../index';
+import {ITheGateway} from '../types/ITheGateway';
 
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../routing/routes';
 import { ConsoleService } from './ConsoleService';
@@ -32,4 +32,4 @@ class ServerService {
     constructor(private configService: AppConfigService, private consoleService: ConsoleService, md5Service: MD5Service){}    
 }
 
-export { ServerService, WsRoutes, IHTTProute, IInitOpts, ITheSocket, IPrefixedHTTProutes, RWSHTTPRoutingEntry, RWSServer, RWSServerPair, ServerControlSet, ServerStarter as RWSServerStarter };
+export { ServerService, WsRoutes, IHTTProute, IInitOpts, ITheGateway, IPrefixedHTTProutes, RWSHTTPRoutingEntry, RWSServer, RWSServerPair, ServerControlSet, ServerStarter as RWSServerStarter };

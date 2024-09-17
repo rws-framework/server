@@ -41,12 +41,12 @@ interface IPromptEnchantment {
 type IPromptSender = (prompt: RWSPrompt) => Promise<void>;
 
 interface IRWSPromptRequestExecutor {
-    promptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>
+    promptRequest: (prompt: RWSPrompt, intruderPrompt?: string | null, debugVars?: any) => Promise<RWSPrompt>
 }
 
 
 interface IRWSSinglePromptRequestExecutor {
-    singlePromptRequest: (prompt: RWSPrompt, contextToken?: IContextToken | null, intruderPrompt?: string | null, ensureJson?: boolean, debugVars?: any) => Promise<RWSPrompt>
+    singlePromptRequest: (prompt: RWSPrompt, intruderPrompt?: string | null, ensureJson?: boolean, debugVars?: any) => Promise<RWSPrompt>
 }
 
 

@@ -1,6 +1,7 @@
 import common, { 
     Injectable, 
     Get, Post, Delete, Put,
+    Param, Body,
     Module  
 } from '@nestjs/common';
 import { Command, Positional } from 'nestjs-command';
@@ -19,5 +20,6 @@ export {
     NestRoute,
     CLI,
     Injectable,
-    NestFactory, Module
+    NestFactory, Module,
+    Param, Body
 };

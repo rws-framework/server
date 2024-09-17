@@ -19,7 +19,7 @@ import { MD5Service } from './services/MD5Service';
 import { TraversalService } from './services/TraversalService';
 import { UtilsService }  from './services/UtilsService';
 import { VectorStoreService } from './services/VectorStoreService';
-
+import { ControllerActionResponse, ControllerActionErrorResponse } from './types/ControllerTypes';
 
 import RWSPrompt, { ILLMChunk, IRWSPromptRequestExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptStreamExecutor, IChainCallOutput, IRWSPromptJSON, ChainStreamType } from './models/prompts/_prompt';
 import RWSConvo, { IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams } from './models/convo/ConvoLoader';
@@ -105,5 +105,6 @@ export {
     // RWSServerStarter,
 
     NEST,
-    RWSController
+    RWSController,
+    ControllerActionResponse, ControllerActionErrorResponse
 };

@@ -14,6 +14,7 @@ interface IDBClientCreate {
 
 @Injectable()
 class DBService {
+    private mongoClient: MongoClient = null;
     private client: PrismaClient;
     private opts: IDBClientCreate = null;
     private connected = false;
@@ -52,22 +53,32 @@ class DBService {
         }
     }
 
-    private async createBaseMongoClient(): Promise<MongoClient>
+    async createBaseMongoClient(force: boolean = false, dbString: string = null): Promise<MongoClient>
     {
-        const dbUrl = this.opts?.dbUrl || this.configService.get('mongo_url');
-        const client = new MongoClient(dbUrl);
-    
-        await client.connect();
+        const dbUrl = dbString ? dbString : (this.opts?.dbUrl || this.configService.get('mongo_url'));
 
-        return client;
+        if(this.mongoClient && force){
+            await this.mongoClient.close();
+            this.mongoClient = null;
+        }
+
+        if(!this.mongoClient || force){            
+            this.mongoClient = new MongoClient(dbUrl);
+
+            await this.mongoClient.connect();
+        }        
+
+        return this.mongoClient;
 
     }
 
-    private async createBaseMongoClientDB(): Promise<Db>
+    async createBaseMongoClientDB(dbName: string = null): Promise<Db>
     {
-        const dbName = this.opts?.dbName || this.configService.get('mongo_db');
-        const client = await this. createBaseMongoClient();
-        return client.db(dbName);
+        if(!dbName){
+            dbName = this.opts?.dbName || this.configService.get('mongo_db');
+        }        
+        
+        return (await this.createBaseMongoClient()).db(dbName);
     }
 
     public async cloneDatabase(source: string, target: string): Promise<void> {
