@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+
 import ITheSocket, { TheSocketParams } from '../interfaces/ITheSocket';
 import ServerService from '../services/ServerService';
 import ConsoleService from '../services/ConsoleService';
@@ -32,7 +32,7 @@ abstract class TheSocket implements ITheSocket{
         this.server = server;
     }
 
-    handleConnection(socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>, routeName: string, params: TheSocketParams = null): Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any> {
+    handleConnection(socket: Socket<any, any, any, any>, routeName: string, params: TheSocketParams = null): Socket<any, any, any, any> {
         throw new Error('Method not implemented.');
     }
     middlewareImplementation?(next: any): void {
