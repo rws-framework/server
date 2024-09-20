@@ -2,8 +2,6 @@ import { TextLoader } from 'langchain/document_loaders/fs/text';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableConfig, Runnable } from '@langchain/core/runnables';
-import { BaseMessage } from '@langchain/core/messages';
-import { BaseLanguageModelInput } from '@langchain/core/language_models/base';
 import VectorStoreService from '../../services/VectorStoreService';
 import ConsoleService from '../../services/ConsoleService';
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';

@@ -4,26 +4,7 @@ import ITheSocket, { TheSocketParams } from '../interfaces/ITheSocket';
 import ServerService from '../services/ServerService';
 import ConsoleService from '../services/ConsoleService';
 
-interface JSONMessage{
-    method: string;
-    msg: any;
-    user_id: string;
-}
-
-interface BaseResponse<T> {
-    data?: T;
-    success: boolean;
-    error?: Error;
-}
-
-interface ErrorResponse extends BaseResponse<any> {
-    error: Error;
-    success: false;
-}
-
-interface SocketWsResponse<T> extends BaseResponse<T> {
-    method: string;
-}
+import { JSONMessage, ErrorResponse, SocketWsResponse, BaseResponse } from '../types/SocketTypes';
 
 abstract class TheSocket implements ITheSocket{
     protected server: any;

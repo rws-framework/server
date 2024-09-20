@@ -7,36 +7,14 @@ import { ChainValues } from '@langchain/core/utils/types';
 import ConsoleService from '../../services/ConsoleService';
 import { IContextToken } from '../../interfaces/IContextToken';
 
-interface IPromptHyperParameters {
-    temperature: number,
-    top_k?: number,
-    top_p?: number,
-    [key: string]: number
-}
-
-interface IRWSHistoryMessage { 
-    content: string, creator: string 
-}
-
-interface ILLMChunk {
-    content: string
-    status: string
- }
-
-interface IPromptParams {
-    hyperParameters?: IPromptHyperParameters;
-    input?: string;
-    modelId: string;
-    modelType: string;
-}
-
-interface IPromptEnchantment {
-    enhancementId: string,
-    enhancementName: string,
-    enhancementParams: any,
-    input: string
-    output: string
-}
+import {
+    IPromptHyperParameters,
+    IRWSHistoryMessage,
+    ILLMChunk,
+    IPromptParams,
+    IPromptEnchantment,
+    IRWSPromptJSON
+} from '../interfaces/IPrompt';
 
 type IPromptSender = (prompt: RWSPrompt) => Promise<void>;
 
@@ -52,21 +30,6 @@ interface IRWSSinglePromptRequestExecutor {
 
 interface IRWSPromptStreamExecutor {
     promptStream: (prompt: RWSPrompt, read: (chunk: ILLMChunk) => void, end: () => void, debugVars?: any) => Promise<RWSPrompt>
-}
-
-interface IRWSPromptJSON {
-    input: string;
-    enhancedInput: IPromptEnchantment[];
-    sentInput: string;
-    originalInput: string;
-    output: string;
-    modelId: string;
-    modelType: string;
-    multiTemplate: PromptTemplate;
-    convo: { id: string };
-    hyperParameters: IPromptHyperParameters;
-    created_at: string;
-    var_storage: any;
 }
 
 type ChainStreamType = AsyncGenerator<IterableReadableStream<ChainValues>>;
