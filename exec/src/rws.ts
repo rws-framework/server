@@ -45,8 +45,7 @@ const packageRootDir = rwsPath.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 
 function getConfig(configPath: string, cfgPathFile: string | null = null) 
-{            
-    console.log({configPath})
+{                
     if(cfgPathFile === null){
         cfgPathFile = configPath;
 

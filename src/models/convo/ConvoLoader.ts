@@ -97,13 +97,13 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
     }
 
 
-    async splitDocs(filePath: string, params: ISplitterParams)
+    async splitDocs(filePath: Blob, params: ISplitterParams, callbackFunc: (docs: Document[]) => Promise<void>, splitCheck: boolean,loadedParts: () => Promise<string[]> = async () => [])
     {
         const splitDir = ConvoLoader.debugSplitDir(this.getId());
 
-        if(!fs.existsSync(splitDir)){
+        if(splitCheck){
             try {
-                ConsoleService.log(`Split dir ${ConsoleService.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
+                ConsoleService.log(`Split for conversation "${this.convo_id}" doesn't exist. Splitting docs...`);
                 this.loader = new TextLoader(filePath);
 
                 this.docSplitter = new RecursiveCharacterTextSplitter({
@@ -124,22 +124,15 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
                 logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
                 logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
 
-                this.docs = splitDocs;            
+                this.docs = splitDocs;                                      
 
-                let i = 0;
-                this.docs.forEach((doc: Document) => {
-                    fs.writeFileSync(this.debugSplitFile(i), doc.pageContent);
-                    i++;
-                });
+                await callbackFunc(this.docs);
             }catch(e: Error | unknown){
                 fs.rmdirSync(splitDir);
                 throw new Error500(e);
             }
-        }else{
-            const splitFiles = fs.readdirSync(splitDir);
-            
-            for(const filePath of splitFiles) {
-                const txt = fs.readFileSync(splitDir + '/' + filePath, 'utf-8');
+        }else{           
+            for(const txt of (await loadedParts())) {
                 this.docs.push(new Document({ pageContent: txt }));              
             }
         }
@@ -268,17 +261,17 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
     private async debugCall(debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null)
     {
         try {
-            const debug = this.initDebugFile();
+            // const debug = this.initDebugFile();
 
-            let callData: IConvoDebugXMLData = debug.xml;
+            // let callData: IConvoDebugXMLData = debug.xml;
 
-            callData.conversation.message.push(this.thePrompt.toJSON());
+            // callData.conversation.message.push(this.thePrompt.toJSON());
 
-            if(debugCallback){
-                callData = await debugCallback(callData);
-            }
+            // if(debugCallback){
+            //     callData = await debugCallback(callData);
+            // }
 
-            this.debugSave(callData);
+            // this.debugSave(callData);
         
         }catch(error: Error | unknown){
             ConsoleService.log(error);
