@@ -41,7 +41,6 @@ const RWSannotations = {
 import TheCommand, {ICmdParams} from './commands/_command';
 import TheService from './services/_service';
 import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse } from './gateways/_gateway';
-import { RWSController } from './controller';
 
 import * as RWSErrorCodes from './errors';
 import * as NEST from '../nest';
@@ -91,6 +90,9 @@ export {
     RWSErrorCodes,
     ChainStreamType,
 
+    ControllerActionResponse,
+    ControllerActionErrorResponse,
+
     BaseWsResponse, ErrorWsResponse,
 
     IRWSPromptRequestExecutor,
@@ -106,7 +108,5 @@ export {
     // RWSServerPair,
     // RWSServerStarter,
 
-    NEST,
-    RWSController,
-    ControllerActionResponse, ControllerActionErrorResponse
+    NEST
 };

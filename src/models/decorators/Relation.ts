@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import TheModel, { OpModelType } from '../_model'
 
-interface IRelationOpts{
+export interface IRelationOpts{
     required?: boolean,
     relationField?: string
     relatedToField?: string,

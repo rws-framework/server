@@ -29,6 +29,7 @@ export interface OpModelType<ChildClass> {
     name: string 
     _collection: string;
     loadModels: () => IModel[];
+    getIncludes: () => {[key: string]: boolean};
     injectDBService: (dbService: DBService) => void,
     checkForInclusionWithThrow: (className: string) => void;
     checkForInclusion: (className: string) => boolean;

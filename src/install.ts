@@ -12,7 +12,7 @@ import { AppConfigService } from './index';
 import TimeSeriesModel from './models/types/TimeSeriesModel';
 import { rwsPath } from '@rws-framework/console';
 
-const { log, color, rwsLog } = ConsoleService;
+const { log, color } = ConsoleService;
 
 
 
@@ -36,18 +36,19 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
         const modelMetadata: IMetaOpts = modelMetadatas[key].metadata;            
         const requiredString = modelMetadata.required ? '' : '?';  
       
-        const annotationType: string = modelMetadatas[key].annotationType;
+        const annotationType: string = modelMetadatas[key].annotationType;        
       
         if(annotationType === 'Relation'){
             section += `\t${key} ${modelMetadata.relatedTo}${requiredString} @relation(fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
             section += `\t${modelMetadata.relationField} String${requiredString} @db.ObjectId\n`;
         }else if (annotationType === 'InverseRelation'){        
-            section += `\t${key} ${modelMetadata.inversionModel}[]`;
+            section += `\t${key} ${modelMetadata.inversionModel}[]\n`;            
+
         }else if (annotationType === 'InverseTimeSeries'){        
             section += `\t${key} String[] @db.ObjectId`;      
-        }else if (annotationType === 'TrackType'){        
+        }else if (annotationType === 'TrackType'){    
             const tags: string[] = modelMetadata.tags.map((item: string) => '@' + item);          
-            section += `\t${key} ${toConfigCase(modelMetadata)}${requiredString} ${tags.join(' ')}\n`;
+            section += `\t${key} ${toConfigCase(modelMetadata, requiredString, modelMetadata.subType)} ${tags.join(' ')}\n`;
         }
     }
 
@@ -57,26 +58,48 @@ function generateModelSections<T extends Model<T>>(constructor: new () => T): st
     return section;
 }
 
-function toConfigCase(modelType: any): string {
+function toConfigCase(modelType: any, requiredString: string, subType: any = null): string {
     const type = modelType.type;
-    const input = type.name;  
+    const input: string = type.name;  
 
-    if(input == 'Number'){
-        return 'Int';
+    let processed: string | null = null;
+
+    switch(input){
+        case 'Number':
+            processed = 'Int';
+            break;
+
+        case 'Object':
+            processed = 'Json';
+            break;    
+
+        case 'Date':
+            processed = 'DateTime';
+            break;
+
+        case 'Number':
+            break;
+        case 'Array':            
+                if(subType){                    
+                    processed = toConfigCase(subType, requiredString) + '[]';
+                    requiredString = '';
+                }else{
+                    processed = 'Json[]';
+                    requiredString = '';
+                }
+            break;
+        default:
+           
+            break;    
+    }    
+
+    if(processed){
+        return processed + requiredString
     }
-
-    if(input == 'Object'){
-        return 'Json';
-    }
-
-    if(input == 'Date'){
-        return 'DateTime';
-    }
-
 
     const firstChar = input.charAt(0).toUpperCase();
     const restOfString = input.slice(1);
-    return firstChar + restOfString;
+    return firstChar + restOfString + requiredString;
 }
 
 async function setupPrisma(cfg: IAppConfig, leaveFile = false, services: {
@@ -100,12 +123,13 @@ async function setupPrisma(cfg: IAppConfig, leaveFile = false, services: {
 
     const usermodels = await services.configService.get('user_models');
 
-    usermodels.forEach((model: any) => {    
+    ConsoleService.log('RWS SCHEMA BUILD', ConsoleService.color().blue('Building DB Models:'));
+    Object.values(usermodels).forEach((model: any) => {    
         const modelSection = generateModelSections(model);
 
-        template += '\n\n' + modelSection;  
+        template += '\n\n' + modelSection;          
 
-        ConsoleService.log('RWS SCHEMA BUILD', ConsoleService.color().blue('Building DB Model'), model.name);
+        ConsoleService.log(ConsoleService.color().yellow(model.name));
     
         if(Model.isSubclass(model, TimeSeriesModel)){      
      
@@ -159,24 +183,24 @@ async function setupRWS(cfg: IAppConfig, generateProjectFiles: boolean = true): 
             if(!fs.existsSync(`${workspaceRoot}/.eslintrc.json`)){
                 const rcjs: string = fs.readFileSync(`${moduleDir}/.setup/_base.eslintrc.json`, 'utf-8');
                 fs.writeFileSync(`${workspaceRoot}/.eslintrc.json`, rcjs.replace('{{backend_dir}}', executionDir));
-                rwsLog(color().green('RWS CLI'), 'Installed eslint base workspace config file.');
+                log(color().green('RWS CLI'), 'Installed eslint base workspace config file.');
             }
         
             if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
                 const rcjs: string = fs.readFileSync(`${moduleDir}/.setup/_base.eslintrc.json`, 'utf-8');
                 fs.writeFileSync(`${executionDir}/.eslintrc.json`, rcjs.replace('{{backend_dir}}', executionDir));                            
-                rwsLog(color().green('RWS CLI'), 'Installed eslint backend workspace config file.');
+                log(color().green('RWS CLI'), 'Installed eslint backend workspace config file.');
             }    
         }else{
             if(!fs.existsSync(`${executionDir}/.eslintrc.json`)){
                 fs.copyFileSync(`${moduleDir}/.eslintrc.json`, `${executionDir}/.eslintrc.json`);
-                rwsLog(color().green('RWS CLI'), 'Installed eslint config file.');
+                log(color().green('RWS CLI'), 'Installed eslint config file.');
             }  
         } 
     
         if(!fs.existsSync(`${executionDir}/tsconfig.json`)){
             fs.copyFileSync(`${moduleDir}/.setup/tsconfig.json`, `${executionDir}/tsconfig.json`);
-            rwsLog(color().green('RWS CLI'), 'Installed tsconfig.');
+            log(color().green('RWS CLI'), 'Installed tsconfig.');
         }
     }
     return;

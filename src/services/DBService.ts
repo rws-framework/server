@@ -4,8 +4,8 @@ import ITimeSeries from '../models/types/ITimeSeries';
 import { IModel } from '../models/_model';
 import {AppConfigService} from '../index';
 import {ConsoleService} from './ConsoleService';
-import { RWSError } from '../errors';
-import { Injectable } from '@rws-framework/server/nest';
+import { Error500, RWSError } from '../errors';
+import { Injectable } from '../../nest';
 
 interface IDBClientCreate {
   dbUrl?: string;
@@ -49,7 +49,7 @@ class DBService {
             this.connected = true;
         } catch (e: Error | any){            
             ConsoleService.error('PRISMA CONNECTION ERROR', e);            
-            throw new RWSError(e, 'PRISMA CONNECTION ERROR');
+            throw new Error500(e, 'PRISMA CONNECTION ERROR');
         }
     }
 
@@ -148,14 +148,14 @@ class DBService {
             where: {
                 id: model_id,
             },
-            data: data,
+            data: data    
         });    
 
         return await this.findOneBy(collection, { id: model_id });
     }
   
 
-    async findOneBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null): Promise<IModel|null>
+    async findOneBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null, include: {[key: string]: boolean} = null): Promise<IModel|null>
     {    
         const params: any = { where: conditions };
 
@@ -164,10 +164,18 @@ class DBService {
             fields.forEach((fieldName: string) => {        
                 params.select[fieldName] = true;
             });    
+
+            if(include){
+                params.select = {...(params.select), ...include}
+            }
         }
 
         if(ordering){
             params.orderBy = ordering;
+        }
+
+        if(!fields && include){
+            params.include = include;
         }
 
         return await this.getCollectionHandler(collection).findFirst(params);
@@ -179,7 +187,7 @@ class DBService {
         return;
     }
 
-    async findBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null): Promise<IModel[]>
+    async findBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null, include: {[key: string]: boolean} = null): Promise<IModel[]>
     {    
         const params: any ={ where: conditions };
 
@@ -188,10 +196,18 @@ class DBService {
             fields.forEach((fieldName: string) => {        
                 params.select[fieldName] = true;
             });    
+
+            if(include){
+                params.select = {...(params.select), ...include}
+            }
         }
 
         if(ordering){
             params.orderBy = ordering;
+        }
+
+        if(!fields && include){            
+            params.include = include;
         }
 
         return await this.getCollectionHandler(collection).findMany(params);

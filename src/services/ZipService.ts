@@ -48,7 +48,7 @@ class ZipService {
     
             // Assuming you want to save the Blob to a file
             const blob = await writer.getData();
-            fs.writeFileSync(outputPath, Buffer.from(await blob.arrayBuffer()));
+            fs.writeFileSync(outputPath, Buffer.from(await blob.arrayBuffer()).toString());
     
             this.consoleService.log(`${this.consoleService.color().green('[RWS Lambda Service]')} ZIP created at: ${outputPath}`);
             return outputPath;

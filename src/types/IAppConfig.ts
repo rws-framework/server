@@ -2,6 +2,8 @@
 import RWSModel from '../models/_model';
 import { RWSModuleType } from './IRWSModule';
 
+import { OpModelType } from '../models/_model';
+
 export default interface IAppConfig {   
     features?: {
         ws_enabled?: boolean
@@ -9,7 +11,9 @@ export default interface IAppConfig {
         test_routes?: boolean
         ssl?: boolean
         auth?: boolean
+        logging?: boolean
     } 
+    logs_directory?: string,
     mongo_url: string
     mongo_db: string
     port: number
@@ -18,8 +22,7 @@ export default interface IAppConfig {
     test_port?: number
     test_ws_port?: number
     ssl_cert: string
-    ssl_key: string
-    logs_directory?: string
+    ssl_key: string    
     secret_key: string
     user_class: any
     user_models?: {[modelName: string]: any}

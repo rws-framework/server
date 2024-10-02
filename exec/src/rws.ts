@@ -1,7 +1,8 @@
-import { RWSAppCommands, AppConfigService, IAppConfig, RWSCommand, ICmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
+import {  AppConfigService, IAppConfig, RWSCommand, IRWSCmdParams, ConsoleService, MD5Service, UtilsService } from '../../src/index';
 import { rwsPath } from '@rws-framework/console';
-const { error, color, rwsLog } = ConsoleService;
+const { error, color, log } = ConsoleService;
 
+import RWSCommands from '../../src/commands';
 
 const fs = require('fs');
 const path = require('path');
@@ -10,7 +11,7 @@ const command = process.argv[2];
 // process.argv[3] will be the parameter args for commands
 const cmdParamString = process.argv[3];
 const cmdArgs = !!cmdParamString && cmdParamString.length > 2 ? cmdParamString.split(',') : [];
-const commandExecutionArgs: ICmdParams = { _default: null, _extra_args: {} };
+const commandExecutionArgs: IRWSCmdParams = { _default: null, _extra_args: {} };
 
 if (cmdParamString && cmdParamString.indexOf('=') > -1) {
     cmdArgs.forEach((arg) => {
@@ -27,12 +28,14 @@ if (cmdParamString && cmdParamString.indexOf('=') > -1) {
     commandExecutionArgs._default = cmdParamString;
 }
 
-if(process.argv.length > 4){
-    for(let i =  4; i <= process.argv.length-1;i++){
+if(process.argv.length > 3){
+    for(let i = 3; i <= process.argv.length-1;i++){
         const parameter: string = process.argv[i].replace('--', '').replace('-', '_');
         const valuePair: string[] = parameter.split('=');
 
-        commandExecutionArgs._extra_args[valuePair[0]] = valuePair.length > 1 ? valuePair[1] : true;
+        if(valuePair && valuePair[0]){
+            commandExecutionArgs._extra_args[valuePair[0]] = valuePair.length > 1 ? valuePair[1] : true;
+        }
     }
 }
 
@@ -42,7 +45,7 @@ const packageRootDir = rwsPath.findRootWorkspacePath(executionDir);
 const moduleCfgDir = `${packageRootDir}/node_modules/.rws`;
 
 function getConfig(configPath: string, cfgPathFile: string | null = null) 
-{    
+{                
     if(cfgPathFile === null){
         cfgPathFile = configPath;
 
@@ -58,7 +61,7 @@ function getConfig(configPath: string, cfgPathFile: string | null = null)
     }                    
 
     
-    const frameworkConfigFactory: () => IAppConfig = require( '@cwd/src/' + configPath).default;
+    const frameworkConfigFactory: () => IAppConfig = require( '@clientWorkDir/src/' + configPath).default;
 
     return frameworkConfigFactory();
 }
@@ -68,15 +71,12 @@ const main = async () => {
     const cfgPathFile = '_cfg_path';
     const execDir = path.resolve(rwsPath.findPackageDir(__dirname), 'exec');
     const tsFile = path.resolve(execDir,'src') + '/rws.ts';
-    let APP_CFG: IAppConfig | null = null;
 
-    if (command === 'init') {
-        const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config';       
+    const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config';       
 
-        const cfgData = getConfig(configPath, cfgPathFile);        
+    const cfgData = command === 'init' ? getConfig(configPath,  cfgPathFile) :  getConfig(UtilsService.getRWSVar(cfgPathFile) as string);
 
-        APP_CFG = cfgData;
-    }
+    const APP_CFG: IAppConfig | null = cfgData;
 
     let savedHash = null;
     const consoleClientHashFile = `${moduleCfgDir}/_cli_hash`;
@@ -86,25 +86,24 @@ const main = async () => {
     }
 
     if(!APP_CFG){
-        APP_CFG = getConfig('config/config', cfgPathFile);                
-    }
-
-    if(!APP_CFG){
         throw new Error(`No config for CLI. Try to initialize with "yarn rws init config=path/to/config.ts" (config path from ${process.cwd()}/src)`);
     }    
 
-    const APP = getAppConfig(APP_CFG);
-    const commands: RWSCommand[] = [...RWSAppCommands, ...APP.get('commands')];    
+    const APP = new AppConfigService();
+    const MD5: any = null;
 
-    APP_CFG.commands = commands;
+     
+    const commands: RWSCommand[] = [...RWSCommands, ...APP.get('commands')];    
+
+    // APP_CFG.commands = commands;
 
     const theCommand = commands.find((cmd: RWSCommand) => cmd.getName() == command);
     
     commandExecutionArgs._rws_config = APP_CFG;
 
-    const cmdFiles = MD5Service.batchGenerateCommandFileMD5(moduleCfgDir);    
+    const cmdFiles = MD5.batchGenerateCommandFileMD5(moduleCfgDir);    
 
-    const currentSumHashes = MD5Service.md5((await MD5Service.generateCliHashes([tsFile, ...cmdFiles])).join('/'));
+    const currentSumHashes = MD5.md5((await MD5.generateCliHashes([tsFile, ...cmdFiles])).join('/'));
 
     if (!savedHash || currentSumHashes !== savedHash) {        
         fs.writeFileSync(consoleClientHashFile, currentSumHashes);

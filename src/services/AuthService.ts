@@ -1,4 +1,4 @@
-import { Injectable } from '@rws-framework/server/nest';
+import { Injectable } from '../../nest';
 
 import jwt from 'jsonwebtoken';
 
@@ -11,23 +11,24 @@ import { ConsoleService } from './ConsoleService';
 import { ConfigService } from '@nestjs/config';
 
 type UserListManager = {
-    getList: () => {[clientId: string]: Partial<IDbUser>}
-    get: (socketId: string) => Partial<IDbUser> | null
-    set: (socketId: string, val: IAuthUser) => void
-    getToken: (socketId: string) => string | null
-    setToken: (socketId: string, val: string) => void
-    getTokenList: () => {[socketId: string]: string;}
-    disconnectClient: (socketId: string) => void
+    getList: () => {[clientId: string]: IDbUser}
+    get: (userId: string) => IDbUser | null
+    set: (val: IDbUser) => void
+    getToken: (userId: string) => string | null
+    setToken: (userId: string, val: string) => void
+    getTokenList: () => {[userId: string]: string;}
+    disconnectClient: (userId: string) => void
 }
+
 
 const _DEFAULTS_USER_LIST_MANAGER = {
     getList: () => { return {} },
-    get: (socketId: string): IDbUser | null => null,
-    set: (socketId: string, val: IAuthUser) => {},
-    getToken: (socketId: string): string | null => null,
-    setToken: (socketId: string, val: string) => {},
+    get: (userId: string): IDbUser | null => null,
+    set: (val: IDbUser) => {},
+    getToken: (userId: string): string | null => null,
+    setToken: (userId: string, val: string) => {},
     getTokenList: () => { return {} },
-    disconnectClient: (socketId: string) => {}
+    disconnectClient: (userId: string) => {}
 }
 
 @Injectable()
@@ -36,7 +37,12 @@ class AuthService {
 
     constructor(private configService: ConfigService, private consoleService: ConsoleService) {}
 
-    async authenticate(clientId: string, jwt_token: string | null = null, userListManager: UserListManager = _DEFAULTS_USER_LIST_MANAGER): Promise<boolean | null>
+    getUser<UserType extends IDbUser>(userList : JWTUsers, userId: string): UserType | null
+    {
+        return !!userList[userId] ? (userList[userId] as UserType) : null
+    }
+
+    async authenticate(jwt_token: string | null = null, userListManager: UserListManager = _DEFAULTS_USER_LIST_MANAGER): Promise<boolean | null>
     {
         if(jwt_token){
             jwt_token =  jwt_token.replace('Bearer ', '');            
@@ -47,16 +53,16 @@ class AuthService {
         if(!jwt_token){                
             return null;         
         }        
+        
+        const parsedUser: IDbUser = await this.authorize<typeof UserClass>(jwt_token, UserClass);
 
-        if(!userListManager.get(clientId)){
-            try{
-                const userClass = await this.authorize<typeof UserClass>(jwt_token, UserClass);
-                this.setUser(userClass);
+        if(!userListManager.get(parsedUser.mongoId)){
+            try{                                
 
-                userListManager.set(clientId, userClass);   
+                userListManager.set(parsedUser);   
 
-                if(!userListManager.getToken(clientId)){    
-                    userListManager.setToken(clientId, jwt_token);
+                if(!userListManager.getToken(parsedUser.mongoId)){
+                    userListManager.setToken(parsedUser.mongoId, jwt_token);
                 }
                 
                 return true;
@@ -67,16 +73,13 @@ class AuthService {
             }
         }
 
-        if(!userListManager.get(clientId)){
-            userListManager.disconnectClient(clientId);    
+        if(!userListManager.get(parsedUser.mongoId)){
+            userListManager.disconnectClient(parsedUser.mongoId);    
             return false;
         }      
-    }
-    
-    setUser<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(user: IUser): AuthService 
-    {
-        this.user = user;
+    }  
 
+<<<<<<< HEAD
         return this;
     }
 
@@ -87,8 +90,12 @@ class AuthService {
 
     async authorize<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
         const secretKey: string = this.configService.get('secret_key');
+=======
+    async authorize<IUser extends IAuthUserTokenManager>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
+        const secretKey: string = getConfigService().get('secret_key');
+>>>>>>> master
             
-        return await new Promise((approve, reject) => {
+        return await new Promise((approve: (user: IUser) => void, reject) => {
             jwt.verify(token, secretKey, (error, tokenData) => {
                 if (error) {                        
                     reject(error);
@@ -96,7 +103,9 @@ class AuthService {
                 }
                 
                 const theUser: IUser = new constructor(tokenData);
+
             
+<<<<<<< HEAD
                 if(this.getUser()){
                     approve(this.getUser() as IUser);
                     return;
@@ -107,6 +116,15 @@ class AuthService {
                         approve(theUser);
                     });
                 }                            
+=======
+                theUser.loadDbUser().then((userModel: Model<any>) => {                                            
+                    ConsoleService.log('RWS AUTH LOG', ConsoleService.color().green('Loaded RWS User Model'), userModel.id);
+                    
+                    approve(theUser);
+                }).catch((e: Error | unknown) => {
+                    reject(e);
+                });                    
+>>>>>>> master
             });
         });
     }

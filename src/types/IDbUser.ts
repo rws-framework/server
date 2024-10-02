@@ -1,7 +1,5 @@
-import Model from "../models/_model";
-
-export default interface IDbUser {    
+export default interface IDbUser<T = any> {    
     mongoId: string
-    loadDbUser: () => Promise<void>
-    db: Model<any>;    
+    loadDbUser: () => Promise<T>
+    db: T;    
 }

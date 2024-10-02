@@ -10,30 +10,11 @@ import {
 
 import { RWSFillService } from '../index';
 
-import { Injectable } from '@rws-framework/server/nest'; 
+import { Injectable } from '../../nest'; 
 import {UtilsService, ConsoleService, AuthService } from '../index';
 import { ConfigService } from '@nestjs/config';
 
-interface JSONMessage{
-    method: string;
-    msg: any;
-    user_id: string;
-}
-
-interface BaseResponse<T> {
-    data?: T;
-    success: boolean;
-    error?: Error;
-}
-
-interface ErrorResponse extends BaseResponse<any> {
-    error: Error;
-    success: false;
-}
-
-interface SocketWsResponse<T> extends BaseResponse<T> {
-    method: string;
-}
+import { JSONMessage, ErrorResponse, SocketWsResponse, BaseResponse } from '../types/SocketTypes';
 
 @WebSocketGateway()
 @Injectable()
@@ -96,7 +77,7 @@ export abstract class RWSGateway implements ITheGateway{
 
     throwError(method: string, socket: Socket, error: Error | any): void
     {        
-        console.log(JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))));
+        ConsoleService.log({method})
 
         socket.emit(method, this.sendJson({
             error: JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))),

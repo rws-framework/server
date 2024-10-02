@@ -7,7 +7,11 @@
 // import path from 'path';
 // import fs from 'fs';
 
+<<<<<<< HEAD
 // const executionDir = process.cwd();
+=======
+const { log, color } = ConsoleService;
+>>>>>>> master
 
 // class InitCommand extends Command 
 // {

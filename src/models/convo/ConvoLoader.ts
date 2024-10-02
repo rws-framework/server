@@ -11,7 +11,6 @@ import { v4 as uuid } from 'uuid';
 import {AppConfigService} from '../../index';
 import { BaseChain, ConversationChain } from 'langchain/chains';
 import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from '../prompts/_prompt';
-
 import { Error500 } from '../../errors';
 import { ChainValues } from '@langchain/core/utils/types';
 
@@ -30,7 +29,7 @@ interface ISplitterParams {
 }
 
 const logConvo = (txt: string) => {
-    ConsoleService.rwsLog(ConsoleService.color().blueBright(txt));
+    ConsoleService.log(ConsoleService.color().blueBright(txt));
 };
 
 interface IBaseLangchainHyperParams {
@@ -108,7 +107,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
     }
 
 
-    async splitDocs(filePath: string, params: ISplitterParams)
+    async splitDocs(filePath: Blob, params: ISplitterParams, callbackFunc: (docs: Document[]) => Promise<void>, splitCheck: boolean,loadedParts: () => Promise<string[]> = async () => [])
     {
 
         if(!this.embeddings){
@@ -117,40 +116,38 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
 
         const splitDir = ConvoLoader.debugSplitDir(this.getId());
 
-        if(!fs.existsSync(splitDir)){
-            console.log(`Split dir ${ConsoleService.color().magentaBright(splitDir)} doesn't exist. Splitting docs...`);
-            this.loader = new TextLoader(filePath);
+        if(splitCheck){
+            try {
+                ConsoleService.log(`Split for conversation "${this.convo_id}" doesn't exist. Splitting docs...`);
+                this.loader = new TextLoader(filePath);
 
-            this.docSplitter = new RecursiveCharacterTextSplitter({
-                chunkSize: params.chunkSize, // The size of the chunk that should be split.
-                chunkOverlap: params.chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
-                separators: params.separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
-            });
+                this.docSplitter = new RecursiveCharacterTextSplitter({
+                    chunkSize: params.chunkSize, // The size of the chunk that should be split.
+                    chunkOverlap: params.chunkOverlap, // Adding overalap so that if a text is broken inbetween, next document may have part of the previous document 
+                    separators: params.separators // In this case we are assuming that /n/n would mean one whole sentence. In case there is no nearing /n/n then "." will be used instead. This can be anything that helps derive a complete sentence .
+                });
 
-            fs.mkdirSync(splitDir, { recursive: true });
-            
-            const orgDocs = await this.loader.load();
-            const splitDocs = await this.docSplitter.splitDocuments(orgDocs);
+                fs.mkdirSync(splitDir, { recursive: true });
+                
+                const orgDocs = await this.loader.load();
+                const splitDocs = await this.docSplitter.splitDocuments(orgDocs);                
 
-            const avgCharCountPre = this.avgDocLength(orgDocs);
-            const avgCharCountPost = this.avgDocLength(splitDocs);
+                const avgCharCountPre = this.avgDocLength(orgDocs);
+                const avgCharCountPost = this.avgDocLength(splitDocs);
 
-            logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
-            logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
-            logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
+                logConvo(`Average length among ${orgDocs.length} documents loaded is ${avgCharCountPre} characters.`);
+                logConvo(`After the split we have ${splitDocs.length} documents more than the original ${orgDocs.length}.`);
+                logConvo(`Average length among ${orgDocs.length} documents (after split) is ${avgCharCountPost} characters.`);
 
-            this.docs = splitDocs;            
+                this.docs = splitDocs;                                      
 
-            let i = 0;
-            this.docs.forEach((doc: Document) => {
-                fs.writeFileSync(this.debugSplitFile(i), doc.pageContent);
-                i++;
-            });
-        }else{
-            const splitFiles = fs.readdirSync(splitDir);
-            
-            for(const filePath of splitFiles) {
-                const txt = fs.readFileSync(splitDir + '/' + filePath, 'utf-8');
+                await callbackFunc(this.docs);
+            }catch(e: Error | unknown){
+                fs.rmdirSync(splitDir);
+                throw new Error500(e);
+            }
+        }else{           
+            for(const txt of (await loadedParts())) {
                 this.docs.push(new Document({ pageContent: txt }));              
             }
         }
@@ -227,7 +224,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
     {           
         // const _self = this;
         // const chain = this.chain() as ConversationChain;  
-        // console.log('call stream');      
+        // ConsoleService.log('call stream');      
         // const stream = await chain.call(values, [{
         //         handleLLMNewToken(token: string) {
         //             yield token;
@@ -235,7 +232,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
         //     }
         // ]);
         
-        // console.log('got stream');
+        // ConsoleService.log('got stream');
 
 
 
@@ -270,29 +267,29 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
 
     async similaritySearch(query: string, splitCount: number): Promise<string>
     {
-        console.log('Store is ready. Searching for embedds...');            
+        ConsoleService.log('Store is ready. Searching for embedds...');            
         const texts = await this.getStore().getFaiss().similaritySearchWithScore(`${query}`, splitCount);
-        console.log('Found best parts: ' + texts.length);
+        ConsoleService.log('Found best parts: ' + texts.length);
         return texts.map(([doc, score]: [any, number]) => `${doc['pageContent']}`).join('\n\n');    
     }
     
     private async debugCall(debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null)
     {
         try {
-            const debug = this.initDebugFile();
+            // const debug = this.initDebugFile();
 
-            let callData: IConvoDebugXMLData = debug.xml;
+            // let callData: IConvoDebugXMLData = debug.xml;
 
-            callData.conversation.message.push(this.thePrompt.toJSON());
+            // callData.conversation.message.push(this.thePrompt.toJSON());
 
-            if(debugCallback){
-                callData = await debugCallback(callData);
-            }
+            // if(debugCallback){
+            //     callData = await debugCallback(callData);
+            // }
 
-            this.debugSave(callData);
+            // this.debugSave(callData);
         
         }catch(error: Error | unknown){
-            console.log(error);
+            ConsoleService.log(error);
         }
     }
 

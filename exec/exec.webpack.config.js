@@ -1,14 +1,14 @@
 const path = require('path');
-const keysTransformer = require('ts-transformer-keys/transformer').default;
+// const keysTransformer = require('ts-transformer-keys/transformer').default;
 const webpackFilters = require('../webpackFilters');
-const rootDir = process.cwd();
 const { rwsPath } = require('@rws-framework/console');
-const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()), 'node_modules')
+const rootWorkspace = rwsPath.findRootWorkspacePath(process.cwd());
+const rootPackageNodeModules = path.resolve(rootWorkspace, 'node_modules');
 const modules_setup = [rootPackageNodeModules];
-const {rwsExternals} = require('../_rws_externals');
+const { rwsExternals } = require('../_rws_externals');
+const { findRWSWorkDir } = require('./_helpers');
+const fs = require('fs');
 const buildDir = path.resolve(__dirname, 'dist', 'vendors', 'build', 'cli');
-
-// console.log('WHERE', path.resolve(__dirname) + '/src/rws.ts');
 
 module.exports = {
     entry: path.resolve(__dirname) + '/src/rws.ts',
@@ -24,7 +24,7 @@ module.exports = {
       symlinks: false,
       modules: modules_setup,
       alias: {                 
-        '@cwd' : process.cwd()      
+        '@clientWorkDir' : findRWSWorkDir()
       },
       extensions: ['.ts', '.js', '.node'],      
     },
@@ -35,15 +35,7 @@ module.exports = {
             loader: 'ts-loader',
             options: {              
               allowTsInNodeModules: true,
-              configFile: path.resolve(__dirname, 'exec.tsconfig.json'), 
-              // compilerOptions: {
-              //   baseUrl: rwsPath..findRootWorkspacePath(process.cwd())
-              // },             
-              getCustomTransformers: program => ({
-                  before: [
-                      keysTransformer(program)
-                  ]
-              })
+              configFile: path.resolve(__dirname, 'exec.tsconfig.json'),           
             },
             exclude: /node_modules\/(?!\@rws-framework\/server)|\.d\.ts$/,
           },

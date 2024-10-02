@@ -7,36 +7,14 @@ import { ChainValues } from '@langchain/core/utils/types';
 
 import { IContextToken } from '../../types/IContextToken';
 
-interface IPromptHyperParameters {
-    temperature: number,
-    top_k?: number,
-    top_p?: number,
-    [key: string]: number
-}
-
-interface IRWSHistoryMessage { 
-    content: string, creator: string 
-}
-
-interface ILLMChunk {
-    content: string
-    status: string
- }
-
-interface IPromptParams {
-    hyperParameters?: IPromptHyperParameters;
-    input?: string;
-    modelId: string;
-    modelType: string;
-}
-
-interface IPromptEnchantment {
-    enhancementId: string,
-    enhancementName: string,
-    enhancementParams: any,
-    input: string
-    output: string
-}
+import {
+    IPromptHyperParameters,
+    IRWSHistoryMessage,
+    ILLMChunk,
+    IPromptParams,
+    IPromptEnchantment,
+    IRWSPromptJSON
+} from '../types/IPrompt';
 
 type IPromptSender = (prompt: RWSPrompt) => Promise<void>;
 
@@ -52,21 +30,6 @@ interface IRWSSinglePromptRequestExecutor {
 
 interface IRWSPromptStreamExecutor {
     promptStream: (prompt: RWSPrompt, read: (chunk: ILLMChunk) => void, end: () => void, debugVars?: any) => Promise<RWSPrompt>
-}
-
-interface IRWSPromptJSON {
-    input: string;
-    enhancedInput: IPromptEnchantment[];
-    sentInput: string;
-    originalInput: string;
-    output: string;
-    modelId: string;
-    modelType: string;
-    multiTemplate: PromptTemplate;
-    convo: { id: string };
-    hyperParameters: IPromptHyperParameters;
-    created_at: string;
-    var_storage: any;
 }
 
 type ChainStreamType = AsyncGenerator<IterableReadableStream<ChainValues>>;
@@ -239,13 +202,13 @@ class RWSPrompt {
     async requestWith(executor: IRWSPromptRequestExecutor, intruderPrompt: string = null, debugVars: any = {}): Promise<void>
     {
         this.sentInput = this.input;
-        const returnedRWS = await executor.promptRequest(this, null, intruderPrompt, debugVars);
+        const returnedRWS = await executor.promptRequest(this, intruderPrompt, debugVars);
         this.output = returnedRWS.readOutput();        
     }
 
     async singleRequestWith(executor: IRWSSinglePromptRequestExecutor, intruderPrompt: string = null, ensureJson: boolean = false): Promise<void>
     {        
-        await executor.singlePromptRequest(this, null, intruderPrompt, ensureJson);
+        await executor.singlePromptRequest(this, intruderPrompt, ensureJson);
         this.sentInput = this.input;
     }
 
@@ -281,8 +244,7 @@ class RWSPrompt {
             // Assuming 'event' has a specific structure. Adjust according to actual event structure.
             if ('chunk' in event && event.chunk.bytes) {
                 const chunk = JSON.parse(Buffer.from(event.chunk.bytes).toString('utf-8'));
-                if(first){
-                    console.log('chunk', chunk);
+                if(first){                    
                     first = false;
                 }
 

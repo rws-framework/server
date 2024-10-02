@@ -1,8 +1,12 @@
-import { Injectable } from '@rws-framework/server/nest';
+import { Injectable } from '../../nest';
 
 import chalk, { Chalk } from 'chalk';
 import pino, { Logger as PinoLogger } from 'pino';
 import pinoPretty from 'pino-pretty'; // Import pino-pretty
+import moment from 'moment';
+import { rwsPath } from '@rws-framework/console';
+import fs from 'fs';
+import {AppConfigService} from '../index';
 
 interface IJSONColors {
   [codeLement: string]: keyof Chalk
@@ -13,7 +17,7 @@ class ConsoleService {
     private isEnabled: boolean = true;
     private originalLogMethods?: any = null;
 
-    constructor() {        
+    constructor(private configService: AppConfigService) {        
         this.log = this.log.bind(this);
         this.error = this.error.bind(this);
         this.warn = this.warn.bind(this);
@@ -29,14 +33,14 @@ class ConsoleService {
 
     static log(...obj: any[]): void {
         const _self = this;
-
+    
         let typeBucket: any[] = [];
         let lastType: string | null = null;
 
         obj.forEach((elem: any, index: number) => {
             const elemType = typeof elem;
             const isLast: boolean = index == obj.length - 1;
-
+    
             if (((lastType === null && obj.length === 1) || (lastType !== null && lastType !== elemType)) || isLast) {
                 if (lastType === 'string') {
                     console.log(typeBucket.join(' '));
@@ -57,11 +61,11 @@ class ConsoleService {
                     }
                     return;
                 }
-            }
-
-            typeBucket.push(elem);
-
-            lastType = elemType; // Update the lastType for the next iteration
+            }else{
+                lastType = elemType; // Update the lastType for the next iteration
+                typeBucket.push(elem);
+            }                  
+           
         });
     } 
     
@@ -245,6 +249,12 @@ class ConsoleService {
         console.error = (...args: string[]) => { };
     };
 
+    public overrideGlobalLogs = () => {
+        console.log = this.log;
+        console.warn = this.warn;
+        console.error = this.error;
+    };
+
     private restoreOriginalLogFunctions = () => {
         const originalF = this.originalLogMethods;
 
@@ -253,11 +263,56 @@ class ConsoleService {
         console.error = originalF.error;
     };
 
-    updateLogLine(message: string) {
-        process.stdout.write('\r' + message);
+    private getDateString(): string
+    {
+        return chalk.blue(`[${moment().format('Y-MM-DD H:mm:ss')}]`);
     }
 
-  
+    updateLogLine(message: string) {
+        process.stdout.write('\r' + message);
+    }  
+
+    stripAnsiCodes(text: any): string {
+       try {
+        if(typeof text !== 'string'){
+            text = JSON.stringify(text);
+        }
+
+        // This regex matches all ANSI color codes
+        const ansiRegex = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
+        return text.replace(ansiRegex, '');
+
+       } catch (e: Error | unknown){        
+          this.error(e);
+       }  
+    }
+
+    squishLines(lines: string[]): string
+    {
+        return lines.map((line: any) => typeof line !== 'string' ? JSON.stringify(line, null, 2) : line).map((line: any) => this.stripAnsiCodes(line)).join(' ')
+    }
+
+    writeToLogFile(lines: string[]) {
+        if(!this.configService.get('features').logging){
+            return;
+        }
+
+        
+        const logsPath = this.configService.get('logs_directory') || rwsPath.findRootWorkspacePath(process.cwd()) + '/node_modules/.rws/logs';
+        const logFile = `${logsPath}/rws_log_${moment().format('Y_MM_DD')}.log`;
+    
+        if (!fs.existsSync(logsPath)) {
+            fs.mkdirSync(logsPath, { recursive: true });
+        }
+
+        const logContent = this.squishLines(lines) + '\n';
+    
+        fs.appendFile(logFile, logContent, (err) => {
+            if (err) {
+                console.error('Error writing to log file:', err);
+            }
+        });
+    }    
 }
 
 
