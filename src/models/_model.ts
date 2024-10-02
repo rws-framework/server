@@ -510,7 +510,7 @@ class Model<ChildClass> implements IModel{
         return newModel;
     }
 
-    static loadModels():{ [key: string]: IModel }
+    static loadModels(): Model<any>[]
     {        
         return this.configService.get('user_models');
     }
@@ -525,7 +525,8 @@ class Model<ChildClass> implements IModel{
         this.configService = configService;
     }
 
-    loadModels(): { [key: string]: IModel } {
+    loadModels(): Model<any>[]
+    {
         return Model.loadModels();
     }
 }

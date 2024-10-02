@@ -1,5 +1,6 @@
 import { ConfigService as AppConfigService } from "@nestjs/config";
 import { DBService } from "../../services/DBService";
+import Model from "../_model";
 
 export interface IModel{
     [key: string]: any;
@@ -28,11 +29,14 @@ export interface OpModelType<ChildClass> {
     new(data?: any | null): ChildClass;
     name: string 
     _collection: string;
-    loadModels: () => IModel[];
+    loadModels: () => Model<any>[];
     getIncludes: () => {[key: string]: boolean};
     injectDBService: (dbService: DBService) => void,
     checkForInclusionWithThrow: (className: string) => void;
     checkForInclusion: (className: string) => boolean;
     configService?: AppConfigService;
     dbService?: DBService;
+    findAll: any;
+    findBy: any;
+    find: any;
 }

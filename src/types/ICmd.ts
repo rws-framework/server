@@ -1,3 +1,5 @@
+import IAppConfig from "./IAppConfig"
+
 export interface ICmdParams {
     [key: string]: any
     verbose?: boolean

@@ -177,9 +177,13 @@ class RWSPrompt {
         return this.multiTemplate;
     }
 
-    setConvo(convo: ConvoLoader<BedrockChat>): RWSPrompt
+    setConvo(convo: ConvoLoader<BedrockChat>, credentials: {
+        region: string,
+        accessKeyId: string,
+        secretAccessKey: string
+    }): RWSPrompt
     {
-        this.convo = convo.setPrompt(this);        
+        this.convo = convo.setPrompt(this, credentials);        
         
         return this;
     }

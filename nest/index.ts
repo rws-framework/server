@@ -6,7 +6,8 @@ import common, {
 } from '@nestjs/common';
 import { Command, Positional } from 'nestjs-command';
 import core, { NestFactory } from '@nestjs/core';
-import { Controller } from '../src/controller';
+import { Controller as NestController, ControllerOptions as NestControllerOptions } from '@nestjs/common';
+import { RWSControllerDecorator, RWSControllerOptions } from '../src/controller/_decorator';
 
 const NestRoute = {
     Get, Post, Delete, Put
@@ -15,11 +16,18 @@ const NestRoute = {
 const CLI = { Command, Positional }
 
 export {    
-    common, core, 
-    Controller, 
-    NestRoute,
+    common, core,     
+    NestRoute,    
+    NestFactory, Module,    
+    NestController as NativeNestController,
+    NestControllerOptions as NativeNestOptions,
+
     CLI,
+
+    RWSControllerDecorator as Controller, 
+    RWSControllerOptions as ControllerOptions,
+
     Injectable,
-    NestFactory, Module,
-    Param, Body
+    Param, Body,
+    Get, Post, Delete, Put
 };

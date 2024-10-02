@@ -1,7 +1,5 @@
 import 'reflect-metadata';
 
-import TheModel, { OpModelType } from '../_model'
-
 export interface IRelationOpts{
     required?: boolean,
     relationField?: string
@@ -28,4 +26,3 @@ function Relation(relatedTo: string, relationField: string = null, required: boo
 }
 
 export default Relation;
-export {IRelationOpts};

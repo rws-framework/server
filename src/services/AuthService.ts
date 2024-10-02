@@ -9,6 +9,7 @@ import IDbUser from '../types/IDbUser';
 import Model from '../models/_model';
 import { ConsoleService } from './ConsoleService';
 import { ConfigService } from '@nestjs/config';
+import { JWTUsers } from '../types/ServerTypes';
 
 type UserListManager = {
     getList: () => {[clientId: string]: IDbUser}
@@ -36,11 +37,6 @@ class AuthService {
     private user: Partial<IDbUser>
 
     constructor(private configService: ConfigService, private consoleService: ConsoleService) {}
-
-    getUser<UserType extends IDbUser>(userList : JWTUsers, userId: string): UserType | null
-    {
-        return !!userList[userId] ? (userList[userId] as UserType) : null
-    }
 
     async authenticate(jwt_token: string | null = null, userListManager: UserListManager = _DEFAULTS_USER_LIST_MANAGER): Promise<boolean | null>
     {
@@ -77,11 +73,7 @@ class AuthService {
             userListManager.disconnectClient(parsedUser.mongoId);    
             return false;
         }      
-    }  
-
-<<<<<<< HEAD
-        return this;
-    }
+    }          
 
     getUser<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(req: any = null): IUser
     {
@@ -90,10 +82,6 @@ class AuthService {
 
     async authorize<IUser extends { db: Model<any>, loadDbUser: () => Promise<void> }>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
         const secretKey: string = this.configService.get('secret_key');
-=======
-    async authorize<IUser extends IAuthUserTokenManager>(token: string, constructor: new (data: any) => IUser ): Promise<IUser> {
-        const secretKey: string = getConfigService().get('secret_key');
->>>>>>> master
             
         return await new Promise((approve: (user: IUser) => void, reject) => {
             jwt.verify(token, secretKey, (error, tokenData) => {
@@ -105,7 +93,6 @@ class AuthService {
                 const theUser: IUser = new constructor(tokenData);
 
             
-<<<<<<< HEAD
                 if(this.getUser()){
                     approve(this.getUser() as IUser);
                     return;
@@ -116,15 +103,6 @@ class AuthService {
                         approve(theUser);
                     });
                 }                            
-=======
-                theUser.loadDbUser().then((userModel: Model<any>) => {                                            
-                    ConsoleService.log('RWS AUTH LOG', ConsoleService.color().green('Loaded RWS User Model'), userModel.id);
-                    
-                    approve(theUser);
-                }).catch((e: Error | unknown) => {
-                    reject(e);
-                });                    
->>>>>>> master
             });
         });
     }

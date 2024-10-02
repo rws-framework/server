@@ -2,25 +2,20 @@ import { TextLoader } from 'langchain/document_loaders/fs/text';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableConfig, Runnable } from '@langchain/core/runnables';
-import { BaseMessage } from '@langchain/core/messages';
 import {VectorStoreService} from '../../services/VectorStoreService';
 import {ConsoleService} from '../../services/ConsoleService';
 import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
 import { Document } from 'langchain/document';
 import { v4 as uuid } from 'uuid';
-import {AppConfigService} from '../../index';
 import { BaseChain, ConversationChain } from 'langchain/chains';
 import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from '../prompts/_prompt';
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { Error500 } from '../../errors';
 import { ChainValues } from '@langchain/core/utils/types';
 
 import xml2js from 'xml2js';
 import fs from 'fs';
 import path from 'path';
-import { InjectServices } from '../../helpers/InjectServices';
-import { BaseChatModel, BaseChatModelCallOptions  } from "@langchain/core/language_models/chat_models";
-import { AIMessageChunk } from "@langchain/core/messages";
-import { BaseLanguageModelInterface, BaseLanguageModelInput } from '@langchain/core/language_models/base';
 
 interface ISplitterParams {
     chunkSize: number
@@ -63,9 +58,6 @@ interface IEmbeddingsHandler<T extends object> {
     storeEmbeddings: (embeddings: any, convoId: string) => Promise<void>
 }
 
-type LLMType = BaseLanguageModelInterface | Runnable<BaseLanguageModelInput, string> | Runnable<BaseLanguageModelInput, BaseMessage>;
-
-@InjectServices([VectorStoreService])
 class ConvoLoader<LLMChat extends BaseChatModel> {
     private loader: TextLoader;
     private docSplitter: RecursiveCharacterTextSplitter;    
@@ -81,12 +73,9 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
     private chatConstructor: new (config: any) => LLMChat;
     private thePrompt: RWSPrompt;
 
-    vectorStoreService: VectorStoreService;
-    configService: AppConfigService;
-
-    public _baseSplitterParams: ISplitterParams;    
+    public _baseSplitterParams: ISplitterParams;
     
-    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler<any> | null = null, convoId: string | null = null, baseSplitterParams: ISplitterParams = {
+    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler<any>, convoId: string | null = null, baseSplitterParams: ISplitterParams = {
         chunkSize:400, chunkOverlap:80, separators: ['/n/n','.']
     }){
         this.embeddings = embeddings;
@@ -107,13 +96,8 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
     }
 
 
-    async splitDocs(filePath: Blob, params: ISplitterParams, callbackFunc: (docs: Document[]) => Promise<void>, splitCheck: boolean,loadedParts: () => Promise<string[]> = async () => [])
+    async splitDocs(vectorStoreService: VectorStoreService, filePath: Blob, params: ISplitterParams, callbackFunc: (docs: Document[]) => Promise<void>, splitCheck: boolean,loadedParts: () => Promise<string[]> = async () => [])
     {
-
-        if(!this.embeddings){
-            throw new Error500('No embeddings provided for ConvoLoader\'s constructor. ConvoLoader.splitDocs aborting...');
-        }
-
         const splitDir = ConvoLoader.debugSplitDir(this.getId());
 
         if(splitCheck){
@@ -152,7 +136,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
             }
         }
         
-        this.store = await this.vectorStoreService.createStore(this.docs, await this.embeddings.generateEmbeddings());
+        this.store = await vectorStoreService.createStore(this.docs, await this.embeddings.generateEmbeddings());
     }
 
     getId(): string {
@@ -173,16 +157,20 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
         return this._initiated;
     }
 
-    setPrompt(prompt: RWSPrompt): ConvoLoader<LLMChat>
+    setPrompt(prompt: RWSPrompt, credentials: {
+        region: string,
+        accessKeyId: string,
+        secretAccessKey: string
+    }): ConvoLoader<LLMChat>
     {
         this.thePrompt = prompt;        
 
         this.llmChat = new this.chatConstructor({
             streaming: true,
-            region: this.configService.get('aws_bedrock_region'),  
+            region: credentials.region,  
             credentials: {  
-                accessKeyId: this.configService.get('aws_access_key'),  
-                secretAccessKey: this.configService.get('aws_secret_key'),  
+                accessKeyId: credentials.accessKeyId,  
+                secretAccessKey: credentials.secretAccessKey,  
             },  
             model: 'anthropic.claude-v2',            
             maxTokens: prompt.getHyperParameter<number>('max_tokens_to_sample'),
