@@ -6,39 +6,8 @@ import { AppConfigService } from '../index';
 import TrackType, {IMetaOpts} from './decorators/TrackType';
 import { InjectServices } from '../helpers/InjectServices';
 
-interface IModel{
-    [key: string]: any;
-    id: string | null;
-    save: () => void;
-    getCollection: () => string | null;
-    configService?: AppConfigService;
-    dbService?: DBService;
-}
+import { IModel, DBModelFindOneType, DBModelFindManyType, OpModelType } from "./types/IRWSModel";
 
-type DBModelFindOneType<ChildClass> = (
-    this: OpModelType<ChildClass>,
-    conditions: any,
-    fields?: string[],
-    ordering?: { [fieldName: string]: string }
-) => Promise<ChildClass | null>;
-
-type DBModelFindManyType<ChildClass> = (
-    this: OpModelType<ChildClass>,
-    conditions: any,
-    fields?: string[],
-    ordering?: { [fieldName: string]: string }
-) => Promise<ChildClass | null>;
-
-interface OpModelType<ChildClass> {
-    new(data?: any | null): ChildClass;
-    name: string 
-    _collection: string;
-    loadModels: () => Model<any>[];
-    checkForInclusionWithThrow: (className: string) => void;
-    checkForInclusion: (className: string) => boolean;
-    configService?: AppConfigService;
-    dbService?: DBService;
-}
 
 const ModelServices = [AppConfigService, DBService];
 
@@ -112,7 +81,7 @@ class Model<ChildClass> implements IModel{
 
     static checkForInclusion(this: OpModelType<any>, checkModelType: string): boolean
     {        
-        return this.loadModels().find((definedModel: Model<any>) => {
+        return this.loadModels().find((definedModel: IModel) => {
             return definedModel.name === checkModelType
         }) !== undefined
     }
@@ -478,6 +447,16 @@ class Model<ChildClass> implements IModel{
     static loadModels(): Model<any>[]
     {        
         return this.configService.get('user_models');
+    }
+
+    static injectDBService(dbService: DBService): void
+    {        
+        this.dbService = dbService;
+    }
+
+    static injectConfigService(configService: AppConfigService): void
+    {        
+        this.configService = configService;
     }
 
     loadModels(): Model<any>[]

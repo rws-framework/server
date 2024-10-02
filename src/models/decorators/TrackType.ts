@@ -1,19 +1,8 @@
 import 'reflect-metadata';
 
-interface ITrackerOpts{
-    required?: boolean,
-    relationField?: string
-    relatedToField?: string,
-    relatedTo?: string,
-    inversionModel?: string,
-  }
+import { TrackedRWSTypes, ITrackerOpts, IMetaOpts } from '../types/TrackedTypes';
   
-  interface IMetaOpts extends ITrackerOpts{
-    type: any,
-    tags: string[]
-  }
-  
-function TrackType(type: any, opts: ITrackerOpts | null = null, tags: string[] = []) {
+function TrackType(type: TrackedRWSTypes & { _collection?: string }, opts: ITrackerOpts | null = null, tags: string[] = []) {
     if(!opts){
         opts = {
             required: false
