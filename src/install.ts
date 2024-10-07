@@ -113,7 +113,7 @@ async function setupPrisma(cfg: IAppConfig, leaveFile = false)
 
     template += `\ndatasource db {\n
     provider = "${dbType}"\n
-    url = env("DATABASE_URL")\n    
+    url = env("DB_URL")\n    
   }\n\n`;
 
     const usermodels = await AppConfigService.get('user_models');

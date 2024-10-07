@@ -109,7 +109,7 @@ async function generateCliClient(command, args)
     }    
 
     const tsFile = path.resolve(webpackPath, 'exec','src') + '/rws.ts';    
-    
+
     if(await shouldReload(tsFile)){
         if(forceReload){
             warn('[RWS] Forcing CLI client reload...');

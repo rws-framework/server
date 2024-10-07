@@ -56,6 +56,9 @@ async function init<PassedUser extends IDbUser>(cfg: IAppConfig, serverOptions: 
 
     const theServer: ServerControlSet = await ServerService.initializeApp<PassedUser>(rwsAppOpts);
 
+    const dbUrl = await AppConfigService.get('mongo_url');  
+    process.env.DB_URL = dbUrl;
+
     const wsStart = async () => {
         return (await theServer.websocket.starter());
     };

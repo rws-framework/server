@@ -72,8 +72,8 @@ const main = async () => {
     const execDir = path.resolve(rwsPath.findPackageDir(__dirname), 'exec');
     const tsFile = path.resolve(execDir,'src') + '/rws.ts';
 
-    const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config';       
-
+    const configPath: string = commandExecutionArgs.config || commandExecutionArgs._default  || 'config/config';          
+    console.log(configPath);
     const cfgData = command === 'init' ? getConfig(configPath,  cfgPathFile) :  getConfig(UtilsService.getRWSVar(cfgPathFile) as string);
 
     const APP_CFG: IAppConfig | null = cfgData;
