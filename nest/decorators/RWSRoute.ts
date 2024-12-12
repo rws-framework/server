@@ -1,7 +1,7 @@
 import { applyDecorators, Get, Post, Put, Delete } from '@nestjs/common';
 import 'reflect-metadata';
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../../src/routing/routes';
-import routes from '../../../test/src/routing/routes';
+import { BootstrapRegistry } from './RWSBootstrap';
 
 export interface IHTTProuteParams {
     name: string;
@@ -18,11 +18,11 @@ function isPrefixedRoutes(entry: RWSHTTPRoutingEntry): entry is IPrefixedHTTProu
 export function RWSRoute(params: IHTTProuteParams) {
     return applyDecorators(
         function methodDecorator(target: Object, propertyKey: string | symbol, descriptor: PropertyDescriptor): void {
-            const existingMetadata = Reflect.getMetadata('routes', target.constructor) || {};
-            
+            const existingMetadata = Reflect.getMetadata('routes', target.constructor) || {};            
+            const routes = BootstrapRegistry.getConfig().http_routes as RWSHTTPRoutingEntry[];
             // Find the matching route configuration
             let routeConfig: IHTTProute | undefined;
-            for (const entry of routes as RWSHTTPRoutingEntry[]) {
+            for (const entry of routes) {
                 if (isPrefixedRoutes(entry)) {
                     const route = entry.routes.find(r => r.name === params.name);
                     if (route) {

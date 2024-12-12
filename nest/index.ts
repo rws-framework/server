@@ -7,6 +7,7 @@ import { Command, Positional } from 'nestjs-command';
 import core, { NestFactory } from '@nestjs/core';
 import { Controller } from '../src/controller';
 import { RWSRoute } from './decorators/RWSRoute';
+import { RWSBootstrap, BootstrapRegistry } from './decorators/RWSBootstrap';
 const NestRoute = {
     Get, Post, Delete, Put
 }
@@ -20,5 +21,7 @@ export {
     CLI,
     Injectable,
     NestFactory, Module,
-    RWSRoute
+    RWSRoute,
+    RWSBootstrap,
+    BootstrapRegistry
 };

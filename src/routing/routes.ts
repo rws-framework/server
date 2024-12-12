@@ -10,6 +10,7 @@ interface IHTTProute {
 
 interface IPrefixedHTTProutes {
     prefix: string;
+    controllerName: string;
     routes: IHTTProute[];
 }
 

@@ -28,18 +28,8 @@ class RouterService {
         private consoleService: ConsoleService
     ) {}
 
-    generateRoutesFromResources(resources: IRWSResource[]): RWSHTTPRoutingEntry[] {
-        const routes: RWSHTTPRoutingEntry[] = [];
-
-        resources.forEach(resource => {
-            const resourceRoutes = this.generateResourceRoutes(resource);
-            routes.push({
-                prefix: `/api/${resource.name}`,
-                routes: resourceRoutes
-            });
-        });
-
-        return routes;
+    generateRoutesFromResources(resources: IRWSResource[]): RWSHTTPRoutingEntry[] {    
+        return [];
     }
 
     private generateResourceRoutes(resource: IRWSResource): IHTTProute[] {

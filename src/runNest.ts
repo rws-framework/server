@@ -1,4 +1,3 @@
-import { NestFactory, Module } from '../nest';
 import { DynamicModule, forwardRef, Inject, Type } from '@nestjs/common';
 import { IRWSModule, NestModulesType, RWSModuleType } from './types/IRWSModule';
 import { CommandModule } from 'nestjs-command';
@@ -10,7 +9,10 @@ import { UtilsService } from './services/UtilsService';
 import IAppConfig from './types/IAppConfig';
 import IDbUser from './types/IDbUser';
 import { DBService } from './services/DBService';
-import RWSModel from './models/_model';
+import { 
+  Module  
+} from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 
 type ServerOpts = {
   authorization?: true, 

@@ -22,8 +22,7 @@ export default interface IAppConfig {
     secret_key: string
     user_class: any
     user_models: any[]
-    resources: IRWSResource[],
-    modules: RWSModuleType[],
+    resources: IRWSResource[],    
     ws_routes: any
     http_routes: any
     front_routes?: Record<string, unknown>[],
