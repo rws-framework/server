@@ -1,11 +1,11 @@
 import HTTP from 'http';
 import HTTPS from 'https';
-import ITheSocket from './ITheGateway';
+import { ITheGateway } from './ITheGateway';
 import IDbUser from './IDbUser';
 import { IHTTProute } from '../routing/routes';
 
 type WsRoutes = {
-    [eventName: string]: new (data: any) => ITheSocket;
+    [eventName: string]: new (data: any) => ITheGateway;
 };
 
 type UserTokens = {
@@ -37,6 +37,12 @@ type ServerStarter = (callback?: () => void) => Promise<void>;
 type RWSServerPair<T> = { instance: T, starter: ServerStarter };
 type ServerControlSet<T> = { websocket: RWSServerPair<T>, http: RWSServerPair<T> };
 
+type ServerOpts = {
+    authorization?: true, 
+    transport?: string, 
+    onAuthorize?: <T extends IDbUser>(user: T, authorizationScope: 'ws' | 'http') => Promise<void>
+  }
+
 export {
     WsRoutes,
     UserTokens,
@@ -46,5 +52,6 @@ export {
     RWSServer,
     ServerStarter,
     RWSServerPair,
-    ServerControlSet
+    ServerControlSet,
+    ServerOpts
 }

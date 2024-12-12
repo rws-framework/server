@@ -1,7 +1,7 @@
 import { applyDecorators, Get, Post, Put, Delete } from '@nestjs/common';
 import 'reflect-metadata';
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../../src/routing/routes';
-import { BootstrapRegistry } from './RWSBootstrap';
+import { BootstrapRegistry } from './RWSConfigInjector';
 
 export interface IHTTProuteParams {
     name: string;

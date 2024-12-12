@@ -7,7 +7,8 @@ import { Command, Positional } from 'nestjs-command';
 import core, { NestFactory } from '@nestjs/core';
 import { Controller } from '../src/controller';
 import { RWSRoute } from './decorators/RWSRoute';
-import { RWSBootstrap, BootstrapRegistry } from './decorators/RWSBootstrap';
+import { RWSConfigInjector, BootstrapRegistry } from './decorators/RWSConfigInjector';
+import { RWSBootstrap } from './bootstrap';
 const NestRoute = {
     Get, Post, Delete, Put
 }
@@ -22,6 +23,7 @@ export {
     Injectable,
     NestFactory, Module,
     RWSRoute,
-    RWSBootstrap,
-    BootstrapRegistry
+    RWSConfigInjector,
+    BootstrapRegistry,
+    RWSBootstrap
 };

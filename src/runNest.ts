@@ -13,12 +13,9 @@ import {
   Module  
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { ServerOpts } from './types/ServerTypes';
 
-type ServerOpts = {
-  authorization?: true, 
-  transport?: string, 
-  onAuthorize?: <T extends IDbUser>(user: T, authorizationScope: 'ws' | 'http') => Promise<void>
-}
+
 
 const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
   ConfigModule.forRoot({

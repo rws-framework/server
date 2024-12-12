@@ -20,11 +20,9 @@ export class BootstrapRegistry {
     }
 }
 
-export function RWSBootstrap(config: any) {
+export function RWSConfigInjector(config: any) {
     return function (target: any) {
         BootstrapRegistry.setConfig(config);
-
-        console.log({config})
         
         // Store original main function
         const originalMain = target.prototype.main;

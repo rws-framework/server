@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { RWSHTTPRoutingEntry } from '../../src/routing/routes';
-import { BootstrapRegistry } from './RWSBootstrap';
+import { BootstrapRegistry } from './RWSConfigInjector';
 
 export function RWSController(name: string) {
     const routes = BootstrapRegistry.getConfig().http_routes as RWSHTTPRoutingEntry[];
