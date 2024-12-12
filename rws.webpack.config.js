@@ -62,7 +62,11 @@ const RWSWebpackWrapper = (config) => {
       extensions: ['.ts', '.js'],
       modules: modules_setup,
       alias: aliases,
-      plugins: WEBPACK_RESOLVE_PLUGINS
+      plugins: WEBPACK_RESOLVE_PLUGINS,
+      fallback: {
+        "kerberos": false,
+        "mongodb-client-encryption": false
+      }
     },
     module: {
       rules: [
@@ -104,6 +108,8 @@ const RWSWebpackWrapper = (config) => {
     'express': 'commonjs express',
     '@nestjs/core': 'commonjs @nestjs/core',
     '@nestjs/common': 'commonjs @nestjs/common',
+    'kerberos': 'commonjs kerberos',
+    'mongodb-client-encryption': 'commonjs mongodb-client-encryption'
     // Add other packages you want to externalize
   }
   if(isDev){

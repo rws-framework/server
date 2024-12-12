@@ -1,5 +1,21 @@
 import 'source-map-support/register';
 import { Socket } from 'socket.io';
+import { 
+    VectorStoreService, 
+    RWSVectorStore, 
+    RWSConvo, 
+    IConvoDebugXMLData, 
+    IEmbeddingsHandler, 
+    ISplitterParams,
+    ILLMChunk, 
+    IRWSPromptRequestExecutor, 
+    IRWSSinglePromptRequestExecutor, 
+    IRWSPromptStreamExecutor, 
+    IChainCallOutput, 
+    IRWSPromptJSON, 
+    ChainStreamType,
+    RWSPrompt 
+} from '@rws-framework/ai-tools';
 
 // import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './helpers/ServerBuilder';
 
@@ -18,18 +34,11 @@ import { ProcessService }from './services/ProcessService';
 import { MD5Service } from './services/MD5Service';
 import { TraversalService } from './services/TraversalService';
 import { UtilsService }  from './services/UtilsService';
-import { VectorStoreService } from './services/VectorStoreService';
-
-
-import RWSPrompt, { ILLMChunk, IRWSPromptRequestExecutor, IRWSSinglePromptRequestExecutor, IRWSPromptStreamExecutor, IChainCallOutput, IRWSPromptJSON, ChainStreamType } from './models/prompts/_prompt';
-import RWSConvo, { IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams } from './models/convo/ConvoLoader';
-import RWSVectorStore from './models/convo/VectorStore';
 
 import { InverseRelation, InverseTimeSeries, Relation, TrackType as RWSTrackType} from './models/decorators/index';
 
 import IAppConfig from './types/IAppConfig';
 import { ConfigService as AppConfigService} from '@nestjs/config';
-import { IContextToken } from './types/IContextToken';
 import IAuthUser from './types/IAuthUser';
 import IDbUser from './types/IDbUser';
 
@@ -48,6 +57,8 @@ import * as NEST from '../nest';
 import Model, { IModel } from './models/_model';
 import { ZipService } from './services/ZipService';
 import { RWSModule, } from './runNest';
+import { InjectServices } from './helpers/InjectServices';
+
 export {    
     RWSFillService,
     AppConfigService,
@@ -74,7 +85,6 @@ export {
 
     ITimeSeries,
     IAppConfig,
-    IContextToken,
     
     IAuthUser,
     IDbUser,
@@ -101,9 +111,8 @@ export {
     ISplitterParams,
     ILLMChunk,
     RWSTrackType,
-    // RWSServerPair,
-    // RWSServerStarter,
 
     NEST,
-    RWSController
+    RWSController,
+    InjectServices
 };
