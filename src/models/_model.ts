@@ -40,9 +40,6 @@ interface OpModelType<ChildClass> {
     dbService?: DBService;
 }
 
-const ModelServices = [AppConfigService, DBService];
-
-@InjectServices(ModelServices, ModelServices)
 class Model<ChildClass> implements IModel{
     configService: AppConfigService
     dbService: DBService

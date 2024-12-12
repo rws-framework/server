@@ -9,6 +9,8 @@ import { AuthService } from './services/AuthService';
 import { UtilsService } from './services/UtilsService';
 import IAppConfig from './types/IAppConfig';
 import IDbUser from './types/IDbUser';
+import { DBService } from './services/DBService';
+import RWSModel from './models/_model';
 
 type ServerOpts = {
   authorization?: true, 
@@ -33,6 +35,7 @@ export class RWSModule {
       module: RWSModule,
       imports: [...baseModules(cfg)] as unknown as NestModulesType,
       providers: [
+        DBService,
         ConfigService,
         UtilsService, 
         ConsoleService, 
@@ -40,6 +43,7 @@ export class RWSModule {
         RouterService
       ],  
       exports: [
+        DBService,
         ConfigService,
         UtilsService, 
         ConsoleService, 
@@ -64,6 +68,17 @@ export default async function bootstrap(
   const app = await NestFactory.create(nestModule.forRoot(rwsOptions));
   
   const routerService = app.get(RouterService);
+
+  const dbService = app.get(DBService);
+  const configService = app.get(ConfigService);
+
+  const models = configService.get('user_models') as any[];
+
+  for (const model of models){
+    model.dbService = dbService;
+    model.configService = configService;
+  }
+
   const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
   await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
 

@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { Collection, Db, MongoClient } from 'mongodb';
 import ITimeSeries from '../models/types/ITimeSeries';
 import { IModel } from '../models/_model';
-import {AppConfigService} from '../index';
+import { ConfigService } from '@nestjs/config';
 import {ConsoleService} from './ConsoleService';
 import { RWSError } from '../errors';
 import { Injectable } from '../../nest';
@@ -18,7 +18,7 @@ class DBService {
     private opts: IDBClientCreate = null;
     private connected = false;
 
-    constructor(private configService: AppConfigService){}
+    constructor(private configService: ConfigService){}
 
     private connectToDB(opts: IDBClientCreate = null) {
         if(opts){
