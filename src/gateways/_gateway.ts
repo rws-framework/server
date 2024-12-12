@@ -1,4 +1,3 @@
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import {ITheGateway} from '../types/ITheGateway';
 import { Server, Socket } from 'socket.io';
 
@@ -10,7 +9,7 @@ import {
 
 import { RWSFillService } from '../index';
 
-import { Injectable } from '@rws-framework/server/nest'; 
+import { Injectable } from '../../nest'; 
 import {UtilsService, ConsoleService, AuthService } from '../index';
 import { ConfigService } from '@nestjs/config';
 
@@ -57,7 +56,7 @@ export abstract class RWSGateway implements ITheGateway{
     }
     
 
-    socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
+    socket: Socket<any, any, any, any>;
     getJson(input: string): any
     {
         return JSON.parse(input);
