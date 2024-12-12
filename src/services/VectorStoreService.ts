@@ -12,4 +12,4 @@ class VectorStoreService
     }    
 }
 
-export {VectorStoreService};
+export { VectorStoreService };

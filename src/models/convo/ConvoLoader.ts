@@ -1,27 +1,27 @@
+import {AppConfigService, ConsoleService, RWSErrorCodes, InjectServices} from '@rws-framework/server';
+
+import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from '../prompts/_prompt';
+import {VectorStoreService} from '../../services/VectorStoreService';
+import RWSVectorStore, { VectorDocType } from './VectorStore';
+
+import { Document } from 'langchain/document';
+import { BaseChain, ConversationChain } from 'langchain/chains';
 import { TextLoader } from 'langchain/document_loaders/fs/text';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { BaseChatModel  } from "@langchain/core/language_models/chat_models";
+import { BaseLanguageModelInterface, BaseLanguageModelInput } from '@langchain/core/language_models/base';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { RunnableConfig, Runnable } from '@langchain/core/runnables';
 import { BaseMessage } from '@langchain/core/messages';
-import {VectorStoreService} from '../../services/VectorStoreService';
-import {ConsoleService} from '../../services/ConsoleService';
-import RWSVectorStore, { VectorDocType } from '../convo/VectorStore';
-import { Document } from 'langchain/document';
-import { v4 as uuid } from 'uuid';
-import {AppConfigService} from '../../index';
-import { BaseChain, ConversationChain } from 'langchain/chains';
-import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from '../prompts/_prompt';
-
-import { Error500 } from '../../errors';
 import { ChainValues } from '@langchain/core/utils/types';
 
+import { v4 as uuid } from 'uuid';
 import xml2js from 'xml2js';
 import fs from 'fs';
 import path from 'path';
-import { InjectServices } from '../../helpers/InjectServices';
-import { BaseChatModel, BaseChatModelCallOptions  } from "@langchain/core/language_models/chat_models";
-import { AIMessageChunk } from "@langchain/core/messages";
-import { BaseLanguageModelInterface, BaseLanguageModelInput } from '@langchain/core/language_models/base';
+
+
+const { Error500 } = RWSErrorCodes;
 
 interface ISplitterParams {
     chunkSize: number

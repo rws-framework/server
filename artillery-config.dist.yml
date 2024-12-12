@@ -1,9 +1,0 @@
-config:
-  target: 'http://your-stage-server.com'
-  phases:
-    - duration: 60
-      arrivalRate: 5
-scenarios:
-  - flow:
-      - get:
-          url: '/your-endpoint'
