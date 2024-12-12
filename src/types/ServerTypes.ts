@@ -38,7 +38,7 @@ type RWSServerPair<T> = { instance: T, starter: ServerStarter };
 type ServerControlSet<T> = { websocket: RWSServerPair<T>, http: RWSServerPair<T> };
 
 type ServerOpts = {
-    authorization?: true, 
+    authorization?: boolean, 
     transport?: string, 
     onAuthorize?: <T extends IDbUser>(user: T, authorizationScope: 'ws' | 'http') => Promise<void>
   }
