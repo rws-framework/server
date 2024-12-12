@@ -1,21 +1,6 @@
 import 'source-map-support/register';
 import { Socket } from 'socket.io';
-import { 
-    VectorStoreService, 
-    RWSVectorStore, 
-    RWSConvo, 
-    IConvoDebugXMLData, 
-    IEmbeddingsHandler, 
-    ISplitterParams,
-    ILLMChunk, 
-    IRWSPromptRequestExecutor, 
-    IRWSSinglePromptRequestExecutor, 
-    IRWSPromptStreamExecutor, 
-    IChainCallOutput, 
-    IRWSPromptJSON, 
-    ChainStreamType,
-    RWSPrompt 
-} from '@rws-framework/ai-tools';
+
 
 // import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './helpers/ServerBuilder';
 
@@ -77,8 +62,7 @@ export {
     MD5Service,
     ZipService,    
     TraversalService,    
-    UtilsService,    
-    VectorStoreService,    
+    UtilsService,     
     ProcessService,
 
     TimeSeriesModel,
@@ -91,25 +75,9 @@ export {
     
     Socket,          
     RWSannotations,
-    JSONMessage as RWSJSONMessage,        
-    
-    RWSVectorStore,
-    RWSConvo,
-    RWSPrompt,    
+    JSONMessage as RWSJSONMessage,         
     RWSErrorCodes,
-    ChainStreamType,
-
     BaseWsResponse, ErrorWsResponse,
-
-    IRWSPromptRequestExecutor,
-    IRWSSinglePromptRequestExecutor,
-    IRWSPromptStreamExecutor,
-    IChainCallOutput,
-    IConvoDebugXMLData,
-    IEmbeddingsHandler,
-    IRWSPromptJSON,
-    ISplitterParams,
-    ILLMChunk,
     RWSTrackType,
 
     NEST,

@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { Injectable } from '@rws-framework/server/nest';  
+import { Injectable } from '../../nest';  
 
 @Injectable()
 class TraversalService {

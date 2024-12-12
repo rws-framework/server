@@ -1,4 +1,4 @@
-import { Injectable } from '@rws-framework/server/nest';
+import { Injectable } from '../../nest';
 
 import chalk, { Chalk } from 'chalk';
 import pino, { Logger as PinoLogger } from 'pino';

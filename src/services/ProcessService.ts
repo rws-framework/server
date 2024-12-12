@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 import {ConsoleService} from './ConsoleService';
-import { Injectable } from '@rws-framework/server/nest';  
+import { Injectable } from '../../nest';  
 import readline from 'readline';
 import { rwsShell } from '@rws-framework/console';
 

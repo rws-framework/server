@@ -1,9 +1,12 @@
 interface IHTTProute {
     name: string;
     path: string;  
-    noParams?: boolean;  
+    method: string;
+    noParams?: boolean;
+    options?: {
+        public?: boolean;
+    };
 }
-
 
 interface IPrefixedHTTProutes {
     prefix: string;
@@ -11,6 +14,5 @@ interface IPrefixedHTTProutes {
 }
 
 type RWSHTTPRoutingEntry = IHTTProute | IPrefixedHTTProutes;
-
 
 export { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry };

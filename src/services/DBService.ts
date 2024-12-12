@@ -5,7 +5,7 @@ import { IModel } from '../models/_model';
 import {AppConfigService} from '../index';
 import {ConsoleService} from './ConsoleService';
 import { RWSError } from '../errors';
-import { Injectable } from '@rws-framework/server/nest';
+import { Injectable } from '../../nest';
 
 interface IDBClientCreate {
   dbUrl?: string;

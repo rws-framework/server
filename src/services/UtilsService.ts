@@ -2,7 +2,7 @@ import TheService from './_service';
 import fs from 'fs';
 import path from 'path';
 import { rwsPath } from '@rws-framework/console';
-import { Injectable } from '@rws-framework/server/nest';  
+import { Injectable } from '../../nest';  
 
 import { SourceMapConsumer, RawSourceMap  } from 'source-map';
 

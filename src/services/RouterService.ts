@@ -8,9 +8,10 @@ import { IHTTProuteParams } from '../routing/annotations/Route';
 import path from 'path';
 import { RWSError } from '../errors/index';
 import { ConsoleService } from './ConsoleService';
-import { Injectable } from '@rws-framework/server/nest';  
-import { AppConfigService } from './AppConfigService';
+import { Injectable } from '../../nest';  
+import { ConfigService } from '@nestjs/config';
 import { Controller } from '@nestjs/common/interfaces';
+import { IRWSResource } from '../types/IRWSResource';
 
 
 type RouteEntry = {[key: string]: [any, CallableFunction, IHTTProuteParams, string]};
@@ -22,13 +23,142 @@ interface IControllerRoutes {
   delete: RouteEntry;
 }
 
-
-
 @Injectable()
 class RouterService{  
+    constructor(
+        private configService: ConfigService, 
+        private consoleService: ConsoleService
+    ) {}
 
-    constructor(private configService: AppConfigService, private consoleService: ConsoleService){}
+    generateRoutesFromResources(resources: IRWSResource[]): RWSHTTPRoutingEntry[] {
+        const routes: RWSHTTPRoutingEntry[] = [];
 
+        resources.forEach(resource => {
+            const resourceRoutes = this.generateResourceRoutes(resource);
+            routes.push({
+                prefix: `/api/${resource.name}`,
+                routes: resourceRoutes
+            });
+        });
+
+        return routes;
+    }
+
+    private generateResourceRoutes(resource: IRWSResource): IHTTProute[] {
+        const routes: IHTTProute[] = [];
+        const endpoints = resource.endpoints || {
+            create: true,
+            read: true,
+            update: true,
+            delete: true,
+            list: true
+        };
+
+        // Standard CRUD routes
+        if (endpoints.create) {
+            routes.push({
+                name: `${resource.name}:create`,
+                path: '/',
+                method: 'POST'
+            });
+        }
+
+        if (endpoints.read) {
+            routes.push({
+                name: `${resource.name}:read`,
+                path: '/:id',
+                method: 'GET'
+            });
+        }
+
+        if (endpoints.update) {
+            routes.push({
+                name: `${resource.name}:update`,
+                path: '/:id',
+                method: 'PUT'
+            });
+        }
+
+        if (endpoints.delete) {
+            routes.push({
+                name: `${resource.name}:delete`,
+                path: '/:id',
+                method: 'DELETE'
+            });
+        }
+
+        if (endpoints.list) {
+            routes.push({
+                name: `${resource.name}:list`,
+                path: '/list',
+                method: 'GET'
+            });
+        }
+
+        // Custom routes
+        if (resource.custom_routes) {
+            resource.custom_routes.forEach(customRoute => {
+                routes.push({
+                    name: `${resource.name}:${customRoute.handler}`,
+                    path: customRoute.path,
+                    method: customRoute.method
+                });
+            });
+        }
+
+        return routes;
+    }
+
+    async assignRoutes(app: express.Express, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]> {
+        const controllerRoutes: IControllerRoutes = {
+            get: {}, post: {}, put: {}, delete: {}
+        };        
+
+        controllerList.forEach((controllerInstance: Controller) => {          
+            const controllerMetadata = this.getRouterAnnotations(controllerInstance.constructor as Controller);
+          
+            if(controllerMetadata) {            
+                Object.keys(controllerMetadata).forEach((key: string) => {
+                    if(controllerMetadata[key].annotationType !== 'Route') {
+                        return;    
+                    }
+                    this.setControllerRoutes(controllerInstance, controllerMetadata, controllerRoutes, key, app);
+                });
+            }
+        });      
+
+        const routes = this.flattenRoutes(routesPackage);
+
+        routes.forEach((route: IHTTProute) => {          
+            Object.keys(controllerRoutes).forEach((_method: string) => {
+                const actions = controllerRoutes[_method as keyof IControllerRoutes];                           
+                if(!actions[route.name]) {
+                    return;
+                }        
+                this.addRouteToServer(actions, route);
+            });
+        });
+
+        return routes;
+    }
+
+    private flattenRoutes(routesPackage: RWSHTTPRoutingEntry[]): IHTTProute[] {
+        let routes: IHTTProute[] = [];
+
+        routesPackage.forEach((item: RWSHTTPRoutingEntry) => {   
+            if ('prefix' in item && 'routes' in item && Array.isArray(item.routes)) {
+                routes = [...routes, ...item.routes.map((subRouteItem: IHTTProute): IHTTProute => ({
+                    path: item.prefix + subRouteItem.path,
+                    name: subRouteItem.name,
+                    method: subRouteItem.method
+                }))];
+            } else {
+                routes.push(item as IHTTProute);
+            }        
+        });  
+
+        return routes;
+    }
 
     static responseTypeToMIME(responseType: string){
         switch (responseType){
@@ -40,79 +170,7 @@ class RouterService{
     getRouterAnnotations(constructor:  Controller): Record<string, {annotationType: string, metadata: any}> {    
         const annotationsData: Record<string, {annotationType: string, metadata: any}> = {};
   
-        // const propertyKeys: string[] = Reflect.getMetadataKeys(constructor.prototype).map((item: string): string => {
-        //     return item.split(':')[1];
-        // });
-        
-        // propertyKeys.forEach(key => {
-        //     const annotations: string[] = ['Route'];
-  
-        //     annotations.forEach(annotation => {
-        //         const metadataKey = `${annotation}:${String(key)}`;
-          
-        //         const meta = Reflect.getMetadata(metadataKey, constructor.prototype);
-            
-        //         if (meta) {
-        //             annotationsData[String(key)] = {annotationType: annotation, metadata: meta};
-        //         }
-        //     });                 
-        // });
-  
         return annotationsData;
-    }
-
-    async assignRoutes(app: express.Express, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]>
-    {                
-        const controllerRoutes: IControllerRoutes = {
-            get: {}, post: {}, put: {}, delete: {}
-        };        
-
-        controllerList.forEach((controllerInstance: Controller) => {          
-            const controllerMetadata: Record<string, {annotationType: string, metadata: any}> = this.getRouterAnnotations(controllerInstance.constructor as Controller);
-          
-            if(controllerMetadata){            
-                Object.keys(controllerMetadata).forEach((key: string) => {
-                    if(controllerMetadata[key].annotationType !== 'Route'){
-                        return;    
-                    }
-
-                    this.setControllerRoutes(controllerInstance, controllerMetadata, controllerRoutes, key, app);
-                });
-            }
-        });      
-
-        let routes: IHTTProute[] = [];
-
-        routesPackage.forEach((item: RWSHTTPRoutingEntry) => {   
-            if ('prefix' in item && 'routes' in item && Array.isArray(item.routes)) {
-                // Handle the case where item is of type IPrefixedHTTProutes
-                routes = [...routes, ...item.routes.map((subRouteItem: IHTTProute): IHTTProute => {
-                    const subRoute: IHTTProute = {
-                        path: item.prefix + subRouteItem.path,
-                        name: subRouteItem.name
-                    };
-          
-                    return subRoute;
-                })];
-            } else {
-                // Handle the case where item is of type IHTTProute
-                routes.push(item as IHTTProute);
-            }        
-        });          
-      
-        routes.forEach((route: IHTTProute) => {          
-            Object.keys(controllerRoutes).forEach((_method: string) => {
-                const actions = controllerRoutes[_method as keyof IControllerRoutes];                           
-
-                if(!actions[route.name]){
-                    return;
-                }        
-                                          
-                this.addRouteToServer(actions, route);
-            });
-        });
-
-        return routes;
     }
 
     private addRouteToServer(actions: RouteEntry, route: IHTTProute){
@@ -125,7 +183,6 @@ class RouterService{
 
         appMethod(route.path, async (req: Request, res: Response) => {
             try {
-
                 const controllerMethodReturn = await routeMethod({
                     req: req,
                     query: req.query,
@@ -226,9 +283,6 @@ class RouterService{
 
     getRoute(routePath: string, routes: IHTTProute[]): IHTTProute | null
     {
-
-        // const front_routes = appConfig().get('front_routes');
-
         const foundRoute = routes.find((item: IHTTProute) => {
             return item.path.indexOf(routePath) > -1 && !item.noParams;
         });      

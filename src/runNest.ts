@@ -1,10 +1,14 @@
-import { NestFactory, Module } from '@rws-framework/server/nest';
-import { AppConfigService,  AuthService,  ConsoleService,  IAppConfig, IDbUser, RWSFillService, UtilsService } from '@rws-framework/server';
-
+import { NestFactory, Module } from '../nest';
 import { DynamicModule, forwardRef, Inject, Type } from '@nestjs/common';
 import { IRWSModule, NestModulesType, RWSModuleType } from './types/IRWSModule';
 import { CommandModule } from 'nestjs-command';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RouterService } from './services/RouterService';
+import { ConsoleService } from './services/ConsoleService';
+import { AuthService } from './services/AuthService';
+import { UtilsService } from './services/UtilsService';
+import IAppConfig from './types/IAppConfig';
+import IDbUser from './types/IDbUser';
 
 type ServerOpts = {
   authorization?: true, 
@@ -28,8 +32,20 @@ export class RWSModule {
     return {
       module: RWSModule,
       imports: [...baseModules(cfg)] as unknown as NestModulesType,
-      providers: [ConfigService, UtilsService, ConsoleService, AuthService],  
-      exports: [ConfigService, UtilsService, ConsoleService, AuthService],    
+      providers: [
+        ConfigService,
+        UtilsService, 
+        ConsoleService, 
+        AuthService,
+        RouterService
+      ],  
+      exports: [
+        ConfigService,
+        UtilsService, 
+        ConsoleService, 
+        AuthService,
+        RouterService
+      ],    
     };
   }
 
@@ -38,10 +54,18 @@ export class RWSModule {
   }
 }
 
-export default async function bootstrap(nestModule:any , cfgRunner: () => IAppConfig, opts: ServerOpts = {}) {
+export default async function bootstrap(
+  nestModule: any, 
+  cfgRunner: () => IAppConfig, 
+  opts: ServerOpts = {},
+  controllers: any[] = []
+) {
   const rwsOptions = cfgRunner();
   const app = await NestFactory.create(nestModule.forRoot(rwsOptions));
   
+  const routerService = app.get(RouterService);
+  const routes = routerService.generateRoutesFromResources(rwsOptions.http_routes || []);
+  await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
+
   await app.listen(rwsOptions.port);
 }
-

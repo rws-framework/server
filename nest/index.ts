@@ -6,7 +6,7 @@ import common, {
 import { Command, Positional } from 'nestjs-command';
 import core, { NestFactory } from '@nestjs/core';
 import { Controller } from '../src/controller';
-
+import { RWSRoute } from './decorators/RWSRoute';
 const NestRoute = {
     Get, Post, Delete, Put
 }
@@ -19,5 +19,6 @@ export {
     NestRoute,
     CLI,
     Injectable,
-    NestFactory, Module
+    NestFactory, Module,
+    RWSRoute
 };

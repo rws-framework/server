@@ -1,6 +1,6 @@
 import TheService from './_service';
 import { ConsoleService } from './ConsoleService';
-import { Injectable } from '@rws-framework/server/nest';  
+import { Injectable } from '../../nest';  
 
 import path from 'path';
 import fs from 'fs';

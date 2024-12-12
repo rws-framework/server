@@ -1,4 +1,4 @@
-import { Injectable } from '@rws-framework/server/nest';  
+import { Injectable } from '../../nest';  
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
