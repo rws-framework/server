@@ -1,4 +1,7 @@
-import {AppConfigService, ConsoleService, RWSErrorCodes, InjectServices} from '@rws-framework/server';
+import 'reflect-metadata';
+
+import {AppConfigService, ConsoleService, RWSErrorCodes} from '@rws-framework/server';
+import { InjectServices } from '@rws-framework/server/src/helpers/InjectServices';
 
 import RWSPrompt, { IRWSPromptJSON, ILLMChunk } from '../prompts/_prompt';
 import {VectorStoreService} from '../../services/VectorStoreService';
