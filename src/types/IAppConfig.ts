@@ -1,5 +1,6 @@
 
 import { RWSModuleType } from './IRWSModule';
+import { IRWSResource } from './IRWSResource';
 
 export default interface IAppConfig {   
     features?: {
@@ -21,6 +22,7 @@ export default interface IAppConfig {
     secret_key: string
     user_class: any
     user_models: any[]
+    resources: IRWSResource[],
     modules: RWSModuleType[],
     ws_routes: any
     http_routes: any

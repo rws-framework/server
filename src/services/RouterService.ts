@@ -1,10 +1,7 @@
 import 'reflect-metadata';
-import express, { Request, Response } from 'express';
 import TheService from './_service';
-
 import { IHTTProute, RWSHTTPRoutingEntry } from '../routing/routes';
 import { IHTTProuteParams } from '../routing/annotations/Route';
-
 import path from 'path';
 import { RWSError } from '../errors/index';
 import { ConsoleService } from './ConsoleService';
@@ -12,9 +9,10 @@ import { Injectable } from '../../nest';
 import { ConfigService } from '@nestjs/config';
 import { Controller } from '@nestjs/common/interfaces';
 import { IRWSResource } from '../types/IRWSResource';
+import { INestApplication, Type } from '@nestjs/common';
+import { Get, Post, Put, Delete, Controller as NestController } from '@nestjs/common';
 
-
-type RouteEntry = {[key: string]: [any, CallableFunction, IHTTProuteParams, string]};
+type RouteEntry = {[key: string]: [any, string, IHTTProuteParams, string]};
 
 interface IControllerRoutes {
   get: RouteEntry;
@@ -24,7 +22,7 @@ interface IControllerRoutes {
 }
 
 @Injectable()
-class RouterService{  
+class RouterService {  
     constructor(
         private configService: ConfigService, 
         private consoleService: ConsoleService
@@ -54,7 +52,6 @@ class RouterService{
             list: true
         };
 
-        // Standard CRUD routes
         if (endpoints.create) {
             routes.push({
                 name: `${resource.name}:create`,
@@ -95,7 +92,6 @@ class RouterService{
             });
         }
 
-        // Custom routes
         if (resource.custom_routes) {
             resource.custom_routes.forEach(customRoute => {
                 routes.push({
@@ -109,7 +105,7 @@ class RouterService{
         return routes;
     }
 
-    async assignRoutes(app: express.Express, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]> {
+    async assignRoutes(app: INestApplication, routesPackage: RWSHTTPRoutingEntry[], controllerList: Controller[]): Promise<IHTTProute[]> {
         const controllerRoutes: IControllerRoutes = {
             get: {}, post: {}, put: {}, delete: {}
         };        
@@ -122,20 +118,21 @@ class RouterService{
                     if(controllerMetadata[key].annotationType !== 'Route') {
                         return;    
                     }
-                    this.setControllerRoutes(controllerInstance, controllerMetadata, controllerRoutes, key, app);
+                    this.setControllerRoutes(controllerInstance, controllerMetadata, controllerRoutes, key);
                 });
             }
         });      
 
         const routes = this.flattenRoutes(routesPackage);
 
+        // Create dynamic controllers for each route
         routes.forEach((route: IHTTProute) => {          
             Object.keys(controllerRoutes).forEach((_method: string) => {
                 const actions = controllerRoutes[_method as keyof IControllerRoutes];                           
                 if(!actions[route.name]) {
                     return;
                 }        
-                this.addRouteToServer(actions, route);
+                this.createRouteController(app, actions, route);
             });
         });
 
@@ -167,122 +164,141 @@ class RouterService{
         }    
     }
 
-    getRouterAnnotations(constructor:  Controller): Record<string, {annotationType: string, metadata: any}> {    
-        const annotationsData: Record<string, {annotationType: string, metadata: any}> = {};
-  
-        return annotationsData;
+    getRouterAnnotations(constructor: Controller): Record<string, {annotationType: string, metadata: any}> {    
+        return Reflect.getMetadata('routes', constructor) || {};
     }
 
-    private addRouteToServer(actions: RouteEntry, route: IHTTProute){
- 
-        const [routeMethod, appMethod, routeParams] = actions[route.name];                                
-      
-        if(!appMethod){
-            return;
-        }        
+    private createRouteController(app: INestApplication, actions: RouteEntry, route: IHTTProute) {
+        const [routeMethod, methodType, routeParams] = actions[route.name];
+        const configService = this.configService;
+        const consoleService = this.consoleService;
 
-        appMethod(route.path, async (req: Request, res: Response) => {
-            try {
-                const controllerMethodReturn = await routeMethod({
-                    req: req,
-                    query: req.query,
-                    params: route.noParams ? [] : req.params,
-                    data: req.body,
-                    res: res       
-                });     
+        // Create a dynamic controller class
+        @NestController(route.path)
+        class DynamicController {
+            constructor(
+                private readonly configService: ConfigService,
+                private readonly consoleService: ConsoleService
+            ) {}
 
-                res.setHeader('Content-Type', RouterService.responseTypeToMIME(routeParams.responseType));  
+            private prepareResponse(res: any, status: number, routeParams: IHTTProuteParams, output: any) {
+                if(routeParams.responseType === 'json' || !routeParams.responseType){                
+                    return { statusCode: status, ...output };
+                }                                              
 
-                let status = 200;
-
-                if(controllerMethodReturn instanceof RWSError){
-                    status = controllerMethodReturn.getCode();
+                if(routeParams.responseType === 'html' && this.configService.get('pub_dir')){          
+                    const filePath = path.join(this.configService.get('pub_dir'), output.template_name + '.html');
+                    return res.sendFile(filePath);
                 }
 
-                this.sendResponseWithStatus(res, status, routeParams, controllerMethodReturn);          
-          
-                return;
-            }catch(err: Error | RWSError | any){   
-                let errMsg;          
-                let stack;
-
-                if(err.printFullError){
-                    err.printFullError();
-                    errMsg = err.getMessage();
-            
-                    stack = err.getStack();
-                }else{
-                    errMsg = err.message;
-                    this.consoleService.error(errMsg);
-                    this.consoleService.log(err.stack); 
-                    stack = err.stack;      
-                    err.message = errMsg;     
-                }                 
-
-                const code = err.getCode ? err.getCode() : 500;
-          
-                this.sendResponseWithStatus(res, code, routeParams, {
-                    success: false,
-                    data: {
-                        error: {
-                            code: code,
-                            message: errMsg,
-                            stack
-                        }
-                    }
-                });          
+                return { statusCode: status };
             }
-        });
-    }
 
-    private sendResponseWithStatus(res: Response, status: number, routeParams: IHTTProuteParams, output: any)
-    {
-        if(routeParams.responseType === 'json' || !routeParams.responseType){                
-            res.status(status).send(output);
-            return;
-        }                                              
+            async handler(req: any, res: any) {
+                try {
+                    const controllerMethodReturn = await routeMethod({
+                        req,
+                        query: req.query,
+                        params: route.noParams ? [] : req.params,
+                        data: req.body,
+                        res
+                    });     
 
-        if(routeParams.responseType === 'html' && this.configService.get('pub_dir')){          
-            res.status(status).sendFile(path.join(this.configService.get('pub_dir'),  output.template_name + '.html'));
-            return;
+                    const contentType = RouterService.responseTypeToMIME(routeParams.responseType);
+                    res.type(contentType);
+
+                    let status = 200;
+                    if(controllerMethodReturn instanceof RWSError){
+                        status = controllerMethodReturn.getCode();
+                    }
+
+                    return this.prepareResponse(res, status, routeParams, controllerMethodReturn);          
+                } catch(err: Error | RWSError | any) {   
+                    let errMsg;          
+                    let stack;
+
+                    if(err.printFullError){
+                        err.printFullError();
+                        errMsg = err.getMessage();
+                        stack = err.getStack();
+                    } else {
+                        errMsg = err.message;
+                        this.consoleService.error(errMsg);
+                        this.consoleService.log(err.stack); 
+                        stack = err.stack;      
+                        err.message = errMsg;     
+                    }                 
+
+                    const code = err.getCode ? err.getCode() : 500;
+              
+                    return this.prepareResponse(res, code, routeParams, {
+                        success: false,
+                        data: {
+                            error: {
+                                code,
+                                message: errMsg,
+                                stack
+                            }
+                        }
+                    });          
+                }
+            }
         }
 
-        res.status(status).send();
+        // Apply the appropriate method decorator
+        switch (route.method.toUpperCase()) {
+            case 'GET':
+                Get()(DynamicController.prototype, 'handler', Object.getOwnPropertyDescriptor(DynamicController.prototype, 'handler'));
+                break;
+            case 'POST':
+                Post()(DynamicController.prototype, 'handler', Object.getOwnPropertyDescriptor(DynamicController.prototype, 'handler'));
+                break;
+            case 'PUT':
+                Put()(DynamicController.prototype, 'handler', Object.getOwnPropertyDescriptor(DynamicController.prototype, 'handler'));
+                break;
+            case 'DELETE':
+                Delete()(DynamicController.prototype, 'handler', Object.getOwnPropertyDescriptor(DynamicController.prototype, 'handler'));
+                break;
+        }
+
+        // Register the controller with the application
+        const moduleRef = app.select(DynamicController);
+        moduleRef.get(DynamicController);
     }
 
     private setControllerRoutes(
         controllerInstance: Controller, 
         controllerMetadata: Record<string, {annotationType: string, metadata: any}>, 
-        controllerRoutes: IControllerRoutes, key: string, app: express.Express): void
-    {
-        const action: any = (params: any) => {}//(controllerInstance as Controller).callMethod(key);
+        controllerRoutes: IControllerRoutes, 
+        key: string
+    ): void {
+        const action: any = () => {}; // (controllerInstance as Controller).callMethod(key);
         const meta = controllerMetadata[key].metadata;                                        
+        
         switch(meta.method) {
         case 'GET':
-            controllerRoutes.get[meta.name] = [action.bind(controllerInstance), app.get.bind(app), meta.params, key]; 
+            controllerRoutes.get[meta.name] = [action.bind(controllerInstance), 'get', meta.params, key]; 
             break;
 
         case 'POST':
-            controllerRoutes.post[meta.name] = [action.bind(controllerInstance), app.post.bind(app), meta.params, key];
+            controllerRoutes.post[meta.name] = [action.bind(controllerInstance), 'post', meta.params, key];
             break;
 
         case 'PUT':
-            controllerRoutes.put[meta.name] = [action.bind(controllerInstance), app.put.bind(app), meta.params, key]; 
+            controllerRoutes.put[meta.name] = [action.bind(controllerInstance), 'put', meta.params, key]; 
             break;
 
         case 'DELETE':
-            controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), app.delete.bind(app), meta.params, key];
+            controllerRoutes.delete[meta.name] = [action.bind(controllerInstance), 'delete', meta.params, key];
             break;  
         }
     }
     
-    hasRoute(routePath: string, routes: IHTTProute[]): boolean
-    {
+    hasRoute(routePath: string, routes: IHTTProute[]): boolean {
         return this.getRoute(routePath, routes) !== null;
     }
 
-    getRoute(routePath: string, routes: IHTTProute[]): IHTTProute | null
-    {
+    getRoute(routePath: string, routes: IHTTProute[]): IHTTProute | null {
         const foundRoute = routes.find((item: IHTTProute) => {
             return item.path.indexOf(routePath) > -1 && !item.noParams;
         });      

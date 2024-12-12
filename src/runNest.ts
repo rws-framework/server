@@ -64,7 +64,7 @@ export default async function bootstrap(
   const app = await NestFactory.create(nestModule.forRoot(rwsOptions));
   
   const routerService = app.get(RouterService);
-  const routes = routerService.generateRoutesFromResources(rwsOptions.http_routes || []);
+  const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
   await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
 
   await app.listen(rwsOptions.port);
