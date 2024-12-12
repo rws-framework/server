@@ -1,11 +1,11 @@
+import { IRouteParams } from "../../nest/decorators/RWSRoute";
+
 interface IHTTProute {
     name: string;
     path: string;  
     method: string;
     noParams?: boolean;
-    options?: {
-        public?: boolean;
-    };
+    options?: IRouteParams;
 }
 
 interface IPrefixedHTTProutes {

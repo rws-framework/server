@@ -3,19 +3,19 @@ import 'reflect-metadata';
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../../src/routing/routes';
 import { BootstrapRegistry } from './RWSConfigInjector';
 
-export interface IHTTProuteParams {
-    name: string;
+export interface IRouteParams {
+    public?: boolean;
     responseType?: string;
-    options?: {
-        public?: boolean;
-    };
-}
+};
 
 function isPrefixedRoutes(entry: RWSHTTPRoutingEntry): entry is IPrefixedHTTProutes {
     return 'prefix' in entry && 'routes' in entry;
 }
 
-export function RWSRoute(params: IHTTProuteParams) {
+export function RWSRoute(routeName: string, options: IRouteParams = {
+    public: false,
+    responseType: 'json'
+}) {
     return applyDecorators(
         function methodDecorator(target: Object, propertyKey: string | symbol, descriptor: PropertyDescriptor): void {
             const existingMetadata = Reflect.getMetadata('routes', target.constructor) || {};            
@@ -24,19 +24,19 @@ export function RWSRoute(params: IHTTProuteParams) {
             let routeConfig: IHTTProute | undefined;
             for (const entry of routes) {
                 if (isPrefixedRoutes(entry)) {
-                    const route = entry.routes.find(r => r.name === params.name);
+                    const route = entry.routes.find(r => r.name === routeName);
                     if (route) {
                         routeConfig = route;
                         break;
                     }
-                } else if (entry.name === params.name) {
+                } else if (entry.name === routeName) {
                     routeConfig = entry;
                     break;
                 }
             }
 
             if (!routeConfig) {
-                throw new Error(`No route configuration found for route name: ${params.name}`);
+                throw new Error(`No route configuration found for route name: ${routeName}`);
             }
 
             // Apply the appropriate HTTP method decorator based on the route configuration
@@ -61,11 +61,11 @@ export function RWSRoute(params: IHTTProuteParams) {
             existingMetadata[propertyKey] = {
                 annotationType: 'Route',
                 metadata: {
-                    name: params.name,
+                    name: routeName,
                     params: {
-                        responseType: params.responseType || 'json',
+                        responseType: options.responseType || 'json',
                         options: {
-                            public: params.options?.public ?? routeConfig.options?.public ?? false
+                            public: options?.public ?? routeConfig.options?.public ?? false
                         }
                     }
                 }
