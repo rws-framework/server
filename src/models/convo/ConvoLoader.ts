@@ -21,8 +21,6 @@ import fs from 'fs';
 import path from 'path';
 
 
-const { Error500 } = RWSErrorCodes;
-
 interface ISplitterParams {
     chunkSize: number
     chunkOverlap: number
@@ -87,19 +85,24 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
 
     public _baseSplitterParams: ISplitterParams;    
     
-    constructor(chatConstructor: new (config: any) => LLMChat, embeddings: IEmbeddingsHandler<any> | null = null, convoId: string | null = null, baseSplitterParams: ISplitterParams = {
-        chunkSize:400, chunkOverlap:80, separators: ['/n/n','.']
-    }){
+    constructor(
+        chatConstructor: new (config: any) => LLMChat, 
+        embeddings: IEmbeddingsHandler<any> | null = null, 
+        convoId: string | null = null, 
+        baseSplitterParams: ISplitterParams = {
+            chunkSize: 400, 
+            chunkOverlap: 80, 
+            separators: ['/n/n','.']
+        }
+    ) {
         this.embeddings = embeddings;
-        
-        if(convoId === null){
+        if(convoId === null) {
             this.convo_id = ConvoLoader.uuid();
         } else {
             this.convo_id = convoId;
         }                        
-
         this.chatConstructor = chatConstructor;    
-        this._baseSplitterParams = baseSplitterParams;   
+        this._baseSplitterParams = baseSplitterParams;  
     }
 
     static uuid(): string
@@ -112,7 +115,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
     {
 
         if(!this.embeddings){
-            throw new Error500('No embeddings provided for ConvoLoader\'s constructor. ConvoLoader.splitDocs aborting...');
+            throw new Error('No embeddings provided for ConvoLoader\'s constructor. ConvoLoader.splitDocs aborting...');
         }
 
         const splitDir = ConvoLoader.debugSplitDir(this.getId());
@@ -208,7 +211,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
         return documents.reduce((sum, doc: Document) => sum + doc.pageContent.length, 0) / documents.length;
     };
 
-    async call(values: ChainValues, cfg: Partial<RunnableConfig>, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
+    async call(values: ChainValues, cfg: any, debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null): Promise<RWSPrompt>
     {   
         const output = await (this.chain()).invoke(values, cfg) as IChainCallOutput;        
         this.thePrompt.listen(output.text);        
@@ -217,33 +220,6 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
 
         return this.thePrompt;
     }
-
-    async *callStreamGenerator(
-        this: ConvoLoader<LLMChat>, 
-        values: ChainValues, 
-        cfg: Partial<RunnableConfig>,     
-        debugCallback: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData> = null
-    ): AsyncGenerator<string>
-    {           
-        // const _self = this;
-        // const chain = this.chain() as ConversationChain;  
-        // console.log('call stream');      
-        // const stream = await chain.call(values, [{
-        //         handleLLMNewToken(token: string) {
-        //             yield token;
-        //         }
-        //     }
-        // ]);
-        
-        // console.log('got stream');
-
-
-
-        // Listen to the stream and yield data chunks as they come
-        // for await (const chunk of stream) {                  
-        //     yield chunk.response;
-        // }
-    }   
 
     async callStream(values: ChainValues, callback: (streamChunk: ILLMChunk) => void, end: () => void = () => {}, cfg: Partial<RunnableConfig> = {}, debugCallback?: (debugData: IConvoDebugXMLData) => Promise<IConvoDebugXMLData>): Promise<RWSPrompt>
     {
@@ -303,7 +279,7 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
         }
 
         if(!this.thePrompt){
-            throw new Error500(new Error('No prompt initialized for conversation'), __filename);
+            throw new Error('No prompt initialized for conversation');
         }        
 
         const chainParams: { prompt: PromptTemplate, values?: ChainValues } = {            
@@ -318,8 +294,8 @@ class ConvoLoader<LLMChat extends BaseChatModel> {
     private async createChain(input: { prompt: PromptTemplate, values?: ChainValues }): Promise<BaseChain>
     {
         this.llmChain = new ConversationChain({
-            llm: this.llmChat,
-            prompt: input.prompt,              
+            llm: this.llmChat as any,
+            prompt: input.prompt as any,              
         });
 
         return this.llmChain;

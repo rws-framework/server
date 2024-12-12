@@ -6,6 +6,7 @@ import { IterableReadableStream } from '@langchain/core/utils/stream';
 import { ChainValues } from '@langchain/core/utils/types';
 
 import { IContextToken } from '../../types/IContextToken';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 interface IPromptHyperParameters {
     temperature: number,
@@ -214,14 +215,14 @@ class RWSPrompt {
         return this.multiTemplate;
     }
 
-    setConvo(convo: ConvoLoader<BedrockChat>): RWSPrompt
+    setConvo(convo: ConvoLoader<BaseChatModel>): RWSPrompt
     {
         this.convo = convo.setPrompt(this);        
         
         return this;
     }
 
-    getConvo<T extends BedrockChat>(): ConvoLoader<T>
+    getConvo<T extends BaseChatModel>(): ConvoLoader<T>
     {
         return this.convo;
     }

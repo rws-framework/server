@@ -3,6 +3,7 @@ import RWSPrompt, { ILLMChunk, IRWSPromptRequestExecutor, IRWSSinglePromptReques
 import RWSConvo, { IConvoDebugXMLData, IEmbeddingsHandler, ISplitterParams } from './models/convo/ConvoLoader';
 import RWSVectorStore from './models/convo/VectorStore';
 import { VectorStoreService } from './services/VectorStoreService';
+import { IContextToken } from './types/IContextToken';
 
 export {    
     VectorStoreService,
@@ -18,5 +19,6 @@ export {
     ChainStreamType,
     IConvoDebugXMLData,
     IEmbeddingsHandler,
-    ISplitterParams
+    ISplitterParams,
+    IContextToken
 };
