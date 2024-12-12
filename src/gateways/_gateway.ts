@@ -51,8 +51,10 @@ export abstract class RWSGateway implements ITheGateway{
 
     onModuleInit() {
         const port = this.appConfigService.get<number>('ws_port');
-        this.server.listen(port);
-        console.log(`WebSocket server is running on port ${port}`);
+        if(port){
+            this.server.listen(port);
+            console.log(`WebSocket server is running on port ${port}`);
+        }        
     }
     
 
