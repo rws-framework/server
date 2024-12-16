@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "3.3.2-beta",
+  "version": "3.3.3-beta",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -23,7 +23,9 @@
     "@nestjs/platform-express": "^10.3.2",
     "@nestjs/platform-fastify": "^10.3.4",
     "@nestjs/platform-socket.io": "^10.3.8",
-    "@nestjs/websockets": "^10.3.8",
+    "@nestjs/websockets": "^10.3.8",  
+    "@nestjs/serve-static": "^4.0.2",
+    "@fastify/static": "^8.0.3",      
     "@prisma/client": "^5.1.1",
     "@rws-framework/console": "*",
     "@zip.js/zip.js": "^2.7.34",

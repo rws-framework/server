@@ -14,6 +14,8 @@ import {
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import path from 'path';
 
 
 
@@ -32,7 +34,13 @@ export class RWSModule {
   static async forRoot(cfg: IAppConfig): Promise<DynamicModule> {       
     return {
       module: RWSModule,
-      imports: [...baseModules(cfg)] as unknown as NestModulesType,
+      imports: [
+        ...baseModules(cfg),
+        ServeStaticModule.forRoot({
+          rootPath: path.join(process.cwd(), process.env.PUBLIC_DIR), // Path to your public directory
+          serveRoot: '/', // URL path prefix for static content
+        })
+      ] as unknown as NestModulesType,
       providers: [
         DBService,
         ConfigService,
