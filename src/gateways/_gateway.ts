@@ -76,7 +76,7 @@ export abstract class RWSGateway implements ITheGateway{
     }
     
     handleDisconnect(@ConnectedSocket() socket: Socket): void {
-    console.log('Client disconnected:', socket.id);
+        console.log('Client disconnected:', socket.id);
     }
 
     emitMessage<T>(method: string, socket: Socket, data?: T): void

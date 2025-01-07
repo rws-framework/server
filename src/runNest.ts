@@ -16,6 +16,7 @@ import { NestFactory } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
+import { InitCommand } from './commands/init.command';
 
 
 
@@ -37,8 +38,8 @@ export class RWSModule {
       imports: [
         ...baseModules(cfg),
         ServeStaticModule.forRoot({
-          rootPath: path.join(process.cwd(), process.env.PUBLIC_DIR), // Path to your public directory
-          serveRoot: '/', // URL path prefix for static content
+          rootPath: path.join(process.cwd(), process.env.PUBLIC_DIR), 
+          serveRoot: cfg.static_route || '/',
         })
       ] as unknown as NestModulesType,
       providers: [
@@ -47,7 +48,8 @@ export class RWSModule {
         UtilsService, 
         ConsoleService, 
         AuthService,
-        RouterService
+        RouterService,
+        InitCommand
       ],  
       exports: [
         DBService,
@@ -55,8 +57,9 @@ export class RWSModule {
         UtilsService, 
         ConsoleService, 
         AuthService,
-        RouterService
-      ],    
+        RouterService,
+        InitCommand
+      ]
     };
   }
 

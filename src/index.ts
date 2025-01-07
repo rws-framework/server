@@ -32,8 +32,7 @@ import { RWSFillService } from './services/RWSFillService';
 const RWSannotations = {
     modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, RWSTrackType }};
 
-// import TheCommand, {ICmdParams} from './commands/_command';
-import TheService from './services/_service';
+import TheCommand, {ICmdParams} from './commands/_command';
 import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse } from './gateways/_gateway';
 import { RWSController } from './controller';
 
@@ -45,6 +44,8 @@ import { RWSModule, } from './runNest';
 import { InjectServices } from './helpers/InjectServices';
 
 export {    
+    TheCommand as RWSCommand,
+    ICmdParams,
     RWSFillService,
     AppConfigService,
     RWSModule,

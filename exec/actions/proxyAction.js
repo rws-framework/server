@@ -43,7 +43,7 @@ module.exports = async (output) => {
         process.env.WEBPACK_CFG_FILE = cfgConfigArg || 'config/config';    
     }
 
-    await setVendors();    
+    // await setVendors();    
     await generateCliClient();        
 
     log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`, `${webpackPath}/exec/dist/rws.js ${command2map} ${lineArgs}`);  
@@ -57,37 +57,6 @@ module.exports = async (output) => {
     }
 
     return;
-}
-
-const setVendors = async () => {    
-    if(forceReload){
-        console.warn('[RWS] Forcing CLI vendors reload...');
-
-        removeDirectory(`${__dirname}/dist/vendors`);    
-    }
-
-    if(!fs.existsSync(path.resolve(__dirname, 'dist', 'vendors'))){
-      
-        console.log('[RWS CLI vendors] Generating vendors for CLI usage...');
-        
-        const symLinkPath = path.resolve(__dirname, 'dist','node_modules');
-        const symLinkPathExec = path.resolve(__dirname, 'node_modules');
-
-        if(fs.existsSync(symLinkPath)){
-            removeDirectory(symLinkPath);
-        }   
-        
-        if(fs.existsSync(symLinkPathExec)){
-            removeDirectory(symLinkPathExec);
-        } 
-
-        await runCommand(`${packageRootDir}/node_modules/.bin/tsc -p vendors.tsconfig.json`, path.resolve(__dirname, '..'));          
-
-        console.log('[RWS CLI vendors] Done.');
-    }
-    
-    ConsoleService = require('../dist/vendors/src/services/ConsoleService').default;
-    MD5Service = require('../dist/vendors/src/services/MD5Service').default;    
 }
 
 const consoleClientHashFile = `${moduleCfgDir}/_cli_hash`;

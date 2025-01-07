@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+      "baseUrl": ".",
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "target": "ES2018",
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "strict": true,
+      "esModuleInterop": true,
+      "sourceMap": true,
+      "resolveJsonModule": true,
+      "outDir": "dist",
+      "strictNullChecks": false,    
+      "allowSyntheticDefaultImports": true,
+      "paths": {
+        "@/*": ["src/*"]
+      }
+    },
+    "include": ["./src"],  
+    "exclude": ["node_modules"]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "rws-example",
+  "version": "1.0.0",
+  "description": "Example RWS server implementation",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "npm-run-all --parallel watch:transpile watch:run",
+    "watch:run": "nodemon \"./build/rws.server.js\" --watch \"./build\"",
+    "watch:transpile": "webpack --config webpack.config.js --watch",
+    "build": "webpack --config webpack.config.js --output-path ./dist",
+    "server": "node dist/rws.server.js",
+    "test": "npx mocha"
+  },
+  "dependencies": {
+    "@rws-framework/server": "*",
+    "@types/body-parser": "^1.19.5",
+    "@types/express": "^4.17.21",
+    "compression": "^1.7.4",
+    "dotenv": "^16.3.1",
+    "jsonwebtoken": "9.0.2",
+    "nodemon": "^1.12.1",
+    "npm-run-all": "^4.1.1",
+    "reflect-metadata": "^0.2.1",
+    "ts-transformer-keys": "^0.4.4",
+    "tsconfig-paths-webpack-plugin": "^4.1.0",
+    "typescript": "^5.3.3",
+    "webpack-node-externals": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.5",
+    "@types/chai-like": "^1.1.1",
+    "@types/chai-things": "^0.0.35",
+    "@types/compression": "^1.7.5",
+    "@types/jsonwebtoken": "9.0.2",
+    "@types/lodash": "^4.14.202",
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
+    "chai-like": "^1.1.1",
+    "chai-things": "^0.2.0",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.1",
+    "webpack": "^5.75.0",
+    "webpack-bundle-analyzer": "^4.10.1",
+    "webpack-cli": "^5.1.4"
+  }
+}

@@ -19,7 +19,7 @@
     }
   },
   "include": [
-    "src"
+    "src/rws.ts"
   ],
   "exclude": [
     "node_modules"

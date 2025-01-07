@@ -32,5 +32,6 @@ export default interface IAppConfig {
     aws_lambda_role?: string
     aws_lambda_bucket?: string
     pub_dir?: string
-    cors_domain?: string
+    cors_domain?: string,
+    static_route?: string
 }
