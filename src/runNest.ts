@@ -1,6 +1,5 @@
 import { DynamicModule, forwardRef, Inject, Type } from '@nestjs/common';
-import { IRWSModule, NestModulesType, RWSModuleType } from './types/IRWSModule';
-import { CommandModule } from 'nestjs-command';
+import { IRWSModule, NestModuleTypes, RWSModuleType } from './types/IRWSModule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RouterService } from './services/RouterService';
 import { ConsoleService } from './services/ConsoleService';
@@ -16,40 +15,42 @@ import { NestFactory } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
-import { InitCommand } from './commands/init.command';
-
-
+import { BootstrapRegistry } from '../nest/decorators/RWSConfigInjector';
+import { exit } from 'process';
 
 const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
   ConfigModule.forRoot({
     isGlobal: true,
     load: [ () => cfg ]
-  }), 
-  CommandModule,  
+  }),  
 ];
 
 @Module({})
 export class RWSModule {
   static cfgData: IAppConfig;
   
-  static async forRoot(cfg: IAppConfig): Promise<DynamicModule> {       
+  static async forRoot(cfg: IAppConfig, cli: boolean = false): Promise<DynamicModule> {       
+    const processedImports = [
+      ...baseModules(cfg)   
+    ];
+
+    if(!cli){
+      processedImports.push(ServeStaticModule.forRoot({
+        rootPath: path.join(process.cwd(), process.env.PUBLIC_DIR), 
+        serveRoot: cfg.static_route || '/',
+      }));      
+    }
+
     return {
       module: RWSModule,
-      imports: [
-        ...baseModules(cfg),
-        ServeStaticModule.forRoot({
-          rootPath: path.join(process.cwd(), process.env.PUBLIC_DIR), 
-          serveRoot: cfg.static_route || '/',
-        })
-      ] as unknown as NestModulesType,
+      imports: processedImports as unknown as NestModuleTypes,
       providers: [
         DBService,
         ConfigService,
         UtilsService, 
         ConsoleService, 
         AuthService,
-        RouterService,
-        InitCommand
+        RouterService        
       ],  
       exports: [
         DBService,
@@ -57,8 +58,7 @@ export class RWSModule {
         UtilsService, 
         ConsoleService, 
         AuthService,
-        RouterService,
-        InitCommand
+        RouterService
       ]
     };
   }
@@ -75,6 +75,7 @@ export default async function bootstrap(
   controllers: any[] = []
 ) {
   const rwsOptions = cfgRunner();
+
   const app = await NestFactory.create(nestModule.forRoot(rwsOptions));
   
   const routerService = app.get(RouterService);

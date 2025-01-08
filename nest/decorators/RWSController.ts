@@ -3,6 +3,10 @@ import { RWSHTTPRoutingEntry } from '../../src/routing/routes';
 import { BootstrapRegistry } from './RWSConfigInjector';
 
 export function RWSController(name: string) {
+    if(!BootstrapRegistry.getConfig()){
+        throw new Error('No config');
+    }
+    
     const routes = BootstrapRegistry.getConfig().http_routes as RWSHTTPRoutingEntry[];
     
     // Find the matching route configuration

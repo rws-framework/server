@@ -11,7 +11,7 @@ import ITimeSeries from './models/types/ITimeSeries';
 import TimeSeriesModel from './models/types/TimeSeriesModel';
 
 // import ServerService, { ServerControlSet, RWSServerPair, RWSServerStarter } from './helpers/ServerBuilder';
-
+import { CLIModule, RWSCliBootstrap } from '../exec/src/rws';
 import { DBService } from './services/DBService';
 import { AuthService } from './services/AuthService';
 import { ConsoleService } from './services/ConsoleService';
@@ -83,5 +83,6 @@ export {
 
     NEST,
     RWSController,
-    InjectServices
+    InjectServices,
+    CLIModule, RWSCliBootstrap
 };

@@ -30,33 +30,48 @@ module.exports = {
     },
     module: {
       rules: [
-          {
-            test: /\.(ts)$/,
-            loader: 'ts-loader',
-            options: {              
-              allowTsInNodeModules: true,
-              configFile: path.resolve(__dirname, 'exec.tsconfig.json'), 
-              // compilerOptions: {
-              //   baseUrl: rwsPath..findRootWorkspacePath(process.cwd())
-              // },             
-              getCustomTransformers: program => ({
+        {
+          test: /\.tsx?$/,
+          use: [
+            {
+              loader: 'ts-loader',
+              options: {              
+                allowTsInNodeModules: true,
+                configFile: path.resolve(__dirname, 'exec.tsconfig.json'),
+                getCustomTransformers: program => ({
                   before: [
-                      keysTransformer(program)
+                    keysTransformer(program)
                   ]
-              })
-            },
-            exclude: /node_modules\/(?!\@rws-framework\/server)|\.d\.ts$/,
-          },
-          {
-              test: /\.node$/,
-              use: 'node-loader',
-            }        
-        ],        
+                })                
+              }
+            }
+          ],
+          exclude: /node_modules\/(?!@rws-framework)/
+        },
+        {
+          test: /\.node$/,
+          use: 'node-loader',
+        }
+      ],        
     },  
     stats: {
       warningsFilter: webpackFilters,
     },
-    externals: rwsExternals(process.cwd(), rootPackageNodeModules),
+    externals: {
+      'express': 'commonjs express',
+      '@nestjs/core': 'commonjs @nestjs/core',
+      '@nestjs/common': 'commonjs @nestjs/common',
+      'kerberos': 'commonjs kerberos',
+      'mongodb-client-encryption': 'commonjs mongodb-client-encryption'
+    },
+    ignoreWarnings: [
+      {
+        module: /node_modules\/nest-commander/
+      },
+      {
+        module: /node_modules\/mongodb/
+      }
+    ],
     optimization: {      
       minimize: false
     }    

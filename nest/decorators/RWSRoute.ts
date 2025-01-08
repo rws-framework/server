@@ -16,6 +16,10 @@ export function RWSRoute(routeName: string, options: IRouteParams = {
     public: false,
     responseType: 'json'
 }) {
+    if(!BootstrapRegistry.getConfig()){
+        return (): null => null;
+    }
+    
     return applyDecorators(
         function methodDecorator(target: Object, propertyKey: string | symbol, descriptor: PropertyDescriptor): void {
             const existingMetadata = Reflect.getMetadata('routes', target.constructor) || {};            

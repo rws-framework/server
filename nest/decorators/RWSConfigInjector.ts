@@ -1,3 +1,4 @@
+import { Console } from "console";
 
 export class BootstrapRegistry {
     private static config: any = null;

@@ -21,7 +21,6 @@
   "include": [
     "src/rws.ts"
   ],
-  "exclude": [
-    "node_modules"
+  "exclude": [    
   ]
 }

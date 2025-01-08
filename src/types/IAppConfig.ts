@@ -1,4 +1,5 @@
 
+import { DynamicModule } from '@nestjs/common';
 import { RWSModuleType } from './IRWSModule';
 import { IRWSResource } from './IRWSResource';
 

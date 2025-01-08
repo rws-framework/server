@@ -18,6 +18,7 @@ let ConsoleService = null;
 let MD5Service = null;
 
 const os = require('os');
+const chalk = require('chalk');
 const webpackPath = path.resolve(__dirname, '..', '..');
 
 const packageRootDir = findRootWorkspacePath(process.cwd());
@@ -46,14 +47,14 @@ module.exports = async (output) => {
     // await setVendors();    
     await generateCliClient();        
 
-    log(`${color().green('[RWS]')} generated CLI client executing ${command2map} command`, `${webpackPath}/exec/dist/rws.js ${command2map} ${lineArgs}`);  
+    log(`${chalk.green('[RWS]')} generated CLI client executing ${command2map} command`, `${webpackPath}/exec/dist/rws.js ${command2map} ${lineArgs}`);  
 
     // const relpath = path.relative(__dirname, 'dist',)
 
     try {
         await runCommand(`node ${path.resolve(webpackPath, 'exec/dist/vendors/build/cli')}/rws.cli.js ${command2map} ${lineArgs}`, process.cwd());
     } catch(err) {
-        rwsError(err);
+        console.error(err);
     }
 
     return;
@@ -61,20 +62,14 @@ module.exports = async (output) => {
 
 const consoleClientHashFile = `${moduleCfgDir}/_cli_hash`;
 
-const shouldReload = async (tsFile) => 
-    (!fs.existsSync(consoleClientHashFile) 
-    || await MD5Service.cliClientHasChanged(consoleClientHashFile, tsFile)) 
-    || forceReload
-;
+const shouldReload = async (tsFile) => true;
 
 async function generateCliClient(command, args)
 {               
     const webpackCmd = `${packageRootDir}/node_modules/.bin/webpack`;
 
-    log = ConsoleService.log;
-    warn = ConsoleService.warn;
-    rwsError = ConsoleService.error;
-    color = ConsoleService.color;        
+    log = console.log;
+ 
 
     if(!fs.existsSync(moduleCfgDir)){
         fs.mkdirSync(moduleCfgDir);
@@ -84,15 +79,15 @@ async function generateCliClient(command, args)
     
     if(await shouldReload(tsFile)){
         if(forceReload){
-            warn('[RWS] Forcing CLI client reload...');
+            log(chalk.yellow('[RWS] Forcing CLI client reload...'));
         }
 
-        log(color().green('[RWS]') + color().yellowBright(' Detected CLI file changes. Generating CLI client file...'));      
+        log(chalk.green('[RWS]') + chalk.yellowBright(' Detected CLI file changes. Generating CLI client file...'));      
         
         await runCommand(`${webpackCmd} --config ${webpackPath}/exec/exec.webpack.config.js`, process.cwd());
-        log(color().green('[RWS]') + ' CLI client file generated.')       
+        log(chalk.green('[RWS]') + ' CLI client file generated.')       
     }else{
-        log(color().green('[RWS]') + ' CLI client file is up to date.')  
+        log(chalk.green('[RWS]') + ' CLI client file is up to date.')  
     }        
 }
 

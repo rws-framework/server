@@ -13,14 +13,14 @@ const RWSWebpackWrapper = (config) => {
   const BuildConfigurator = new RWSConfigBuilder(executionDir + '/.rws.json', {
     dev: false,  
     tsConfigPath: executionDir + '/tsconfig.json',
-    entry: `${executionDir}/src/index.ts`,
+    entry: config.entry,
     executionDir: executionDir,  
     outputDir:  path.resolve(executionDir, 'build'),
-    outputFileName: config.outputFileName || 'rws.server.js'
+    outputFileName: config.outputFileName || 'rws.cli.js'
   });
 
-  const isDev = BuildConfigurator.get('dev') || config.dev;
-  const cfgEntry = BuildConfigurator.get('entry') || config.entry;
+  const isDev = BuildConfigurator.get('dev') || config.dev;  
+  const cfgEntry = BuildConfigurator.get('entry') || config.entry;  
   const cfgOutputDir = BuildConfigurator.get('outputDir') || config.outputDir;
   const outputFileName = BuildConfigurator.get('outputFileName') || config.outputFileName;
 
