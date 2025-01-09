@@ -4,7 +4,8 @@ import {DBService} from '../services/DBService';
 import { AppConfigService } from '../index';
 
 import TrackType, {IMetaOpts} from './decorators/TrackType';
-import { InjectServices } from '../helpers/InjectServices';
+import { InjectServices } from '../../nest/decorators/InjectServices';
+import { ConfigService } from '@nestjs/config';
 
 interface IModel{
     [key: string]: any;
@@ -40,6 +41,7 @@ interface OpModelType<ChildClass> {
     dbService?: DBService;
 }
 
+@InjectServices()
 class Model<ChildClass> implements IModel{
     configService: AppConfigService
     dbService: DBService
@@ -60,11 +62,12 @@ class Model<ChildClass> implements IModel{
         
         }
 
+        this.dbService = Model.dbService;
+        this.configService = Model.configService;
+
         if(!data){
             return;    
-        }
-
-        this.checkForInclusionWithThrow();
+        }          
   
         if(!this.hasTimeSeries()){
             this._fill(data);
@@ -214,7 +217,7 @@ class Model<ChildClass> implements IModel{
 
     async save(): Promise<this> {
         const data = this.toMongo();
-        let updatedModelData = data;
+        let updatedModelData = data;                
   
         if (this.id) {
             this.preUpdate();
@@ -366,6 +369,7 @@ class Model<ChildClass> implements IModel{
     ): Promise<ChildClass | null> {
         this.checkForInclusionWithThrow('');
 
+        
         const collection = Reflect.get(this, '_collection');
         const dbData = await this.dbService.findOneBy(collection, conditions, fields, ordering);
         
@@ -438,10 +442,10 @@ class Model<ChildClass> implements IModel{
         
             return [];
         } catch (rwsError: RWSError | any) {
-            rwsError.printFullError();
+            console.error(rwsError);
 
             throw rwsError;
-        }        
+        }                 
     }
     
 

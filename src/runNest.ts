@@ -17,6 +17,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
 import { BootstrapRegistry } from '../nest/decorators/RWSConfigInjector';
 import { exit } from 'process';
+import RWSModel from './models/_model';
 
 const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
   ConfigModule.forRoot({
@@ -85,10 +86,8 @@ export default async function bootstrap(
 
   const models = configService.get('user_models') as any[];
 
-  for (const model of models){
-    model.dbService = dbService;
-    model.configService = configService;
-  }
+  RWSModel.dbService = dbService;
+  RWSModel.configService = configService;
 
   const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
   await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);

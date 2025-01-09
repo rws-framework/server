@@ -86,8 +86,7 @@ async function setupPrisma(leaveFile = false, services: {
     configService: ConfigService
 } = { dbService: null, processService: null, configService: null})
 {       
-    const dbUrl = await services.configService.get('mongo_url');    
-
+    const dbUrl = await services.configService.get('mongo_url');      
     const dbType = 'mongodb';
 
     let template: string = `generator client {\n
