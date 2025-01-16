@@ -25,36 +25,33 @@ const _RWS_INSTALED_TXT: string = 'OK';
 
 function generateModelSections<T extends Model<T>>(constructor: new () => T): string {
     let section = '';
-
-    const modelMetadatas: Record<string, {annotationType: string, metadata: any}> = Model.getModelAnnotations(constructor); // Pass the class constructor   
+    const modelMetadatas: Record<string, {annotationType: string, metadata: any}> = Model.getModelAnnotations(constructor);
     const modelName: string = (constructor as any)._collection;
     
     section += `model ${modelName} {\n`;
-
-    section += '\tid String @map("_id") @id @default(auto()) @db.ObjectId\n';     
+    section += '\tid String @map("_id") @id @default(auto()) @db.ObjectId\n';
     
     for (const key in modelMetadatas) {
         const modelMetadata: IMetaOpts = modelMetadatas[key].metadata;            
         const requiredString = modelMetadata.required ? '' : '?';  
-      
         const annotationType: string = modelMetadatas[key].annotationType;
-      
+        
         if(annotationType === 'Relation'){
-            section += `\t${key} ${modelMetadata.relatedTo}${requiredString} @relation(fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
+            // Handle direct relation (many-to-one or one-to-one)
+            section += `\t${key} ${modelMetadata.relatedTo}${requiredString} @relation("${modelName}_${modelMetadata.relatedTo}", fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
             section += `\t${modelMetadata.relationField} String${requiredString} @db.ObjectId\n`;
-        }else if (annotationType === 'InverseRelation'){        
-            section += `\t${key} ${modelMetadata.inversionModel}[]`;
-        }else if (annotationType === 'InverseTimeSeries'){        
-            section += `\t${key} String[] @db.ObjectId`;      
-        }else if (annotationType === 'TrackType'){        
+        } else if (annotationType === 'InverseRelation'){        
+            // Handle inverse relation (one-to-many or one-to-one)
+            section += `\t${key} ${modelMetadata.inversionModel}[] @relation("${modelMetadata.inversionModel}_${modelName}")\n`;
+        } else if (annotationType === 'InverseTimeSeries'){        
+            section += `\t${key} String[] @db.ObjectId\n`;      
+        } else if (annotationType === 'TrackType'){        
             const tags: string[] = modelMetadata.tags.map((item: string) => '@' + item);          
             section += `\t${key} ${toConfigCase(modelMetadata)}${requiredString} ${tags.join(' ')}\n`;
         }
     }
-
-    section += '\n}';
-  
-  
+    
+    section += '}\n';
     return section;
 }
 

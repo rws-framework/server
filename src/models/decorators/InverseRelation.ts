@@ -5,17 +5,15 @@ interface InverseRelationOpts{
     relationField?: string
     relatedToField?: string,
     relatedTo?: string,
-    inversionModel?: string,
+    inversionModel?: string    
   }
   
 function InverseRelation(inversionModel: string) {
-  
-    const metaOpts: InverseRelationOpts = {
-        inversionModel: inversionModel
-    };
-
-  
     return function(target: any, key: string) {          
+        const metaOpts: InverseRelationOpts = {
+            inversionModel,
+
+        };
         Reflect.defineMetadata(`InverseRelation:${key}`, metaOpts, target);
     };
 }

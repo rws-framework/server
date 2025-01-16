@@ -1,14 +1,13 @@
 import 'reflect-metadata';
 
-interface IRelationOpts{
+interface IRelationOpts {
     required?: boolean,
     relationField?: string
     relatedToField?: string,
     relatedTo?: string,
-    inversionModel?: string,
-  }
+}
   
-function Relation(relatedTo: string, required: boolean = false, relationField: string = null,  relatedToField: string = 'id') {
+function Relation(relatedTo: string, required: boolean = false, relationField: string = null, relatedToField: string = 'id') {
   
     const metaOpts: IRelationOpts = {required};
   
