@@ -1,20 +1,26 @@
 import 'reflect-metadata';
+import Model, { OpModelType } from '../_model';
 
 interface InverseRelationOpts{
-    required?: boolean,
-    relationField?: string
-    relatedToField?: string,
-    relatedTo?: string,
-    inversionModel?: string    
+    key: string,
+    inversionModel: OpModelType<Model<any>>,
+    foreignKey: string    
   }
-  
-function InverseRelation(inversionModel: string) {
-    return function(target: any, key: string) {          
-        const metaOpts: InverseRelationOpts = {
-            inversionModel,
 
-        };
-        Reflect.defineMetadata(`InverseRelation:${key}`, metaOpts, target);
+function InverseRelation(inversionModel: () => OpModelType<Model<any>>, sourceModel: () => OpModelType<Model<any>>,foreignKey: string = null) {    
+    return function(target: any, key: string) {     
+        setTimeout(() => {    
+            const model = inversionModel();
+            const source = sourceModel();
+    
+            const metaOpts: InverseRelationOpts = {
+                key,
+                inversionModel: model,
+                foreignKey: foreignKey ? foreignKey : `${source._collection}_id`
+            };             
+    
+            Reflect.defineMetadata(`InverseRelation:${key}`, metaOpts, target);
+        }, 0);       
     };
 }
 

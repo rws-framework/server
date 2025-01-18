@@ -140,11 +140,12 @@ class DBService {
             data: data,
         });    
 
+        
         return await this.findOneBy(collection, { id: model_id });
     }
   
 
-    async findOneBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null): Promise<IModel|null>
+    async findOneBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null, allowRelations: boolean = true): Promise<IModel|null>
     {    
         const params: any = { where: conditions };
 
@@ -159,7 +160,9 @@ class DBService {
             params.orderBy = ordering;
         }
 
-        return await this.getCollectionHandler(collection).findFirst(params);
+        const retData = await this.getCollectionHandler(collection).findFirst(params);
+
+        return retData;
     }
 
     async delete(collection: string, conditions: any): Promise<void>
@@ -168,7 +171,7 @@ class DBService {
         return;
     }
 
-    async findBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null): Promise<IModel[]>
+    async findBy(collection: string, conditions: any, fields: string[] | null = null, ordering: { [fieldName: string]: string } = null, allowRelations: boolean = true): Promise<IModel[]>
     {    
         const params: any ={ where: conditions };
 
@@ -183,7 +186,9 @@ class DBService {
             params.orderBy = ordering;
         }
 
-        return await this.getCollectionHandler(collection).findMany(params);
+        const retData = await this.getCollectionHandler(collection).findMany(params);        
+
+        return retData;
     }
 
     async collectionExists(collection_name: string): Promise<boolean>
