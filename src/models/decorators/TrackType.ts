@@ -1,11 +1,12 @@
 import 'reflect-metadata';
+import { OpModelType } from '../_model';
 
 interface ITrackerOpts{
     required?: boolean,
     relationField?: string
     relatedToField?: string,
     relatedTo?: string,
-    inversionModel?: string,
+    inversionModel?: OpModelType<any>,
     relationName?: string
   }
   
