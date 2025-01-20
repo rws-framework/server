@@ -123,7 +123,12 @@ async function setupPrisma(leaveFile = false, services: {
         }
     }
 
-    const schemaPath = path.join(moduleDir, 'prisma', 'schema.prisma');
+    const schemaDir = path.join(moduleDir, 'prisma');
+    const schemaPath = path.join(schemaDir, 'schema.prisma');
+
+    if(!fs.existsSync(schemaDir)){
+        fs.mkdirSync(schemaDir);
+    }
 
     if(fs.existsSync(schemaPath)){
         fs.unlinkSync(schemaPath);
