@@ -84,8 +84,6 @@ export default async function bootstrap(
   const dbService = app.get(DBService);
   const configService = app.get(ConfigService);
 
-  const models = configService.get('user_models') as any[];
-
   RWSModel.dbService = dbService;
   RWSModel.configService = configService;
 

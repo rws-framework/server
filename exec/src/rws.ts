@@ -47,7 +47,7 @@ export class CLIModule {
 export class RWSCliBootstrap {
     private static _instance: RWSCliBootstrap;
 
-    constructor(private module: RWSModuleType = null){}
+    constructor(protected module: RWSModuleType = null){}
 
     static async run(commandName: string, config: () => IAppConfig, customModule: RWSModuleType = null): Promise<void> {
         if (!this._instance) {

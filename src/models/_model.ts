@@ -172,7 +172,7 @@ class Model<ChildClass> implements IModel{
         if (allowRelations) {
             // Handle many-to-many relations
             for (const key in relManyData) { 
-                if((this as any).constructor._CUT_KEYS.includes(key)){
+                if(!fullDataMode && (this as any).constructor._CUT_KEYS.includes(key)){
                     continue;
                 }
 
@@ -191,7 +191,7 @@ class Model<ChildClass> implements IModel{
             
             // Handle one-to-one relations
             for (const key in relOneData) {      
-                if((this as any).constructor._CUT_KEYS.includes(key)){
+                if(!fullDataMode && (this as any).constructor._CUT_KEYS.includes(key)){
                     continue;
                 }
 
@@ -207,7 +207,7 @@ class Model<ChildClass> implements IModel{
         // Process regular fields and time series
         for (const key in data) {
             if (data.hasOwnProperty(key)) {                        
-                if((this as any).constructor._CUT_KEYS.includes(key)){
+                if(!fullDataMode && (this as any).constructor._CUT_KEYS.includes(key)){
                     continue;
                 }
 
