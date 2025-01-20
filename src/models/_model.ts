@@ -48,7 +48,13 @@ export interface OpModelType<ChildClass> {
     findBy<T extends Model<T>>(
         this: OpModelType<T>,    
         findParams: FindByType
-    ): Promise<T[]>
+    ): Promise<T[]>;
+    delete<ChildClass extends Model<ChildClass>>(
+        this: OpModelType<ChildClass>,
+        conditions: any
+    ): Promise<void>
+    getRelationOneMeta(model: any, classFields: string[]): Promise<RelOneMetaType<Model<any>>>;
+    getRelationManyMeta(model: any, classFields: string[]): Promise<RelManyMetaType<Model<any>>>;
 }
 
 @InjectServices()
@@ -90,7 +96,7 @@ class Model<ChildClass> implements IModel{
     
     checkForInclusionWithThrow(): void
     {
-        Model.checkForInclusionWithThrow(this.constructor.name)
+        this.checkForInclusionWithThrow()
     }
 
     static checkForInclusionWithThrow(this: OpModelType<any>, checkModelType: string): void
@@ -102,7 +108,7 @@ class Model<ChildClass> implements IModel{
 
     checkForInclusion(): boolean    
     {                
-        return Model.checkForInclusion(this.constructor.name);        
+        return this.checkForInclusion();        
     }
 
     static checkForInclusion(this: OpModelType<any>, checkModelType: string): boolean
@@ -188,7 +194,7 @@ class Model<ChildClass> implements IModel{
                 if((this as any).constructor._CUT_KEYS.includes(key)){
                     continue;
                 }
-                      
+
                 const relMeta = relOneData[key];  
         
                 const relationEnabled = this.checkRelEnabled(relMeta.key);
@@ -266,6 +272,11 @@ class Model<ChildClass> implements IModel{
     }
     
     private async getRelationOneMeta(classFields: string[]): Promise<RelOneMetaType<Model<any>>> {
+        return Model.getRelationOneMeta(this, classFields);
+    }
+
+    static async getRelationOneMeta(model: any, classFields: string[]): Promise<RelOneMetaType<Model<any>>>
+    {
         const relIds: RelOneMetaType<Model<any>> = {};
         const relationFields = classFields
             .filter((item: string) => item.indexOf('Relation') === 0 && !item.includes('Inverse'))
@@ -273,7 +284,7 @@ class Model<ChildClass> implements IModel{
     
         for (const key of relationFields) {  
             const metadataKey = `Relation:${key}`;
-            const metadata = Reflect.getMetadata(metadataKey, this);                 
+            const metadata = Reflect.getMetadata(metadataKey, model);                 
             
             if (metadata && metadata.promise) {
                 const resolvedMetadata = await metadata.promise;
@@ -290,18 +301,23 @@ class Model<ChildClass> implements IModel{
         } 
     
         return relIds;
-    }
+    }    
 
     private async getRelationManyMeta(classFields: string[]): Promise<RelManyMetaType<Model<any>>> {
+        return Model.getRelationManyMeta(this, classFields);
+    }
+
+    static async getRelationManyMeta(model: any, classFields: string[]): Promise<RelManyMetaType<Model<any>>> 
+    {
         const relIds: RelManyMetaType<Model<any>> = {};
     
         const inverseFields = classFields
             .filter((item: string) => item.indexOf('InverseRelation') === 0)
-            .map((item: string) => item.split(':').at(-1));        
-    
+            .map((item: string) => item.split(':').at(-1));
+                
         for (const key of inverseFields) {          
             const metadataKey = `InverseRelation:${key}`;
-            const metadata = Reflect.getMetadata(metadataKey, this);                            
+            const metadata = Reflect.getMetadata(metadataKey, model);                            
     
             if (metadata && metadata.promise) {
                 const resolvedMetadata = await metadata.promise;
@@ -599,7 +615,7 @@ class Model<ChildClass> implements IModel{
         conditions: any
     ): Promise<void> {
         const collection = Reflect.get(this, '_collection');
-        this.checkForInclusionWithThrow(this.name);
+        this.checkForInclusionWithThrow(this.name);         
         return await this.dbService.delete(collection, conditions);
     }
 

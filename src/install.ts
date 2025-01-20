@@ -44,7 +44,7 @@ async function generateModelSections<T extends Model<T>>(model: OpModelType<T>):
         if(annotationType === 'Relation'){
             const relatedModel = modelMetadata.relatedTo as OpModelType<T>;        
             // Handle direct relation (many-to-one or one-to-one)
-            section += `\t${key} ${relatedModel._collection}${requiredString} @relation("${modelName}_${relatedModel._collection}", fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
+            section += `\t${key} ${relatedModel._collection}${requiredString} @relation("${modelName}_${relatedModel._collection}", fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}], onDelete: Cascade)\n`;      
             section += `\t${modelMetadata.relationField} String${requiredString} @db.ObjectId\n`;
         } else if (annotationType === 'InverseRelation'){        
             // Handle inverse relation (one-to-many or one-to-one)
@@ -124,6 +124,11 @@ async function setupPrisma(leaveFile = false, services: {
     }
 
     const schemaPath = path.join(moduleDir, 'prisma', 'schema.prisma');
+
+    if(fs.existsSync(schemaPath)){
+        fs.unlinkSync(schemaPath);
+    }
+
     fs.writeFileSync(schemaPath, template);  
     process.env.DB_URL = dbUrl;
     
