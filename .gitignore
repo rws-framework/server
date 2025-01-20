@@ -10,3 +10,4 @@ exec/node_modules
 .amplify
 amplifyconfiguration*
 yarn.lock
+prisma/

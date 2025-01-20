@@ -5,7 +5,7 @@ interface ITrackerOpts{
     required?: boolean,
     relationField?: string
     relatedToField?: string,
-    relatedTo?: string,
+    relatedTo?: OpModelType<any>,
     inversionModel?: OpModelType<any>,
     relationName?: string
   }

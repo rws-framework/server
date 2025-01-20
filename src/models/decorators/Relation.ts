@@ -9,10 +9,10 @@ interface IRelationOpts {
     relatedTo: OpModelType<Model<any>>
 }
   
-function Relation(theModel: () =>  OpModelType<Model<any>>, required: boolean = false, relationField: string = null, relatedToField: string = 'id') {
-  
+function Relation(theModel: () => OpModelType<Model<any>>, required: boolean = false, relationField: string = null, relatedToField: string = 'id') {
     return function(target: any, key: string) {     
-        setTimeout(() => {                 
+        // Store the promise in metadata immediately
+        const metadataPromise = Promise.resolve().then(() => {
             const relatedTo = theModel();
             const metaOpts: IRelationOpts = {required, relatedTo, relatedToField};                    
             if(!relationField){
@@ -21,10 +21,17 @@ function Relation(theModel: () =>  OpModelType<Model<any>>, required: boolean = 
                 metaOpts.relationField = relationField;
             }  
             metaOpts.key = key;
-            Reflect.defineMetadata(`Relation:${metaOpts.relationField}`, metaOpts, target);
-        }, 0);
+            return metaOpts;
+        });
+
+        // Store both the promise and the key information
+        Reflect.defineMetadata(`Relation:${key}`, {
+            promise: metadataPromise,
+            key
+        }, target);
     };
 }
+
 
 export default Relation;
 export {IRelationOpts};

@@ -1,5 +1,5 @@
 import IAppConfig from './types/IAppConfig';
-import Model, { IMetaOpts } from './models/_model';
+import Model, { IMetaOpts, OpModelType } from './models/_model';
 import fs from 'fs';
 import path from 'path';
 import 'reflect-metadata';
@@ -23,22 +23,28 @@ const workspaceRoot = rwsPath.findRootWorkspacePath();
 const moduleDir = path.resolve(workspaceRoot, 'node_modules', '@rws-framework', 'server');
 const _RWS_INSTALED_TXT: string = 'OK';
 
-function generateModelSections<T extends Model<T>>(constructor: new () => T): string {
+async function generateModelSections<T extends Model<T>>(model: OpModelType<T>): Promise<string> {
     let section = '';
-    const modelMetadatas: Record<string, {annotationType: string, metadata: any}> = Model.getModelAnnotations(constructor);
-    const modelName: string = (constructor as any)._collection;
+    const modelMetadatas: Record<string, {annotationType: string, metadata: any}> = await Model.getModelAnnotations(model);    
+
+    const modelName: string = (model as any)._collection;
     
     section += `model ${modelName} {\n`;
     section += '\tid String @map("_id") @id @default(auto()) @db.ObjectId\n';
-    
+ 
     for (const key in modelMetadatas) {
         const modelMetadata: IMetaOpts = modelMetadatas[key].metadata;            
         const requiredString = modelMetadata.required ? '' : '?';  
         const annotationType: string = modelMetadatas[key].annotationType;
+
+        if(key === 'id'){
+            continue;
+        }
         
         if(annotationType === 'Relation'){
+            const relatedModel = modelMetadata.relatedTo as OpModelType<T>;        
             // Handle direct relation (many-to-one or one-to-one)
-            section += `\t${key} ${modelMetadata.relatedTo}${requiredString} @relation("${modelName}_${modelMetadata.relatedTo}", fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
+            section += `\t${key} ${relatedModel._collection}${requiredString} @relation("${modelName}_${relatedModel._collection}", fields: [${modelMetadata.relationField}], references: [${modelMetadata.relatedToField}])\n`;      
             section += `\t${modelMetadata.relationField} String${requiredString} @db.ObjectId\n`;
         } else if (annotationType === 'InverseRelation'){        
             // Handle inverse relation (one-to-many or one-to-one)
@@ -95,10 +101,9 @@ async function setupPrisma(leaveFile = false, services: {
     url = env("DATABASE_URL")\n    
   }\n\n`;
 
-    const usermodels = await services.configService.get('user_models');
-
-    usermodels.forEach((model: any) => {    
-        const modelSection = generateModelSections(model);
+    const usermodels = await services.configService.get('user_models');       
+    for (const model of usermodels){ 
+        const modelSection = await generateModelSections(model);
 
         template += '\n\n' + modelSection;  
 
@@ -116,14 +121,15 @@ async function setupPrisma(leaveFile = false, services: {
                 services.dbService.createTimeSeriesCollection(model._collection);    
             });
         }
-    });
+    }
 
     const schemaPath = path.join(moduleDir, 'prisma', 'schema.prisma');
     fs.writeFileSync(schemaPath, template);  
     process.env.DB_URL = dbUrl;
-    // Define the command you want to run
+    
     await ProcessService.runShellCommand('npx prisma generate --schema='+schemaPath);  
 
+    // leaveFile = true;
     log(chalk.green('[RWS Init]') + ' prisma schema generated from ', schemaPath);
 
     UtilsService.setRWSVar('_rws_installed', _RWS_INSTALED_TXT);
@@ -140,7 +146,6 @@ async function setupRWS(generateProjectFiles: boolean = true): Promise<void>
     const packageRootDir: string = rwsPath.findRootWorkspacePath(process.cwd());
     const endPrismaFilePath = packageRootDir + 'node_modules/.prisma/client/schema.prisma';
 
-    console.log(packageRootDir);
     if(fs.existsSync(endPrismaFilePath)){
         fs.unlinkSync(endPrismaFilePath);
     }                

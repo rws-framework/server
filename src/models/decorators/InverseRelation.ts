@@ -7,9 +7,10 @@ interface InverseRelationOpts{
     foreignKey: string    
   }
 
-function InverseRelation(inversionModel: () => OpModelType<Model<any>>, sourceModel: () => OpModelType<Model<any>>,foreignKey: string = null) {    
+  function InverseRelation(inversionModel: () => OpModelType<Model<any>>, sourceModel: () => OpModelType<Model<any>>, foreignKey: string = null) {    
     return function(target: any, key: string) {     
-        setTimeout(() => {    
+        // Store the promise in metadata immediately
+        const metadataPromise = Promise.resolve().then(() => {
             const model = inversionModel();
             const source = sourceModel();
     
@@ -19,8 +20,14 @@ function InverseRelation(inversionModel: () => OpModelType<Model<any>>, sourceMo
                 foreignKey: foreignKey ? foreignKey : `${source._collection}_id`
             };             
     
-            Reflect.defineMetadata(`InverseRelation:${key}`, metaOpts, target);
-        }, 0);       
+            return metaOpts;
+        });
+
+        // Store both the promise and the key information
+        Reflect.defineMetadata(`InverseRelation:${key}`, {
+            promise: metadataPromise,
+            key
+        }, target);
     };
 }
 

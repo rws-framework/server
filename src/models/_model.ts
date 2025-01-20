@@ -7,6 +7,7 @@ import TrackType, {IMetaOpts} from './decorators/TrackType';
 import { InjectServices } from '../../nest/decorators/InjectServices';
 import { ConfigService } from '@nestjs/config';
 import { FieldsHelper } from '../helpers/FieldsHelper';
+import { FindByType } from './types/FindParams';
 
 interface IModel{
     [key: string]: any;
@@ -16,20 +17,6 @@ interface IModel{
     configService?: AppConfigService;
     dbService?: DBService;
 }
-
-type DBModelFindOneType<ChildClass> = (
-    this: OpModelType<ChildClass>,
-    conditions: any,
-    fields?: string[],
-    ordering?: { [fieldName: string]: string }
-) => Promise<ChildClass | null>;
-
-type DBModelFindManyType<ChildClass> = (
-    this: OpModelType<ChildClass>,
-    conditions: any,
-    fields?: string[],
-    ordering?: { [fieldName: string]: string }
-) => Promise<ChildClass | null>;
 
 type RelationBindType = {
     connect: { id: string }
@@ -43,6 +30,7 @@ export interface OpModelType<ChildClass> {
     name: string 
     _collection: string;
     _RELATIONS: {[key: string]: boolean}
+    _CUT_KEYS: string[]
     loadModels: () => Model<any>[];
     checkForInclusionWithThrow: (className: string) => void;
     checkForInclusion: (className: string) => boolean;
@@ -50,26 +38,16 @@ export interface OpModelType<ChildClass> {
     dbService?: DBService;
     findOneBy<T extends Model<T>>(
         this: OpModelType<T>,
-        conditions: {
-            [fieldName: string]: any
-        },
-        fields: string[] | null,
-        ordering: { [fieldName: string]: string },
-        allowRelations?: boolean
+        findParams: FindByType
     ): Promise<T | null>;
     find<T extends Model<T>>(
         this: OpModelType<T>,
         id: string,        
-        fields?: string[] | null,
-        ordering?: { [fieldName: string]: string },
-        allowRelations?: boolean
+        findParams?: Omit<FindByType, 'conditions'>
     ): Promise<T | null>;
     findBy<T extends Model<T>>(
         this: OpModelType<T>,    
-        conditions: any,
-        fields?: string[] | null,
-        ordering?: { [fieldName: string]: string },
-        allowRelations?: boolean
+        findParams: FindByType
     ): Promise<T[]>
 }
 
@@ -87,6 +65,8 @@ class Model<ChildClass> implements IModel{
     static _collection: string = null;
     static _RELATIONS = {};
     static _BANNED_KEYS = ['_collection'];
+
+    static _CUT_KEYS: string[] = [];
 
     constructor(data: any) {    
         if(!this.getCollection()){
@@ -165,77 +145,95 @@ class Model<ChildClass> implements IModel{
         };
     }
 
-    public async _asyncFill(data: any, allowRelations = true): Promise<ChildClass>{
+    public async _asyncFill(data: any, fullDataMode = false, allowRelations = true): Promise<ChildClass> {
         const collections_to_models: {[key: string]: any} = {};           
-        const timeSeriesIds: {[key: string]: {collection: string, hydrationField: string,ids: string[]}} = this.getTimeSeriesModelFields();
-
+        const timeSeriesIds = this.getTimeSeriesModelFields();
+    
         const classFields = FieldsHelper.getAllClassFields(this.constructor);        
-
-        const relOneData = this.getRelationOneMeta(classFields);
-        const relManyData = this.getRelationManyMeta(classFields);        
-        
-
+    
+        // Get both relation metadata types asynchronously
+        const [relOneData, relManyData] = await Promise.all([
+            this.getRelationOneMeta(classFields),
+            this.getRelationManyMeta(classFields)
+        ]);        
+    
         this.loadModels().forEach((model) => {
             collections_to_models[model.getCollection()] = model;      
         });      
-
+    
         const seriesHydrationfields: string[] = []; 
         
-        if(allowRelations){
-            for (const key in relManyData) {            
+        if (allowRelations) {
+            // Handle many-to-many relations
+            for (const key in relManyData) { 
+                if((this as any).constructor._CUT_KEYS.includes(key)){
+                    continue;
+                }
+
                 const relMeta = relManyData[key];  
         
                 const relationEnabled = this.checkRelEnabled(relMeta.key);
-                if(relationEnabled){            
+                if (relationEnabled) {            
                     this[relMeta.key] = await relMeta.inversionModel.findBy({
-                        [relMeta.foreignKey]: data.id
-                    }, null, null, false);    
+                        conditions: {
+                            [relMeta.foreignKey]: data.id
+                        },
+                        allowRelations: false
+                    });    
                 }                                
             }
             
-            for (const key in relOneData) {            
+            // Handle one-to-one relations
+            for (const key in relOneData) {      
+                if((this as any).constructor._CUT_KEYS.includes(key)){
+                    continue;
+                }
+                      
                 const relMeta = relOneData[key];  
         
                 const relationEnabled = this.checkRelEnabled(relMeta.key);
-                if(relationEnabled){     
-                    this[relMeta.key] = await relMeta.model.find(data[relMeta.hydrationField], null, null, false);    
+                if (relationEnabled) {        
+                    this[relMeta.key] = await relMeta.model.find(data[relMeta.hydrationField], { allowRelations: false });    
                 }                                
             }
-
         }
-
+    
+        // Process regular fields and time series
         for (const key in data) {
             if (data.hasOwnProperty(key)) {                        
-                if(Object.keys(relOneData).includes(key)){               
+                if((this as any).constructor._CUT_KEYS.includes(key)){
+                    continue;
+                }
+
+                if (Object.keys(relOneData).includes(key)) {               
                     continue;
                 }                
-
-                if(seriesHydrationfields.includes(key)){
+    
+                if (seriesHydrationfields.includes(key)) {
                     continue;
                 }                    
-
+    
                 const timeSeriesMetaData = timeSeriesIds[key];  
           
-                if(timeSeriesMetaData){
+                if (timeSeriesMetaData) {
                     this[key] = data[key];
                     const seriesModel = collections_to_models[timeSeriesMetaData.collection];
             
                     const dataModels = await seriesModel.findBy({
                         id: { in: data[key] }
                     });                        
-
+    
                     seriesHydrationfields.push(timeSeriesMetaData.hydrationField);
             
                     this[timeSeriesMetaData.hydrationField] = dataModels;
                 } else {
                     this[key] = data[key];            
                 }        
-
             }       
         }     
-
+    
         return this as any as ChildClass;
-    }
+    }    
 
     private getModelScalarFields(model: OpModelType<any>): string[]
     {
@@ -267,96 +265,93 @@ class Model<ChildClass> implements IModel{
         return timeSeriesIds;
     }
     
-    private getRelationOneMeta(classFields: string[]): RelOneMetaType<Model<any>>
-    {
+    private async getRelationOneMeta(classFields: string[]): Promise<RelOneMetaType<Model<any>>> {
         const relIds: RelOneMetaType<Model<any>> = {};
-        const relationFields = classFields.filter((item: string) => item.indexOf('Relation') === 0).map((item: string) => item.split(':').at(-1));        
-
+        const relationFields = classFields
+            .filter((item: string) => item.indexOf('Relation') === 0 && !item.includes('Inverse'))
+            .map((item: string) => item.split(':').at(-1));        
+    
         for (const key of relationFields) {  
-             
-            const meta = Reflect.getMetadata(`Relation:${key}`, (this as any));                 
+            const metadataKey = `Relation:${key}`;
+            const metadata = Reflect.getMetadata(metadataKey, this);                 
             
-            if(meta){
-                if(!relIds[key]){
+            if (metadata && metadata.promise) {
+                const resolvedMetadata = await metadata.promise;
+                if (!relIds[key]) {
                     relIds[key] = {
-                        key: meta.key,
-                        required: meta.required,
-                        model: meta.relatedTo,
-                        hydrationField: meta.relationField,
-                        foreignKey: meta.relatedToField
+                        key: resolvedMetadata.key,
+                        required: resolvedMetadata.required,
+                        model: resolvedMetadata.relatedTo,
+                        hydrationField: resolvedMetadata.relationField,
+                        foreignKey: resolvedMetadata.relatedToField
                     };
                 }
             }                         
-            
         } 
-
+    
         return relIds;
     }
 
-    private getRelationManyMeta(classFields: string[]): RelManyMetaType<Model<any>>
-    {
+    private async getRelationManyMeta(classFields: string[]): Promise<RelManyMetaType<Model<any>>> {
         const relIds: RelManyMetaType<Model<any>> = {};
-
-        const inverseFields = classFields.filter((item: string) => item.indexOf('InverseRelation') === 0).map((item: string) => item.split(':').at(-1));        
-
+    
+        const inverseFields = classFields
+            .filter((item: string) => item.indexOf('InverseRelation') === 0)
+            .map((item: string) => item.split(':').at(-1));        
+    
         for (const key of inverseFields) {          
-       
-            const meta = Reflect.getMetadata(`InverseRelation:${key}`, (this as any));                            
-
-            if(meta){
-                if(!relIds[key]){
+            const metadataKey = `InverseRelation:${key}`;
+            const metadata = Reflect.getMetadata(metadataKey, this);                            
+    
+            if (metadata && metadata.promise) {
+                const resolvedMetadata = await metadata.promise;
+                if (!relIds[key]) {
                     relIds[key] = {       
-                        key: meta.key,         
-                        inversionModel: meta.inversionModel,
-                        foreignKey: meta.foreignKey                   
+                        key: resolvedMetadata.key,         
+                        inversionModel: resolvedMetadata.inversionModel,
+                        foreignKey: resolvedMetadata.foreignKey                   
                     };
                 }
             }                         
-            
         } 
-
+    
         return relIds;
     }
 
-    public toMongo(): any{
-       
+    public async toMongo(): Promise<any> {
         const data: any = {};
-
-        const timeSeriesIds: {[key: string]: {collection: string, hydrationField: string, ids: string[]}} = this.getTimeSeriesModelFields();
+        const timeSeriesIds = this.getTimeSeriesModelFields();
         const timeSeriesHydrationFields: string[] = [];
       
         for (const key in (this as any)) { 
-            console.log({key, rel: this.hasRelation(key)})  
-            if(this.hasRelation(key)){                
+            if (this.hasRelation(key)) {                
                 data[key] = this.bindRelation(key, this[key]);                
                 continue;
             }
-
-            if(!this.isDbVariable(key)){
+    
+            if (!(await this.isDbVariable(key))) {
                 continue;
             } 
-
+    
             const passedFieldCondition: boolean = this.hasOwnProperty(key) && 
                 !((this as any).constructor._BANNED_KEYS 
                     || Model._BANNED_KEYS
                 ).includes(key) && 
                 !timeSeriesHydrationFields.includes(key)
             ;
-
-            console.log({hasProp: passedFieldCondition})    
-
+    
             if (passedFieldCondition) {                      
                 data[key] = this[key];
             }
-
-            if(timeSeriesIds[key]){
+    
+            if (timeSeriesIds[key]) {
                 data[key] = this[key];
                 timeSeriesHydrationFields.push(timeSeriesIds[key].hydrationField);              
             }
         }                
-
+    
         return data;
-    }   
+    }  
 
     getCollection(): string | null {
         return (this as any).constructor._collection || this._collection;
@@ -368,7 +363,7 @@ class Model<ChildClass> implements IModel{
 
 
     async save(): Promise<this> {
-        const data = this.toMongo();
+        const data = await this.toMongo();
         let updatedModelData = data;         
         if (this.id) {
             this.preUpdate();
@@ -393,31 +388,38 @@ class Model<ChildClass> implements IModel{
         return this;
     }
 
-    static getModelAnnotations<T extends object>(constructor: new () => T): Record<string, {annotationType: string, metadata: any}> {    
+    static async getModelAnnotations<T extends object>(constructor: new () => T): Promise<Record<string, {annotationType: string, metadata: any}>> {    
         const annotationsData: Record<string, {annotationType: string, metadata: any}> = {};
-
-        const propertyKeys: string[] = Reflect.getMetadataKeys(constructor.prototype).map((item: string): string => {
-            return item.split(':')[1];
-        });
-      
-        propertyKeys.forEach(key => {
-            if(String(key) == 'id'){
-                return;
-            }  
-
-            const annotations: string[] = ['TrackType', 'Relation', 'InverseRelation', 'InverseTimeSeries'];
-
-            annotations.forEach(annotation => {
-                const metadataKey = `${annotation}:${String(key)}`;
+    
+        const metadataKeys = Reflect.getMetadataKeys(constructor.prototype);
         
-                const meta = Reflect.getMetadata(metadataKey, constructor.prototype);
-          
-                if (meta) {
-                    annotationsData[String(key)] = {annotationType: annotation, metadata: meta};
+        // Process all metadata keys and collect promises
+        const metadataPromises = metadataKeys.map(async (fullKey: string) => {
+            const [annotationType, propertyKey] = fullKey.split(':');
+            const metadata = Reflect.getMetadata(fullKey, constructor.prototype);
+    
+            if (metadata) {
+                // If this is a relation metadata with a promise
+                if (metadata.promise && (annotationType === 'Relation' || annotationType === 'InverseRelation')) {
+                    const resolvedMetadata = await metadata.promise;
+                    annotationsData[propertyKey] = {
+                        annotationType,
+                        metadata: resolvedMetadata
+                    };
+                } else {
+                    // Handle non-relation metadata as before
+                    const key = metadata.key || propertyKey;
+                    annotationsData[key] = {
+                        annotationType,
+                        metadata
+                    };
                 }
-            });                 
+            }
         });
-
+    
+        // Wait for all metadata to be processed
+        await Promise.all(metadataPromises);
+        
         return annotationsData;
     }
 
@@ -467,24 +469,25 @@ class Model<ChildClass> implements IModel{
         return false;
     }
 
-    isDbVariable(variable: string): boolean 
+    async isDbVariable(variable: string): Promise<boolean> 
     {
         return Model.checkDbVariable((this as any).constructor, variable);
     }
 
-    static checkDbVariable(constructor: any, variable: string): boolean
-    {                   
-
+    static async checkDbVariable(constructor: any, variable: string): Promise<boolean> {                   
         if(variable === 'id'){
             return true;
         }
         
-        const dbAnnotations = Model.getModelAnnotations(constructor);
-      type AnnotationType = { annotationType: string, key: string };
-
-      const dbProperties: string[] = Object.keys(dbAnnotations).map((key: string): AnnotationType => {return {...dbAnnotations[key], key};}).filter((element: AnnotationType) => element.annotationType === 'TrackType' ).map((element: AnnotationType) => element.key);
-
-      return dbProperties.includes(variable);
+        const dbAnnotations = await Model.getModelAnnotations(constructor);
+        type AnnotationType = { annotationType: string, key: string };
+    
+        const dbProperties: string[] = Object.keys(dbAnnotations)
+            .map((key: string): AnnotationType => {return {...dbAnnotations[key], key};})
+            .filter((element: AnnotationType) => element.annotationType === 'TrackType' )
+            .map((element: AnnotationType) => element.key);
+    
+        return dbProperties.includes(variable);
     }
 
     sanitizeDBData(data: any): any
@@ -512,23 +515,24 @@ class Model<ChildClass> implements IModel{
 
     public static async findOneBy<ChildClass extends Model<ChildClass>>(
         this: OpModelType<ChildClass>,
-        conditions: {
-            [fieldName: string]: any
-        },
-        fields: string[] | null = null,
-        ordering: { [fieldName: string]: string } = null,
-        allowRelations: boolean = true
+        findParams?: FindByType
     ): Promise<ChildClass | null> {
+        const conditions = findParams?.conditions ?? {};
+        const ordering = findParams?.ordering ?? null;
+        const fields = findParams?.fields ?? null;
+        const allowRelations = findParams?.allowRelations ?? true;
+        const fullData = findParams?.fullData ?? false;
+
         this.checkForInclusionWithThrow('');
 
         
-        const collection = Reflect.get(this, '_collection');
+        const collection = Reflect.get(this, '_collection');        
         const dbData = await this.dbService.findOneBy(collection, conditions, fields, ordering, allowRelations);
         
     
         if (dbData) {
             const inst: ChildClass = new (this as { new(): ChildClass })();
-            return await inst._asyncFill(dbData, allowRelations);
+            return await inst._asyncFill(dbData, fullData, allowRelations);
         }
     
         return null;
@@ -537,21 +541,57 @@ class Model<ChildClass> implements IModel{
     public static async find<ChildClass extends Model<ChildClass>>(
         this: OpModelType<ChildClass>,
         id: string,        
-        fields: string[] | null = null,
-        ordering: { [fieldName: string]: string } = null,
-        allowRelations: boolean = true
-    ): Promise<ChildClass | null> {
+        findParams: Omit<FindByType, 'conditions'> = null
+    ): Promise<ChildClass | null> {        
+        const ordering = findParams?.ordering ?? null;
+        const fields = findParams?.fields ?? null;
+        const allowRelations = findParams?.allowRelations ?? true;          
+        const fullData = findParams?.fullData ?? false;
+
         const collection = Reflect.get(this, '_collection');
         this.checkForInclusionWithThrow(this.name);
 
         const dbData = await this.dbService.findOneBy(collection, { id }, fields, ordering, allowRelations);
     
-        if (dbData) {
+        if (dbData) {            
             const inst: ChildClass = new (this as { new(): ChildClass })();
-            return await inst._asyncFill(dbData);
+            return await inst._asyncFill(dbData, fullData, allowRelations);
         }
     
         return null;
+    }   
+    
+    public static async findBy<ChildClass extends Model<ChildClass>>(
+        this: OpModelType<ChildClass>,    
+        findParams?: FindByType
+    ): Promise<ChildClass[]> {
+        const conditions = findParams?.conditions ?? {};
+        const ordering = findParams?.ordering ?? null;
+        const fields = findParams?.fields ?? null;
+        const allowRelations = findParams?.allowRelations ?? true;
+        const fullData = findParams?.fullData ?? false;
+
+        const collection = Reflect.get(this, '_collection');
+        this.checkForInclusionWithThrow(this.name);
+        try {
+            const dbData = await this.dbService.findBy(collection, conditions, fields, ordering, allowRelations);   
+            if (dbData.length) {
+                const instanced: ChildClass[] = [];
+        
+                for (const data of dbData) { 
+                    const inst: ChildClass = new (this as { new(): ChildClass })();
+                    instanced.push((await inst._asyncFill(data, fullData,allowRelations)) as ChildClass);
+                }
+        
+                return instanced;
+            }
+        
+            return [];
+        } catch (rwsError: RWSError | any) {
+            console.error(rwsError);
+
+            throw rwsError;
+        }                 
     }
 
     public static async delete<ChildClass extends Model<ChildClass>>(
@@ -570,36 +610,6 @@ class Model<ChildClass> implements IModel{
             id: this.id
         });  
     }    
-    
-    public static async findBy<ChildClass extends Model<ChildClass>>(
-        this: OpModelType<ChildClass>,    
-        conditions: any,
-        fields: string[] | null = null,
-        ordering: { [fieldName: string]: string } = null,
-        allowRelations: boolean = true
-    ): Promise<ChildClass[]> {
-        const collection = Reflect.get(this, '_collection');
-        this.checkForInclusionWithThrow(this.name);
-        try {
-            const dbData = await this.dbService.findBy(collection, conditions, fields, ordering, allowRelations);   
-            if (dbData.length) {
-                const instanced: ChildClass[] = [];
-        
-                for (const data of dbData) { 
-                    const inst: ChildClass = new (this as { new(): ChildClass })();
-                    instanced.push((await inst._asyncFill(data, allowRelations)) as ChildClass);
-                }
-        
-                return instanced;
-            }
-        
-            return [];
-        } catch (rwsError: RWSError | any) {
-            console.error(rwsError);
-
-            throw rwsError;
-        }                 
-    }
     
 
     static async create<T extends Model<T>>(this: new () => T, data: any): Promise<T> {
