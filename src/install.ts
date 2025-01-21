@@ -136,8 +136,8 @@ async function setupPrisma(leaveFile = false, services: {
 
     fs.writeFileSync(schemaPath, template);  
     process.env.DB_URL = dbUrl;
-    
-    await ProcessService.runShellCommand('npx prisma generate --schema='+schemaPath);  
+    const endPrisma = 'npx prisma';
+    await ProcessService.runShellCommand(`${endPrisma} generate --schema=${schemaPath}`, process.cwd());  
 
     // leaveFile = true;
     log(chalk.green('[RWS Init]') + ' prisma schema generated from ', schemaPath);

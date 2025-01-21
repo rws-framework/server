@@ -66,6 +66,15 @@ class UtilsService {
             fs.mkdirSync(moduleCfgDir);
         }
 
+        if(fileName.indexOf('/') > -1){
+            const parts = fileName.split('/');
+            const file = parts.pop(); // Ostatni element to nazwa pliku
+            const dirPath = `${moduleCfgDir}/${parts.join('/')}`; 
+    
+            // Tworzymy wszystkie katalogi rekursywnie
+            fs.mkdirSync(dirPath, { recursive: true });
+        }
+
         fs.writeFileSync(`${moduleCfgDir}/${fileName}`, value);
     }
 
@@ -110,6 +119,21 @@ class UtilsService {
         });
 
         return originalPosition.line;
+    }
+
+    detectPackageManager(): 'yarn' | 'npm'
+    {
+        // Sprawdzamy czy jest yarn.lock
+        const hasYarnLock = fs.existsSync(path.join(process.cwd(), 'yarn.lock'));
+        
+        // Sprawdzamy zmienne środowiskowe
+        const npmExecPath = process.env.npm_execpath || '';
+        const isYarnPath = npmExecPath.includes('yarn');
+        
+        // Sprawdzamy czy proces został uruchomiony przez yarn
+        const isYarnEnv = process.env.npm_config_user_agent?.includes('yarn');
+    
+        return (hasYarnLock || isYarnPath || isYarnEnv) ? 'yarn' : 'npm';
     }
 }
 

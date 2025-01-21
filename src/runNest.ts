@@ -15,9 +15,8 @@ import { NestFactory } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
-import { BootstrapRegistry } from '../nest/decorators/RWSConfigInjector';
-import { exit } from 'process';
 import RWSModel from './models/_model';
+import { DecoratorExplorerService } from './services/DecoratorExplorerService';
 
 const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
   ConfigModule.forRoot({
@@ -37,7 +36,7 @@ export class RWSModule {
 
     if(!cli){
       processedImports.push(ServeStaticModule.forRoot({
-        rootPath: path.join(process.cwd(), process.env.PUBLIC_DIR), 
+        rootPath: path.join(process.cwd(), cfg.pub_dir), 
         serveRoot: cfg.static_route || '/',
       }));      
     }

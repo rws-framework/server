@@ -1,32 +1,12 @@
-import { Command, CommandRunner } from 'nest-commander'; // Tu jest zmiana - nest-commander zamiast @nestjs/cli
 import { Injectable } from '@nestjs/common';
 import { setupRWS, setupPrisma } from '../install';
-import { ConsoleService } from '../services/ConsoleService';
-import { UtilsService } from '../services/UtilsService';
-import { ConfigService } from '@nestjs/config';
-import * as path from 'path';
-import {RWSTSLocator} from '../../nest/decorators/RWSTSLocator';
-import 'reflect-metadata';
-import { ProcessService } from '../services/ProcessService';
-import { DBService } from '../services/DBService';
 
-@RWSTSLocator()
+import {RWSBaseCommand, RWSCommand} from './_command';
+
+
 @Injectable()
-export class InitCommand  {
-  private packageRootDir: string;
-  private executionDir: string;
-
-  constructor(
-    private readonly utilsService: UtilsService,
-    private readonly consoleService: ConsoleService,
-    private readonly configService: ConfigService,
-    private readonly processService: ProcessService,
-    private readonly dbService: DBService,
-  ) {    
-    this.executionDir = process.cwd();
-    this.packageRootDir = this.utilsService.findRootWorkspacePath(__dirname);
-  }
-
+@RWSCommand({name: 'init', description: 'Systems init command.'})
+export class InitCommand extends RWSBaseCommand {
   async run(
     passedParams: string[], // parametry przekazane z CLI
     options?: Record<string, any>, // opcje z flag

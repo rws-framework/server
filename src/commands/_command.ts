@@ -1,114 +1,54 @@
-import IAppConfig from '../types/IAppConfig';
-import path from 'path';
-import fs from 'fs';
+import 'reflect-metadata'; 
+import { ConsoleService } from '../services/ConsoleService';
 import { UtilsService } from '../services/UtilsService';
-import { rwsPath } from '@rws-framework/console';
+import { ConfigService } from '@nestjs/config';
+import { ProcessService } from '../services/ProcessService';
+import { DBService } from '../services/DBService';
+import RWSModel from '../models/_model';
+import * as path from 'path';
+import { Injectable } from '@nestjs/common';
+import { ParsedOptions } from '../../exec/src/application/cli.module';
 
-interface ICmdParams {
-    [key: string]: any
-    verbose?: boolean
-    _rws_config?: IAppConfig
-    _extra_args: {
-        [key: string]: any
-    }
+const COMMAND_DECORATOR_META_KEY = 'rws:command';
+
+@Injectable()
+export abstract class RWSBaseCommand{
+    protected packageRootDir: string;
+    protected executionDir: string;  
+    
+    constructor(
+      protected readonly utilsService: UtilsService,
+      protected readonly consoleService: ConsoleService,
+      protected readonly configService: ConfigService,
+      protected readonly processService: ProcessService,    
+      protected readonly dbService: DBService  
+    ) {    
+      this.executionDir = process.cwd();
+      this.packageRootDir = this.utilsService.findRootWorkspacePath(__dirname);
+      
+
+      RWSModel.dbService = dbService;
+      RWSModel.configService = configService;
+    }    
+
+    abstract run(
+      passedParams: string[],
+      options: ParsedOptions,
+    ): Promise<void>;
 }
 
-interface ICmdParamsReturn {
-    subCmd: string;
-    apiCmd: string;
-    apiArg: string;
-    extraParams: {
-        [key: string]: any
-    };
+export interface IRWSCliCmdOpts {
+  name: string,
+  description?: string
 }
 
-export default abstract class TheCommand {
-    public name: string;
+export type CmdMetadataType = { options: IRWSCliCmdOpts, _IS_CMD: true } | null | undefined
 
-    public static cmdDescription: string | null = null;
-
-    protected static _instances: { [key: string]: TheCommand } | null = {};
-
-
-    constructor(name: string){
-        this.name = name;
-
-        const rootPackageDir = rwsPath.findRootWorkspacePath(process.cwd());
-        const packageDir = rwsPath.findPackageDir(process.cwd());
-
-        const moduleCfgDir = path.resolve(rootPackageDir, 'node_modules', '.rws');
-        const cmdDirFile = `${moduleCfgDir}/_cli_cmd_dir`;       
-        const cmdDirFileContents: string[] = fs.existsSync(cmdDirFile) ? fs.readFileSync(cmdDirFile, 'utf-8').split('\n') : [];
-        const startLength = cmdDirFileContents.length;
-
-
-        if(!fs.existsSync(moduleCfgDir)){
-            fs.mkdirSync(moduleCfgDir);
-        }
-        
-
-        const filePath: string = `${packageDir}/src/commands/${(this.constructor as any).className}.ts`;
-        
-        const cmdDir = `${path.dirname(filePath)}`;        
-
-        let finalCmdDir = path.resolve(cmdDir);        
-
-        if(!cmdDirFileContents.includes(finalCmdDir)){
-            cmdDirFileContents.push(finalCmdDir);
-        }        
-        
-        if(startLength < cmdDirFileContents.length){
-            fs.writeFileSync(cmdDirFile, cmdDirFileContents.join('\n'));
-        }
-    }
-
-    getSourceFilePath() {
-        const err = new Error();
-        if (err.stack) {
-            const match = err.stack.match(/at [^\s]+ \((.*):\d+:\d+\)/);
-            if (match && match[1]) {
-                return match[1];
-            }
-        }
-        return '';
-    }
-
-    async execute(params: ICmdParams = null): Promise<void>
-    {
-        throw new Error('Implement method.');
-    }
-
-    getName(): string
-    {
-        return this.name;
-    }
-
-    public static createCommand<T extends new (...args: any[]) => TheCommand>(this: T): InstanceType<T> {
-        const className = this.name;        
-
-        if (!TheCommand._instances[className]) {
-            TheCommand._instances[className] = new this();
-        }
-
-        return TheCommand._instances[className] as InstanceType<T>;
-    }
-
-    getCommandParameters(params: ICmdParams): ICmdParamsReturn
-    {
-        const cmdString: string = params.cmdString || params._default;
-        const cmdStringArr: string[] = cmdString.split(':');        
-        const subCmd: string = cmdStringArr[0];
-        const apiCmd = cmdStringArr[1];    
-        const apiArg = cmdStringArr.length > 2 ? cmdStringArr[2] : null;    
-        const extraParams = params._extra_args.deploy_loader;
-
-        return {
-            subCmd,
-            apiCmd,
-            apiArg,
-            extraParams
-        };
-    }
+const RWSCommand = (cmdOpts: IRWSCliCmdOpts) => {
+  return (target: any, prop: string = null) => {
+    const metadata: CmdMetadataType = { options: cmdOpts, _IS_CMD: true };
+    Reflect.defineMetadata(COMMAND_DECORATOR_META_KEY, metadata, target);
+  }
 }
 
-export {ICmdParams, ICmdParamsReturn};
+export { RWSCommand, COMMAND_DECORATOR_META_KEY }

@@ -1,76 +1,135 @@
-import { CommandFactory } from 'nest-commander';
+
+import 'reflect-metadata';
+
 import { BootstrapRegistry } from '../../nest/decorators/RWSConfigInjector';
 import IAppConfig from '../../src/types/IAppConfig';
-import { DiscoveryModule, DiscoveryService, ModulesContainer, NestFactory } from '@nestjs/core';
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RWSModule } from '../../src/runNest';
-import { InitCommand } from '../../src/commands/init.command';
-import { ConsoleService, DBService, ProcessService, UtilsService } from '../../src';
-import { IRWSModule, NestModuleTypes, RWSModuleType } from '../../src/types/IRWSModule';
+import { INestApplication, Type } from '@nestjs/common';
+import { CLIModule, NestModuleInputData, NestModuleData, ParsedOptions, ParsedOpt } from './application/cli.module';
+import { DiscoveryService, NestFactory } from '@nestjs/core';
 
+import chalk from 'chalk';
+import { DecoratorExplorerService, CMDProvider } from '../../src/services/DecoratorExplorerService';
+import { argv } from 'process';
+import { UtilsService } from '../../src/services/UtilsService';
+import { MD5Service } from '../../src/services/MD5Service';
 
-@Module({})
-export class CLIModule {
-    static async forRoot(config: IAppConfig) {
-        // const appModule = await (config.module as any).forRoot(config, true);
-        // const rwsModule = await RWSModule.forRoot(config, true);
-        
-        return {
-          module: CLIModule,
-          imports: [      
-            ConfigModule.forRoot({
-              isGlobal: true,
-              load: [ () => config ]
-            })
-          ],
-          providers: [     
-            ProcessService,      
-            DBService,
-            ConfigService,
-            UtilsService,
-            ConsoleService,
-            InitCommand
-          ],
-          exports: [
-            ProcessService,
-            DBService,
-            ConfigService,
-            UtilsService,
-            ConsoleService,
-            InitCommand
-          ]
-        };
-    }
-}
+// console.log = (any) => {};
+
+interface CLIServices { discoveryService: DecoratorExplorerService, utilsService: UtilsService, md5Service: MD5Service }
+
+const DATANAME_CACHE_KEY: string = 'nestDataName';
+const CLI_MAIN_CACHE_KEY: string = 'rws.ts';
 
 export class RWSCliBootstrap {
-    private static _instance: RWSCliBootstrap;
+    protected static _instance: RWSCliBootstrap;
+    protected $app: INestApplication;    
+    constructor(protected nestModuleData: NestModuleInputData, protected module: Type<any> = null){}
 
-    constructor(protected module: RWSModuleType = null){}
-
-    static async run(commandName: string, config: () => IAppConfig, customModule: RWSModuleType = null): Promise<void> {
-        if (!this._instance) {
-            this._instance = new RWSCliBootstrap(customModule);
+    static async run<T extends IAppConfig>(       
+        config: () => T, 
+        nestModuleData: NestModuleInputData, 
+        customModule: Type<any> = null
+      ): Promise<void> {
+        const commandName: string = process.argv[2];     
+        try {
+          console.log('RWSCliBootstrap.run - Starting...');
+          console.log('Command:', commandName);
+          
+          if (!this._instance) {
+            this._instance = new RWSCliBootstrap(nestModuleData, customModule);
+          }
+          return this._instance.runCli(commandName, config());
+        } catch (error) {
+          console.error('Error in RWSCliBootstrap.run:', error);
+          throw error;
         }
-        return this._instance.runCli(commandName, config());
-    }
+      }
+    
 
     protected static get instance(): RWSCliBootstrap {
         return this._instance;
     }
 
+    private async makeModule(): Promise<void> {
+        try {
+          console.log('makeModule - Starting module creation...');     
+          
+          const config = BootstrapRegistry.getConfig();
+          console.log('Retrieved config from BootstrapRegistry');
+          
+          this.module = await (CLIModule as any).forRoot(
+            this.nestModuleData, 
+            config
+          );
+
+          console.log('CLI Module created successfully');
+        } catch (error) {
+          console.error('Error in makeModule:', error);
+          throw error;
+        }
+    }
+
+    protected getServices(): CLIServices
+    {
+      const discoveryService = this.$app.get(DecoratorExplorerService);
+      const utilsService = this.$app.get(UtilsService);
+      const md5Service = this.$app.get(MD5Service);
+
+      return {
+        discoveryService, utilsService, md5Service
+      }
+    }
+
     async runCli(commandName:string, config: IAppConfig): Promise<void> {
         try {
+          
             if (!BootstrapRegistry.isInitialized()) {
                 BootstrapRegistry.setConfig(config);
             }
 
-            const app = await NestFactory.create(((this.module ? this.module : CLIModule) as any).forRoot(BootstrapRegistry.getConfig()));                       
-            if(commandName === 'init'){
-                const command: InitCommand = app.get(InitCommand);
-                command.run(process.argv.slice(3));
-            }
+            await this.makeModule();        
+            this.$app = await NestFactory.create(this.module);
+
+            await this.$app.init();
+
+            console.log(chalk.bgGreen('$APP is loaded.')); 
+          
+            const { discoveryService, utilsService, md5Service } : CLIServices = this.getServices();              
+
+            const cmdProviders = discoveryService.getCommandProviders();
+            const cmdProvider: CMDProvider = cmdProviders[Object.keys(cmdProviders).find((item) => item === commandName)];
+
+            const inputParams = process.argv.splice(3);
+            const ignoredInputs: string[] = [];
+            
+            const parsedOptions: ParsedOptions = inputParams.reduce<ParsedOptions>((acc: ParsedOptions, currentValue: string) => {
+              if (currentValue.startsWith('--') || currentValue.startsWith('-')) {
+                const [key, value] = currentValue.replace(/^-+/, '').split('=');
+                ignoredInputs.push(currentValue);
+                return {
+                  ...acc,
+                  [key]: {
+                    key: key,
+                    value: value,
+                    fullString: currentValue
+                  }
+                };
+              }
+              return acc;
+            }, {});
+
+            const passedParams = inputParams.filter(item => !ignoredInputs.includes(item));           
+
+            if(cmdProvider){     
+              cmdProvider.instance.run(passedParams, parsedOptions);
+            } else {
+              console.log(chalk.yellowBright(`Command "${commandName}" does not exist. Maybe you are looking for:`));
+
+              for(const pk of Object.keys(cmdProviders)){
+                const provider: CMDProvider = cmdProviders[pk];
+                console.log(`"${utilsService.detectPackageManager() === 'yarn' ? 'yarn' : 'npx'} rws ${provider.metadata.options.name}": ${provider.metadata.options.description}`);
+              }
+            }            
         } catch (error) {
             console.error('Error in CLI bootstrap:', error);
             process.exit(1);

@@ -11,7 +11,8 @@ import ITimeSeries from './models/types/ITimeSeries';
 import TimeSeriesModel from './models/types/TimeSeriesModel';
 
 // import ServerService, { ServerControlSet, RWSServerPair, RWSServerStarter } from './helpers/ServerBuilder';
-import { CLIModule, RWSCliBootstrap } from '../exec/src/rws';
+import { RWSCliBootstrap } from '../exec/src/rws';
+import { CLIModule } from '../exec/src/application/cli.module';
 import { DBService } from './services/DBService';
 import { AuthService } from './services/AuthService';
 import { ConsoleService } from './services/ConsoleService';
@@ -32,7 +33,7 @@ import { RWSFillService } from './services/RWSFillService';
 const RWSannotations = {
     modelAnnotations: { InverseRelation, InverseTimeSeries, Relation, RWSTrackType }};
 
-import TheCommand, {ICmdParams} from './commands/_command';
+import {RWSCommand} from './commands/_command';
 import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse } from './gateways/_gateway';
 import { RWSController } from './controller';
 
@@ -44,8 +45,7 @@ import { RWSModule, } from './runNest';
 import { InjectServices } from './helpers/InjectServices';
 
 export {    
-    TheCommand as RWSCommand,
-    ICmdParams,
+    RWSCommand,
     RWSFillService,
     AppConfigService,
     RWSModule,
