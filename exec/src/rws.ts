@@ -11,6 +11,7 @@ import chalk from 'chalk';
 import { DecoratorExplorerService, CMDProvider } from '../../src/services/DecoratorExplorerService';
 import { UtilsService } from '../../src/services/UtilsService';
 import { MD5Service } from '../../src/services/MD5Service';
+import fs from 'fs';
 
 // console.log = (any) => {};
 
@@ -27,10 +28,7 @@ export class RWSCliBootstrap {
         customModule: Type<any> = null
       ): Promise<void> {
         const commandName: string = process.argv[2];     
-        try {
-          console.log('RWSCliBootstrap.run - Starting...');
-          console.log('Command:', commandName);
-          
+        try {          
           if (!this._instance) {
             this._instance = new RWSCliBootstrap(nestModuleData, customModule);
           }
@@ -47,18 +45,15 @@ export class RWSCliBootstrap {
     }
 
     private async makeModule(): Promise<void> {
-        try {
-          console.log('makeModule - Starting module creation...');     
-          
+        try {                   
           const config = BootstrapRegistry.getConfig();
-          console.log('Retrieved config from BootstrapRegistry');
           
           this.module = await (CLIModule as any).forRoot(
             this.nestModuleData, 
             config
           );
 
-          console.log('CLI Module created successfully');
+          console.log(chalk.blue('CLI Module created successfully'));
         } catch (error) {
           console.error('Error in makeModule:', error);
           throw error;
@@ -90,7 +85,7 @@ export class RWSCliBootstrap {
 
             console.log(chalk.bgGreen('$APP is loaded.')); 
           
-            const { discoveryService, utilsService } : CLIServices = this.getServices();              
+            const { discoveryService, utilsService, md5Service } : CLIServices = this.getServices();              
 
             const cmdProviders = discoveryService.getCommandProviders();
             const cmdProvider: CMDProvider = cmdProviders[Object.keys(cmdProviders).find((item) => item === commandName)];
@@ -100,14 +95,20 @@ export class RWSCliBootstrap {
             
             const parsedOptions: ParsedOptions = inputParams.reduce<ParsedOptions>((acc: ParsedOptions, currentValue: string) => {
               if (currentValue.startsWith('--') || currentValue.startsWith('-')) {
-                const [key, value] = currentValue.replace(/^-+/, '').split('=');
-                ignoredInputs.push(currentValue);      
+                let [key, value] = currentValue.replace(/^-+/, '').split('=');
+                ignoredInputs.push(currentValue); 
+                
+                let theValue: string | boolean = value;
+
+                if(!value){
+                  theValue = true;
+                }
 
                 return {
                   ...acc,
                   [key]: {
                     key: key,
-                    value: value,
+                    value: theValue,
                     fullString: currentValue
                   }
                 };
@@ -127,6 +128,16 @@ export class RWSCliBootstrap {
                 console.log(`"${utilsService.detectPackageManager() === 'yarn' ? 'yarn' : 'npx'} rws ${provider.metadata.options.name}": ${provider.metadata.options.description}`);
               }
             }            
+
+            const cached: string | null = utilsService.getRWSVar('cli/paths');
+            const cliPaths: string[] = cached ? cached.split('\n') : []; 
+            const fileContents: string[] = [];
+
+            for(const cliFile of cliPaths){
+              fileContents.push(fs.readFileSync(cliFile, 'utf-8'));
+            }
+
+            utilsService.setRWSVar('cli/checksum', md5Service.md5(fileContents.join('\n')));             
         } catch (error) {
             console.error('Error in CLI bootstrap:', error);
             process.exit(1);

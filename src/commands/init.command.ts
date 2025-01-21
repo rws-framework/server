@@ -2,14 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { setupRWS, setupPrisma } from '../install';
 
 import {RWSBaseCommand, RWSCommand} from './_command';
+import { ParsedOptions } from '../../exec/src/application/cli.module';
 
 
 @Injectable()
 @RWSCommand({name: 'init', description: 'Systems init command.'})
 export class InitCommand extends RWSBaseCommand {
   async run(
-    passedParams: string[], // parametry przekazane z CLI
-    options?: Record<string, any>, // opcje z flag
+    passedParams: string[],
+    options?: ParsedOptions
   ): Promise<void> {
     this.consoleService.log(this.consoleService.color().green('[RWS]') + ' starting systems...');
 

@@ -13,7 +13,7 @@ import { MD5Service } from '../../../src/services/MD5Service';
 
 export interface ParsedOpt {
   key: string,
-  value: string,
+  value: string | boolean,
   fullString: string  
 }
 export interface ParsedOptions {
