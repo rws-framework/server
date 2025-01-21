@@ -19,7 +19,9 @@ function needsCacheWarming(){
     if(fileList.length){
         const fileContents = [];
         for(const filePath of fileList){
-            fileContents.push(fs.readFileSync(filePath, 'utf-8'));
+            if(fs.existsSync(filePath)){
+                fileContents.push(fs.readFileSync(filePath, 'utf-8'));
+            }
         }
         const finalMD5 = crypto.createHash('md5').update(fileContents.join('\n')).digest('hex');
         const cachedMD5 = fs.readFileSync(getCachedPath('checksum'), 'utf-8');
