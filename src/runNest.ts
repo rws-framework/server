@@ -74,9 +74,8 @@ export default async function bootstrap(
   opts: ServerOpts = {},
   controllers: any[] = []
 ) {
-  const rwsOptions = cfgRunner();
-
-  const app = await NestFactory.create(nestModule.forRoot(rwsOptions));
+  const rwsOptions = cfgRunner();  
+  const app = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, false)));
   
   const routerService = app.get(RouterService);
 

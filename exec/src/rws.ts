@@ -5,20 +5,16 @@ import { BootstrapRegistry } from '../../nest/decorators/RWSConfigInjector';
 import IAppConfig from '../../src/types/IAppConfig';
 import { INestApplication, Type } from '@nestjs/common';
 import { CLIModule, NestModuleInputData, NestModuleData, ParsedOptions, ParsedOpt } from './application/cli.module';
-import { DiscoveryService, NestFactory } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 
 import chalk from 'chalk';
 import { DecoratorExplorerService, CMDProvider } from '../../src/services/DecoratorExplorerService';
-import { argv } from 'process';
 import { UtilsService } from '../../src/services/UtilsService';
 import { MD5Service } from '../../src/services/MD5Service';
 
 // console.log = (any) => {};
 
 interface CLIServices { discoveryService: DecoratorExplorerService, utilsService: UtilsService, md5Service: MD5Service }
-
-const DATANAME_CACHE_KEY: string = 'nestDataName';
-const CLI_MAIN_CACHE_KEY: string = 'rws.ts';
 
 export class RWSCliBootstrap {
     protected static _instance: RWSCliBootstrap;
@@ -94,18 +90,19 @@ export class RWSCliBootstrap {
 
             console.log(chalk.bgGreen('$APP is loaded.')); 
           
-            const { discoveryService, utilsService, md5Service } : CLIServices = this.getServices();              
+            const { discoveryService, utilsService } : CLIServices = this.getServices();              
 
             const cmdProviders = discoveryService.getCommandProviders();
             const cmdProvider: CMDProvider = cmdProviders[Object.keys(cmdProviders).find((item) => item === commandName)];
 
             const inputParams = process.argv.splice(3);
-            const ignoredInputs: string[] = [];
+            const ignoredInputs: string[] = [];            
             
             const parsedOptions: ParsedOptions = inputParams.reduce<ParsedOptions>((acc: ParsedOptions, currentValue: string) => {
               if (currentValue.startsWith('--') || currentValue.startsWith('-')) {
                 const [key, value] = currentValue.replace(/^-+/, '').split('=');
-                ignoredInputs.push(currentValue);
+                ignoredInputs.push(currentValue);      
+
                 return {
                   ...acc,
                   [key]: {
