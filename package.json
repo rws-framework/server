@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "3.6.3",
+  "version": "3.6.4",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -52,8 +52,6 @@
     "mongodb": "^6.8.1",
     "mongodb-client-encryption": "^6.1.1",
     "napi-rs": "^0.3.10",
-    "nest-commander": "^3.15.0",
-    "nestjs-command": "^3.1.4",
     "node-loader": "^2.0.0",
     "pickleparser": "^0.2.1",
     "pino": "^8.15.1",
