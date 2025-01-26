@@ -2,8 +2,28 @@
 import { DynamicModule } from '@nestjs/common';
 import { RWSModuleType } from './IRWSModule';
 import { IRWSResource } from './IRWSResource';
+import { IPrefixedHTTProutes } from '../routing/routes';
 
-export default interface IAppConfig {   
+export default interface IAppConfig {       
+    secret_key: string
+    nest_module: any
+    domain?: string
+    port?: number
+    ws_port?: number
+    mongo_url?: string
+    mongo_db?: string    
+    http_routes: IPrefixedHTTProutes[]
+    user_model?: any
+    db_models?: any[]
+    ssl_cert?: string
+    ssl_key?: string
+    resources?: IRWSResource[]   
+    front_routes?: Record<string, unknown>[]
+    pub_dir?: string
+    cors_domain?: string
+    static_route?: string
+    test_port?: number
+    test_ws_port?: number
     features?: {
         ws_enabled?: boolean
         routing_enabled?: boolean
@@ -11,28 +31,4 @@ export default interface IAppConfig {
         ssl?: boolean
         auth?: boolean
     } 
-    mongo_url: string
-    mongo_db: string
-    port: number
-    ws_port?: number
-    domain: string
-    test_port?: number
-    test_ws_port?: number
-    ssl_cert: string
-    ssl_key: string
-    secret_key: string
-    user_class: any
-    user_models: any[]
-    resources: IRWSResource[],    
-    ws_routes: any
-    http_routes: any
-    front_routes?: Record<string, unknown>[],
-    aws_lambda_region?: string
-    aws_access_key?: string
-    aws_secret_key?: string
-    aws_lambda_role?: string
-    aws_lambda_bucket?: string
-    pub_dir?: string
-    cors_domain?: string,
-    static_route?: string
 }
