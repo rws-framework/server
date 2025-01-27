@@ -18,7 +18,7 @@ export type CMDProviderList = {
 
 @Injectable()
 export class DecoratorExplorerService {
-  constructor(private readonly discoveryService: DiscoveryService, private readonly utilsService: UtilsService, private readonly md5Service: MD5Service) {}
+  constructor(private readonly discoveryService: DiscoveryService) {}
 
   getCommandProviders(): CMDProviderList
   {    

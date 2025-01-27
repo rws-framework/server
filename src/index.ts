@@ -24,8 +24,6 @@ import { UtilsService }  from './services/UtilsService';
 import { InverseRelation, InverseTimeSeries, Relation, TrackType as RWSTrackType} from './models/decorators/index';
 
 import IAppConfig from './types/IAppConfig';
-import { ConfigService as AppConfigService} from '@nestjs/config';
-import IAuthUser from './types/IAuthUser';
 import IDbUser from './types/IDbUser';
 
 import { RWSFillService } from './services/RWSFillService';
@@ -43,11 +41,12 @@ import Model, { IModel } from './models/_model';
 import { ZipService } from './services/ZipService';
 import { RWSModule, } from './runNest';
 import { InjectServices } from './helpers/InjectServices';
+import { RWSConfigService } from './services/RWSConfigService';
 
 export {    
     RWSCommand,
     RWSFillService,
-    AppConfigService,
+    RWSConfigService,
     RWSModule,
     runNest as serverInit,
     setupRWS,
@@ -70,8 +69,6 @@ export {
 
     ITimeSeries,
     IAppConfig,
-    
-    IAuthUser,
     IDbUser,
     
     Socket,          

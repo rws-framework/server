@@ -1,12 +1,12 @@
-import { DynamicModule, forwardRef, Inject, Type } from '@nestjs/common';
-import { IRWSModule, NestModuleTypes, RWSModuleType } from './types/IRWSModule';
+import { DynamicModule, Type } from '@nestjs/common';
+import { NestModuleTypes } from './types/IRWSModule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RouterService } from './services/RouterService';
 import { ConsoleService } from './services/ConsoleService';
+import { RWSConfigService } from './services/RWSConfigService';
 import { AuthService } from './services/AuthService';
 import { UtilsService } from './services/UtilsService';
 import IAppConfig from './types/IAppConfig';
-import IDbUser from './types/IDbUser';
 import { DBService } from './services/DBService';
 import { 
   Module  
@@ -16,7 +16,6 @@ import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
 import RWSModel from './models/_model';
-import { DecoratorExplorerService } from './services/DecoratorExplorerService';
 
 const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
   ConfigModule.forRoot({
@@ -46,6 +45,7 @@ export class RWSModule {
       imports: processedImports as unknown as NestModuleTypes,
       providers: [
         DBService,
+        RWSConfigService,
         ConfigService,
         UtilsService, 
         ConsoleService, 
@@ -55,6 +55,7 @@ export class RWSModule {
       exports: [
         DBService,
         ConfigService,
+        RWSConfigService,
         UtilsService, 
         ConsoleService, 
         AuthService,
@@ -80,7 +81,7 @@ export default async function bootstrap(
   const routerService = app.get(RouterService);
 
   const dbService = app.get(DBService);
-  const configService = app.get(ConfigService);
+  const configService = app.get(RWSConfigService);
 
   RWSModel.dbService = dbService;
   RWSModel.configService = configService;

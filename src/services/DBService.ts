@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import {ConsoleService} from './ConsoleService';
 import { RWSError } from '../errors';
 import { Injectable } from '../../nest';
+import { RWSConfigService } from './RWSConfigService';
 
 interface IDBClientCreate {
   dbUrl?: string;
@@ -18,7 +19,7 @@ class DBService {
     private opts: IDBClientCreate = null;
     private connected = false;
 
-    constructor(private configService: ConfigService){}
+    constructor(private configService: RWSConfigService){}
 
     private connectToDB(opts: IDBClientCreate = null) {
         if(opts){

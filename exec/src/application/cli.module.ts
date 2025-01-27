@@ -10,6 +10,7 @@ import { RWSModuleType } from '../../../src/types/IRWSModule';
 import { DecoratorExplorerService } from '../../../src/services/DecoratorExplorerService';
 import { DiscoveryService } from '@nestjs/core';
 import { MD5Service } from '../../../src/services/MD5Service';
+import { RWSConfigService } from '../../../src/services/RWSConfigService';
 
 export interface ParsedOpt {
   key: string,
@@ -45,6 +46,7 @@ export class CLIModule {
             ProcessService,      
             DBService,
             ConfigService,
+            RWSConfigService,
             UtilsService,
             TraversalService,
             ConsoleService,            

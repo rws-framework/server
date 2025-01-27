@@ -6,13 +6,12 @@ import 'reflect-metadata';
 
 import {DBService} from './services/DBService';
 import {ProcessService} from './services/ProcessService';
-import {ConsoleService} from './services/ConsoleService';
 import {UtilsService} from './services/UtilsService';
 
 import TimeSeriesModel from './models/types/TimeSeriesModel';
 import { rwsPath } from '@rws-framework/console';
-import { ConfigService } from '@nestjs/config';
 import chalk from 'chalk';
+import { RWSConfigService } from './services/RWSConfigService';
 
 const { log } = console;
 
@@ -23,7 +22,7 @@ const workspaceRoot = rwsPath.findRootWorkspacePath();
 const moduleDir = path.resolve(workspaceRoot, 'node_modules', '@rws-framework', 'server');
 const _RWS_INSTALED_TXT: string = 'OK';
 
-async function generateModelSections<T extends Model<T>>(model: OpModelType<T>): Promise<string> {
+async function generateModelSections<T extends unknown>(model: OpModelType<T>): Promise<string> {
     let section = '';
     const modelMetadatas: Record<string, {annotationType: string, metadata: any}> = await Model.getModelAnnotations(model);    
 
@@ -86,7 +85,7 @@ function toConfigCase(modelType: any): string {
 async function setupPrisma(leaveFile = false, services: {
     dbService: DBService,    
     processService: ProcessService,
-    configService: ConfigService
+    configService: RWSConfigService
 } = { dbService: null, processService: null, configService: null})
 {       
     const dbUrl = await services.configService.get('mongo_url');      
@@ -101,16 +100,15 @@ async function setupPrisma(leaveFile = false, services: {
     url = env("DATABASE_URL")\n    
   }\n\n`;
 
-    const usermodels = await services.configService.get('user_models');       
-    for (const model of usermodels){ 
+    const dbModels: OpModelType<unknown>[] = await services.configService.get('db_models');       
+    for (const model of dbModels){ 
         const modelSection = await generateModelSections(model);
 
         template += '\n\n' + modelSection;  
 
         log('RWS SCHEMA BUILD', chalk.blue('Building DB Model'), model.name);
     
-        if(Model.isSubclass(model, TimeSeriesModel)){      
-     
+        if(Model.isSubclass(model as any, TimeSeriesModel)){    
             services.dbService.collectionExists(model._collection).then((exists: boolean) => {
                 if (exists){
                     return;

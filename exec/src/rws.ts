@@ -12,6 +12,12 @@ import { DecoratorExplorerService, CMDProvider } from '../../src/services/Decora
 import { UtilsService } from '../../src/services/UtilsService';
 import { MD5Service } from '../../src/services/MD5Service';
 import fs from 'fs';
+import { ICommandBaseServices } from '../../src/commands/types';
+import { ConfigService } from '@nestjs/config';
+import { ConsoleService } from '../../src/services/ConsoleService';
+import { ProcessService } from '../../src/services/ProcessService';
+import { DBService } from '../../src/services/DBService';
+import { RWSBaseCommand } from '../../src/commands/_command';
 
 // console.log = (any) => {};
 
@@ -84,6 +90,16 @@ export class RWSCliBootstrap {
             await this.$app.init();
 
             console.log(chalk.bgGreen('$APP is loaded.')); 
+
+            const services: ICommandBaseServices = {
+              utilsService: this.$app.get(UtilsService),
+              configService: this.$app.get(ConfigService),
+              consoleService: this.$app.get(ConsoleService),
+              processService: this.$app.get(ProcessService),
+              dbService: this.$app.get(DBService)
+            }
+
+            RWSBaseCommand.setServices(services);
           
             const { discoveryService, utilsService, md5Service } : CLIServices = this.getServices();              
 
@@ -118,8 +134,9 @@ export class RWSCliBootstrap {
 
             const passedParams = inputParams.filter(item => !ignoredInputs.includes(item));           
 
-            if(cmdProvider){     
-              cmdProvider.instance.run(passedParams, parsedOptions);
+            if(cmdProvider){          
+              cmdProvider.instance.injectServices();
+              await cmdProvider.instance.run(passedParams, parsedOptions);
             } else {
               console.log(chalk.yellowBright(`Command "${commandName}" does not exist. Maybe you are looking for:`));
 

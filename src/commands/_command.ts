@@ -1,7 +1,6 @@
 import 'reflect-metadata'; 
 import { ConsoleService } from '../services/ConsoleService';
 import { UtilsService } from '../services/UtilsService';
-import { ConfigService } from '@nestjs/config';
 import { ProcessService } from '../services/ProcessService';
 import { DBService } from '../services/DBService';
 import RWSModel from '../models/_model';
@@ -11,33 +10,63 @@ import { ParsedOptions } from '../../exec/src/application/cli.module';
 import fs from 'fs';
 import chalk from 'chalk';
 import { rwsPath } from '@rws-framework/console';
+import { ICommandBaseServices } from './types';
+import { RWSConfigService } from '../services/RWSConfigService';
 
 const COMMAND_DECORATOR_META_KEY = 'rws:command';
+
+
 
 @Injectable()
 export abstract class RWSBaseCommand{
     protected packageRootDir: string;
     protected executionDir: string;  
-    
-    constructor(
-      protected readonly utilsService: UtilsService,
-      protected readonly consoleService: ConsoleService,
-      protected readonly configService: ConfigService,
-      protected readonly processService: ProcessService,    
-      protected readonly dbService: DBService  
-    ) {    
-      this.executionDir = process.cwd();
-      this.packageRootDir = this.utilsService.findRootWorkspacePath(__dirname);
-      
 
-      RWSModel.dbService = dbService;
-      RWSModel.configService = configService;
-    }    
+    protected services: ICommandBaseServices;
+    protected static services: ICommandBaseServices;
+
+    protected utilsService: UtilsService;
+    protected consoleService: ConsoleService;
+    protected configService: RWSConfigService;
+    protected processService: ProcessService;
+    protected dbService: DBService;
+     
+
+    constructor(){
+      if(RWSBaseCommand.services){
+        this.setServices(RWSBaseCommand.services);
+      }
+    }
 
     abstract run(
       passedParams: string[],
       options: ParsedOptions,
     ): Promise<void>;
+
+    static setServices(services: ICommandBaseServices) {
+      RWSBaseCommand.services = services;      
+    }
+
+    private setServices(services: ICommandBaseServices) {          
+      this.services = services;
+
+      this.utilsService = services.utilsService;
+      this.consoleService = services.consoleService;
+      this.configService = services.configService;
+      this.processService = services.processService;
+      this.dbService = services.dbService;
+
+      this.executionDir = process.cwd();
+      this.packageRootDir = this.services.utilsService.findRootWorkspacePath(__dirname);
+    
+      RWSModel.dbService = this.services.dbService;
+      RWSModel.configService = this.services.configService;
+    }
+    
+    injectServices()
+    {
+      this.setServices(RWSBaseCommand.services);
+    }
 }
 
 export interface IRWSCliCmdOpts {

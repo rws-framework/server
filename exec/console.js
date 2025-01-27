@@ -11,10 +11,16 @@ let paramsString = params.length ? (' ' + params.join(' ')) : '';
 const rwsCliConfigDir = path.resolve(rwsPath.findRootWorkspacePath(), 'node_modules', '.rws', 'cli');
 const getCachedPath = (key) => path.resolve(rwsCliConfigDir, key);
 
+
+
 const commandString = `webpack --config cli.webpack.config.js --output-path ./build`;
 function needsCacheWarming(){
+
+    if(!fs.existsSync(getCachedPath('paths')) || !fs.existsSync(getCachedPath('checksum'))){
+        return true;
+    }
     
-    const fileList = fs.existsSync(getCachedPath('paths')) ? fs.readFileSync(getCachedPath('paths'), 'utf-8').split('\n') : [];
+    const fileList = fs.readFileSync(getCachedPath('paths'), 'utf-8').split('\n');    
 
     if(fileList.length){
         const fileContents = [];
@@ -36,7 +42,9 @@ function needsCacheWarming(){
 
 async function main()
 {
-    if(needsCacheWarming() || paramsString.indexOf('--rebuild') > -1){
+    const doWarmCache = needsCacheWarming() || paramsString.indexOf('--rebuild') > -1;    
+
+    if(doWarmCache){
         console.log(chalk.yellow('[RWS CLI CACHE] Rebuilding CLI client...'));
 
         const cacheTypes = ['paths', 'checksum'];

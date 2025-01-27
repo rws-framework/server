@@ -11,6 +11,7 @@ import { Controller } from '@nestjs/common/interfaces';
 import { IRWSResource } from '../types/IRWSResource';
 import { INestApplication, Type } from '@nestjs/common';
 import { Get, Post, Put, Delete, Controller as NestController } from '@nestjs/common';
+import { RWSConfigService } from './RWSConfigService';
 
 type RouteEntry = {[key: string]: [any, string, IHTTProuteParams, string]};
 
@@ -24,7 +25,7 @@ interface IControllerRoutes {
 @Injectable()
 class RouterService {  
     constructor(
-        private configService: ConfigService, 
+        private configService: RWSConfigService, 
         private consoleService: ConsoleService
     ) {}
 
@@ -167,7 +168,7 @@ class RouterService {
         @NestController(route.path)
         class DynamicController {
             constructor(
-                private readonly configService: ConfigService,
+                private readonly configService: RWSConfigService,
                 private readonly consoleService: ConsoleService
             ) {}
 

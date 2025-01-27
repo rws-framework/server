@@ -1,11 +1,10 @@
 import { Error500, RWSError } from '../errors';
 import { Inject, Injectable, ExecutionContext, createParamDecorator } from '@nestjs/common';
 import {DBService} from '../services/DBService';
-import { AppConfigService } from '../index';
+import { RWSConfigService } from '../index';
 
 import TrackType, {IMetaOpts} from './decorators/TrackType';
 import { InjectServices } from '../../nest/decorators/InjectServices';
-import { ConfigService } from '@nestjs/config';
 import { FieldsHelper } from '../helpers/FieldsHelper';
 import { FindByType } from './types/FindParams';
 
@@ -14,7 +13,7 @@ interface IModel{
     id: string | null;
     save: () => void;
     getCollection: () => string | null;
-    configService?: AppConfigService;
+    configService?: RWSConfigService;
     dbService?: DBService;
 }
 
@@ -34,7 +33,7 @@ export interface OpModelType<ChildClass> {
     loadModels: () => Model<any>[];
     checkForInclusionWithThrow: (className: string) => void;
     checkForInclusion: (className: string) => boolean;
-    configService?: AppConfigService;
+    configService?: RWSConfigService;
     dbService?: DBService;
     findOneBy<T extends Model<T>>(
         this: OpModelType<T>,
@@ -59,10 +58,10 @@ export interface OpModelType<ChildClass> {
 
 @InjectServices()
 class Model<ChildClass> implements IModel{
-    configService: AppConfigService
+    configService: RWSConfigService
     dbService: DBService
 
-    static configService: AppConfigService
+    static configService: RWSConfigService;
     static dbService: DBService
 
     [key: string]: any;
@@ -404,7 +403,7 @@ class Model<ChildClass> implements IModel{
         return this;
     }
 
-    static async getModelAnnotations<T extends object>(constructor: new () => T): Promise<Record<string, {annotationType: string, metadata: any}>> {    
+    static async getModelAnnotations<T extends unknown>(constructor: new () => T): Promise<Record<string, {annotationType: string, metadata: any}>> {    
         const annotationsData: Record<string, {annotationType: string, metadata: any}> = {};
     
         const metadataKeys = Reflect.getMetadataKeys(constructor.prototype);
@@ -640,7 +639,7 @@ class Model<ChildClass> implements IModel{
 
     static loadModels(): Model<any>[]
     {        
-        return this.configService.get('user_models');
+        return this.configService.get('db_models');
     }
 
     loadModels(): Model<any>[]
