@@ -44,9 +44,9 @@ export class RWSModule {
       module: RWSModule,
       imports: processedImports as unknown as NestModuleTypes,
       providers: [
-        DBService,
-        RWSConfigService,
         ConfigService,
+        DBService,
+        RWSConfigService,        
         UtilsService, 
         ConsoleService, 
         AuthService,
@@ -76,8 +76,10 @@ export default async function bootstrap(
   controllers: any[] = []
 ) {
   const rwsOptions = cfgRunner();  
+
   const app = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, false)));
-  
+  await app.init();
+
   const routerService = app.get(RouterService);
 
   const dbService = app.get(DBService);
@@ -88,6 +90,7 @@ export default async function bootstrap(
 
   const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
   await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
+
 
   await app.listen(rwsOptions.port);
 }

@@ -1,19 +1,20 @@
 import { IRouteParams } from "../../nest/decorators/RWSRoute";
 
-interface IHTTProute {
+interface IHTTProute<P = {[key: string]: any}> {
     name: string;
     path: string;  
     method: string;
     noParams?: boolean;
     options?: IRouteParams;
+    plugins?: P
 }
 
-interface IPrefixedHTTProutes {
+interface IPrefixedHTTProutes<P = {[key: string]: any}> {
     prefix: string;
     controllerName: string;
-    routes: IHTTProute[];
+    routes: IHTTProute<P>[];
 }
 
-type RWSHTTPRoutingEntry = IHTTProute | IPrefixedHTTProutes;
+type RWSHTTPRoutingEntry<P = {[key: string]: any}> = IHTTProute<P> | IPrefixedHTTProutes<P>;
 
 export { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry };

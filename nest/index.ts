@@ -19,7 +19,7 @@ export {
     Injectable,
     NestFactory, Module,
     RWSRoute,
-    RWSConfigInjector,
+    RWSConfigInjector,    
     BootstrapRegistry,
     RWSBootstrap
 };

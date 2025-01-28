@@ -88,7 +88,7 @@ async function setupPrisma(leaveFile = false, services: {
     configService: RWSConfigService
 } = { dbService: null, processService: null, configService: null})
 {       
-    const dbUrl = await services.configService.get('mongo_url');      
+    const dbUrl = services.configService.get('mongo_url');      
     const dbType = 'mongodb';
 
     let template: string = `generator client {\n
@@ -100,51 +100,55 @@ async function setupPrisma(leaveFile = false, services: {
     url = env("DATABASE_URL")\n    
   }\n\n`;
 
-    const dbModels: OpModelType<unknown>[] = await services.configService.get('db_models');       
-    for (const model of dbModels){ 
-        const modelSection = await generateModelSections(model);
+    const dbModels: OpModelType<unknown>[] | null = services.configService.get('db_models');       
 
-        template += '\n\n' + modelSection;  
+    if(dbModels){
 
-        log('RWS SCHEMA BUILD', chalk.blue('Building DB Model'), model.name);
-    
-        if(Model.isSubclass(model as any, TimeSeriesModel)){    
-            services.dbService.collectionExists(model._collection).then((exists: boolean) => {
-                if (exists){
-                    return;
-                }
+        for (const model of dbModels){ 
+            const modelSection = await generateModelSections(model);
 
-                log(chalk.green('[RWS Init]') + ` creating TimeSeries type collection from ${model} model`);
+            template += '\n\n' + modelSection;  
 
-                services.dbService.createTimeSeriesCollection(model._collection);    
-            });
+            log('RWS SCHEMA BUILD', chalk.blue('Building DB Model'), model.name);
+        
+            if(Model.isSubclass(model as any, TimeSeriesModel)){    
+                services.dbService.collectionExists(model._collection).then((exists: boolean) => {
+                    if (exists){
+                        return;
+                    }
+
+                    log(chalk.green('[RWS Init]') + ` creating TimeSeries type collection from ${model} model`);
+
+                    services.dbService.createTimeSeriesCollection(model._collection);    
+                });
+            }
         }
+
+        const schemaDir = path.join(moduleDir, 'prisma');
+        const schemaPath = path.join(schemaDir, 'schema.prisma');
+
+        if(!fs.existsSync(schemaDir)){
+            fs.mkdirSync(schemaDir);
+        }
+
+        if(fs.existsSync(schemaPath)){
+            fs.unlinkSync(schemaPath);
+        }
+
+        fs.writeFileSync(schemaPath, template);  
+        process.env.DB_URL = dbUrl;
+        const endPrisma = 'npx prisma';
+        await ProcessService.runShellCommand(`${endPrisma} generate --schema=${schemaPath}`, process.cwd());  
+
+        // leaveFile = true;
+        log(chalk.green('[RWS Init]') + ' prisma schema generated from ', schemaPath);
+
+        if(!leaveFile){
+            fs.unlinkSync(schemaPath);
+        }    
     }
 
-    const schemaDir = path.join(moduleDir, 'prisma');
-    const schemaPath = path.join(schemaDir, 'schema.prisma');
-
-    if(!fs.existsSync(schemaDir)){
-        fs.mkdirSync(schemaDir);
-    }
-
-    if(fs.existsSync(schemaPath)){
-        fs.unlinkSync(schemaPath);
-    }
-
-    fs.writeFileSync(schemaPath, template);  
-    process.env.DB_URL = dbUrl;
-    const endPrisma = 'npx prisma';
-    await ProcessService.runShellCommand(`${endPrisma} generate --schema=${schemaPath}`, process.cwd());  
-
-    // leaveFile = true;
-    log(chalk.green('[RWS Init]') + ' prisma schema generated from ', schemaPath);
-
-    UtilsService.setRWSVar('_rws_installed', _RWS_INSTALED_TXT);
-
-    if(!leaveFile){
-        fs.unlinkSync(schemaPath);
-    }    
+    UtilsService.setRWSVar('_rws_installed', _RWS_INSTALED_TXT); 
 
     return;
 }

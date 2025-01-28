@@ -8,7 +8,7 @@ class RWSConfigService<MainConfig extends IAppConfig = IAppConfig> {
 
     get<K extends keyof MainConfig>(key: K): MainConfig[K]
     {
-        return this.configService.get(key as string);
+        return this.configService.get(key as string) || null;
     }
 
     set<K extends keyof MainConfig>(key: K, value: MainConfig[K]): RWSConfigService<MainConfig>

@@ -5,8 +5,7 @@ import { IRWSResource } from './IRWSResource';
 import { IPrefixedHTTProutes } from '../routing/routes';
 
 export default interface IAppConfig {       
-    secret_key: string
-    nest_module: any
+    secret_key: string    
     domain?: string
     port?: number
     ws_port?: number
