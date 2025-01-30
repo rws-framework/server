@@ -37,11 +37,12 @@ import { RWSController } from './controller';
 
 import * as RWSErrorCodes from './errors';
 import * as NEST from '../nest';
-import Model, { IModel } from './models/_model';
+import Model from './models/_model';
 import { ZipService } from './services/ZipService';
 import { RWSModule, } from './runNest';
 import { InjectServices } from './helpers/InjectServices';
 import { RWSConfigService } from './services/RWSConfigService';
+import { IRWSModel } from './types/IRWSModel';
 
 export {    
     RWSCommand,
@@ -53,7 +54,7 @@ export {
     setupPrisma,         
     RWSGateway,    
     Model as RWSModel,
-    IModel as IRWSModel,
+    IRWSModel,
 
     // ServerService as RWSServer,    
     DBService,        
