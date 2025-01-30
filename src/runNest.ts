@@ -28,12 +28,12 @@ const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<Dyna
 export class RWSModule {
   static cfgData: IAppConfig;
   
-  static async forRoot(cfg: IAppConfig, cli: boolean = false): Promise<DynamicModule> {       
+  static async forRoot(cfg: IAppConfig, pubDirEnabled: boolean = true): Promise<DynamicModule> {       
     const processedImports = [
       ...baseModules(cfg)   
     ];
 
-    if(!cli){
+    if(pubDirEnabled){
       processedImports.push(ServeStaticModule.forRoot({
         rootPath: path.join(process.cwd(), cfg.pub_dir), 
         serveRoot: cfg.static_route || '/',
@@ -72,12 +72,14 @@ export class RWSModule {
 export default async function bootstrap(
   nestModule: any, 
   cfgRunner: () => IAppConfig, 
-  opts: ServerOpts = {},
+  opts: ServerOpts = {
+    pubDirEnabled: true
+  },
   controllers: any[] = []
 ) {
   const rwsOptions = cfgRunner();  
 
-  const app = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, false)));
+  const app = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled)));
   await app.init();
 
   const routerService = app.get(RouterService);
