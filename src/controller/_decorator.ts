@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { Controller as NestController, ControllerOptions as NestControllerOptions } from '@nestjs/common';
+import { Controller as NestController } from '@nestjs/common';
 import { BootstrapRegistry } from '../../nest/decorators/RWSConfigInjector';
 import { RWSHTTPRoutingEntry, IHTTProute, IPrefixedHTTProutes } from '../routing/routes';
 
