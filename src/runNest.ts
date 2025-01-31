@@ -16,6 +16,8 @@ import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
 import RWSModel from './models/_model';
+import { RunCallback } from './types/BootstrapTypes';
+import { INestApplication } from '@nestjs/common';
 
 const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
   ConfigModule.forRoot({
@@ -75,12 +77,13 @@ export default async function bootstrap(
   opts: ServerOpts = {
     pubDirEnabled: true
   },
+  callback: RunCallback | null = null,
   controllers: any[] = []
 ) {
   const rwsOptions = cfgRunner();  
 
-  const app = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled)));
-  await app.init();
+  const app: INestApplication = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled)));
+  await app.init();  
 
   const routerService = app.get(RouterService);
 
@@ -93,6 +96,9 @@ export default async function bootstrap(
   const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
   await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
 
+  if(callback){
+    callback(app);
+  }
 
   await app.listen(rwsOptions.port);
 }
