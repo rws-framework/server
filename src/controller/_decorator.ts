@@ -3,7 +3,7 @@ import 'reflect-metadata';
 import { Controller as NestController, Logger } from '@nestjs/common';
 import { BootstrapRegistry } from '../../nest/decorators/RWSConfigInjector';
 import { RWSHTTPRoutingEntry, IHTTProute, IPrefixedHTTProutes } from '../routing/routes';
-import { OpModelType } from '../models/_model';
+import { OpModelType } from '@rws-framework/db';
 import { RWSAutoApiController } from './_autoApi';
 
 export type RWSControllerOptions = {}

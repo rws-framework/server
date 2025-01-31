@@ -10,6 +10,7 @@ export class SerializeInterceptor implements NestInterceptor {
     'configService',
     '_client',
     '_originalClient',
+    'allModels',
     'connection',
     // Add any other keys you want to ignore
   ]);

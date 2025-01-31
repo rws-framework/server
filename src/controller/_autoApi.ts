@@ -2,7 +2,7 @@ import 'reflect-metadata';
 
 import { RWSAutoApi } from "./autoApi.decorator";
 import { AutoRouteService } from '../services/AutoRouteService'
-import { OpModelType } from "../models/_model";
+import { OpModelType } from "@rws-framework/db";
 import { RWSCONTROLLER_METADATA_KEY, RWSControllerMetadata } from "@rws-framework/server/src/controller/_decorator";
 import { IPrefixedHTTProutes } from '@rws-framework/server/src/routing/routes';
 import { Param, Body } from '@nestjs/common';

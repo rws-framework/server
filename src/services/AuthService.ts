@@ -2,10 +2,8 @@ import { Injectable } from '../../nest';
 
 import jwt from 'jsonwebtoken';
 
-import HTTP, { ServerResponse } from 'http';
-import { Error403 } from '../errors';
 import IDbUser from '../types/IDbUser';
-import Model, { OpModelType } from '../models/_model';
+import { OpModelType } from '@rws-framework/db';
 import { ConsoleService } from './ConsoleService';
 import { RWSConfigService } from './RWSConfigService';
 

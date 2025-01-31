@@ -24,7 +24,7 @@ export class InitCommand extends RWSBaseCommand {
       try {
         await setupRWS();
         await setupPrisma(false, {
-          dbService: this.dbService,
+          dbService: this.dbService.core(),
           processService: this.processService,
           configService: this.configService
         });

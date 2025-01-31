@@ -4,10 +4,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RouterService } from './services/RouterService';
 import { ConsoleService } from './services/ConsoleService';
 import { RWSConfigService } from './services/RWSConfigService';
+import { NestDBService } from './services/NestDBService';
 import { AuthService } from './services/AuthService';
 import { UtilsService } from './services/UtilsService';
 import IAppConfig from './types/IAppConfig';
-import { DBService } from './services/DBService';
+import { RWSModel, IDbConfigHandler } from '@rws-framework/db';
 import { 
   Module  
 } from '@nestjs/common';
@@ -15,7 +16,6 @@ import { APP_INTERCEPTOR, NestFactory, Reflector } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
-import RWSModel from './models/_model';
 import { RunCallbackList } from './types/BootstrapTypes';
 import { INestApplication } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
@@ -57,7 +57,7 @@ export class RWSModule {
       imports: processedImports as unknown as NestModuleTypes,
       providers: [
         ConfigService,
-        DBService,
+        NestDBService,
         RWSConfigService,        
         UtilsService, 
         ConsoleService, 
@@ -73,7 +73,7 @@ export class RWSModule {
         }        
       ],  
       exports: [
-        DBService,
+        NestDBService,
         ConfigService,
         RWSConfigService,
         UtilsService, 
@@ -107,14 +107,19 @@ export default async function bootstrap(
     callback.preInit(app);
   }
 
-  const dbService = app.get(DBService);
   const configService = app.get(RWSConfigService);
+  const dbService = app.get(NestDBService);  
 
-  RWSModel.dbService = dbService;
-  RWSModel.configService = configService;
+  RWSModel.dbService = dbService.core();
+  RWSModel.allModels = configService.get('db_models');
+
+  RWSModel.setServices({
+    dbService: app.get(NestDBService),
+    configService: configService
+  })
   
   RWSAutoApiController.setServices({
-      configService: app.get(RWSConfigService),
+      configService: configService,
       autoRouteService: app.get(AutoRouteService),      
       httpAdapter: app.getHttpAdapter().getInstance()
   });

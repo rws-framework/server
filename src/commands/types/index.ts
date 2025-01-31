@@ -1,5 +1,5 @@
 import { ConsoleService } from "../../services/ConsoleService";
-import { DBService } from "../../services/DBService";
+import { NestDBService as DBService } from "../../services/NestDBService";
 import { ProcessService } from "../../services/ProcessService";
 import { UtilsService } from "../../services/UtilsService";
 import { RWSConfigService } from "../../services/RWSConfigService";

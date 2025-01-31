@@ -1,4 +1,4 @@
-import RWSModel from "../models/_model";
+import {RWSModel} from "@rws-framework/db";
 
 export interface IRWSResource {
     name: string;

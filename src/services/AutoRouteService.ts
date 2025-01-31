@@ -86,6 +86,7 @@ export class AutoRouteService {
           const result = await config.handler(req, res);
           res.json(result);
         } catch (error: Error | any) {
+          this.logger.error(error, error.stack);
           res.status(500).json({ error: error.message });
         }
       }

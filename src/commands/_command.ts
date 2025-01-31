@@ -2,8 +2,8 @@ import 'reflect-metadata';
 import { ConsoleService } from '../services/ConsoleService';
 import { UtilsService } from '../services/UtilsService';
 import { ProcessService } from '../services/ProcessService';
-import { DBService } from '../services/DBService';
-import RWSModel from '../models/_model';
+import { NestDBService as DBService } from '../services/NestDBService';
+import {IDbConfigHandler, RWSModel} from '@rws-framework/db';
 import path from 'path';
 import { Injectable } from '@nestjs/common';
 import { ParsedOptions } from '../../exec/src/application/cli.module';
@@ -59,8 +59,10 @@ export abstract class RWSBaseCommand{
       this.executionDir = process.cwd();
       this.packageRootDir = this.services.utilsService.findRootWorkspacePath(__dirname);
     
-      RWSModel.dbService = this.services.dbService;
-      RWSModel.configService = this.services.configService;
+      RWSModel.setServices({
+        configService: this.services.configService as IDbConfigHandler,
+        dbService: this.services.dbService.core()
+      });    
     }
     
     injectServices()

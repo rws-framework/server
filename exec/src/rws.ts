@@ -16,7 +16,7 @@ import { ICommandBaseServices } from '../../src/commands/types';
 import { ConfigService } from '@nestjs/config';
 import { ConsoleService } from '../../src/services/ConsoleService';
 import { ProcessService } from '../../src/services/ProcessService';
-import { DBService } from '../../src/services/DBService';
+import { NestDBService as DBService } from '../../src/services/NestDBService';
 import { RWSBaseCommand } from '../../src/commands/_command';
 
 // console.log = (any) => {};
