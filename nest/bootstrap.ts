@@ -12,7 +12,7 @@ export abstract class RWSBootstrap {
             this._instance = new (this as any)();
         }
 
-        return this._instance.runServer(nestModule, opts);
+        return this._instance.runServer(nestModule, opts, callback);
     }
 
     async runServer(nestModule: any,         
