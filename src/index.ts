@@ -20,7 +20,7 @@ import { ProcessService }from './services/ProcessService';
 import { MD5Service } from './services/MD5Service';
 import { TraversalService } from './services/TraversalService';
 import { UtilsService }  from './services/UtilsService';
-
+import { RWSAutoApiController } from './controller/_autoApi';
 import { InverseRelation, InverseTimeSeries, Relation, TrackType as RWSTrackType} from './models/decorators/index';
 
 import IAppConfig from './types/IAppConfig';
@@ -33,16 +33,16 @@ const RWSannotations = {
 
 import {RWSCommand} from './commands/_command';
 import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse } from './gateways/_gateway';
-import { RWSController } from './controller';
 
 import * as RWSErrorCodes from './errors';
 import * as NEST from '../nest';
 import Model from './models/_model';
 import { ZipService } from './services/ZipService';
 import { RWSModule, } from './runNest';
-import { InjectServices } from './helpers/InjectServices';
+import { InjectServices } from './services/_inject';
 import { RWSConfigService } from './services/RWSConfigService';
 import { IRWSModel } from './types/IRWSModel';
+import { Helper } from './helpers/_helper';
 
 export {    
     RWSCommand,
@@ -78,9 +78,10 @@ export {
     RWSErrorCodes,
     BaseWsResponse, ErrorWsResponse,
     RWSTrackType,
+    Helper,
 
     NEST,
-    RWSController,
+    RWSAutoApiController,
     InjectServices,
     CLIModule, RWSCliBootstrap
 };

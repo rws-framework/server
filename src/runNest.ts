@@ -11,19 +11,24 @@ import { DBService } from './services/DBService';
 import { 
   Module  
 } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { APP_INTERCEPTOR, NestFactory, Reflector } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
 import RWSModel from './models/_model';
-import { RunCallback, RunCallbackList } from './types/BootstrapTypes';
+import { RunCallbackList } from './types/BootstrapTypes';
 import { INestApplication } from '@nestjs/common';
+import { RouterModule } from '@nestjs/core';
+import { SerializeInterceptor } from './interceptors/serialize.interceptor';
+import { RWSAutoApiController } from './controller/_autoApi';
+import { AutoRouteService } from './services/AutoRouteService';
 
 const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
   ConfigModule.forRoot({
     isGlobal: true,
     load: [ () => cfg ]
   }),  
+  RouterModule.register([])
 ];
 
 @Module({})
@@ -42,6 +47,11 @@ export class RWSModule {
       }));      
     }
 
+    const serializerProvider =  {
+      provide: APP_INTERCEPTOR,
+      useClass: SerializeInterceptor,
+    }
+
     return {
       module: RWSModule,
       imports: processedImports as unknown as NestModuleTypes,
@@ -52,7 +62,15 @@ export class RWSModule {
         UtilsService, 
         ConsoleService, 
         AuthService,
-        RouterService        
+        RouterService,
+        SerializeInterceptor,
+        {
+          provide: APP_INTERCEPTOR,
+          useFactory: (reflector: Reflector) => {
+            return new SerializeInterceptor();
+          },
+          inject: [Reflector]
+        }        
       ],  
       exports: [
         DBService,
@@ -61,7 +79,8 @@ export class RWSModule {
         UtilsService, 
         ConsoleService, 
         AuthService,
-        RouterService
+        RouterService,
+        SerializeInterceptor
       ]
     };
   }
@@ -84,28 +103,38 @@ export default async function bootstrap(
 
   const app: INestApplication = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled)));
 
-  if(callback.preInit){
+  if(callback?.preInit){
     callback.preInit(app);
   }
-
-  if(callback.afterInit){
-    callback.afterInit(app);
-  }
-
-  await app.init();  
-
-  const routerService = app.get(RouterService);
 
   const dbService = app.get(DBService);
   const configService = app.get(RWSConfigService);
 
   RWSModel.dbService = dbService;
   RWSModel.configService = configService;
+  
+  RWSAutoApiController.setServices({
+      configService: app.get(RWSConfigService),
+      autoRouteService: app.get(AutoRouteService),      
+      httpAdapter: app.getHttpAdapter().getInstance()
+  });
+  
+  // RWSAutoApiController.setServices({
+  //   serializer: app.get(SerializeInterceptor)     
+  // });
+
+  await app.init();  
+
+  if(callback?.afterInit){
+    callback.afterInit(app);
+  }
+
+  const routerService = app.get(RouterService);
 
   const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
   await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
 
-  if(callback.preServerStart){
+  if(callback?.preServerStart){
     callback.preServerStart(app);
   }
 

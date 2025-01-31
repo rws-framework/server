@@ -1,4 +1,6 @@
-export class FieldsHelper {
+import { Helper } from "./_helper";
+
+export class FieldsHelper extends Helper {
     static getAllClassFields(target: any): string[] {
         // Get instance properties
         const instanceFields = Object.getOwnPropertyNames(target.prototype);

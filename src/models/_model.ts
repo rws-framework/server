@@ -1,7 +1,7 @@
 import { Error500, RWSError } from '../errors';
 import { Inject, Injectable, ExecutionContext, createParamDecorator } from '@nestjs/common';
 import {DBService} from '../services/DBService';
-import { RWSConfigService } from '../index';
+import { RWSConfigService, RWSModel } from '../index';
 
 import TrackType, {IMetaOpts} from './decorators/TrackType';
 import { InjectServices } from '../../nest/decorators/InjectServices';
@@ -52,6 +52,7 @@ export interface OpModelType<ChildClass> {
         this: OpModelType<ChildClass>,
         conditions: any
     ): Promise<void>
+    create<T extends Model<T>>(this: OpModelType<T>, data: T): Promise<T>;
     getRelationOneMeta(model: any, classFields: string[]): Promise<RelOneMetaType<Model<any>>>;
     getRelationManyMeta(model: any, classFields: string[]): Promise<RelManyMetaType<Model<any>>>;
 }
@@ -178,7 +179,7 @@ class Model<ChildClass> implements IModel{
                 const relMeta = relManyData[key];  
         
                 const relationEnabled = this.checkRelEnabled(relMeta.key);
-                if (relationEnabled) {            
+                if (relationEnabled) {                                
                     this[relMeta.key] = await relMeta.inversionModel.findBy({
                         conditions: {
                             [relMeta.foreignKey]: data.id
@@ -194,12 +195,26 @@ class Model<ChildClass> implements IModel{
                     continue;
                 }
 
-                const relMeta = relOneData[key];  
-        
+                const relMeta = relOneData[key];          
                 const relationEnabled = this.checkRelEnabled(relMeta.key);
-                if (relationEnabled) {        
+                
+                if(!data[relMeta.hydrationField] && relMeta.required){
+                    throw new Error(`Relation field "${relMeta.hydrationField}" is required in model ${this.constructor.name}.`)
+                }
+                
+                if (relationEnabled && data[relMeta.hydrationField]) {        
                     this[relMeta.key] = await relMeta.model.find(data[relMeta.hydrationField], { allowRelations: false });    
                 }                                
+                else if(relationEnabled && !data[relMeta.hydrationField] && data[relMeta.key]){                    
+                    const newRelModel: RWSModel<any> = await relMeta.model.create(data[relMeta.key]);                    
+                    this[relMeta.key] = await newRelModel.save();
+                }
+
+                const cutKeys = ((this.constructor as any)._CUT_KEYS as string[]);
+
+                if(!cutKeys.includes(relMeta.hydrationField)){
+                    cutKeys.push(relMeta.hydrationField)
+                }
             }
         }
     

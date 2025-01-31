@@ -4,7 +4,7 @@ import common, {
     Module  
 } from '@nestjs/common';
 import core, { NestFactory } from '@nestjs/core';
-import { Controller } from '../src/controller';
+import { RWSControllerDecorator as RWSController } from '../src/controller/_decorator';
 import { RWSRoute } from './decorators/RWSRoute';
 import { RWSConfigInjector, BootstrapRegistry } from './decorators/RWSConfigInjector';
 import { RWSBootstrap } from './bootstrap';
@@ -14,7 +14,7 @@ const NestRoute = {
 
 export {    
     common, core, 
-    Controller, 
+    RWSController, 
     NestRoute,
     Injectable,
     NestFactory, Module,

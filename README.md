@@ -88,15 +88,16 @@ export default User;
 
 ### Controllers
 
-Controllers handle HTTP routes using decorators:
+RWS Nest Controllers **(handmade)**:
 
 ```typescript
-import { RWSannotations, RWSController, IRequestParams } from "@rws-framework/server";
+import { RWSAutoApiController } from "@rws-framework/server";
+import { RWSRoute, RWSController } from "@rws-framework/server/nest";
+import User from '../models/User';
 
-const { Route } = RWSannotations.routingAnnotations;
-
-class UserController extends RWSController {
-    @Route('user:get', 'GET')
+@RWSController('user')
+export class UserController {
+    @RWSRoute('user:get')
     public async getUser(params: IRequestParams): Promise<any> {
         return {
             success: true,
@@ -107,7 +108,28 @@ class UserController extends RWSController {
     }
 }
 
-export default UserController.getSingleton();
+```
+
+RWS Nest Controllers **(AutoApi)**
+
+```typescript
+import { RWSAutoApiController } from "@rws-framework/server";
+import { RWSRoute, RWSController } from "@rws-framework/server/nest";
+import User from '../models/User';
+
+@RWSController('user', () => User)
+export class UserController extends RWSAutoApiController {
+    @RWSRoute('user:get')
+    public async getUser(params: IRequestParams): Promise<any> {
+        return {
+            success: true,
+            data: {
+                // Your response data
+            }
+        }
+    }
+}
+
 ```
 
 ### WebSocket Gateways
@@ -131,19 +153,43 @@ export default ChatGateway;
 Custom CLI commands can be created:
 
 ```typescript
-import { ICmdParams, RWSCommand } from '@rws-framework/server';
+import { Injectable } from '@nestjs/common';
+import { setupRWS, setupPrisma } from '../install';
 
-class SetupCommand extends RWSCommand {
-    constructor() {
-        super('setup', module);
-    }
+import {RWSBaseCommand, RWSCommand} from './_command';
+import { ParsedOptions } from '../../exec/src/application/cli.module';
 
-    execute(params?: ICmdParams): void {
-        // Command implementation
+
+@Injectable()
+@RWSCommand({name: 'setup', description: 'Systems init command.'})
+    export class SetupCommand extends RWSBaseCommand {
+        async run(
+        passedParams: string[],
+        options?: ParsedOptions
+    ): Promise<void> {
+        console.log({passedParams, passedOptions})
     }
 }
 
 export default new SetupCommand();
+```
+
+Default services in CLI command class:
+
+```typescript
+import { ConsoleService } from "../../services/ConsoleService";
+import { DBService } from "../../services/DBService";
+import { ProcessService } from "../../services/ProcessService";
+import { UtilsService } from "../../services/UtilsService";
+import { RWSConfigService } from "../../services/RWSConfigService";
+
+export interface ICommandBaseServices {
+    utilsService: UtilsService;
+    consoleService: ConsoleService;
+    configService: RWSConfigService;
+    processService: ProcessService;
+    dbService: DBService;
+}
 ```
 
 ## Server Initialization
@@ -158,11 +204,9 @@ import { AppModule } from "./app/app.module";
 @RWSConfigInjector(config())
 class Bootstrap extends RWSBootstrap {}
 
-Bootstrap.run(AppModule, { 
+await Bootstrap.run(AppModule, { 
     authorization: false, 
     transport: 'websocket'
-}).then(() => {
-    console.log('Server started');
 });
 ```
 
