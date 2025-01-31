@@ -67,7 +67,6 @@ export class RWSModule {
   }
 
   onModuleInit() {    
-    console.log('RWSModule has been initialized');
   }
 }
 
