@@ -12,7 +12,7 @@ import { RWSModel, IDbConfigHandler } from '@rws-framework/db';
 import { 
   Module  
 } from '@nestjs/common';
-import { APP_INTERCEPTOR, NestFactory, Reflector } from '@nestjs/core';
+import { APP_INTERCEPTOR, NestFactory, Reflector, DiscoveryService } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
@@ -56,6 +56,7 @@ export class RWSModule {
       module: RWSModule,
       imports: processedImports as unknown as NestModuleTypes,
       providers: [
+        DiscoveryService,
         ConfigService,
         NestDBService,
         RWSConfigService,        
@@ -70,7 +71,8 @@ export class RWSModule {
             return new SerializeInterceptor();
           },
           inject: [Reflector]
-        }        
+        },
+        AutoRouteService        
       ],  
       exports: [
         NestDBService,
@@ -80,7 +82,8 @@ export class RWSModule {
         ConsoleService, 
         AuthService,
         RouterService,
-        SerializeInterceptor
+        SerializeInterceptor,
+        AutoRouteService
       ]
     };
   }
