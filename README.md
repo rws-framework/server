@@ -26,7 +26,7 @@ yarn add @rws-framework/server
 1. Initialize a new RWS project:
 
 ```bash
-yarn rws init
+yarn rws-server init
 ```
 
 2. Create a configuration file (e.g., `src/config/config.ts`):
@@ -265,7 +265,7 @@ The `IAppConfig` interface supports the following options:
 
 ## Best Practices
 
-1. Always run `yarn rws init` after modifying model schemas
+1. Always run `yarn rws-server init` after modifying model schemas
 2. Use decorators for clean and maintainable code
 3. Implement proper error handling in controllers and gateways
 4. Keep configuration in environment variables
