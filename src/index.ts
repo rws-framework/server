@@ -1,4 +1,3 @@
-import 'source-map-support/register';
 import { Socket } from 'socket.io';
 
 

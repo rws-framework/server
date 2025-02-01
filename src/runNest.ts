@@ -101,9 +101,13 @@ export default async function bootstrap(
   callback: RunCallbackList | null = null,
   controllers: any[] = []
 ) {
+  const dbCli =  process.env?.DB_CLI ? parseInt(process.env.DB_CLI) : 0;
+
+  if(dbCli){
+    return;
+  }
+
   const rwsOptions = cfgRunner();  
-
-
   const app: INestApplication = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled)));
 
   if(callback?.preInit){

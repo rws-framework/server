@@ -24,6 +24,10 @@ export function RWSControllerDecorator(
     dbModel?: () => OpModelType<any>
   ): ClassDecorator {    
     
+    if(!BootstrapRegistry.getConfig()){
+      return;
+    }
+
     const routes = BootstrapRegistry.getConfig().http_routes as RWSHTTPRoutingEntry[];
     
     return (target: any) => {      
