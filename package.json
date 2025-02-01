@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "3.8.3",
+  "version": "3.8.4",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -10,7 +10,7 @@
   "author": "papablack",
   "license": "ISC",
   "bin": {
-    "rws": "./exec/console.js"
+    "rws-server": "./exec/console.js"
   },
   "dependencies": {
     "@fastify/static": "7.0.0",    
