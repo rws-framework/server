@@ -4,38 +4,38 @@ const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
 const {rwsExternals} = require('./_rws_externals');
 const { rwsPath, RWSConfigBuilder } = require('@rws-framework/console');
+const { fileURLToPath } = require('url');
+const { dirname } = require('path');
 
-const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()), 'node_modules')
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const RWSWebpackWrapper = (config) => {
-  const executionDir = config.executionDir || process.cwd();
+const RWSWebpackWrapper = (appRoot, config, packageDir) => {
+  const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
 
-  const BuildConfigurator = new RWSConfigBuilder(executionDir + '/.rws.json', {
-    dev: false,  
-    tsConfigPath: executionDir + '/tsconfig.json',
-    entry: `${executionDir}/src/index.ts`,
-    executionDir: executionDir,  
-    outputDir:  path.resolve(executionDir, 'build'),
-    outputFileName: config.outputFileName || 'rws.server.js'
-  });
+  const executionDir = config.executionDir;
 
-  const isDev = BuildConfigurator.get('dev') || config.dev;
-  const cfgEntry = BuildConfigurator.get('entry') || config.entry;
-  const cfgOutputDir = BuildConfigurator.get('outputDir') || config.outputDir;
-  const outputFileName = BuildConfigurator.get('outputFileName') || config.outputFileName;
+  const cfgEntry = `./src/index.ts`;
+  const cfgOutputDir = path.resolve(executionDir, config.outputDir);
+  const outputFileName = config.outputFileName;
+  const tsConfig = config.tsConfig;
+  const isDev = config.dev;
 
   console.log('Build mode:', chalk.red(isDev ? 'development' : 'production'));
   
-
   const modules_setup =  config.nodeModules || [rootPackageNodeModules];
   const aliases = config.aliases = {}
 
   
-
   const overridePlugins = config.plugins || []
   const overrideResolvePlugins = config.resolvePlugins || []
 
-  let WEBPACK_PLUGINS = [new webpack.optimize.ModuleConcatenationPlugin()]
+  let WEBPACK_PLUGINS = [
+    new webpack.optimize.ModuleConcatenationPlugin(),
+    new webpack.ProvidePlugin({
+      'Reflect': ['reflect-metadata', 'Reflect']
+    })
+  ]
 
   WEBPACK_PLUGINS = [...WEBPACK_PLUGINS, ...overridePlugins];  
   
@@ -43,13 +43,38 @@ const RWSWebpackWrapper = (config) => {
 
   WEBPACK_RESOLVE_PLUGINS = [...WEBPACK_RESOLVE_PLUGINS, ...overridePlugins];
 
-  const mergeCodeBaseOptions = config.mergedCodeBaseOptions || null;
+  const tsConfigData = tsConfig(__dirname, true, false);
+  const tsConfigPath = tsConfigData.path;
+
+  console.log('TypeScript config path:', tsConfigPath);
+  if (!require('fs').existsSync(tsConfigPath)) {
+      console.error('TypeScript config file not found at:', tsConfigPath);
+  }
+
+  const tsLoaderOptions = {        
+    configFile: tsConfigPath, 
+    compilerOptions: {
+        emitDecoratorMetadata: true,
+        experimentalDecorators: true,
+        target: "ES2018",
+        module: "commonjs"
+    }, 
+    transpileOnly: false,  
+    logLevel: "info",
+    logInfoToStdOut: true,
+    context: executionDir,
+    errorFormatter: (message, colors) => {
+      const messageText = message.message || message;
+      return `\nTS Error: ${messageText}\n`;
+    }                
+  }
+
+  console.log('TS CONFIG: ', tsConfigData.config);
+  console.log('TS LINKS: ', tsConfigData.includes.map(item => item.rel()), tsConfigData.excludes.map(item => item.rel()));
 
   const cfgExport = {
     context: executionDir,
-    entry: {      
-      main_rws: cfgEntry
-    },
+    entry: [require.resolve('reflect-metadata'), cfgEntry],
     mode: isDev ? 'development' : 'production',
     target: 'node',
     devtool: isDev ? 'source-map' : false,
@@ -75,18 +100,17 @@ const RWSWebpackWrapper = (config) => {
           use: [                       
             {
               loader: 'ts-loader',
-              options: {
-                allowTsInNodeModules: true,
-                configFile: path.resolve(process.cwd() + '/tsconfig.json'),
-                // compilerOptions: {
-                //   paths: {
-                //     '*': [rootPackageNodeModules + '/*']
-                //   }
-                // }
-              }
+              options: tsLoaderOptions
             }
           ],
-          exclude: /node_modules\/(?!\@rws-framework\/.*)|\.d\.ts$/,
+          include: [
+            ...tsConfigData.includes.map(item => item.abs())            
+          ],
+          exclude: [
+            ...tsConfigData.excludes.map(item => item.abs()),
+            /node_modules\/(?!\@rws-framework\/[A-Z0-9a-z])/,            
+            /\.d\.ts$/        
+          ],
         },       
         {
             test: /\.node$/,
@@ -101,20 +125,40 @@ const RWSWebpackWrapper = (config) => {
     ignoreWarnings: webpackFilters,
     optimization: {      
       minimize: false
-  }    
+    }    
   }
-  cfgExport.externals = {
-    // List dependencies you want to exclude from the bundle
-    'express': 'commonjs express',
-    '@nestjs/core': 'commonjs @nestjs/core',
-    '@nestjs/common': 'commonjs @nestjs/common',
-    'kerberos': 'commonjs kerberos',
-    'mongodb-client-encryption': 'commonjs mongodb-client-encryption'
-    // Add other packages you want to externalize
-  }
+
+  console.log('Include paths:', cfgExport.module.rules[0].include);
+
+  cfgExport.externals = [
+    function({ request }, callback) {
+      const includePackages = [
+        '@rws-framework',
+        'ts-loader',
+        'tslib',
+        'reflect-metadata',
+        '@nestjs'
+      ];
+  
+      // Jeśli pakiet jest na liście includePackages, nie externalizuj go
+      if (includePackages.some(pkg => request.startsWith(pkg))) {
+        return callback();
+      }
+  
+      // Externalizuj wszystkie pozostałe node_modules
+      if (/^[a-z\-0-9@]/.test(request)) {
+        return callback(null, `commonjs ${request}`);
+      }
+  
+      callback();
+    }
+  ];
+
   if(isDev){
     
   }
+
+  console.log({})
 
   return cfgExport;
 }

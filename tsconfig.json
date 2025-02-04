@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "target": "ES2018",
@@ -13,12 +12,7 @@
     "strictNullChecks": false,
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
-    "declaration": true
-  },
-  "include": [
-    "src"
-  ],
-  "exclude": [  
-    "node_modules"  
-  ]
+    "noEmit": false,
+    "declaration": false
+  }
 }
