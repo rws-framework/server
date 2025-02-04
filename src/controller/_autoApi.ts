@@ -5,10 +5,8 @@ import { AutoRouteService } from '../services/AutoRouteService'
 import { OpModelType } from "@rws-framework/db";
 import { RWSCONTROLLER_METADATA_KEY, RWSControllerMetadata } from "@rws-framework/server/src/controller/_decorator";
 import { IPrefixedHTTProutes } from '@rws-framework/server/src/routing/routes';
-import { Param, Body } from '@nestjs/common';
+import { Param } from '@nestjs/common';
 import { IAppConfig, RWSConfigService, RWSModel } from '@rws-framework/server';
-import { SerializeInterceptor } from '../interceptors/serialize.interceptor';
-import { RouteInfo } from '@nestjs/common/interfaces';
 
 interface IAutoApiServices {
     configService?: RWSConfigService<IAppConfig>;

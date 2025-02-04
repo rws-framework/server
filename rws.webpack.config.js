@@ -10,6 +10,14 @@ const { dirname } = require('path');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const verboseLog = console.log;
+
+console.log = (x) => {
+  if(process.env.RWS_VERBOSE){
+    verboseLog(x);
+  }
+}
+
 const RWSWebpackWrapper = (appRoot, config, packageDir) => {
   const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
 
@@ -32,10 +40,10 @@ const RWSWebpackWrapper = (appRoot, config, packageDir) => {
 
   let WEBPACK_PLUGINS = [
     new webpack.optimize.ModuleConcatenationPlugin(),
-    new webpack.ProvidePlugin({
-      'Reflect': ['reflect-metadata', 'Reflect']
+    new webpack.DefinePlugin({
+      'global.GENTLY': false //FFS I have no idea why only with this the reflect-metadata works. Please do consult any god devised by mankind for explanation.
     })
-  ]
+  ];
 
   WEBPACK_PLUGINS = [...WEBPACK_PLUGINS, ...overridePlugins];  
   
@@ -59,7 +67,7 @@ const RWSWebpackWrapper = (appRoot, config, packageDir) => {
         target: "ES2018",
         module: "commonjs"
     }, 
-    transpileOnly: false,  
+    transpileOnly: true,  
     logLevel: "info",
     logInfoToStdOut: true,
     context: executionDir,
@@ -70,11 +78,10 @@ const RWSWebpackWrapper = (appRoot, config, packageDir) => {
   }
 
   console.log('TS CONFIG: ', tsConfigData.config);
-  console.log('TS LINKS: ', tsConfigData.includes.map(item => item.rel()), tsConfigData.excludes.map(item => item.rel()));
 
   const cfgExport = {
     context: executionDir,
-    entry: [require.resolve('reflect-metadata'), cfgEntry],
+    entry: ['reflect-metadata', cfgEntry],
     mode: isDev ? 'development' : 'production',
     target: 'node',
     devtool: isDev ? 'source-map' : false,
@@ -133,19 +140,14 @@ const RWSWebpackWrapper = (appRoot, config, packageDir) => {
   cfgExport.externals = [
     function({ request }, callback) {
       const includePackages = [
-        '@rws-framework',
-        'ts-loader',
-        'tslib',
-        'reflect-metadata',
-        '@nestjs'
+        '@rws-framework'   
       ];
   
-      // Jeśli pakiet jest na liście includePackages, nie externalizuj go
       if (includePackages.some(pkg => request.startsWith(pkg))) {
         return callback();
       }
   
-      // Externalizuj wszystkie pozostałe node_modules
+      // Externalize others
       if (/^[a-z\-0-9@]/.test(request)) {
         return callback(null, `commonjs ${request}`);
       }

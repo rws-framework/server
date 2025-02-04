@@ -1,6 +1,5 @@
+import 'reflect-metadata';
 import { Socket } from 'socket.io';
-
-
 // import { RWSHTTPRoutingEntry, IPrefixedHTTProutes, IHTTProute, WsRoutes, ITheSocket } from './helpers/ServerBuilder';
 
 import runNest from './runNest';

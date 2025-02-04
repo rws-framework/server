@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import common, { 
     Injectable, 
     Get, Post, Delete, Put,
