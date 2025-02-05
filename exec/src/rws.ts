@@ -4,7 +4,7 @@ import 'reflect-metadata';
 import { BootstrapRegistry } from '../../nest/decorators/RWSConfigInjector';
 import IAppConfig from '../../src/types/IAppConfig';
 import { INestApplication, Type } from '@nestjs/common';
-import { CLIModule, NestModuleInputData, NestModuleData, ParsedOptions, ParsedOpt } from './application/cli.module';
+import { CLIModule, NestModuleInputData, ParsedOptions } from './application/cli.module';
 import { NestFactory } from '@nestjs/core';
 
 import chalk from 'chalk';
@@ -13,11 +13,12 @@ import { UtilsService } from '../../src/services/UtilsService';
 import { MD5Service } from '../../src/services/MD5Service';
 import fs from 'fs';
 import { ICommandBaseServices } from '../../src/commands/types';
-import { ConfigService } from '@nestjs/config';
 import { ConsoleService } from '../../src/services/ConsoleService';
 import { ProcessService } from '../../src/services/ProcessService';
 import { NestDBService as DBService } from '../../src/services/NestDBService';
 import { RWSBaseCommand } from '../../src/commands/_command';
+import { RWSConfigService } from '../../src/services/RWSConfigService';
+import { RWSModel } from '@rws-framework/db';
 
 // console.log = (any) => {};
 
@@ -32,18 +33,18 @@ export class RWSCliBootstrap {
         config: () => T, 
         nestModuleData: NestModuleInputData, 
         customModule: Type<any> = null
-      ): Promise<void> {
+    ): Promise<void> {
         const commandName: string = process.argv[2];     
         try {          
-          if (!this._instance) {
-            this._instance = new RWSCliBootstrap(nestModuleData, customModule);
-          }
-          return this._instance.runCli(commandName, config());
+            if (!this._instance) {
+                this._instance = new RWSCliBootstrap(nestModuleData, customModule);
+            }
+            return this._instance.runCli(commandName, config());
         } catch (error) {
-          console.error('Error in RWSCliBootstrap.run:', error);
-          throw error;
+            console.error('Error in RWSCliBootstrap.run:', error);
+            throw error;
         }
-      }
+    }
     
 
     protected static get instance(): RWSCliBootstrap {
@@ -52,32 +53,32 @@ export class RWSCliBootstrap {
 
     private async makeModule(): Promise<void> {
         try {                   
-          const config = BootstrapRegistry.getConfig();
+            const config = BootstrapRegistry.getConfig();
           
-          this.module = await (CLIModule as any).forRoot(
-            this.nestModuleData, 
-            config
-          );
+            this.module = await (CLIModule as any).forRoot(
+                this.nestModuleData, 
+                config
+            );
 
-          console.log(chalk.blue('CLI Module created successfully'));
+            console.log(chalk.blue('CLI Module created successfully'));
         } catch (error) {
-          console.error('Error in makeModule:', error);
-          throw error;
+            console.error('Error in makeModule:', error);
+            throw error;
         }
     }
 
     protected getServices(): CLIServices
     {
-      const discoveryService = this.$app.get(DecoratorExplorerService);
-      const utilsService = this.$app.get(UtilsService);
-      const md5Service = this.$app.get(MD5Service);
+        const discoveryService = this.$app.get(DecoratorExplorerService);
+        const utilsService = this.$app.get(UtilsService);
+        const md5Service = this.$app.get(MD5Service);
 
-      return {
-        discoveryService, utilsService, md5Service
-      }
+        return {
+            discoveryService, utilsService, md5Service
+        };
     }
 
-    async runCli(commandName:string, config: IAppConfig): Promise<void> {
+    async runCli(commandName: string, config: IAppConfig): Promise<void> {
         try {
           
             if (!BootstrapRegistry.isInitialized()) {
@@ -91,17 +92,22 @@ export class RWSCliBootstrap {
 
             console.log(chalk.bgGreen('$APP is loaded.')); 
 
-            const services: ICommandBaseServices = {
-              utilsService: this.$app.get(UtilsService),
-              configService: this.$app.get(ConfigService),
-              consoleService: this.$app.get(ConsoleService),
-              processService: this.$app.get(ProcessService),
-              dbService: this.$app.get(DBService)
-            }
+            const { discoveryService, utilsService, md5Service }: CLIServices = this.getServices();              
 
-            RWSBaseCommand.setServices(services);
-          
-            const { discoveryService, utilsService, md5Service } : CLIServices = this.getServices();              
+            const configService = this.$app.get(RWSConfigService);
+            const dbService = this.$app.get(DBService);  
+            
+            RWSModel.setServices({configService, dbService: dbService.core()}); 
+
+            const services: ICommandBaseServices = {
+                utilsService: this.$app.get(UtilsService),
+                configService: this.$app.get(RWSConfigService),
+                consoleService: this.$app.get(ConsoleService),
+                processService: this.$app.get(ProcessService),
+                dbService: this.$app.get(DBService)
+            };
+
+            RWSBaseCommand.setServices(services);                    
 
             const cmdProviders = discoveryService.getCommandProviders();
             const cmdProvider: CMDProvider = cmdProviders[Object.keys(cmdProviders).find((item) => item === commandName)];
@@ -110,40 +116,40 @@ export class RWSCliBootstrap {
             const ignoredInputs: string[] = [];            
             
             const parsedOptions: ParsedOptions = inputParams.reduce<ParsedOptions>((acc: ParsedOptions, currentValue: string) => {
-              if (currentValue.startsWith('--') || currentValue.startsWith('-')) {
-                let [key, value] = currentValue.replace(/^-+/, '').split('=');
-                ignoredInputs.push(currentValue); 
+                if (currentValue.startsWith('--') || currentValue.startsWith('-')) {
+                    const [key, value] = currentValue.replace(/^-+/, '').split('=');
+                    ignoredInputs.push(currentValue); 
                 
-                let theValue: string | boolean = value;
+                    let theValue: string | boolean = value;
 
-                if(!value){
-                  theValue = true;
+                    if(!value){
+                        theValue = true;
+                    }
+
+                    return {
+                        ...acc,
+                        [key]: {
+                            key: key,
+                            value: theValue,
+                            fullString: currentValue
+                        }
+                    };
                 }
-
-                return {
-                  ...acc,
-                  [key]: {
-                    key: key,
-                    value: theValue,
-                    fullString: currentValue
-                  }
-                };
-              }
-              return acc;
+                return acc;
             }, {});
 
             const passedParams = inputParams.filter(item => !ignoredInputs.includes(item));           
 
             if(cmdProvider){          
-              cmdProvider.instance.injectServices();
-              await cmdProvider.instance.run(passedParams, parsedOptions);
+                cmdProvider.instance.injectServices(services);
+                await cmdProvider.instance.run(passedParams, parsedOptions);
             } else {
-              console.log(chalk.yellowBright(`Command "${commandName}" does not exist. Maybe you are looking for:`));
+                console.log(chalk.yellowBright(`Command "${commandName}" does not exist. Maybe you are looking for:`));
 
-              for(const pk of Object.keys(cmdProviders)){
-                const provider: CMDProvider = cmdProviders[pk];
-                console.log(`"${utilsService.detectPackageManager() === 'yarn' ? 'yarn' : 'npx'} rws ${provider.metadata.options.name}": ${provider.metadata.options.description}`);
-              }
+                for(const pk of Object.keys(cmdProviders)){
+                    const provider: CMDProvider = cmdProviders[pk];
+                    console.log(`"${utilsService.detectPackageManager() === 'yarn' ? 'yarn' : 'npx'} rws ${provider.metadata.options.name}": ${provider.metadata.options.description}`);
+                }
             }            
 
             const cached: string | null = utilsService.getRWSVar('cli/paths');
@@ -151,7 +157,7 @@ export class RWSCliBootstrap {
             const fileContents: string[] = [];
 
             for(const cliFile of cliPaths){
-              fileContents.push(fs.readFileSync(cliFile, 'utf-8'));
+                fileContents.push(fs.readFileSync(cliFile, 'utf-8'));
             }
 
             utilsService.setRWSVar('cli/checksum', md5Service.md5(fileContents.join('\n')));             

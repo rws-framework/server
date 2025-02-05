@@ -32,8 +32,9 @@ export abstract class RWSBaseCommand{
     protected dbService: DBService;
      
 
-    constructor(){
+    constructor(){      
       if(RWSBaseCommand.services){
+        console.log(RWSBaseCommand.services)
         this.setServices(RWSBaseCommand.services);
       }
     }
@@ -58,16 +59,16 @@ export abstract class RWSBaseCommand{
 
       this.executionDir = process.cwd();
       this.packageRootDir = this.services.utilsService.findRootWorkspacePath(__dirname);
-    
+      
       RWSModel.setServices({
         configService: this.services.configService as IDbConfigHandler,
         dbService: this.services.dbService.core()
-      });    
+      });
     }
     
-    injectServices()
-    {
-      this.setServices(RWSBaseCommand.services);
+    injectServices(services: ICommandBaseServices)
+    {    
+      this.setServices(services);
     }
 }
 

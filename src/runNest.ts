@@ -8,9 +8,9 @@ import { NestDBService } from './services/NestDBService';
 import { AuthService } from './services/AuthService';
 import { UtilsService } from './services/UtilsService';
 import IAppConfig from './types/IAppConfig';
-import { RWSModel, IDbConfigHandler } from '@rws-framework/db';
+import { RWSModel } from '@rws-framework/db';
 import { 
-  Module  
+    Module  
 } from '@nestjs/common';
 import { APP_INTERCEPTOR, NestFactory, Reflector, DiscoveryService } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
@@ -24,131 +24,128 @@ import { RWSAutoApiController } from './controller/_autoApi';
 import { AutoRouteService } from './services/AutoRouteService';
 
 const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
-  ConfigModule.forRoot({
-    isGlobal: true,
-    load: [ () => cfg ]
-  }),  
-  RouterModule.register([])
+    ConfigModule.forRoot({
+        isGlobal: true,
+        load: [ () => cfg ]
+    }),  
+    RouterModule.register([])
 ];
 
 @Module({})
 export class RWSModule {
-  static cfgData: IAppConfig;
+    static cfgData: IAppConfig;
   
-  static async forRoot(cfg: IAppConfig, pubDirEnabled: boolean = true): Promise<DynamicModule> {       
-    const processedImports = [
-      ...baseModules(cfg)   
-    ];
+    static async forRoot(cfg: IAppConfig, pubDirEnabled: boolean = true): Promise<DynamicModule> {       
+        const processedImports = [
+            ...baseModules(cfg)   
+        ];
 
-    if(pubDirEnabled){
-      processedImports.push(ServeStaticModule.forRoot({
-        rootPath: path.join(process.cwd(), cfg.pub_dir), 
-        serveRoot: cfg.static_route || '/',
-      }));      
+        if(pubDirEnabled){
+            processedImports.push(ServeStaticModule.forRoot({
+                rootPath: path.join(process.cwd(), cfg.pub_dir), 
+                serveRoot: cfg.static_route || '/',
+            }));      
+        }
+
+        const serializerProvider =  {
+            provide: APP_INTERCEPTOR,
+            useClass: SerializeInterceptor,
+        };
+
+        return {
+            module: RWSModule,
+            imports: processedImports as unknown as NestModuleTypes,
+            providers: [
+                DiscoveryService,
+                ConfigService,
+                NestDBService,
+                RWSConfigService,        
+                UtilsService, 
+                ConsoleService, 
+                AuthService,
+                RouterService,
+                SerializeInterceptor,
+                {
+                    provide: APP_INTERCEPTOR,
+                    useFactory: (reflector: Reflector) => {
+                        return new SerializeInterceptor();
+                    },
+                    inject: [Reflector]
+                },
+                AutoRouteService        
+            ],  
+            exports: [
+                NestDBService,
+                ConfigService,
+                RWSConfigService,
+                UtilsService, 
+                ConsoleService, 
+                AuthService,
+                RouterService,
+                SerializeInterceptor,
+                AutoRouteService
+            ]
+        };
     }
 
-    const serializerProvider =  {
-      provide: APP_INTERCEPTOR,
-      useClass: SerializeInterceptor,
+    onModuleInit() {    
     }
-
-    return {
-      module: RWSModule,
-      imports: processedImports as unknown as NestModuleTypes,
-      providers: [
-        DiscoveryService,
-        ConfigService,
-        NestDBService,
-        RWSConfigService,        
-        UtilsService, 
-        ConsoleService, 
-        AuthService,
-        RouterService,
-        SerializeInterceptor,
-        {
-          provide: APP_INTERCEPTOR,
-          useFactory: (reflector: Reflector) => {
-            return new SerializeInterceptor();
-          },
-          inject: [Reflector]
-        },
-        AutoRouteService        
-      ],  
-      exports: [
-        NestDBService,
-        ConfigService,
-        RWSConfigService,
-        UtilsService, 
-        ConsoleService, 
-        AuthService,
-        RouterService,
-        SerializeInterceptor,
-        AutoRouteService
-      ]
-    };
-  }
-
-  onModuleInit() {    
-  }
 }
 
 export default async function bootstrap(
-  nestModule: any, 
-  cfgRunner: () => IAppConfig, 
-  opts: ServerOpts = {
-    pubDirEnabled: true
-  },
-  callback: RunCallbackList | null = null,
-  controllers: any[] = []
+    nestModule: any, 
+    cfgRunner: () => IAppConfig, 
+    opts: ServerOpts = {
+        pubDirEnabled: true
+    },
+    callback: RunCallbackList | null = null,
+    controllers: any[] = []
 ) {
-  const dbCli =  process.env?.DB_CLI ? parseInt(process.env.DB_CLI) : 0;
+    const dbCli =  process.env?.DB_CLI ? parseInt(process.env.DB_CLI) : 0;
 
-  if(dbCli){
-    return;
-  }
+    if(dbCli){
+        return;
+    }
 
-  const rwsOptions = cfgRunner();  
-  const app: INestApplication = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled)));
+    const rwsOptions = cfgRunner();  
+    const app: INestApplication = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled)));
 
-  if(callback?.preInit){
-    callback.preInit(app);
-  }
+    if(callback?.preInit){
+        callback.preInit(app);
+    }
 
-  const configService = app.get(RWSConfigService);
-  const dbService = app.get(NestDBService);  
+    const configService = app.get(RWSConfigService);
+    const dbService = app.get(NestDBService);  
 
-  RWSModel.dbService = dbService.core();
-  RWSModel.allModels = configService.get('db_models');
-
-  RWSModel.setServices({
-    dbService: app.get(NestDBService),
-    configService: configService
-  })
+    RWSModel.setServices({
+        dbService: dbService.core(),
+        configService: configService
+    });    
   
-  RWSAutoApiController.setServices({
-      configService: configService,
-      autoRouteService: app.get(AutoRouteService),      
-      httpAdapter: app.getHttpAdapter().getInstance()
-  });
+    RWSAutoApiController.setServices({
+        configService: configService,
+        autoRouteService: app.get(AutoRouteService),      
+        httpAdapter: app.getHttpAdapter().getInstance()
+    });
   
-  // RWSAutoApiController.setServices({
-  //   serializer: app.get(SerializeInterceptor)     
-  // });
+    // RWSAutoApiController.setServices({
+    //   serializer: app.get(SerializeInterceptor)     
+    // });
 
-  await app.init();  
+    await app.init();  
 
-  if(callback?.afterInit){
-    callback.afterInit(app);
-  }
+    if(callback?.afterInit){
+        callback.afterInit(app);
+    }
 
-  const routerService = app.get(RouterService);
+    const routerService = app.get(RouterService);
 
-  const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
-  await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
+    const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
+    await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
 
-  if(callback?.preServerStart){
-    callback.preServerStart(app);
-  }
+    if(callback?.preServerStart){
+        callback.preServerStart(app);
+    }
 
-  await app.listen(rwsOptions.port);
+    await app.listen(rwsOptions.port);
 }

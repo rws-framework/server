@@ -12,13 +12,13 @@ const __dirname = dirname(__filename);
 
 const verboseLog = console.log;
 
-console.log = (x) => {
+console.log = (...x) => {
   if(process.env.RWS_VERBOSE){
-    verboseLog(x);
+    verboseLog(...x);
   }
 }
 
-const RWSWebpackWrapper = (appRoot, config, packageDir) => {
+const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
 
   const executionDir = config.executionDir;
@@ -51,13 +51,14 @@ const RWSWebpackWrapper = (appRoot, config, packageDir) => {
 
   WEBPACK_RESOLVE_PLUGINS = [...WEBPACK_RESOLVE_PLUGINS, ...overridePlugins];
 
-  const tsConfigData = tsConfig(__dirname, true, false);
+  const tsConfigData = await tsConfig(__dirname, true);
   const tsConfigPath = tsConfigData.path;
 
-  console.log('TypeScript config path:', tsConfigPath);
   if (!require('fs').existsSync(tsConfigPath)) {
       console.error('TypeScript config file not found at:', tsConfigPath);
   }
+
+  console.log('TypeScript config path:', tsConfigPath);
 
   const tsLoaderOptions = {        
     configFile: tsConfigPath, 
@@ -155,12 +156,6 @@ const RWSWebpackWrapper = (appRoot, config, packageDir) => {
       callback();
     }
   ];
-
-  if(isDev){
-    
-  }
-
-  console.log({})
 
   return cfgExport;
 }

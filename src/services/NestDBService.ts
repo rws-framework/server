@@ -15,6 +15,7 @@ export class NestDBService {
 
     constructor(private configService: RWSConfigService) {
         this.db = new DBService(this.configService);
+        
         this.proxyHandler = {
             get: (target: NestDBService, prop: string | symbol, receiver: any) => {                
                 if (prop in target) {

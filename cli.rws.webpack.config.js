@@ -4,38 +4,46 @@ const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
 const {rwsExternals} = require('./_rws_externals');
 const { rwsPath, RWSConfigBuilder } = require('@rws-framework/console');
+const { fileURLToPath } = require('url');
+const { dirname } = require('path');
 
-const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(process.cwd()), 'node_modules')
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const RWSWebpackWrapper = (config) => {
-  const executionDir = config.executionDir || process.cwd();
+const verboseLog = console.log;
 
-  const BuildConfigurator = new RWSConfigBuilder(executionDir + '/.rws.json', {
-    dev: false,  
-    tsConfigPath: executionDir + '/tsconfig.json',
-    entry: config.entry,
-    executionDir: executionDir,  
-    outputDir:  path.resolve(executionDir, 'build'),
-    outputFileName: config.outputFileName || 'rws.cli.js'
-  });
+console.log = (...x) => {
+  if(process.env.RWS_VERBOSE){
+    verboseLog(...x);
+  }
+}
 
-  const isDev = BuildConfigurator.get('dev') || config.dev;  
-  const cfgEntry = BuildConfigurator.get('entry') || config.entry;  
-  const cfgOutputDir = BuildConfigurator.get('outputDir') || config.outputDir;
-  const outputFileName = BuildConfigurator.get('outputFileName') || config.outputFileName;
+const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
+  const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
+
+  const executionDir = config.executionDir;
+
+  const cfgEntry = config.entrypoint || `./src/index.ts`;
+  const cfgOutputDir = path.resolve(executionDir, config.outputDir);
+  const outputFileName = config.outputFileName;
+  const tsConfig = config.tsConfig;
+  const isDev = config.dev;
 
   console.log('Build mode:', chalk.red(isDev ? 'development' : 'production'));
   
-
   const modules_setup =  config.nodeModules || [rootPackageNodeModules];
   const aliases = config.aliases = {}
 
   
-
   const overridePlugins = config.plugins || []
   const overrideResolvePlugins = config.resolvePlugins || []
 
-  let WEBPACK_PLUGINS = [new webpack.optimize.ModuleConcatenationPlugin()]
+  let WEBPACK_PLUGINS = [
+    new webpack.optimize.ModuleConcatenationPlugin(),
+    new webpack.DefinePlugin({
+      'global.GENTLY': false //FFS I have no idea why only with this the reflect-metadata works. Please do consult any god devised by mankind for explanation.
+    })
+  ];
 
   WEBPACK_PLUGINS = [...WEBPACK_PLUGINS, ...overridePlugins];  
   
@@ -43,13 +51,45 @@ const RWSWebpackWrapper = (config) => {
 
   WEBPACK_RESOLVE_PLUGINS = [...WEBPACK_RESOLVE_PLUGINS, ...overridePlugins];
 
-  const mergeCodeBaseOptions = config.mergedCodeBaseOptions || null;
+  const tsConfigData = await tsConfig(__dirname, true);
+  const tsConfigPath = tsConfigData.path;
+
+  if (!require('fs').existsSync(tsConfigPath)) {
+      console.error('TypeScript config file not found at:', tsConfigPath);
+  }
+
+  console.log('TypeScript config path:', tsConfigPath);
+
+  const tsLoaderOptions = {        
+    configFile: tsConfigPath, 
+    compilerOptions: {
+        emitDecoratorMetadata: true,
+        experimentalDecorators: true,
+        target: "ES2018",
+        module: "commonjs"
+    }, 
+    transpileOnly: true,  
+    logLevel: "info",
+    logInfoToStdOut: true,
+    context: executionDir,
+    errorFormatter: (message, colors) => {
+      const messageText = message.message || message;
+      return `\nTS Error: ${messageText}\n`;
+    }                
+  }
+
+  console.log('TS CONFIG: ', tsConfigData.config);
+
+  for(const aliasKey of Object.keys(tsConfigData.config.compilerOptions.paths)){
+    const alias = tsConfigData.config.compilerOptions.paths[aliasKey];
+    aliases[aliasKey] = path.resolve(executionDir, alias[0]);
+  }
+
+  console.log({aliases, cfgEntry})
 
   const cfgExport = {
     context: executionDir,
-    entry: {      
-      main_rws: cfgEntry
-    },
+    entry: ['reflect-metadata', cfgEntry],
     mode: isDev ? 'development' : 'production',
     target: 'node',
     devtool: isDev ? 'source-map' : false,
@@ -75,18 +115,17 @@ const RWSWebpackWrapper = (config) => {
           use: [                       
             {
               loader: 'ts-loader',
-              options: {
-                allowTsInNodeModules: true,
-                configFile: path.resolve(process.cwd() + '/tsconfig.json'),
-                // compilerOptions: {
-                //   paths: {
-                //     '*': [rootPackageNodeModules + '/*']
-                //   }
-                // }
-              }
+              options: tsLoaderOptions
             }
           ],
-          exclude: /node_modules\/(?!\@rws-framework\/.*)|\.d\.ts$/,
+          include: [
+            ...tsConfigData.includes.map(item => item.abs())            
+          ],
+          exclude: [
+            ...tsConfigData.excludes.map(item => item.abs()),
+            /node_modules\/(?!\@rws-framework\/[A-Z0-9a-z])/,            
+            /\.d\.ts$/        
+          ],
         },       
         {
             test: /\.node$/,
@@ -101,20 +140,29 @@ const RWSWebpackWrapper = (config) => {
     ignoreWarnings: webpackFilters,
     optimization: {      
       minimize: false
-  }    
+    }    
   }
-  cfgExport.externals = {
-    // List dependencies you want to exclude from the bundle
-    'express': 'commonjs express',
-    '@nestjs/core': 'commonjs @nestjs/core',
-    '@nestjs/common': 'commonjs @nestjs/common',
-    'kerberos': 'commonjs kerberos',
-    'mongodb-client-encryption': 'commonjs mongodb-client-encryption'
-    // Add other packages you want to externalize
-  }
-  if(isDev){
-    
-  }
+
+  console.log('Include paths:', cfgExport.module.rules[0].include);
+
+  cfgExport.externals = [
+    function({ request }, callback) {
+      const includePackages = [
+        '@rws-framework'   
+      ];
+  
+      if (includePackages.some(pkg => request.startsWith(pkg))) {
+        return callback();
+      }
+  
+      // Externalize others
+      if (/^[a-z\-0-9@]/.test(request)) {
+        return callback(null, `commonjs ${request}`);
+      }
+  
+      callback();
+    }
+  ];
 
   return cfgExport;
 }
