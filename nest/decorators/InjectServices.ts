@@ -1,4 +1,4 @@
-import { DBService } from '../../src/services/DBService';
+import { NestDBService as DBService } from '../../src/services/NestDBService';
 import { ConfigService } from '@nestjs/config';
 
 let globalDBService: DBService;

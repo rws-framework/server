@@ -21,6 +21,8 @@ console.log = (...x) => {
 const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
 
+  console.log('START')
+
   const executionDir = config.executionDir;
 
   const cfgEntry = `./src/index.ts`;
