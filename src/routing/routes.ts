@@ -11,6 +11,7 @@ interface IHTTProute<P = {[key: string]: any}> {
 
 interface IPrefixedHTTProutes<P = {[key: string]: any}> {
     prefix: string;
+    exportAutoRoutes?: boolean;
     controllerName: string;
     routes: IHTTProute<P>[];
 }

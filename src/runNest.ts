@@ -22,8 +22,11 @@ import { RouterModule } from '@nestjs/core';
 import { SerializeInterceptor } from './interceptors/serialize.interceptor';
 import { RWSAutoApiController } from './controller/_autoApi';
 import { AutoRouteService } from './services/AutoRouteService';
+import { RWSCoreController } from './controller/core.controller';
+import { config } from 'yargs';
+type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
-const baseModules: (cfg: IAppConfig) => (DynamicModule| Type<any> | Promise<DynamicModule>)[] = (cfg: IAppConfig) => [   
+const baseModules: (cfg: IAppConfig) => AnyModule[] = (cfg: IAppConfig) => [   
     ConfigModule.forRoot({
         isGlobal: true,
         load: [ () => cfg ]
@@ -52,7 +55,7 @@ export class RWSModule {
             useClass: SerializeInterceptor,
         };
 
-        return {
+        const theModule: AnyModule = {
             module: RWSModule,
             imports: processedImports as unknown as NestModuleTypes,
             providers: [
@@ -84,8 +87,16 @@ export class RWSModule {
                 RouterService,
                 SerializeInterceptor,
                 AutoRouteService
-            ]
+            ]            
         };
+
+        if(!cfg.noCoreController){
+            theModule.controllers = [
+                RWSCoreController
+            ];
+        }
+
+        return theModule;
     }
 
     onModuleInit() {    
@@ -109,6 +120,14 @@ export default async function bootstrap(
 
     const rwsOptions = cfgRunner();  
     const app: INestApplication = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled)));
+
+    if(rwsOptions.cors_domain){
+        app.enableCors({
+            origin: rwsOptions.cors_domain, 
+            methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+            credentials: true,
+        });
+    }
 
     if(callback?.preInit){
         callback.preInit(app);

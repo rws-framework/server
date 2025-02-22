@@ -19,10 +19,11 @@ export default interface IAppConfig {
     resources?: IRWSResource[]   
     front_routes?: Record<string, unknown>[]
     pub_dir?: string
-    cors_domain?: string
+    cors_domain?: string | string[]
     static_route?: string
     test_port?: number
     test_ws_port?: number
+    noCoreController?: boolean
     features?: {
         ws_enabled?: boolean
         routing_enabled?: boolean
