@@ -1,10 +1,11 @@
 import 'reflect-metadata';
 
-import { OpModelType, RWSModel } from '@rws-framework/db';
+import { IMetaOpts, IRWSCollectionMeta, OpModelType, RWSModel } from '@rws-framework/db';
 import { RWSConfigService } from '../services/RWSConfigService';
 
 import {  Controller, Get, Param } from '@nestjs/common';
 import { IKDBTypeInfo, IKDBTypesResponse } from '../types/CoreTypes';
+import { IRWSResourceOpts, IRWSResourceMeta } from '../decorators/resource';
 
 
 @Controller('/api/rws')
@@ -12,21 +13,30 @@ class RWSCoreController {
     constructor(private configService: RWSConfigService){}
 
     @Get('/resource/:resourceName')
-    public async getKDBTypesAction(@Param('resourceName') resourceName: string): Promise<IKDBTypesResponse> {
+    public async getResourceAction(@Param('resourceName') resourceName: string): Promise<IKDBTypesResponse> {
         // Get all decorated properties from KDB model using reflection
         const types: IKDBTypeInfo[] = [];
 
-        const models: OpModelType<any>[] = this.configService.get('db_models');
+        const models: OpModelType<any>[] = this.configService.get('db_models');           
 
         const chosen_model = models.find((item) => {
-            return item._collection === resourceName;
-        })
+            const collectionMeta: IRWSResourceMeta = Reflect.getMetadata('RWSResource', item);   
+            return collectionMeta.resourceName === resourceName;
+        });
+
 
         if(!chosen_model){
-            throw new Error('No model found for resource: ' + resourceName);
+            throw new Error('No model found.');
         }
 
-        const metadata = await RWSModel.getModelAnnotations(chosen_model);
+        let metadata: Record<string, {
+            annotationType: string;
+            metadata: any;
+        }> = await RWSModel.getModelAnnotations(chosen_model);
+
+        if(!chosen_model || !metadata){
+            throw new Error('No model found for resource: ' + resourceName);
+        }        
 
         for (const key of Object.keys(metadata)) {
             const metadataItem = metadata[key];

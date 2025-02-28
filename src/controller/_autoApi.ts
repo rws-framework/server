@@ -50,8 +50,7 @@ export abstract class RWSAutoApiController {
         return this.httpAdapter;
     }
     
-    async findManyAction<T extends OpModelType<any>>(): Promise<T[]> {   
-        // console.log(this.dbModel);                 
+    async findManyAction<T extends OpModelType<any>>(): Promise<T[]> {                         
         return await this.dbModel.findBy({ });
     }
 

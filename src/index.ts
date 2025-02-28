@@ -18,7 +18,7 @@ import { MD5Service } from './services/MD5Service';
 import { TraversalService } from './services/TraversalService';
 import { UtilsService }  from './services/UtilsService';
 import { RWSAutoApiController } from './controller/_autoApi';
-
+import { RWSResource, IRWSResourceMeta, IRWSResourceOpts } from './decorators/resource';
 import IAppConfig from './types/IAppConfig';
 import IDbUser from './types/IDbUser';
 
@@ -46,8 +46,8 @@ export {
     RWSGateway,    
     RWSModel,
     IRWSModel,
+    RWSResource, IRWSResourceMeta, IRWSResourceOpts,
 
-      
     NestDBService as DBService,        
     AuthService,        
     ConsoleService,             
