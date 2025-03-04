@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import { RWSAutoApi } from "./autoApi.decorator";
-import { AutoRouteService } from '../services/AutoRouteService'
+import { RWSAutoAPIService } from '../services/RWSAutoAPIService'
 import { OpModelType } from "@rws-framework/db";
 import { RWSCONTROLLER_METADATA_KEY, RWSControllerMetadata } from "@rws-framework/server/src/controller/_decorator";
 import { IPrefixedHTTProutes } from '@rws-framework/server/src/routing/routes';
@@ -10,7 +10,7 @@ import { IAppConfig, RWSConfigService, RWSModel } from '@rws-framework/server';
 
 interface IAutoApiServices {
     configService?: RWSConfigService<IAppConfig>;
-    autoRouteService?: AutoRouteService;    
+    autoRouteService?: RWSAutoAPIService;    
     httpAdapter?: any;
 }
 
@@ -21,7 +21,7 @@ export abstract class RWSAutoApiController {
     public static services: IAutoApiServices = {};
     
     private dbModel: OpModelType<any>;
-    private autoRouteService: AutoRouteService;
+    private autoRouteService: RWSAutoAPIService;
     private configService: RWSConfigService;
     private httpAdapter: HTTPAdapter;    
 

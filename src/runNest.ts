@@ -1,4 +1,4 @@
-import { DynamicModule, Type } from '@nestjs/common';
+import { DynamicModule, Logger, Type } from '@nestjs/common';
 import { NestModuleTypes } from './types/IRWSModule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RouterService } from './services/RouterService';
@@ -21,9 +21,10 @@ import { INestApplication } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
 import { SerializeInterceptor } from './interceptors/serialize.interceptor';
 import { RWSAutoApiController } from './controller/_autoApi';
-import { AutoRouteService } from './services/AutoRouteService';
+import { RWSAutoAPIService } from './services/RWSAutoAPIService';
 import { RWSCoreController } from './controller/core.controller';
 import { config } from 'yargs';
+import { RWSLogger } from './services/RWSLogger';
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
 const baseModules: (cfg: IAppConfig) => AnyModule[] = (cfg: IAppConfig) => [   
@@ -75,7 +76,7 @@ export class RWSModule {
                     },
                     inject: [Reflector]
                 },
-                AutoRouteService        
+                RWSAutoAPIService    
             ],  
             exports: [
                 NestDBService,
@@ -86,7 +87,7 @@ export class RWSModule {
                 AuthService,
                 RouterService,
                 SerializeInterceptor,
-                AutoRouteService
+                RWSAutoAPIService
             ]            
         };
 
@@ -119,7 +120,9 @@ export default async function bootstrap(
     }
 
     const rwsOptions = cfgRunner();  
-    const app: INestApplication = await NestFactory.create(nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled)));
+    const app: INestApplication = await NestFactory.create(
+        nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled))
+    );
 
     if(rwsOptions.cors_domain){
         app.enableCors({
@@ -135,6 +138,7 @@ export default async function bootstrap(
 
     const configService = app.get(RWSConfigService);
     const dbService = app.get(NestDBService);  
+    const autoRouteService: RWSAutoAPIService = app.get(RWSAutoAPIService);
 
     RWSModel.setServices({
         dbService: dbService.core(),
@@ -143,13 +147,9 @@ export default async function bootstrap(
   
     RWSAutoApiController.setServices({
         configService: configService,
-        autoRouteService: app.get(AutoRouteService),      
+        autoRouteService: autoRouteService,      
         httpAdapter: app.getHttpAdapter().getInstance()
     });
-  
-    // RWSAutoApiController.setServices({
-    //   serializer: app.get(SerializeInterceptor)     
-    // });
 
     await app.init();  
 
@@ -161,6 +161,7 @@ export default async function bootstrap(
 
     const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
     await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
+    autoRouteService.shoutRoutes();
 
     if(callback?.preServerStart){
         callback.preServerStart(app);

@@ -17,7 +17,7 @@ interface RouteConfig {
 }
 
 @Injectable()
-export class AutoRouteService {
+export class RWSAutoAPIService {
   private logger: Logger = new Logger(this.constructor.name);
   private routerProxy: any;
   private methodMap: { [key: string]: RequestMethod } = {
@@ -131,13 +131,7 @@ export class AutoRouteService {
         await controllerInstance.removeAction(req.params.id);
         return { statusCode: 204 };
       }
-    });
-
-    for (const route of this.readRoutes()){
-      const routeEntry = Object.entries(this.methodMap).find(([_, val]) => val === route.method);
-
-      this.logger.log(`Mapped {${route.path}, ${routeEntry ? routeEntry[0] : 'UNDEFINED'}} route`);
-    }
+    });   
   }
 
   readRoutes(): RouteInfo[]
@@ -218,5 +212,14 @@ export class AutoRouteService {
     }
 
     return body;
+  }
+
+  shoutRoutes(): void
+  {
+    for (const route of this.readRoutes()){
+      const routeEntry = Object.entries(this.methodMap).find(([_, val]) => val === route.method);
+
+      this.logger.log(`Mapped {${route.path}, ${routeEntry ? routeEntry[0] : 'UNDEFINED'}} route`);
+    }
   }
 }
