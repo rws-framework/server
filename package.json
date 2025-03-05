@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "3.10.5",
+  "version": "3.10.6",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -24,7 +24,7 @@
     "@nestjs/serve-static": "^4.0.2",
     "@nestjs/websockets": "^10.3.8",   
     "@rws-framework/console": "*",
-    "@rws-framework/db": "^2.*",
+    "@rws-framework/db": "^2.1.10",
     "@zip.js/zip.js": "^2.7.34",
     "add": "^2.0.6",
     "axios": "^1.4.0",
