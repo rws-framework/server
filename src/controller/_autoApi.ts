@@ -82,7 +82,7 @@ export abstract class RWSAutoApiController {
         
         const controllerRoute: IPrefixedHTTProutes = this.configService.get('http_routes').find((item => item.controllerName === controllerMeta.name));
 
-        if(controllerRoute){
+        if(controllerRoute && controllerRoute.exportAutoRoutes){
             this.autoRouteService.createCrudRoutes(this, controllerRoute.prefix);
         }        
     }

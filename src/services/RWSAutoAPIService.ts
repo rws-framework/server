@@ -138,7 +138,7 @@ export class RWSAutoAPIService {
   {
     const routes: RouteInfo[] = [];
 
-    if (this.routerProxy._router && this.routerProxy._router.stack) {
+    if (this.routerProxy && this.routerProxy._router && this.routerProxy._router.stack) {
       const stack = this.routerProxy._router.stack;
       
       stack.forEach((layer: any) => {

@@ -51,11 +51,6 @@ export class RWSModule {
             }));      
         }
 
-        const serializerProvider =  {
-            provide: APP_INTERCEPTOR,
-            useClass: SerializeInterceptor,
-        };
-
         const theModule: AnyModule = {
             module: RWSModule,
             imports: processedImports as unknown as NestModuleTypes,
@@ -161,6 +156,7 @@ export default async function bootstrap(
 
     const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
     await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
+    
     autoRouteService.shoutRoutes();
 
     if(callback?.preServerStart){
