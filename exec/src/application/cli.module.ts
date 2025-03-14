@@ -22,7 +22,8 @@ export interface ParsedOptions {
 }
 
 export interface NestModuleInputData {
-    providers: any[]
+    imports?: any[];
+    providers?: any[]
 }
 
 export interface NestModuleData extends NestModuleInputData {
@@ -41,7 +42,8 @@ export type NestCliModuleType = Promise<DynamicModule>
 export class CLIModule {
     static async forRoot(nestModuleData: NestModuleInputData = {
         providers: []
-    }, config: IAppConfig): NestCliModuleType {      
+    }, config: IAppConfig): NestCliModuleType {  
+        const newImports = nestModuleData.imports ? [...nestModuleData.imports] : [];    
         const baseProviders = [
             ProcessService,      
             DBService,
@@ -55,6 +57,8 @@ export class CLIModule {
             DecoratorExplorerService,
             MD5Service        
         ];
+
+        const newProviders = nestModuleData.providers ? [...nestModuleData.providers] : [];    
         
         return {
           module: CLIModule,
@@ -63,11 +67,12 @@ export class CLIModule {
               isGlobal: true,
               load: [ () => config ]
             }),
+            ...newImports
           ],
           providers: [
             ...baseProviders, ...nestModuleData.providers
         ],
-          exports: [...baseProviders, ...nestModuleData.providers]
+          exports: [...baseProviders, ...newProviders]
         };
     }
 }
