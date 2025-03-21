@@ -121,7 +121,7 @@ export default async function bootstrap(
 
     const rwsOptions = cfgRunner();  
     const app: INestApplication = await NestFactory.create(
-        nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled))
+        nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled), rwsOptions)
     );
 
     if(rwsOptions.cors_domain){
