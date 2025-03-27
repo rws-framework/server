@@ -29,6 +29,7 @@ export class InitCommand extends RWSBaseCommand {
           configService: this.configService
         });
         this.consoleService.log(this.consoleService.color().green('[RWS]') + ' systems initialized.');
+        process.exit();        
       } catch (error) {
         this.consoleService.error('Error while initiating RWS server installation:', error);
         throw error;
