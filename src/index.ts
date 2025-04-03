@@ -29,7 +29,6 @@ import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse } from './gate
 
 import * as RWSErrorCodes from './errors';
 import * as NEST from '../nest';
-import { ZipService } from './services/ZipService';
 import { RWSModule, } from './runNest';
 import { InjectServices } from './services/_inject';
 import { RWSConfigService } from './services/RWSConfigService';
@@ -51,8 +50,7 @@ export {
     NestDBService as DBService,        
     AuthService,        
     ConsoleService,             
-    MD5Service,
-    ZipService,    
+    MD5Service, 
     TraversalService,    
     UtilsService,     
     ProcessService,
