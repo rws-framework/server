@@ -128,7 +128,7 @@ export default async function bootstrap(
     }
 
     if(callback?.preInit){
-        callback.preInit(app);
+        await callback.preInit(app);
     }
 
     const configService = app.get(RWSConfigService);
@@ -149,7 +149,7 @@ export default async function bootstrap(
     await app.init();  
 
     if(callback?.afterInit){
-        callback.afterInit(app);
+        await callback.afterInit(app);
     }
 
     const routerService = app.get(RouterService);
@@ -160,7 +160,7 @@ export default async function bootstrap(
     autoRouteService.shoutRoutes();
 
     if(callback?.preServerStart){
-        callback.preServerStart(app);
+        await callback.preServerStart(app);
     }
 
     await app.listen(rwsOptions.port);
