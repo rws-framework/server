@@ -5,7 +5,7 @@ import { Socket } from 'socket.io';
 import runNest from './runNest';
 import {setupPrisma, setupRWS} from './install';
 
-import { RWSModel, IRWSModel, ITimeSeries, TimeSeriesModel, InverseRelation, InverseTimeSeries, Relation, TrackType } from '@rws-framework/db';
+import { RWSModel, IRWSModel, ITimeSeries, InverseRelation, InverseTimeSeries, Relation, TrackType } from '@rws-framework/db';
 
 // import ServerService, { ServerControlSet, RWSServerPair, RWSServerStarter } from './helpers/ServerBuilder';
 import { RWSCliBootstrap } from '../exec/src/rws';
@@ -55,9 +55,7 @@ export {
     ZipService,    
     TraversalService,    
     UtilsService,     
-    ProcessService,
-
-    TimeSeriesModel,
+    ProcessService,    
 
     ITimeSeries,
     IAppConfig,
