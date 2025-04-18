@@ -165,7 +165,7 @@ class ConsoleService {
     }
 
     static sanitizeObject(obj: any): any {
-        const sensitiveKeys = ['mongo_url', 'mongo_db', 'ssl_cert', 'ssl_key', 'secret_key', 'aws_access_key', 'aws_secret_key'];
+        const sensitiveKeys = ['db_url', 'db_name', 'db_type', 'ssl_cert', 'ssl_key', 'secret_key', 'aws_access_key', 'aws_secret_key'];
     
         const sanitizedObj = { ...obj }; // Create a shallow copy of the object
 

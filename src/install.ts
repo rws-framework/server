@@ -38,6 +38,17 @@ async function setupRWS(generateProjectFiles: boolean = true): Promise<void>
     return;
 }
 
+export async function pushDbModels(leaveFile = false, services: {
+    dbService: DBService,    
+    processService: ProcessService,
+    configService: RWSConfigService
+} = { dbService: null, processService: null, configService: null})
+{       
+    
+    await DbHelper.pushDBModels(services.configService as IDbConfigHandler, services.dbService, leaveFile);
+    return;
+}
+
 const nodeModulesDir = path.resolve(`${workspaceRoot}`, 'node_modules');
 
 const isInstalled = {

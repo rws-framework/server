@@ -44,8 +44,9 @@ export default (): IAppConfig => {
             routing_enabled: true,
             ssl: false
         },
-        mongo_url: process.env.MONGO_URL,
-        mongo_db: process.env.DB_NAME,
+        db_type: 'mongodb'
+        db_url: process.env.MONGO_URL,
+        db_db: process.env.DB_NAME,
         port: parseInt(process.env.APP_PORT),
         domain: process.env.APP_DOMAIN,
         user_models: [], // Your models here
@@ -250,8 +251,9 @@ The `IAppConfig` interface supports the following options:
   - `ws_enabled`: Enable WebSocket support
   - `routing_enabled`: Enable HTTP routing
   - `ssl`: Enable SSL/TLS
-- `mongo_url`: MongoDB connection string
-- `mongo_db`: Database name
+- `db_type`: DB connection driver type (mongodb by default)  
+- `db_url`: DB connection string
+- `db_name`: Database name
 - `port`: HTTP server port
 - `ws_port`: WebSocket server port
 - `domain`: Application domain

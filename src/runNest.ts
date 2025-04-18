@@ -159,6 +159,10 @@ export default async function bootstrap(
     
     autoRouteService.shoutRoutes();
 
+    if(configService.get('db_url')){
+        process.env.PRISMA_DB_URL = configService.get('db_url');
+    }
+
     if(callback?.preServerStart){
         await callback.preServerStart(app);
     }

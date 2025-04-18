@@ -3,14 +3,15 @@ import { DynamicModule } from '@nestjs/common';
 import { RWSModuleType } from './IRWSModule';
 import { IRWSResource } from './IRWSResource';
 import { IPrefixedHTTProutes } from '../routing/routes';
-
+import {IDbConfigParams} from '@rws-framework/db'
 export default interface IAppConfig {       
     secret_key: string    
     domain?: string
     port?: number
     ws_port?: number
-    mongo_url?: string
-    mongo_db?: string    
+    db_type?: IDbConfigParams['db_type']
+    db_url?: string
+    db_name?: string    
     http_routes: IPrefixedHTTProutes[]
     user_model?: any
     db_models?: any[]

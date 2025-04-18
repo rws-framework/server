@@ -142,6 +142,9 @@ export class RWSCliBootstrap {
 
             if(cmdProvider){          
                 cmdProvider.instance.injectServices(services);
+                if(configService.get('db_url')){
+                    process.env.PRISMA_DB_URL = configService.get('db_url');
+                }
                 await cmdProvider.instance.run(passedParams, parsedOptions);
             } else {
                 console.log(chalk.yellowBright(`Command "${commandName}" does not exist. Maybe you are looking for:`));
