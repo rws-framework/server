@@ -3,6 +3,7 @@ import { DynamicModule } from '@nestjs/common';
 import { RWSModuleType } from './IRWSModule';
 import { IRWSResource } from './IRWSResource';
 import { IPrefixedHTTProutes } from '../routing/routes';
+import { OpModelType } from '@rws-framework/db';
 
 export default interface IAppConfig {       
     secret_key: string    
@@ -12,8 +13,8 @@ export default interface IAppConfig {
     mongo_url?: string
     mongo_db?: string    
     http_routes: IPrefixedHTTProutes[]
-    user_model?: any
-    db_models?: any[]
+    user_model?: OpModelType<any>
+    db_models?: OpModelType<any>[]
     ssl_cert?: string
     ssl_key?: string
     resources?: IRWSResource[]   
@@ -29,6 +30,9 @@ export default interface IAppConfig {
         routing_enabled?: boolean
         test_routes?: boolean
         ssl?: boolean
-        auth?: boolean
+        auth?: boolean,
+        auth_pub_key?: string,
+        auth_alghoritm?: 'RS256' | null,
+        auth_passphrase?: string
     } 
 }

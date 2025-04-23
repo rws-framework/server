@@ -12,7 +12,7 @@ import { RWSModel } from '@rws-framework/db';
 import { 
     Module  
 } from '@nestjs/common';
-import { APP_INTERCEPTOR, NestFactory, Reflector, DiscoveryService } from '@nestjs/core';
+import { APP_INTERCEPTOR, NestFactory, Reflector, DiscoveryService, APP_GUARD } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
@@ -23,8 +23,8 @@ import { SerializeInterceptor } from './interceptors/serialize.interceptor';
 import { RWSAutoApiController } from './controller/_autoApi';
 import { RWSAutoAPIService } from './services/RWSAutoAPIService';
 import { RWSCoreController } from './controller/core.controller';
-import { config } from 'yargs';
-import { RWSLogger } from './services/RWSLogger';
+import { AuthGuard } from '../nest/decorators/guards/auth.guard';
+
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
 const baseModules: (cfg: IAppConfig) => AnyModule[] = (cfg: IAppConfig) => [   
@@ -55,6 +55,13 @@ export class RWSModule {
             module: RWSModule,
             imports: processedImports as unknown as NestModuleTypes,
             providers: [
+                {
+                    provide: APP_GUARD,
+                    useFactory: (reflector: Reflector, configService: RWSConfigService<IAppConfig>) => {
+                        return new AuthGuard(configService, reflector);
+                    },
+                    inject: [Reflector, RWSConfigService]
+                },   
                 DiscoveryService,
                 ConfigService,
                 NestDBService,
