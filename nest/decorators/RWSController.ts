@@ -1,8 +1,13 @@
-import { Controller } from '@nestjs/common';
+import { Controller, applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
 import { RWSHTTPRoutingEntry } from '../../src/routing/routes';
 import { BootstrapRegistry } from './RWSConfigInjector';
+import { AuthGuard, RWS_PROTECTED_KEY } from './guards/auth.guard';
 
-export function RWSController(name: string) {
+export interface RWSControllerOptions {
+    public?: boolean;
+}
+
+export function RWSController(name: string, options: RWSControllerOptions = {}) {
     if(!BootstrapRegistry.getConfig()){
         throw new Error('No config');
     }
@@ -18,6 +23,10 @@ export function RWSController(name: string) {
         throw new Error(`No route configuration found for controller: ${name}`);
     }
 
-    // Apply the NestJS Controller decorator with the prefix from the route configuration
-    return Controller(routeConfig.prefix);
+    // Use applyDecorators to combine the Controller decorator with the protection metadata
+    return applyDecorators(
+        Controller(routeConfig.prefix),
+        SetMetadata(RWS_PROTECTED_KEY, !options.public), // Protected by default unless explicitly set to public,
+        UseGuards(AuthGuard) // Explicitly apply the AuthGuard
+    );
 }
