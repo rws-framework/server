@@ -26,6 +26,16 @@ export default interface IAppConfig {
     test_port?: number
     test_ws_port?: number
     noCoreController?: boolean
+    logging?: {
+        loki_port: number,
+        loki_url: string,
+        loki_login?: string,
+        loki_pass?: string,
+        app_name?: string,
+        environment?: string,
+        log_level?: string,
+        service_name?: string
+    }
     features?: {
         ws_enabled?: boolean
         routing_enabled?: boolean

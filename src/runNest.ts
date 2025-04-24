@@ -24,6 +24,7 @@ import { RWSAutoApiController } from './controller/_autoApi';
 import { RWSAutoAPIService } from './services/RWSAutoAPIService';
 import { RWSCoreController } from './controller/core.controller';
 import { AuthGuard } from '../nest/decorators/guards/auth.guard';
+import { BlackLogger } from '../nest';
 
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
@@ -43,6 +44,8 @@ export class RWSModule {
         const processedImports = [
             ...baseModules(cfg)   
         ];
+
+        BlackLogger.setConfig(cfg.logging);
 
         if(pubDirEnabled){
             processedImports.push(ServeStaticModule.forRoot({

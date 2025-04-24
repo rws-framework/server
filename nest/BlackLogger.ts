@@ -1,21 +1,26 @@
 import { Injectable, LoggerService, Scope, Logger as BaseLogger } from '@nestjs/common';
 import * as winston from 'winston';
 import LokiTransport from 'winston-loki';
+import { RWSConfigService } from '../src/services/RWSConfigService';
+import IAppConfig from '../src/types/IAppConfig';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class BlackLogger extends BaseLogger implements LoggerService {
   protected context?: string;
   private winstonLogger: winston.Logger;
+  private static cfg: IAppConfig['logging'];
 
   constructor(context?: string) {
     super(context);
     this.context = context;
+
+    const cfg = BlackLogger.cfg;
     
     const lokiTransport = new LokiTransport({
-      host: process.env.LOKI_URL,
+      host: cfg.loki_url,
       labels: { 
-        app: process.env.APP_NAME || 'nestjs',
-        environment: process.env.NODE_ENV || 'development'
+        app: cfg.app_name || 'nestjs',
+        environment: cfg.environment || 'development'
       },
       json: true,
       format: winston.format.json(),
@@ -24,7 +29,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     });
     
     this.winstonLogger = winston.createLogger({
-      level: process.env.LOG_LEVEL || 'info',
+      level: cfg.log_level || 'info',
       format: winston.format.combine(
         winston.format.timestamp({
           format: 'YYYY-MM-DD HH:mm:ss'
@@ -34,7 +39,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
         winston.format.json()
       ),
       defaultMeta: { 
-        service: process.env.SERVICE_NAME || 'api',
+        service: cfg.service_name || 'api',
         pid: process.pid
       },
       transports: [
@@ -77,6 +82,10 @@ export class BlackLogger extends BaseLogger implements LoggerService {
         lokiTransport
       ]
     });
+  }
+
+  static setConfig(cfg: IAppConfig['logging']){
+    BlackLogger.cfg = cfg;
   }
 
   log(message: unknown, context?: string): void {

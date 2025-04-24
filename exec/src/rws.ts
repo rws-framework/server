@@ -19,6 +19,7 @@ import { NestDBService as DBService } from '../../src/services/NestDBService';
 import { RWSBaseCommand } from '../../src/commands/_command';
 import { RWSConfigService } from '../../src/services/RWSConfigService';
 import { RWSModel } from '@rws-framework/db';
+import { BlackLogger } from '../../nest';
 
 // console.log = (any) => {};
 
@@ -84,6 +85,8 @@ export class RWSCliBootstrap {
             if (!BootstrapRegistry.isInitialized()) {
                 BootstrapRegistry.setConfig(config);
             }
+
+            BlackLogger.setConfig(config.logging);
 
             await this.makeModule();        
             this.$app = await NestFactory.create(this.module);
