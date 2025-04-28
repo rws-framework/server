@@ -45,8 +45,6 @@ export class RWSModule {
             ...baseModules(cfg)   
         ];
 
-        BlackLogger.setConfig(cfg.logging);
-
         if(pubDirEnabled){
             processedImports.push(ServeStaticModule.forRoot({
                 rootPath: path.join(process.cwd(), cfg.pub_dir), 
@@ -118,6 +116,7 @@ export default async function bootstrap(
     callback: RunCallbackList | null = null,
     controllers: any[] = []
 ) {
+    const logger = new Logger('bootstrap');
     const dbCli =  process.env?.DB_CLI ? parseInt(process.env.DB_CLI) : 0;
 
     if(dbCli){
@@ -125,6 +124,13 @@ export default async function bootstrap(
     }
 
     const rwsOptions = cfgRunner();  
+    
+    BlackLogger.setConfig(rwsOptions.logging);
+
+    if(rwsOptions.logging){
+        logger.debug('Loki logs upload enabled.');
+    }
+
     const app: INestApplication = await NestFactory.create(
         nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled), rwsOptions)
     );
@@ -149,6 +155,7 @@ export default async function bootstrap(
         dbService: dbService.core(),
         configService: configService
     });    
+
   
     RWSAutoApiController.setServices({
         configService: configService,
@@ -175,6 +182,13 @@ export default async function bootstrap(
 
     if(callback?.preServerStart){
         await callback.preServerStart(app);
+    }
+
+    logger.log(`HTTP server started on port "${rwsOptions.port}"`);
+
+    if(rwsOptions.ws_port){
+        logger.log(`WS server started on port "${rwsOptions.ws_port}"`);
+
     }
 
     await app.listen(rwsOptions.port);

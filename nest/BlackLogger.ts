@@ -8,19 +8,24 @@ import IAppConfig from '../src/types/IAppConfig';
 export class BlackLogger extends BaseLogger implements LoggerService {
   protected context?: string;
   private winstonLogger: winston.Logger;
-  private static cfg: IAppConfig['logging'];
+  private static config: IAppConfig['logging'];
+  private cfg: IAppConfig['logging'];
 
   constructor(context?: string) {
     super(context);
     this.context = context;
 
-    const cfg = BlackLogger.cfg;
+    this.cfg = BlackLogger.config;
+
+    if(!this.cfg){
+      return;
+    }
     
     const lokiTransport = new LokiTransport({
-      host: cfg.loki_url,
+      host: this.cfg.loki_url,
       labels: { 
-        app: cfg.app_name || 'nestjs',
-        environment: cfg.environment || 'development'
+        app: this.cfg.app_name || 'nestjs',
+        environment: this.cfg.environment || 'development'
       },
       json: true,
       format: winston.format.json(),
@@ -29,7 +34,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     });
     
     this.winstonLogger = winston.createLogger({
-      level: cfg.log_level || 'info',
+      level: this.cfg.log_level || 'info',
       format: winston.format.combine(
         winston.format.timestamp({
           format: 'YYYY-MM-DD HH:mm:ss'
@@ -39,7 +44,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
         winston.format.json()
       ),
       defaultMeta: { 
-        service: cfg.service_name || 'api',
+        service: this.cfg.service_name || 'api',
         pid: process.pid
       },
       transports: [
@@ -85,13 +90,18 @@ export class BlackLogger extends BaseLogger implements LoggerService {
   }
 
   static setConfig(cfg: IAppConfig['logging']){
-    BlackLogger.cfg = cfg;
+    BlackLogger.config = cfg;
   }
 
   log(message: unknown, context?: string): void {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
-    // super.log(formattedMessage, safeContext);
+
+    if(!this.cfg){
+      super.log(formattedMessage, safeContext)
+      return;
+    }
+    
     this.winstonLogger.info(formattedMessage, { context: safeContext });
   }
 
@@ -99,6 +109,9 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
     super.error(formattedMessage, trace);
+    if(!this.cfg){     
+      return;
+    }
     this.winstonLogger.error(formattedMessage, { context: safeContext, trace });
   }
 
@@ -113,6 +126,9 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
     super.debug(formattedMessage);
+    if(!this.cfg){      
+      return;
+    }
     this.winstonLogger.debug(formattedMessage, { context: safeContext });
   }
 
@@ -120,6 +136,9 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
     super.verbose(formattedMessage);
+    if(!this.cfg){      
+      return;
+    }
     this.winstonLogger.verbose(formattedMessage, { context: safeContext });
   }
 
