@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { pushDbModels } from '../install';
+import { pushDbModels, setupPrisma } from '../install';
 
 import {RWSBaseCommand, RWSCommand} from './_command';
 import { ParsedOptions } from '../../exec/src/application/cli.module';
@@ -22,7 +22,11 @@ export class DBPushCommand extends RWSBaseCommand {
       }
 
       try {
-        
+        await setupPrisma(false, {
+          dbService: this.dbService.core(),
+          processService: this.processService,
+          configService: this.configService
+        });
         await pushDbModels(false, {
           dbService: this.dbService.core(),
           processService: this.processService,
