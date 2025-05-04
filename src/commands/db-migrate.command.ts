@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { pushDbModels } from '../install';
+import { migrateDbModels } from '../install';
 
 import {RWSBaseCommand, RWSCommand} from './_command';
 import { ParsedOptions } from '../../exec/src/application/cli.module';
 
 
 @Injectable()
-@RWSCommand({name: 'db:push', description: 'DB push command.'})
-export class DBPushCommand extends RWSBaseCommand {
+@RWSCommand({name: 'db:migrate', description: 'DB migrate command.'})
+export class DBMigrateCommand extends RWSBaseCommand {
   async run(
     passedParams: string[],
     options?: ParsedOptions
@@ -21,9 +21,8 @@ export class DBPushCommand extends RWSBaseCommand {
         return;
       }
 
-      try {
-        
-        await pushDbModels(false, {
+      try {        
+        await migrateDbModels(false, {
           dbService: this.dbService.core(),
           processService: this.processService,
           configService: this.configService
@@ -31,7 +30,7 @@ export class DBPushCommand extends RWSBaseCommand {
         this.consoleService.log(this.consoleService.color().green('[RWS]') + ' DB pushed.');
         process.exit();        
       } catch (error) {
-        this.consoleService.error('Error while initiating RWS server installation:', error);
+        this.consoleService.error('Error while migrating RWS models to DB:', error);
         throw error;
       }
     } catch (e: unknown) {
