@@ -22,11 +22,14 @@ export class DBPushCommand extends RWSBaseCommand {
       }
 
       try {
-        await setupPrisma(false, {
-          dbService: this.dbService.core(),
-          processService: this.processService,
-          configService: this.configService
-        });
+        if(!(options && Object.hasOwn(options, 'no-rws') && options['no-rws'].value)){
+          await setupPrisma(false, {
+            dbService: this.dbService.core(),
+            processService: this.processService,
+            configService: this.configService
+          });
+        }        
+     
         await pushDbModels(false, {
           dbService: this.dbService.core(),
           processService: this.processService,
