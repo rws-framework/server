@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import { IMetaOpts, IRWSCollectionMeta, OpModelType, RWSModel } from '@rws-framework/db';
+import { IRWSCollectionMeta, OpModelType, RWSModel } from '@rws-framework/db';
 import { RWSConfigService } from '../services/RWSConfigService';
 
 import {  Controller, Get, Param } from '@nestjs/common';

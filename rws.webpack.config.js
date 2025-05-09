@@ -12,6 +12,8 @@ const __dirname = dirname(__filename);
 
 const verboseLog = console.log;
 
+
+
 console.log = (...x) => {
   if(process.env.RWS_VERBOSE){
     verboseLog(...x);
@@ -54,6 +56,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   WEBPACK_RESOLVE_PLUGINS = [...WEBPACK_RESOLVE_PLUGINS, ...overridePlugins];
 
   const tsConfigData = await tsConfig(__dirname, true);
+
   const tsConfigPath = tsConfigData.path;
 
   if (!require('fs').existsSync(tsConfigPath)) {
