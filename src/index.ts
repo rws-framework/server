@@ -34,6 +34,7 @@ import { RWSModule, } from './runNest';
 import { InjectServices } from './services/_inject';
 import { RWSConfigService } from './services/RWSConfigService';
 import { Helper } from './helpers/_helper';
+import { RealtimePoint } from './gateways/_realtimePoint';
 
 export {    
     RWSCommand,
@@ -47,6 +48,7 @@ export {
     RWSModel,
     IRWSModel,
     RWSResource, IRWSResourceMeta, IRWSResourceOpts,
+    RealtimePoint,
 
     NestDBService as DBService,        
     AuthService,        
