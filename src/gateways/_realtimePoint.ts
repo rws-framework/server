@@ -1,18 +1,9 @@
-import { ITheGateway, StaticRealtimePoint } from '../types/ITheGateway';
-import { Server, Socket } from 'socket.io';
-
-import {
-  WebSocketGateway,
-  WebSocketServer,
-  ConnectedSocket,
-  SubscribeMessage,
-} from '@nestjs/websockets';
+import { StaticRealtimePoint } from '../types/ITheGateway';
+import {  Socket } from 'socket.io';
 
 import { RWSGateway } from './_gateway';
 
 import { BlackLogger, Injectable } from '../../nest';
-import { UtilsService, ConsoleService, AuthService } from '../index';
-import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
 import { OnModuleInit } from '@nestjs/common';
 import { REALTIME_ROUTES_MAP_KEY, RealtimeRouteMetadata } from '../../nest/decorators/RWSRealtimeRoute';

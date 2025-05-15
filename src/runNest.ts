@@ -27,6 +27,7 @@ import { AuthGuard } from '../nest/decorators/guards/auth.guard';
 import { BlackLogger } from '../nest';
 import { RWSWebsocketRoutingService } from './services/RWSWebsocketRoutingService';
 import { RealtimePoint } from './gateways/_realtimePoint';
+import { RWSFillService } from './services/RWSFillService';
 
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
@@ -74,6 +75,7 @@ export class RWSModule {
                 AuthService,
                 RouterService,
                 RWSWebsocketRoutingService,
+                RWSFillService,
                 SerializeInterceptor,
                 {
                     provide: APP_INTERCEPTOR,
@@ -94,7 +96,8 @@ export class RWSModule {
                 RouterService,
                 SerializeInterceptor,
                 RWSAutoAPIService,
-                RWSWebsocketRoutingService
+                RWSWebsocketRoutingService,
+                RWSFillService
             ]            
         };
 
