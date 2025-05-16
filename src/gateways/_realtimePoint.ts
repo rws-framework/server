@@ -11,11 +11,11 @@ import { REALTIME_ROUTES_MAP_KEY, RealtimeRouteMetadata } from '../../nest/decor
 
 @Injectable()
 export abstract class RealtimePoint implements OnModuleInit {
-  private logger = new BlackLogger(this.constructor.name);
-  private static moduleRef: ModuleRef;
+  protected logger = new BlackLogger(this.constructor.name);
+  protected static moduleRef: ModuleRef;
   private static gatewayClass: typeof RWSGateway;
   private static pointName: string;
-  private routesMap: Map<string | symbol, RealtimeRouteMetadata> = new Map();
+  protected routesMap: Map<string | symbol, RealtimeRouteMetadata> = new Map();
 
   private gateway: RWSGateway;
 
