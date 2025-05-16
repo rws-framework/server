@@ -85,6 +85,16 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
     aliases[aliasKey] = path.resolve(executionDir, alias[0]);
   }  
 
+  const allowedModules = ['@rws-framework\\/[A-Z0-9a-z]'];
+
+  if(config.loaderIgnoreExceptions){
+    for(const ignoreException of config.loaderIgnoreExceptions){
+      allowedModules.push(ignoreException);
+    }
+  }
+
+  const modulePattern = `node_modules\\/(?!(${allowedModules.join('|')}))`;
+
   const cfgExport = {
     context: executionDir,
     entry: ['reflect-metadata', cfgEntry],
@@ -121,7 +131,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
           ],
           exclude: [
             ...tsConfigData.excludes.map(item => item.abs()),
-            /node_modules\/(?!\@rws-framework\/[A-Z0-9a-z])/,            
+            new RegExp(modulePattern),            
             /\.d\.ts$/        
           ],
         },       

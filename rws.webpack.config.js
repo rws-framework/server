@@ -92,7 +92,14 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   console.log('TS CONFIG: ', tsConfigData.config);
 
-  const allowedModules = ['@rws-framework\\/[A-Z0-9a-z]', 'marathon-agent'];
+  const allowedModules = ['@rws-framework\\/[A-Z0-9a-z]'];
+
+  if(config.loaderIgnoreExceptions){
+    for(const ignoreException of config.loaderIgnoreExceptions){
+      allowedModules.push(ignoreException);
+    }
+  }
+
   const modulePattern = `node_modules\\/(?!(${allowedModules.join('|')}))`;
 
   const cfgExport = {
