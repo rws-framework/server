@@ -45,5 +45,7 @@ export default interface IAppConfig {
         auth_pub_key?: string,
         auth_alghoritm?: 'RS256' | null,
         auth_passphrase?: string
+        token_auth_callback?: (decoded: unknown) => Promise<OpModelType<any> | null>
+        apikey_auth_callback?: (apiKey: string) => Promise<OpModelType<any> | null>
     } 
 }
