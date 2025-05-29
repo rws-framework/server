@@ -93,33 +93,28 @@ export abstract class RWSGateway implements ITheGateway{
         };
 
         for(const argLine of args){
-            const parsedLine: RWSJSONMessage = JSON.parse(argLine);
+            try {
+                const parsedLine: RWSJSONMessage = JSON.parse(argLine);
 
-            if(parsedLine.method){
-                parsedArgs.method = parsedLine.method;
-            }            
-
-            if(parsedLine.msg){
-                parsedArgs.msg = parsedLine.msg;
-            }            
-
-            if(parsedLine.user_id){
-                parsedArgs.user_id = parsedLine.user_id;
+                if(parsedLine.method){
+                    parsedArgs.method = parsedLine.method;
+                }            
+    
+                if(parsedLine.msg){
+                    parsedArgs.msg = parsedLine.msg;
+                }            
+    
+                if(parsedLine.user_id){
+                    parsedArgs.user_id = parsedLine.user_id;
+                }           
+            } catch(e: Error | any){
+                console.error('Not RWS Message format: ', argLine);
             }            
         }
 
         const method = parsedArgs.method;
         const data = parsedArgs.msg;
-        const userId = parsedArgs.user_id;
-
-        // this.logger.debug(`
-        //     🔥 Incoming WebSocket Event
-        //     Event: ${eventName}
-        //     Method: ${method}
-        //     Client ID: ${userId}
-        //     Data: ${JSON.stringify(data)}
-        //     Timestamp: ${new Date().toISOString()}
-        // `);     
+        const userId = parsedArgs.user_id; 
 
         
         const foundRtp = Array.from(this.wsRoutingService.getRealtimePoints()).find(point => point[0] === eventName && point[1].getGateway().constructor.name === this.constructor.name);
