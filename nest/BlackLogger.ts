@@ -119,6 +119,10 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
     // super.warn(formattedMessage);
+    if(!this.cfg){ 
+      super.warn(formattedMessage);   
+      return;
+    }
     this.winstonLogger.warn(formattedMessage, { context: safeContext });
   }
 
