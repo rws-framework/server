@@ -1,9 +1,7 @@
 
-import { DynamicModule } from '@nestjs/common';
-import { RWSModuleType } from './IRWSModule';
 import { IRWSResource } from './IRWSResource';
 import { IPrefixedHTTProutes } from '../routing/routes';
-import {IDbConfigParams, OpModelType} from '@rws-framework/db'
+import {IDbConfigParams, OpModelType, RWSModel} from '@rws-framework/db'
 
 export default interface IAppConfig {       
     secret_key: string    
@@ -45,7 +43,7 @@ export default interface IAppConfig {
         auth_pub_key?: string,
         auth_alghoritm?: 'RS256' | null,
         auth_passphrase?: string
-        token_auth_callback?: (decoded: unknown) => Promise<OpModelType<any> | null>
-        apikey_auth_callback?: (apiKey: string) => Promise<OpModelType<any> | null>
+        token_auth_callback?: (decoded: unknown) => Promise<RWSModel<any> | null>
+        apikey_auth_callback?: (apiKey: string) => Promise<RWSModel<any> | null>
     } 
 }
