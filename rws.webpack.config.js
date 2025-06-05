@@ -36,6 +36,12 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   const modules_setup =  config.nodeModules || [rootPackageNodeModules];
   const aliases = config.aliases = {}
 
+  aliases['entities/escape'] = path.resolve(rootPackageNodeModules, 'entities/lib/escape.js'),
+  aliases['entities/decode'] = path.resolve(rootPackageNodeModules, 'entities/lib/decode.js')
+  aliases['@nestjs/microservices'] = path.resolve(rootPackageNodeModules, '@nestjs/microservices')
+  aliases['reflect-metadata'] = path.resolve(rootPackageNodeModules, 'reflect-metadata');
+  aliases['mongodb'] = path.resolve(rootPackageNodeModules, 'mongodb');
+
   
   const overridePlugins = config.plugins || []
   const overrideResolvePlugins = config.resolvePlugins || []
@@ -44,7 +50,16 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
     new webpack.optimize.ModuleConcatenationPlugin(),
     new webpack.DefinePlugin({
       'global.GENTLY': false //FFS I have no idea why only with this the reflect-metadata works. Please do consult any god devised by mankind for explanation.
-    })
+    }),
+    new webpack.IgnorePlugin({
+      resourceRegExp: /(kerberos|.*\.node)/
+    }), 
+    new webpack.NormalModuleReplacementPlugin(
+      /reflect-metadata/,
+      function(resource) {
+        resource.request = path.resolve(rootPackageNodeModules, 'reflect-metadata');
+      }
+    )
   ];
 
   WEBPACK_PLUGINS = [...WEBPACK_PLUGINS, ...overridePlugins];  
@@ -99,8 +114,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
       alias: aliases,
       plugins: WEBPACK_RESOLVE_PLUGINS,
       fallback: {
-        "kerberos": false,
-        "mongodb-client-encryption": false
+        "kerberos": false,     
       }
     },
     module: {
@@ -139,25 +153,15 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   }
 
   console.log('Include paths:', cfgExport.module.rules[0].include);
-
-  cfgExport.externals = [
-    function({ request }, callback) {
-      const includePackages = [
-        '@rws-framework'   
-      ];
-  
-      if (includePackages.some(pkg => request.startsWith(pkg))) {
-        return callback();
-      }
-  
-      // Externalize others
-      if (/^[a-z\-0-9@]/.test(request)) {
-        return callback(null, `commonjs ${request}`);
-      }
-  
-      callback();
-    }
-  ];
+      cfgExport.externals = [
+        'kafkajs',
+        'mqtt',
+        'nats',
+        'ioredis',
+        'amqplib',
+        'amqp-connection-manager',      
+        /\.node$/
+      ]
 
   return cfgExport;
 }
