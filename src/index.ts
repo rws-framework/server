@@ -29,11 +29,11 @@ import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse } from './gate
 
 import * as RWSErrorCodes from './errors';
 import * as NEST from '../nest';
-import { ZipService } from './services/ZipService';
 import { RWSModule, } from './runNest';
 import { InjectServices } from './services/_inject';
 import { RWSConfigService } from './services/RWSConfigService';
 import { Helper } from './helpers/_helper';
+import { RealtimePoint } from './gateways/_realtimePoint';
 
 export {    
     RWSCommand,
@@ -47,12 +47,12 @@ export {
     RWSModel,
     IRWSModel,
     RWSResource, IRWSResourceMeta, IRWSResourceOpts,
+    RealtimePoint,
 
     NestDBService as DBService,        
     AuthService,        
     ConsoleService,             
     MD5Service,
-    ZipService,    
     TraversalService,    
     UtilsService,     
     ProcessService,    

@@ -83,9 +83,17 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   for(const aliasKey of Object.keys(tsConfigData.config.compilerOptions.paths)){
     const alias = tsConfigData.config.compilerOptions.paths[aliasKey];
     aliases[aliasKey] = path.resolve(executionDir, alias[0]);
+  }  
+
+  const allowedModules = ['@rws-framework\\/[A-Z0-9a-z]'];
+
+  if(config.loaderIgnoreExceptions){
+    for(const ignoreException of config.loaderIgnoreExceptions){
+      allowedModules.push(ignoreException);
+    }
   }
 
-  console.log({aliases, cfgEntry})
+  const modulePattern = `node_modules\\/(?!(${allowedModules.join('|')}))`;
 
   const cfgExport = {
     context: executionDir,
@@ -123,7 +131,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
           ],
           exclude: [
             ...tsConfigData.excludes.map(item => item.abs()),
-            /node_modules\/(?!\@rws-framework\/[A-Z0-9a-z])/,            
+            new RegExp(modulePattern),            
             /\.d\.ts$/        
           ],
         },       
@@ -143,12 +151,15 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
     }    
   }
 
+  console.log('Aliases:', cfgExport.resolve.alias);
   console.log('Include paths:', cfgExport.module.rules[0].include);
+  const rwsExternalsOverride = config.externalsOverride || [];
 
   cfgExport.externals = [
     function({ request }, callback) {
       const includePackages = [
-        '@rws-framework'   
+        '@rws-framework',
+        ...rwsExternalsOverride   
       ];
   
       if (includePackages.some(pkg => request.startsWith(pkg))) {

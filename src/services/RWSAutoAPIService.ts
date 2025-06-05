@@ -1,14 +1,17 @@
 import 'reflect-metadata';
-import { DiscoveryService } from '@nestjs/core';
+import { DiscoveryService, Reflector  } from '@nestjs/core';
 import { Injectable, Logger, RawBodyRequest } from '@nestjs/common';
 import { Module } from '@nestjs/core/injector/module';
 import { AUTOAPI_METADATA_KEY, AutoAPIMetadata } from '../controller/autoApi.decorator';
 import { RequestMethod } from '@nestjs/common';
 import { RWSAutoApiController } from '../controller/_autoApi';
-import { RouteInfo } from '@nestjs/common/interfaces';
+import { ExecutionContext, RouteInfo } from '@nestjs/common/interfaces';
 import { SerializeInterceptor } from '../interceptors/serialize.interceptor';
 import multer from 'multer';
 import { json, urlencoded } from 'express';
+import { AuthGuard } from '../../nest/decorators/guards/auth.guard';
+import { RWSConfigService } from './RWSConfigService';
+import IAppConfig from '../types/IAppConfig';
 
 interface RouteConfig {
   path: string;
@@ -20,6 +23,7 @@ interface RouteConfig {
 export class RWSAutoAPIService {
   private logger: Logger = new Logger(this.constructor.name);
   private routerProxy: any;
+  private authGuard: AuthGuard;
   private methodMap: { [key: string]: RequestMethod } = {
     'GET': RequestMethod.GET,
     'POST': RequestMethod.POST,
@@ -32,7 +36,10 @@ export class RWSAutoAPIService {
   };
   constructor(
     private readonly discoveryService: DiscoveryService,
+    private readonly configService: RWSConfigService<IAppConfig>,
+    private readonly reflector: Reflector,
   ) {
+    this.authGuard = new AuthGuard(this.configService, this.reflector);
   }
 
   setRouterProxy(routerProxy: any)
@@ -83,7 +90,33 @@ export class RWSAutoAPIService {
       },
       async (req: any, res: any) => {
         try {
-          const result = await config.handler(req, res);
+          const controllerMethod = config.handler;        
+
+          const ctx = {
+            switchToHttp: () => ({
+              getRequest: () => req,
+              getResponse: () => res
+            }),
+            getHandler: () => controllerMethod,
+            getClass: () => controllerMethod.constructor
+          };
+
+          const error401 = () => res.status(401).json({ message: 'Unauthorized', statusCode: 401 });
+
+          try {
+            const canActivate = await this.authGuard.canActivate(ctx as ExecutionContext);
+          
+            if (!canActivate) {
+              error401();
+              return;
+            }
+          } catch(error: Error | any){
+            this.logger.debug(`Unauthorized access denied for ${req.url}`)
+            error401();
+            return;
+          }
+    
+          const result = await controllerMethod(req, res);
           res.json(result);
         } catch (error: Error | any) {
           this.logger.error(error, error.stack);
@@ -132,7 +165,7 @@ export class RWSAutoAPIService {
         return { statusCode: 204 };
       }
     });   
-  }
+  }  
 
   readRoutes(): RouteInfo[]
   {

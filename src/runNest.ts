@@ -12,7 +12,7 @@ import { RWSModel } from '@rws-framework/db';
 import { 
     Module  
 } from '@nestjs/common';
-import { APP_INTERCEPTOR, NestFactory, Reflector, DiscoveryService } from '@nestjs/core';
+import { APP_INTERCEPTOR, NestFactory, Reflector, DiscoveryService, APP_GUARD, ModuleRef } from '@nestjs/core';
 import { ServerOpts } from './types/ServerTypes';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import path from 'path';
@@ -23,8 +23,12 @@ import { SerializeInterceptor } from './interceptors/serialize.interceptor';
 import { RWSAutoApiController } from './controller/_autoApi';
 import { RWSAutoAPIService } from './services/RWSAutoAPIService';
 import { RWSCoreController } from './controller/core.controller';
-import { config } from 'yargs';
-import { RWSLogger } from './services/RWSLogger';
+import { AuthGuard } from '../nest/decorators/guards/auth.guard';
+import { BlackLogger } from '../nest';
+import { RWSWebsocketRoutingService } from './services/RWSWebsocketRoutingService';
+import { RealtimePoint } from './gateways/_realtimePoint';
+import { RWSFillService } from './services/RWSFillService';
+
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
 const baseModules: (cfg: IAppConfig) => AnyModule[] = (cfg: IAppConfig) => [   
@@ -55,6 +59,13 @@ export class RWSModule {
             module: RWSModule,
             imports: processedImports as unknown as NestModuleTypes,
             providers: [
+                {
+                    provide: APP_GUARD,
+                    useFactory: (reflector: Reflector, configService: RWSConfigService<IAppConfig>) => {
+                        return new AuthGuard(configService, reflector);
+                    },
+                    inject: [Reflector, RWSConfigService]
+                },   
                 DiscoveryService,
                 ConfigService,
                 NestDBService,
@@ -63,6 +74,8 @@ export class RWSModule {
                 ConsoleService, 
                 AuthService,
                 RouterService,
+                RWSWebsocketRoutingService,
+                RWSFillService,
                 SerializeInterceptor,
                 {
                     provide: APP_INTERCEPTOR,
@@ -82,7 +95,9 @@ export class RWSModule {
                 AuthService,
                 RouterService,
                 SerializeInterceptor,
-                RWSAutoAPIService
+                RWSAutoAPIService,
+                RWSWebsocketRoutingService,
+                RWSFillService
             ]            
         };
 
@@ -108,6 +123,7 @@ export default async function bootstrap(
     callback: RunCallbackList | null = null,
     controllers: any[] = []
 ) {
+    const logger = new Logger('bootstrap');
     const dbCli =  process.env?.DB_CLI ? parseInt(process.env.DB_CLI) : 0;
 
     if(dbCli){
@@ -115,6 +131,13 @@ export default async function bootstrap(
     }
 
     const rwsOptions = cfgRunner();  
+    
+    BlackLogger.setConfig(rwsOptions.logging);
+
+    if(rwsOptions.logging){
+        logger.debug('Loki logs upload enabled.');
+    }
+
     const app: INestApplication = await NestFactory.create(
         nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled), rwsOptions)
     );
@@ -134,6 +157,9 @@ export default async function bootstrap(
     const configService = app.get(RWSConfigService);
     const dbService = app.get(NestDBService);  
     const autoRouteService: RWSAutoAPIService = app.get(RWSAutoAPIService);
+    const websocketRoutingService: RWSWebsocketRoutingService = app.get(RWSWebsocketRoutingService);
+
+    RealtimePoint.setModuleRef(app.get(ModuleRef));
 
     RWSModel.setServices({
         dbService: dbService.core(),
@@ -157,6 +183,8 @@ export default async function bootstrap(
     const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
     await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
     
+    // websocketRoutingService.assignRoutes();
+
     autoRouteService.shoutRoutes();
 
     if(configService.get('db_url')){
@@ -165,6 +193,13 @@ export default async function bootstrap(
 
     if(callback?.preServerStart){
         await callback.preServerStart(app);
+    }
+
+    logger.log(`HTTP server started on port "${rwsOptions.port}"`);
+
+    if(rwsOptions.ws_port){
+        logger.log(`WS server started on port "${rwsOptions.ws_port}"`);
+
     }
 
     await app.listen(rwsOptions.port);

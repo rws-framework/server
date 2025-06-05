@@ -12,11 +12,13 @@ const __dirname = dirname(__filename);
 
 const verboseLog = console.log;
 
-console.log = (...x) => {
-  if(process.env.RWS_VERBOSE){
-    verboseLog(...x);
-  }
-}
+
+
+// console.log = (...x) => {
+//   if(process.env.RWS_VERBOSE){
+//     verboseLog(...x);
+//   }
+// }
 
 const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
@@ -68,8 +70,16 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   WEBPACK_RESOLVE_PLUGINS = [...WEBPACK_RESOLVE_PLUGINS, ...overridePlugins];
 
-  const tsConfigData = await tsConfig(__dirname, true);
+  const tsConfigData = await tsConfig(__dirname, true, false);
+
   const tsConfigPath = tsConfigData.path;
+
+
+  for(const aliasKey of Object.keys(tsConfigData.config.compilerOptions.paths)){
+    const alias = tsConfigData.config.compilerOptions.paths[aliasKey];
+    aliases[aliasKey] = path.resolve(executionDir, alias[0]);
+  }
+
 
   if (!require('fs').existsSync(tsConfigPath)) {
       console.error('TypeScript config file not found at:', tsConfigPath);
@@ -96,6 +106,16 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   }
 
   console.log('TS CONFIG: ', tsConfigData.config);
+
+  const allowedModules = ['@rws-framework\\/[A-Z0-9a-z]'];
+
+  if(config.loaderIgnoreExceptions){
+    for(const ignoreException of config.loaderIgnoreExceptions){
+      allowedModules.push(ignoreException);
+    }
+  }
+
+  const modulePattern = `node_modules\\/(?!(${allowedModules.join('|')}))`;
 
   const cfgExport = {
     context: executionDir,
@@ -132,7 +152,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
           ],
           exclude: [
             ...tsConfigData.excludes.map(item => item.abs()),
-            /node_modules\/(?!\@rws-framework\/[A-Z0-9a-z])/,            
+            new RegExp(modulePattern),            
             /\.d\.ts$/        
           ],
         },       
@@ -151,6 +171,8 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
       minimize: false
     }    
   }
+
+  console.log('Aliases:', cfgExport.resolve.alias);
 
   console.log('Include paths:', cfgExport.module.rules[0].include);
       cfgExport.externals = [

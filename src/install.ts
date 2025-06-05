@@ -49,6 +49,17 @@ export async function pushDbModels(leaveFile = false, services: {
     return;
 }
 
+export async function migrateDbModels(leaveFile = false, services: {
+    dbService: DBService,    
+    processService: ProcessService,
+    configService: RWSConfigService
+} = { dbService: null, processService: null, configService: null})
+{       
+    
+    await DbHelper.migrateDBModels(services.configService as IDbConfigHandler, services.dbService, leaveFile);
+    return;
+}
+
 const nodeModulesDir = path.resolve(`${workspaceRoot}`, 'node_modules');
 
 const isInstalled = {

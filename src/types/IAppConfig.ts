@@ -1,9 +1,8 @@
 
-import { DynamicModule } from '@nestjs/common';
-import { RWSModuleType } from './IRWSModule';
 import { IRWSResource } from './IRWSResource';
 import { IPrefixedHTTProutes } from '../routing/routes';
-import {IDbConfigParams} from '@rws-framework/db'
+import {IDbConfigParams, OpModelType, RWSModel} from '@rws-framework/db'
+
 export default interface IAppConfig {       
     secret_key: string    
     domain?: string
@@ -13,8 +12,8 @@ export default interface IAppConfig {
     db_url?: string
     db_name?: string    
     http_routes: IPrefixedHTTProutes[]
-    user_model?: any
-    db_models?: any[]
+    user_model?: OpModelType<any>
+    db_models?: OpModelType<any>[]
     ssl_cert?: string
     ssl_key?: string
     resources?: IRWSResource[]   
@@ -25,11 +24,26 @@ export default interface IAppConfig {
     test_port?: number
     test_ws_port?: number
     noCoreController?: boolean
+    logging?: {
+        loki_port: number,
+        loki_url: string,
+        loki_login?: string,
+        loki_pass?: string,
+        app_name?: string,
+        environment?: string,
+        log_level?: string,
+        service_name?: string
+    }
     features?: {
         ws_enabled?: boolean
         routing_enabled?: boolean
         test_routes?: boolean
         ssl?: boolean
-        auth?: boolean
+        auth?: boolean,
+        auth_pub_key?: string,
+        auth_alghoritm?: 'RS256' | null,
+        auth_passphrase?: string
+        token_auth_callback?: (decoded: unknown) => Promise<RWSModel<any> | null>
+        apikey_auth_callback?: (apiKey: string) => Promise<RWSModel<any> | null>
     } 
 }

@@ -12,6 +12,7 @@ import { DiscoveryService } from '@nestjs/core';
 import { MD5Service } from '../../../src/services/MD5Service';
 import { RWSConfigService } from '../../../src/services/RWSConfigService';
 import { DBPushCommand } from '../../../src/commands/db-push.command';
+import { DBMigrateCommand } from '../../../src/commands/db-migrate.command';
 
 export interface ParsedOpt {
   key: string,
@@ -55,6 +56,7 @@ export class CLIModule {
             ConsoleService,            
             InitCommand,
             DBPushCommand,
+            DBMigrateCommand,
             DiscoveryService,
             DecoratorExplorerService,
             MD5Service        

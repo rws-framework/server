@@ -9,6 +9,10 @@ import { RWSControllerDecorator as RWSController } from '../src/controller/_deco
 import { RWSRoute } from './decorators/RWSRoute';
 import { RWSConfigInjector, BootstrapRegistry } from './decorators/RWSConfigInjector';
 import { RWSBootstrap } from './bootstrap';
+import { BlackLogger } from './BlackLogger';
+import { RWSRealtimePoint } from './decorators/RWSRealtimePoint';
+import { RWSRealtimeRoute } from './decorators/RWSRealtimeRoute';
+
 const NestRoute = {
     Get, Post, Delete, Put
 }
@@ -22,5 +26,8 @@ export {
     RWSRoute,
     RWSConfigInjector,    
     BootstrapRegistry,
-    RWSBootstrap
+    RWSBootstrap,
+    BlackLogger,
+    RWSRealtimePoint,
+    RWSRealtimeRoute
 };
