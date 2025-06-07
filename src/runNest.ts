@@ -154,7 +154,7 @@ export default async function bootstrap(
         await callback.preInit(app);
     }
 
-    const configService = app.get(RWSConfigService);
+    const configService: RWSConfigService<IAppConfig> = app.get(RWSConfigService);
     const dbService = app.get(NestDBService);  
     const autoRouteService: RWSAutoAPIService = app.get(RWSAutoAPIService);
     const websocketRoutingService: RWSWebsocketRoutingService = app.get(RWSWebsocketRoutingService);

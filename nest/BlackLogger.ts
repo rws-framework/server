@@ -6,7 +6,7 @@ import IAppConfig from '../src/types/IAppConfig';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class BlackLogger extends BaseLogger implements LoggerService {
-  protected context?: string;
+  protected context?: string = 'APP';
   private winstonLogger: winston.Logger;
   private static config: IAppConfig['logging'];
   private cfg: IAppConfig['logging'];
