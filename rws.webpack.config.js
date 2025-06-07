@@ -10,15 +10,16 @@ const { dirname } = require('path');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const isVerbose = process.argv.includes('--verbose');
+
 const verboseLog = console.log;
 
 
-
-// console.log = (...x) => {
-//   if(process.env.RWS_VERBOSE){
-//     verboseLog(...x);
-//   }
-// }
+console.log = (...x) => {
+  if(isVerbose){
+    verboseLog(...x);
+  }
+}
 
 const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
@@ -35,7 +36,12 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   console.log('Build mode:', chalk.red(isDev ? 'development' : 'production'));
   
-  const modules_setup =  config.nodeModules || [rootPackageNodeModules];
+  let modules_setup =  config.nodeModules || [rootPackageNodeModules];
+
+  modules_setup = [...modules_setup, ...(config.extraNodeModules || [])]
+
+  console.log('Node modules locations:', modules_setup);
+
   const aliases = config.aliases = {}
 
   aliases['entities/escape'] = path.resolve(rootPackageNodeModules, 'entities/lib/escape.js'),
