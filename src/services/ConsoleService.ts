@@ -135,25 +135,25 @@ class ConsoleService {
                     const trimmedPart = part.trim();
                     if (trimmedPart === ':') {
                     // This part is a colon, colorize it with white
-                        parts[i] = getCodeColor(_JSON_COLORS.colons, ':');
+                        parts[i] = getCodeColor(_JSON_COLORS.colons as string, ':');
                     } else if (trimmedPart === ',') {
                     // This part is a comma, colorize it with white
-                        parts[i] = getCodeColor(_JSON_COLORS.colons, ',');
+                        parts[i] = getCodeColor(_JSON_COLORS.colons as string, ',');
                     } else if (trimmedPart === '[' || trimmedPart === ']') {
                     // This part is a bracket, colorize it with the arrayBraces color
-                        parts[i] = getCodeColor(_JSON_COLORS.arrayBraces, part);
+                        parts[i] = getCodeColor(_JSON_COLORS.arrayBraces as string as string, part);
                     } else if (i % 4 === 1) {
                     // This part is a key, colorize it with the keys color
                         const key = trimmedPart;
                         if (key === ':') {
-                            parts[i] = getCodeColor(_JSON_COLORS.colons, key);
+                            parts[i] = getCodeColor(_JSON_COLORS.colons as string, key);
                         } else {
-                            parts[i] = getCodeColor(_JSON_COLORS.keys, key);
+                            parts[i] = getCodeColor(_JSON_COLORS.keys as string, key);
                         }
                     } else if (i % 4 === 3) {
                     // This part is a value, colorize it with objectValue
                         const value = trimmedPart;
-                        parts[i] = getCodeColor(_JSON_COLORS.objectValue, value);
+                        parts[i] = getCodeColor(_JSON_COLORS.objectValue as string, value);
                     }
                 }
             }
