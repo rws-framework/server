@@ -122,7 +122,7 @@ export default async function bootstrap(
     },
     callback: RunCallbackList | null = null,
     controllers: any[] = []
-) {
+): Promise<{ app: INestApplication, listen: () => Promise<void> }> {
     const logger = new Logger('bootstrap');
     const dbCli =  process.env?.DB_CLI ? parseInt(process.env.DB_CLI) : 0;
 
@@ -200,7 +200,10 @@ export default async function bootstrap(
     if(rwsOptions.ws_port){
         logger.log(`WS server started on port "${rwsOptions.ws_port}"`);
 
-    }
+    }        
 
-    await app.listen(rwsOptions.port);
+    return {
+        app,
+        listen: async () => app.listen(rwsOptions.port)
+    };
 }

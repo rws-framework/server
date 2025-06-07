@@ -2,24 +2,29 @@ import { serverInit } from "../src/index";
 import { ServerOpts } from "../src/types/ServerTypes";
 import { BootstrapRegistry } from "./decorators/RWSConfigInjector";
 import { RunCallback, RunCallbackList } from '../src/types/BootstrapTypes';
+import { INestApplication } from "@nestjs/common";
 
 export abstract class RWSBootstrap {
     private static _instance: RWSBootstrap = null;
 
-    static async run(nestModule: any, opts: ServerOpts, callbacks: RunCallbackList | null = null): Promise<void>
+    static async run(nestModule: any, opts: ServerOpts, callbacks: RunCallbackList | null = null): Promise<INestApplication>
     {
         if (!this._instance) {            
             this._instance = new (this as any)();
         }
 
-        return this._instance.runServer(nestModule, opts, callbacks);
+        const instance =  await this._instance.runServer(nestModule, opts, callbacks);
+
+        return instance;
     }
 
     async runServer(nestModule: any,         
         opts: ServerOpts = { pubDirEnabled: true },
         callbacks: RunCallbackList | null = null
-    ): Promise<void> {
-        await serverInit(nestModule, () => BootstrapRegistry.getConfig(), opts, callbacks);
+    ): Promise<INestApplication> {
+        const server = await serverInit(nestModule, () => BootstrapRegistry.getConfig(), opts, callbacks);
+        server.listen();
+        return server.app;
     }
 
     protected static get instance(): RWSBootstrap {
