@@ -1,12 +1,13 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "3.19.5",
+  "version": "3.19.6",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
     "docs": "typedoc --tsconfig ./tsconfig.json"
   },
+  "type": "commonjs",
   "author": "papablack",
   "license": "ISC",
   "bin": {

@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const chalk = require('chalk');
 const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
@@ -7,8 +8,9 @@ const { rwsPath, RWSConfigBuilder } = require('@rws-framework/console');
 const { fileURLToPath } = require('url');
 const { dirname } = require('path');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+
+
+const currentDir = __dirname;
 
 const verboseLog = console.log;
 
@@ -34,7 +36,8 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   const isDev = config.dev;
 
   console.log('Build mode:', chalk.red(isDev ? 'development' : 'production'));
-  
+  console.log('Build cfg:', config);
+
   let modules_setup =  config.nodeModules || [rootPackageNodeModules];
 
   modules_setup = [...modules_setup, ...(config.extraNodeModules || [])]
@@ -43,6 +46,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   const aliases = config.aliases = {}
 
+  aliases['entities/*'] = [path.join(rootPackageNodeModules, 'entities', 'lib')];
   
   const overridePlugins = config.plugins || []
   const overrideResolvePlugins = config.resolvePlugins || []
@@ -56,20 +60,53 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   WEBPACK_PLUGINS = [...WEBPACK_PLUGINS, ...overridePlugins];  
   
+  WEBPACK_PLUGINS.push(
+    new webpack.IgnorePlugin({
+                resourceRegExp: /kerberos\.node$/,
+                contextRegExp: /node_modules[\\/]kerberos[\\/]lib/,
+    }),
+  )
+
   let WEBPACK_RESOLVE_PLUGINS = [];
 
   WEBPACK_RESOLVE_PLUGINS = [...WEBPACK_RESOLVE_PLUGINS, ...overridePlugins];
 
-  const tsConfigData = await tsConfig(__dirname, true, false);
+  let tsConfigData = null;
+  let tsConfigPath = null;
 
-  const tsConfigPath = tsConfigData.path;
+  let wpIncludes = []
+  let wpExcludes = [];
 
+  if(tsConfig){
+    tsConfigData = await tsConfig(currentDir, true, false);
+    tsConfigPath = tsConfigData.path;  
+    wpIncludes = (tsConfigData ? tsConfigData.includes.map(item => item.abs()) : []) 
+    wpExcludes = (tsConfigData ? tsConfigData.excludes.map(item => item.abs()) : []) 
+  }else{
+    tsConfigPath = path.join(process.cwd(), 'tsconfig.json');
+    tsConfigData = { config: JSON.parse(fs.readFileSync(tsConfigPath, 'utf-8'))};
 
-  for(const aliasKey of Object.keys(tsConfigData.config.compilerOptions.paths)){
-    const alias = tsConfigData.config.compilerOptions.paths[aliasKey];
-    aliases[aliasKey] = path.resolve(executionDir, alias[0]);
+      if(tsConfigData.config.include){
+        for(const incl of tsConfigData.config.include){
+          wpIncludes.push(path.resolve(executionDir, incl.replace('/*', '')))
+        }
+      }  
+      
+      if(tsConfigData.config.exclude){
+        for(const excl of tsConfigData.config.exclude){
+          wpIncludes.push(path.resolve(executionDir, excl.replace('/*', '')))
+        }
+      } 
   }
 
+  console.log({ wpIncludes, wpExcludes });
+
+  if(tsConfigData.config.compilerOptions.paths){
+    for(const aliasKey of Object.keys(tsConfigData.config.compilerOptions.paths)){
+        const alias = tsConfigData.config.compilerOptions.paths[aliasKey];
+        aliases[aliasKey] = path.resolve(executionDir, alias[0]);
+    }
+  }  
 
   if (!require('fs').existsSync(tsConfigPath)) {
       console.error('TypeScript config file not found at:', tsConfigPath);
@@ -95,7 +132,9 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
     }                
   }
 
-  console.log('TS CONFIG: ', tsConfigData.config);
+  if(tsConfigData){
+    console.log('TS CONFIG: ', tsConfigData.config);
+  }
 
   const allowedModules = ['@rws-framework\\/[A-Z0-9a-z]'];
 
@@ -139,10 +178,10 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
             }
           ],
           include: [
-            ...tsConfigData.includes.map(item => item.abs())            
+            ...wpIncludes            
           ],
           exclude: [
-            ...tsConfigData.excludes.map(item => item.abs()),
+            ...wpExcludes,
             new RegExp(modulePattern),            
             /\.d\.ts$/        
           ],
@@ -169,25 +208,34 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   const rwsExternalsOverride = config.externalsOverride || [];
 
-  cfgExport.externals = [
-    function({ request }, callback) {
-      const includePackages = [
-        '@rws-framework',
-        ...rwsExternalsOverride
-      ];
+  cfgExport.externals = {
+      '@ngrok/ngrok': 'commonjs @ngrok/ngrok',
+      'kafkajs': 'commonjs kafkajs',
+      'mqtt': 'commonjs mqtt',
+      'nats': 'commonjs nats',
+      'ioredis': 'commonjs ioredis',
+      'amqplib': 'commonjs amqplib',
+      'amqp-connection-manager': 'commonjs amqp-connection-manager',
+      'electron': 'commonjs electron',
+  }
+
+  // cfgExport.externals = [
+  //   function({ request }, callback) {
+  //     const excludePackages = [
+  //     ];
   
-      if (includePackages.some(pkg => request.startsWith(pkg))) {
-        return callback();
-      }
+  //     if (excludePackages.some(pkg => request.startsWith(pkg))) {
+  //       return callback(null, `commonjs ${request}`);
+  //     }
   
-      // Externalize others
-      if (/^[a-z\-0-9@]/.test(request)) {
-        return callback(null, `commonjs ${request}`);
-      }
+  //     // Externalize others
+  //     if (/^[a-z\-0-9@]/.test(request)) {
+  //       return callback();
+  //     }
   
-      callback();
-    }
-  ];
+  //     return callback(null, `commonjs ${request}`);
+  //   }
+  // ];
 
   return cfgExport;
 }
