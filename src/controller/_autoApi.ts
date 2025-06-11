@@ -2,11 +2,12 @@ import 'reflect-metadata';
 
 import { RWSAutoApi } from "./autoApi.decorator";
 import { RWSAutoAPIService } from '../services/RWSAutoAPIService'
-import { OpModelType } from "@rws-framework/db";
-import { RWSCONTROLLER_METADATA_KEY, RWSControllerMetadata } from "@rws-framework/server/src/controller/_decorator";
-import { IPrefixedHTTProutes } from '@rws-framework/server/src/routing/routes';
+import { OpModelType, RWSModel } from "@rws-framework/db";
+import { RWSCONTROLLER_METADATA_KEY, RWSControllerMetadata } from "./_decorator";
+import { IPrefixedHTTProutes } from '../routing/routes';
 import { Param } from '@nestjs/common';
-import { IAppConfig, RWSConfigService, RWSModel } from '@rws-framework/server';
+import IAppConfig from '../types/IAppConfig';
+import { RWSConfigService } from '../services/RWSConfigService';
 
 interface IAutoApiServices {
     configService?: RWSConfigService<IAppConfig>;
