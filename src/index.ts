@@ -24,7 +24,7 @@ import IDbUser from './types/IDbUser';
 
 import { RWSFillService } from './services/RWSFillService';
 
-import {RWSCommand} from './commands/_command';
+import {RWSBaseCommand, RWSCommand} from './commands/_command';
 import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse } from './gateways/_gateway';
 
 import * as RWSErrorCodes from './errors';
@@ -37,6 +37,7 @@ import { RealtimePoint } from './gateways/_realtimePoint';
 
 export {    
     RWSCommand,
+    RWSBaseCommand,
     RWSFillService,
     RWSConfigService,
     RWSModule,
