@@ -5,6 +5,7 @@ import {IDbConfigParams, OpModelType, RWSModel} from '@rws-framework/db'
 
 export default interface IAppConfig {       
     secret_key: string    
+    jwt_expiration_days?: number,
     domain?: string
     port?: number
     ws_port?: number

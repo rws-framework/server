@@ -12,6 +12,8 @@ import { RWSBootstrap } from './bootstrap';
 import { BlackLogger } from './BlackLogger';
 import { RWSRealtimePoint } from './decorators/RWSRealtimePoint';
 import { RWSRealtimeRoute } from './decorators/RWSRealtimeRoute';
+import { Auth, AuthUser } from './decorators/guards/auth.guard';
+import { Public } from './decorators/guards/public.decorator';
 
 const NestRoute = {
     Get, Post, Delete, Put
@@ -29,5 +31,8 @@ export {
     RWSBootstrap,
     BlackLogger,
     RWSRealtimePoint,
-    RWSRealtimeRoute
+    RWSRealtimeRoute,
+    Auth,
+    AuthUser,
+    Public
 };

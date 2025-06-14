@@ -4,29 +4,22 @@ const chalk = require('chalk');
 const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
 const {rwsExternals} = require('./_rws_externals');
-const { rwsPath, RWSConfigBuilder } = require('@rws-framework/console');
-const { fileURLToPath } = require('url');
-const { dirname } = require('path');
-
-
-
-const currentDir = __dirname;
+const { rwsPath, RWSConfigBuilder, RWSWebpackPlugins } = require('@rws-framework/console');
 
 const verboseLog = console.log;
 
 
 
-// console.log = (...x) => {
-//   if(process.env.RWS_VERBOSE){
-//     verboseLog(...x);
-//   }
-// }
+console.log = (...x) => {
+  if(process.argv.find(a => a.includes('--verbose'))){
+      verboseLog(...x);
+  }
+}
 
 const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
-  const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
-
   console.log('START')
-
+  const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
+  const currentDir = path.join(rootPackageNodeModules, '@rws-framework', 'server');
   const executionDir = config.executionDir;
 
   const cfgEntry = `./src/index.ts`;
@@ -46,7 +39,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   const aliases = config.aliases = {}
 
-  aliases['entities/*'] = [path.join(rootPackageNodeModules, 'entities', 'lib')];
+  // aliases['entities/*'] = [path.join(rootPackageNodeModules, 'entities', 'lib')];
   
   const overridePlugins = config.plugins || []
   const overrideResolvePlugins = config.resolvePlugins || []
@@ -62,9 +55,10 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   
   WEBPACK_PLUGINS.push(
     new webpack.IgnorePlugin({
-                resourceRegExp: /kerberos\.node$/,
-                contextRegExp: /node_modules[\\/]kerberos[\\/]lib/,
-    }),
+      resourceRegExp: /kerberos\.node$/,
+      contextRegExp: /node_modules[\\/]kerberos[\\/]lib/,
+    }),    
+    new RWSWebpackPlugins.CheckNestedModulesPlugin(['entities'])
   )
 
   let WEBPACK_RESOLVE_PLUGINS = [];
@@ -98,8 +92,6 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
         }
       } 
   }
-
-  console.log({ wpIncludes, wpExcludes });
 
   if(tsConfigData.config.compilerOptions.paths){
     for(const aliasKey of Object.keys(tsConfigData.config.compilerOptions.paths)){
@@ -187,8 +179,8 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
           ],
         },       
         {
-            test: /\.node$/,
-            use: 'node-loader',
+          test: /\.node$/,
+          loader: 'ignore-loader'
         }        
       ],
     },
@@ -217,6 +209,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
       'amqplib': 'commonjs amqplib',
       'amqp-connection-manager': 'commonjs amqp-connection-manager',
       'electron': 'commonjs electron',
+      '@rws-framework/console': 'commonjs @rws-framework/console',
   }
 
   // cfgExport.externals = [

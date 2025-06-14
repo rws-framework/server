@@ -4,23 +4,18 @@ const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
 const {rwsExternals} = require('./_rws_externals');
 const { rwsPath, RWSConfigBuilder } = require('@rws-framework/console');
-const { fileURLToPath } = require('url');
-const { dirname } = require('path');
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const verboseLog = console.log;
 
 console.log = (...x) => {
-  if(process.env.RWS_VERBOSE){
+  if(process.argv.find(a => a.includes('--verbose'))){
     verboseLog(...x);
   }
 }
 
 const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
-
+  const currentDir = path.join(rootPackageNodeModules, '@rws-framework', 'server');
   const executionDir = config.executionDir;
 
   const cfgEntry = config.entrypoint || `./src/index.ts`;
@@ -50,9 +45,33 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   let WEBPACK_RESOLVE_PLUGINS = [];
 
   WEBPACK_RESOLVE_PLUGINS = [...WEBPACK_RESOLVE_PLUGINS, ...overridePlugins];
+  let tsConfigData = null;
+  let tsConfigPath = null;
 
-  const tsConfigData = await tsConfig(__dirname, true);
-  const tsConfigPath = tsConfigData.path;
+  let wpIncludes = []
+  let wpExcludes = [];
+
+  if(tsConfig){
+    tsConfigData = await tsConfig(currentDir, true, false);
+    tsConfigPath = tsConfigData.path;  
+    wpIncludes = (tsConfigData ? tsConfigData.includes.map(item => item.abs()) : []) 
+    wpExcludes = (tsConfigData ? tsConfigData.excludes.map(item => item.abs()) : []) 
+  }else{
+    tsConfigPath = path.join(process.cwd(), 'tsconfig.json');
+    tsConfigData = { config: JSON.parse(fs.readFileSync(tsConfigPath, 'utf-8'))};
+
+      if(tsConfigData.config.include){
+        for(const incl of tsConfigData.config.include){
+          wpIncludes.push(path.resolve(executionDir, incl.replace('/*', '')))
+        }
+      }  
+      
+      if(tsConfigData.config.exclude){
+        for(const excl of tsConfigData.config.exclude){
+          wpIncludes.push(path.resolve(executionDir, excl.replace('/*', '')))
+        }
+      } 
+  }
 
   if (!require('fs').existsSync(tsConfigPath)) {
       console.error('TypeScript config file not found at:', tsConfigPath);
@@ -80,9 +99,11 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   console.log('TS CONFIG: ', tsConfigData.config);
 
-  for(const aliasKey of Object.keys(tsConfigData.config.compilerOptions.paths)){
-    const alias = tsConfigData.config.compilerOptions.paths[aliasKey];
-    aliases[aliasKey] = path.resolve(executionDir, alias[0]);
+  if(tsConfigData.config.compilerOptions.paths){
+    for(const aliasKey of Object.keys(tsConfigData.config.compilerOptions.paths)){
+        const alias = tsConfigData.config.compilerOptions.paths[aliasKey];
+        aliases[aliasKey] = path.resolve(executionDir, alias[0]);
+    }
   }  
 
   const allowedModules = ['@rws-framework\\/[A-Z0-9a-z]'];
@@ -127,10 +148,10 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
             }
           ],
           include: [
-            ...tsConfigData.includes.map(item => item.abs())            
+            ...wpIncludes            
           ],
           exclude: [
-            ...tsConfigData.excludes.map(item => item.abs()),
+            ...wpExcludes,
             new RegExp(modulePattern),            
             /\.d\.ts$/        
           ],
