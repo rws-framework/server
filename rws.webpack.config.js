@@ -58,7 +58,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
       resourceRegExp: /kerberos\.node$/,
       contextRegExp: /node_modules[\\/]kerberos[\\/]lib/,
     }),    
-    new RWSWebpackPlugins.CheckNestedModulesPlugin(['entities'])
+    new RWSWebpackPlugins.CheckNestedModulesPlugin(config.nestedNodePackages ? config.nestedNodePackages : [])
   )
 
   let WEBPACK_RESOLVE_PLUGINS = [];
@@ -200,35 +200,39 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   const rwsExternalsOverride = config.externalsOverride || [];
 
-  cfgExport.externals = {
-      '@ngrok/ngrok': 'commonjs @ngrok/ngrok',
-      'kafkajs': 'commonjs kafkajs',
-      'mqtt': 'commonjs mqtt',
-      'nats': 'commonjs nats',
-      'ioredis': 'commonjs ioredis',
-      'amqplib': 'commonjs amqplib',
-      'amqp-connection-manager': 'commonjs amqp-connection-manager',
-      'electron': 'commonjs electron',
-      '@rws-framework/console': 'commonjs @rws-framework/console',
+  if(config.selfContained){
+    cfgExport.externals = {
+        '@ngrok/ngrok': 'commonjs @ngrok/ngrok',
+        'kafkajs': 'commonjs kafkajs',
+        'mqtt': 'commonjs mqtt',
+        'nats': 'commonjs nats',
+        'ioredis': 'commonjs ioredis',
+        'amqplib': 'commonjs amqplib',
+        'amqp-connection-manager': 'commonjs amqp-connection-manager',
+        'electron': 'commonjs electron',
+        '@rws-framework/console': 'commonjs @rws-framework/console',
+    }
+  }else{
+    cfgExport.externals = [
+    function({ request }, callback) {
+      const includePackages = [
+        '@rws-framework',
+        ...rwsExternalsOverride
+      ];
+  
+      if (includePackages.some(pkg => request.startsWith(pkg))) {
+        return callback();
+      }
+  
+      // Externalize others
+      if (/^[a-z\-0-9@]/.test(request)) {
+        return callback(null, `commonjs ${request}`);
+      }
+  
+      callback();
+    }
+  ];
   }
-
-  // cfgExport.externals = [
-  //   function({ request }, callback) {
-  //     const excludePackages = [
-  //     ];
-  
-  //     if (excludePackages.some(pkg => request.startsWith(pkg))) {
-  //       return callback(null, `commonjs ${request}`);
-  //     }
-  
-  //     // Externalize others
-  //     if (/^[a-z\-0-9@]/.test(request)) {
-  //       return callback();
-  //     }
-  
-  //     return callback(null, `commonjs ${request}`);
-  //   }
-  // ];
 
   return cfgExport;
 }
