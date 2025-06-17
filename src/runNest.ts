@@ -44,7 +44,7 @@ export class RWSModule {
     static cfgData: IAppConfig;
   
     static async forRoot(cfg: IAppConfig, pubDirEnabled: boolean = true): Promise<DynamicModule> {       
-        const processedImports = [
+        const processedImports: any[] = [
             ...baseModules(cfg)   
         ];
 
