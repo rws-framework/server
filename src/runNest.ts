@@ -28,6 +28,7 @@ import { BlackLogger } from '../nest';
 import { RWSWebsocketRoutingService } from './services/RWSWebsocketRoutingService';
 import { RealtimePoint } from './gateways/_realtimePoint';
 import { RWSFillService } from './services/RWSFillService';
+import chalk from 'chalk';
 
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
@@ -48,7 +49,8 @@ export class RWSModule {
             ...baseModules(cfg)   
         ];
 
-        if(pubDirEnabled){
+        if(pubDirEnabled){            
+            console.log(chalk.bgMagenta(`Public dir served on route "${cfg.static_route || '/'}" from path: "${path.join(process.cwd(), cfg.pub_dir)}"`));
             processedImports.push(ServeStaticModule.forRoot({
                 rootPath: path.join(process.cwd(), cfg.pub_dir), 
                 serveRoot: cfg.static_route || '/',
