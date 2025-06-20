@@ -26,7 +26,10 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   console.log('Build mode:', chalk.red(isDev ? 'development' : 'production'));
   
-  const modules_setup =  config.nodeModules || [rootPackageNodeModules];
+  let modules_setup =  config.nodeModules || [rootPackageNodeModules];
+
+  modules_setup = [...modules_setup, path.join(currentDir, 'node_modules')]
+
   const aliases = config.aliases = {}
 
   
