@@ -135,19 +135,22 @@ class AuthService {
   }
 
   // Generate JWT token
-  generateToken(user: RWSModel<any>, userLoginKey: string = 'username'): string {
+   generateToken(user: RWSModel<any>, userLoginKey: string = 'username'): string {
     const expirationInSeconds = this.JWT_EXPIRATION * 24 * 60 * 60;
-
-    return jwt.sign(
-      {
-        sub: user.id,
-        username: user[userLoginKey]
-      },
-      this.JWT_SECRET,
-      {
-        expiresIn: expirationInSeconds
-      }
-    );
+    try {    
+      return jwt.sign(
+        {
+          sub: user.id,
+          username: user[userLoginKey]
+        },
+        this.JWT_SECRET,
+        {
+          expiresIn: expirationInSeconds
+        }
+      );
+    } catch (e: Error | any){
+      throw new Error(`[AuthService] ERROR: generateToken - ${e.message}`);
+    }
   }
 
   // Verify JWT token
