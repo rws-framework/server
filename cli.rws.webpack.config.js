@@ -180,6 +180,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
     function({ request }, callback) {
       const includePackages = [
         '@rws-framework',
+        '@nestjs',
         ...rwsExternalsOverride   
       ];
   
