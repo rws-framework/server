@@ -33,7 +33,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
 
   let modules_setup =  config.nodeModules || [rootPackageNodeModules];
 
-  modules_setup = [...modules_setup, ...(config.extraNodeModules || [])]
+  modules_setup = [...modules_setup, ...(config.extraNodeModules || []), path.join(currentDir, 'node_modules')]
 
   console.log('Node modules locations:', modules_setup);
 
@@ -217,8 +217,9 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
     function({ request }, callback) {
       const includePackages = [
         '@rws-framework',
+        '@nestjs',
         ...rwsExternalsOverride
-      ];
+      ];      
   
       if (includePackages.some(pkg => request.startsWith(pkg))) {
         return callback();
