@@ -29,6 +29,7 @@ import { RWSWebsocketRoutingService } from './services/RWSWebsocketRoutingServic
 import { RealtimePoint } from './gateways/_realtimePoint';
 import { RWSFillService } from './services/RWSFillService';
 import chalk from 'chalk';
+import { FilteredServeModule } from './serve/FilteredServeModule';
 
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
@@ -40,21 +41,30 @@ const baseModules: (cfg: IAppConfig) => AnyModule[] = (cfg: IAppConfig) => [
     RouterModule.register([])
 ];
 
+
+
 @Module({})
 export class RWSModule {
     static cfgData: IAppConfig;
   
-    static async forRoot(cfg: IAppConfig, pubDirEnabled: boolean = true): Promise<DynamicModule> {       
+    static async forRoot(cfg: IAppConfig, serverOpts: ServerOpts | null = null): Promise<DynamicModule> {       
         const processedImports: any[] = [
             ...baseModules(cfg)   
         ];
 
-        if(pubDirEnabled){            
-            console.log(chalk.bgMagenta(`Public dir served on route "${cfg.static_route || '/'}" from path: "${path.join(process.cwd(), cfg.pub_dir)}"`));
-            processedImports.push(ServeStaticModule.forRoot({
-                rootPath: path.join(process.cwd(), cfg.pub_dir), 
-                serveRoot: cfg.static_route || '/',
-            }));      
+        if(serverOpts && serverOpts.pubDirEnabled){            
+            console.log(chalk.bgMagenta(`Public dir served on route "${cfg.static_route || '/'}" from path: "${path.join(process.cwd(), cfg.pub_dir)}"${serverOpts.spaMode ? `
+SPA mode enabled (only direct files requests are served)` : ''}`));
+
+            if(serverOpts.spaMode){
+                processedImports.push(FilteredServeModule.forRoot(cfg));  
+
+            }else{
+                processedImports.push(ServeStaticModule.forRoot({
+                    rootPath: path.join(process.cwd(), cfg.pub_dir), 
+                    serveRoot: cfg.static_route || '',
+                }));  
+            }                        
         }
 
         const theModule: AnyModule = {
@@ -119,9 +129,7 @@ export class RWSModule {
 export default async function bootstrap(
     nestModule: any, 
     cfgRunner: () => IAppConfig, 
-    opts: ServerOpts = {
-        pubDirEnabled: true
-    },
+    opts: ServerOpts | null = null,
     callback: RunCallbackList | null = null,
     controllers: any[] = []
 ): Promise<{ app: INestApplication, listen: () => Promise<void> }> {
@@ -141,7 +149,7 @@ export default async function bootstrap(
     }
 
     const app: INestApplication = await NestFactory.create(
-        nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts.pubDirEnabled), rwsOptions)
+        nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts), rwsOptions)
     );
 
     if(rwsOptions.cors_domain){

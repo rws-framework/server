@@ -3,7 +3,8 @@ import { IRWSResource } from './IRWSResource';
 import { IPrefixedHTTProutes } from '../routing/routes';
 import {IDbConfigParams, OpModelType, RWSModel} from '@rws-framework/db'
 
-export default interface IAppConfig {       
+export default interface IAppConfig {  
+    devMode?: boolean     
     secret_key: string    
     jwt_expiration_days?: number,
     domain?: string

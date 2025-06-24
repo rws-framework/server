@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import TheService from './_service';
-import { IHTTProute, RWSHTTPRoutingEntry } from '../routing/routes';
+import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../routing/routes';
 import { IHTTProuteParams } from '../routing/annotations/Route';
 import path from 'path';
 import { RWSError } from '../errors/index';
@@ -127,6 +127,7 @@ class RouterService {
             });
         });
 
+
         return routes;
     }
 
@@ -134,18 +135,36 @@ class RouterService {
         let routes: IHTTProute[] = [];
 
         routesPackage.forEach((item: RWSHTTPRoutingEntry) => {   
-            if ('prefix' in item && 'routes' in item && Array.isArray(item.routes)) {
-                routes = [...routes, ...item.routes.map((subRouteItem: IHTTProute): IHTTProute => ({
-                    path: item.prefix + subRouteItem.path,
-                    name: subRouteItem.name,
-                    method: subRouteItem.method
-                }))];
+            if ('prefix' in item && 'routes' in item && Array.isArray(item.routes)) {                
+                for(const itemRoute of item.routes){
+                    this.populateByPath(routes, itemRoute, item);
+                }
             } else {
-                routes.push(item as IHTTProute);
+                this.populateByPath(routes, item as IHTTProute);
+                // routes.push(item as IHTTProute);
             }        
-        });  
+        });          
 
         return routes;
+    }
+
+    private populateByPath(routes: IHTTProute[], item: IHTTProute, parent?: IPrefixedHTTProutes){        
+        if(Array.isArray(item.path)){
+            for(const itemRoute of item.path){
+                 routes.push({
+                    path: parent ? parent.prefix + itemRoute : itemRoute,
+                    name: item.name,
+                    method: item.method
+                });
+            }
+            return;
+        }
+
+        routes.push({
+            path: parent ? parent.prefix + item.path : item.path,
+            name: item.name,
+            method: item.method
+        });
     }
 
     static responseTypeToMIME(responseType: string){

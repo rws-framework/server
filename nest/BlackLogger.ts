@@ -11,6 +11,8 @@ export class BlackLogger extends BaseLogger implements LoggerService {
   private static config: IAppConfig['logging'];
   private cfg: IAppConfig['logging'];
 
+  private winstonEnabled: boolean = true;  
+
   constructor(context?: string) {
     super(context);
     this.context = context;
@@ -93,11 +95,19 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     BlackLogger.config = cfg;
   }
 
+  disableWinston(){
+    this.winstonEnabled = false;
+  }
+
+  enableWinston(){
+    this.winstonEnabled = true;
+  }
+
   log(message: unknown, context?: string): void {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
 
-    if(!this.cfg){
+    if(!this.cfg || !this.winstonEnabled){
       super.log(formattedMessage, safeContext)
       return;
     }
@@ -109,7 +119,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
     super.error(formattedMessage, trace);
-    if(!this.cfg){     
+    if(!this.cfg || !this.winstonEnabled){     
       return;
     }
     this.winstonLogger.error(formattedMessage, { context: safeContext, trace });
@@ -119,7 +129,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
     // super.warn(formattedMessage);
-    if(!this.cfg){ 
+    if(!this.cfg || !this.winstonEnabled){ 
       super.warn(formattedMessage);   
       return;
     }
@@ -130,7 +140,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
     super.debug(formattedMessage);
-    if(!this.cfg){      
+    if(!this.cfg || !this.winstonEnabled){      
       return;
     }
     this.winstonLogger.debug(formattedMessage, { context: safeContext });
@@ -140,7 +150,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
     super.verbose(formattedMessage);
-    if(!this.cfg){      
+    if(!this.cfg || !this.winstonEnabled){      
       return;
     }
     this.winstonLogger.verbose(formattedMessage, { context: safeContext });
