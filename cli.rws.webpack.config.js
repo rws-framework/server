@@ -182,8 +182,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   cfgExport.externals = [
     function({ request }, callback) {
       const includePackages = [
-        '@rws-framework',
-        '@nestjs',
+        '@rws-framework',        
         ...rwsExternalsOverride   
       ];
   
