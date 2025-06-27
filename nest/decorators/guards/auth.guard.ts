@@ -77,13 +77,13 @@ export class AuthGuard implements CanActivate {
         }
 
         // Find user based on decoded token data
-        user = await features.token_auth_callback(decoded);
+        user = await features.token_auth_callback(request, decoded);
       } else if (type === 'ApiKey') {
         if(!features.apikey_auth_callback){
           throw new Error('App needs "features.apikey_auth_callback" defined');
         }
 
-        user = await features.apikey_auth_callback(token);
+        user = await features.apikey_auth_callback(request, token);
       }
 
       if (!user) {

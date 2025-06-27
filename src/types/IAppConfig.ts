@@ -47,7 +47,7 @@ export default interface IAppConfig {
         auth_pub_key?: string,
         auth_alghoritm?: 'RS256' | null,
         auth_passphrase?: string
-        token_auth_callback?: (decoded: unknown) => Promise<RWSModel<any> | null>
-        apikey_auth_callback?: (apiKey: string) => Promise<RWSModel<any> | null>
+        token_auth_callback?: (request: { user: RWSModel<any>},decoded: unknown) => Promise<RWSModel<any> | null>
+        apikey_auth_callback?: (request: { user: RWSModel<any>}, apiKey: string) => Promise<RWSModel<any> | null>
     } 
 }
