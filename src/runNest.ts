@@ -30,6 +30,8 @@ import { RealtimePoint } from './gateways/_realtimePoint';
 import { RWSFillService } from './services/RWSFillService';
 import chalk from 'chalk';
 import { FilteredServeModule } from './serve/FilteredServeModule';
+import { RWSGateway } from './gateways/_gateway';
+import { GatewayHelper } from './helpers/GatewayHelper';
 
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
@@ -196,6 +198,8 @@ export default async function bootstrap(
     // websocketRoutingService.assignRoutes();
 
     autoRouteService.shoutRoutes();
+    
+    const hasGatewayProvider = GatewayHelper.hasRWSGatewayProvider(app);
 
     if(configService.get('db_url')){
         process.env.PRISMA_DB_URL = configService.get('db_url');
@@ -207,9 +211,8 @@ export default async function bootstrap(
 
     logger.log(`HTTP server started on port "${rwsOptions.port}"`);
 
-    if(rwsOptions.ws_port){
+    if(rwsOptions.ws_port && rwsOptions.features?.ws_enabled && hasGatewayProvider){
         logger.log(`WS server started on port "${rwsOptions.ws_port}"`);
-
     }        
 
     return {
