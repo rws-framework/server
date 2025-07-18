@@ -4,7 +4,7 @@ const webpackFilters = require('./webpackFilters');
 const webpack = require('webpack');
 const {rwsExternals} = require('./_rws_externals');
 const { rwsPath, RWSConfigBuilder } = require('@rws-framework/console');
-
+const fs = require('fs');
 const verboseLog = console.log;
 
 console.log = (...x) => {
