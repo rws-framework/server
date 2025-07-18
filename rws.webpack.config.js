@@ -22,7 +22,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   const currentDir = path.join(rootPackageNodeModules, '@rws-framework', 'server');
   const executionDir = config.executionDir;
 
-  const cfgEntry = `./src/index.ts`;
+  const cfgEntry = config.entrypoint || `./src/index.ts`;
   const cfgOutputDir = path.resolve(executionDir, config.outputDir);
   const outputFileName = config.outputFileName;
   const tsConfig = config.tsConfig;
