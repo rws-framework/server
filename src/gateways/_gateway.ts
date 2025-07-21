@@ -1,5 +1,6 @@
 import {ITheGateway} from '../types/ITheGateway';
 import { Server, Socket } from 'socket.io';
+import { ModuleRef } from '@nestjs/core';
 
 import {
     WebSocketGateway,
@@ -48,14 +49,16 @@ export abstract class RWSGateway implements ITheGateway{
     public consoleService: ConsoleService;
 
     constructor(
-        public appConfigService: ConfigService,
-        rwsFillService: RWSFillService,
+        private readonly moduleRef: ModuleRef,
+        public appConfigService: ConfigService,        
         private wsRoutingService: RWSWebsocketRoutingService
     ){
-        rwsFillService.fillBaseServices(this);
     }
 
     onModuleInit() {
+        const rwsFillService = this.moduleRef.get(RWSFillService, { strict: false });
+        rwsFillService.fillBaseServices(this);
+
         const port = this.appConfigService.get<number>('ws_port');
         if(port){
             this.setupGlobalEventHandlers();
