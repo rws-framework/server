@@ -79,6 +79,118 @@ export class RWSCliBootstrap {
         };
     }
 
+    /**
+     * Common method to parse quoted strings from parameter arrays
+     * Handles both regular parameters and option values
+     */
+    private parseQuotedString(params: string[], startIndex: number): { value: string; nextIndex: number } {
+        const param = params[startIndex];
+        
+        // Check if parameter starts with a quote
+        if (param.startsWith('"')) {
+            const quotedParts = [param];
+            let foundClosingQuote = param.endsWith('"') && param.length > 1;
+            let nextIndex = startIndex + 1;
+            
+            if (!foundClosingQuote) {
+                // Look for closing quote in subsequent parameters
+                while (nextIndex < params.length && !foundClosingQuote) {
+                    quotedParts.push(params[nextIndex]);
+                    if (params[nextIndex].endsWith('"')) {
+                        foundClosingQuote = true;
+                    }
+                    nextIndex++;
+                }
+            }
+            
+            if (foundClosingQuote) {
+                // Join all parts and remove surrounding quotes
+                const quotedParam = quotedParts.join(' ');
+                return {
+                    value: quotedParam.slice(1, -1), // Remove first and last quote
+                    nextIndex
+                };
+            } else {
+                // No closing quote found, treat as regular parameter without opening quote
+                return {
+                    value: param.slice(1), // Remove opening quote
+                    nextIndex: startIndex + 1
+                };
+            }
+        } else {
+            // Regular parameter without quotes
+            return {
+                value: param,
+                nextIndex: startIndex + 1
+            };
+        }
+    }
+
+    /**
+     * Parse command line parameters with support for quoted strings
+     * Handles both options (--key=value) and regular parameters
+     */
+    private parseParametersWithQuotes(inputParams: string[]): { parsedOptions: ParsedOptions; passedParams: string[] } {
+        const parsedOptions: ParsedOptions = {};
+        const passedParams: string[] = [];
+        const ignoredInputs: string[] = [];
+        
+        let i = 0;
+        while (i < inputParams.length) {
+            const currentValue = inputParams[i];
+            
+            if (currentValue.startsWith('--') || currentValue.startsWith('-')) {
+                // Handle options
+                const [key, value] = currentValue.replace(/^-+/, '').split('=');
+                ignoredInputs.push(currentValue);
+                
+                let theValue: string | boolean = value;
+                
+                if (!value) {
+                    theValue = true;
+                } else if (value.startsWith('"')) {
+                    // Handle quoted option values
+                    const fullOptionString = currentValue;
+                    const valueStartIndex = fullOptionString.indexOf('=') + 1;
+                    const valuePrefix = fullOptionString.substring(0, valueStartIndex);
+                    const valueSuffix = fullOptionString.substring(valueStartIndex);
+                    
+                    // Create temporary array with just the value part for parsing
+                    const tempParams = [valueSuffix];
+                    let j = i + 1;
+                    
+                    // If the quoted value spans multiple parameters after the =
+                    if (!valueSuffix.endsWith('"') || valueSuffix.length === 1) {
+                        while (j < inputParams.length && !inputParams[j-1]?.endsWith('"')) {
+                            tempParams.push(inputParams[j]);
+                            ignoredInputs.push(inputParams[j]);
+                            j++;
+                        }
+                    }
+                    
+                    const parsed = this.parseQuotedString(tempParams, 0);
+                    theValue = parsed.value;
+                    i = j - 1; // Skip consumed parameters
+                }
+                
+                parsedOptions[key] = {
+                    key: key,
+                    value: theValue,
+                    fullString: currentValue
+                };
+            } else {
+                // Handle regular parameters
+                const parsed = this.parseQuotedString(inputParams, i);
+                passedParams.push(parsed.value);
+                i = parsed.nextIndex - 1; // Will be incremented at end of loop
+            }
+            
+            i++;
+        }
+        
+        return { parsedOptions, passedParams };
+    }
+
     async runCli(commandName: string, config: IAppConfig): Promise<void> {
         try {
           
@@ -116,32 +228,9 @@ export class RWSCliBootstrap {
             const cmdProvider: CMDProvider = cmdProviders[Object.keys(cmdProviders).find((item) => item === commandName)];
 
             const inputParams = process.argv.splice(3);
-            const ignoredInputs: string[] = [];            
             
-            const parsedOptions: ParsedOptions = inputParams.reduce<ParsedOptions>((acc: ParsedOptions, currentValue: string) => {
-                if (currentValue.startsWith('--') || currentValue.startsWith('-')) {
-                    const [key, value] = currentValue.replace(/^-+/, '').split('=');
-                    ignoredInputs.push(currentValue); 
-                
-                    let theValue: string | boolean = value;
-
-                    if(!value){
-                        theValue = true;
-                    }
-
-                    return {
-                        ...acc,
-                        [key]: {
-                            key: key,
-                            value: theValue,
-                            fullString: currentValue
-                        }
-                    };
-                }
-                return acc;
-            }, {});
-
-            const passedParams = inputParams.filter(item => !ignoredInputs.includes(item));           
+            // Parse all parameters with quoted string support
+            const { parsedOptions, passedParams } = this.parseParametersWithQuotes(inputParams);             
 
             if(cmdProvider){          
                 cmdProvider.instance.injectServices(services);

@@ -33,8 +33,7 @@ export abstract class RWSBaseCommand{
      
 
     constructor(){      
-      if(RWSBaseCommand.services){
-        console.log(RWSBaseCommand.services)
+      if(RWSBaseCommand.services){        
         this.setServices(RWSBaseCommand.services);
       }
     }
