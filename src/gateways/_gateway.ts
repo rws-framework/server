@@ -47,6 +47,7 @@ export abstract class RWSGateway implements ITheGateway{
     public utilsService: UtilsService;
     public authService: AuthService;
     public consoleService: ConsoleService;
+    protected port: number;
 
     constructor(
         private readonly moduleRef: ModuleRef,
@@ -55,16 +56,22 @@ export abstract class RWSGateway implements ITheGateway{
     ){
     }
 
-    onModuleInit() {
-        const rwsFillService = this.moduleRef.get(RWSFillService, { strict: false });
-        rwsFillService.fillBaseServices(this);
-
+    protected setPortHandler(){
         const port = this.appConfigService.get<number>('ws_port');
         if(port){
+            this.port = port;            
+        }   
+    }
+
+    onModuleInit() {
+        const rwsFillService = this.moduleRef.get(RWSFillService, { strict: false });
+        rwsFillService.fillBaseServices(this);   
+        
+        this.setPortHandler();
+        if(this.port){
+            this.server.listen(this.port);
             this.setupGlobalEventHandlers();
-            this.server.listen(port);
-            
-            console.log(`WebSocket server is running on port ${port}`);
+            console.log(`WebSocket server is running on port ${this.port}`);
         }        
     }
 

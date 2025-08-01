@@ -268,6 +268,201 @@ await Bootstrap.run(AppModule, {
 ```
 
 ---
+## WebSocket Gateways
+
+RWS WebSocket gateways are an extension of NestJS gateways that provide a structured approach to real-time communication. They enable you to create WebSocket servers with organized routing through realtime points.
+
+### Basic Gateway Structure
+
+A WebSocket gateway extends `RWSGateway` and serves as the entry point for WebSocket connections:
+
+```typescript
+import { RWSGateway } from "@rws-framework/server";
+import { SubscribeMessage } from '@nestjs/websockets';
+
+class XXXGateway extends RWSGateway {   
+    // Optional port source setup
+    protected setPortHandler(){
+        const port = this.appConfigService.get<number>('second_port');
+        if(port){
+            this.server.listen(port);
+            
+            console.log(`WebSocket server is running on port ${port}`);
+        }   
+    }
+}
+
+export default MarathonChatGateway;
+```
+By default gateway uses port from **ws_port** RWSConfigService setting.
+
+### Message Structure
+
+All WebSocket messages follow a standardized JSON structure:
+
+```typescript
+interface JSONMessage<T = unknown> {
+    method: string;      // The method/route to call
+    msg: T;             // The message payload
+    user_id: string;    // User identifier
+}
+```
+
+### Realtime Points
+
+Realtime points are the core routing mechanism for WebSocket messages. They extend the `RealtimePoint` abstract class and handle specific message types:
+
+```typescript
+import { RealtimePoint, RWSConfigService, RWSJSONMessage, Socket } from "@rws-framework/server";
+import { BlackLogger, RWSRealtimePoint, RWSRealtimeRoute } from "@rws-framework/server/nest";
+
+@RWSRealtimePoint('chat_point', MarathonChatGateway)
+export class ChatPoint extends RealtimePoint {
+    constructor(
+        // Inject your services here
+        private someService: SomeService
+    ) {
+        super();
+    }
+
+    @RWSRealtimeRoute('marathon_chat_message')
+    async getChatMessage(params: RWSJSONMessage<IWSChatPromptRequest>, socket: Socket) {
+        const userMessage: string = params.msg.message;
+        const userId: string | number | null | undefined = params.msg.user_id !== '' ? params.msg.user_id : null;
+
+        // Handle the message logic here
+        // Emit responses back to the client
+        this.emitMessage('response_method', socket, { data: 'response' });
+    }
+}
+```
+
+### Key Decorators
+
+- **`@RWSRealtimePoint(pointName, gatewayClass)`**: Registers a realtime point with a specific name and associates it with a gateway
+- **`@RWSRealtimeRoute(methodName)`**: Maps a WebSocket method to a handler function
+
+### Message Emission
+
+Realtime points can emit messages back to clients using the `emitMessage` method:
+
+```typescript
+// Emit a successful response
+this.emitMessage<ResponseType>('method_name', socket, responseData, true);
+
+// Emit an error response
+this.emitMessage<ErrorType>('error_method', socket, errorData, false);
+```
+
+### Frontend Integration
+
+On the frontend, you can connect to WebSocket gateways using the `@rws-framework/nest-interconnectors` package:
+
+```typescript
+import { RWSViewComponent, RWSView, RWSInject, observable } from "@rws-framework/client";
+import { WSService, WSServiceInstance } from "@rws-framework/nest-interconnectors";
+
+@RWSView('web-chat')
+class WebChatComponent extends RWSViewComponent {
+    constructor(@RWSInject(WSService) private wsService: WSServiceInstance) {
+        super();
+    }
+
+    async connectedCallback(): Promise<void> {
+        super.connectedCallback();
+
+        // Listen for messages from the realtime point
+        this.wsService.listenForMessage('chat_point', (wsResponse) => {
+            // Handle the response
+            console.log('Received:', wsResponse.data);
+        }, 'response_method');
+    }
+
+    sendMessage() {
+        // Send message to the realtime point
+        this.wsService.sendMessage('chat_point', 'marathon_chat_message', {
+            message: 'Hello World',
+            user_id: 'user123',
+            extra: {}
+        });
+    }
+}
+```
+
+### Gateway Registration
+
+Register your gateway in the application configuration:
+
+```typescript
+// In your config file
+export default (): IAppConfig => {
+    return {
+        // ... other config
+        ws_routes: {
+            'chat': MarathonChatGateway,
+            // Add more gateways as needed
+        },
+        // ... other config
+    }
+}
+```
+
+### Advanced Features
+
+#### Streaming Responses
+
+For real-time streaming (like chat responses), you can emit multiple messages:
+
+```typescript
+@RWSRealtimeRoute('stream_chat')
+async streamChat(params: RWSJSONMessage<IChatRequest>, socket: Socket) {
+    const messageId = uuid();
+    
+    // Start streaming
+    this.emitMessage('chat_response_start', socket, { messageId, date: new Date() });
+    
+    // Stream chunks
+    for (const chunk of responseChunks) {
+        this.emitMessage(`chat_response_chunk_${messageId}`, socket, { chunkWord: chunk });
+    }
+    
+    // End streaming
+    this.emitMessage(`chat_response_end_${messageId}`, socket, { finished: true });
+}
+```
+
+#### Type Safety
+
+Define TypeScript interfaces for your message types:
+
+```typescript
+export interface IWSChatPromptRequest {
+    message: string;
+    user_id?: string | number;
+    extra?: unknown;
+}
+
+export interface IWSChatPromptStartResponse {
+    messageId: string;
+    date: Date;
+}
+
+export interface IWSChatPromptChunkResponse {
+    chunkWord: string;
+    date: Date;
+}
+```
+
+### Best Practices
+
+1. **Use descriptive point names**: Choose clear, meaningful names for your realtime points
+2. **Implement proper error handling**: Always handle exceptions and emit appropriate error responses
+3. **Type your messages**: Define TypeScript interfaces for all message types
+4. **Organize by feature**: Group related WebSocket functionality into dedicated realtime points
+5. **Clean up resources**: Properly handle disconnections and clean up any resources
+6. **Use dependency injection**: Leverage NestJS dependency injection for services in realtime points
+
+---
 
 ## Development
 

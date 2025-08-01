@@ -231,7 +231,7 @@ export class RWSCliBootstrap {
             
             // Parse all parameters with quoted string support
             const { parsedOptions, passedParams } = this.parseParametersWithQuotes(inputParams);             
-
+            console.log({passedParams});
             if(cmdProvider){          
                 cmdProvider.instance.injectServices(services);
                 if(configService.get('db_url')){
