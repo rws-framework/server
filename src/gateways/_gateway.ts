@@ -67,7 +67,8 @@ export abstract class RWSGateway implements ITheGateway{
         const rwsFillService = this.moduleRef.get(RWSFillService, { strict: false });
         rwsFillService.fillBaseServices(this);   
         
-        this.setPortHandler();
+        this.setPortHandler();        
+
         if(this.port){
             this.server.listen(this.port);
             this.setupGlobalEventHandlers();
@@ -76,8 +77,8 @@ export abstract class RWSGateway implements ITheGateway{
     }
 
     private async setupGlobalEventHandlers() {
+
         this.server.on('connection', (socket: Socket) => {
-            // Łapie wszystkie eventy dla każdego socketa
             socket.onAny((eventName: string, ...args: any[]) => {
                 this.handleAnyEvent(socket, eventName, args);
             }); 
@@ -94,7 +95,6 @@ export abstract class RWSGateway implements ITheGateway{
         if(!args.length){
             return;
         }
-
 
         const parsedArgs: RWSJSONMessage = {
             method: null,
@@ -227,4 +227,4 @@ export abstract class RWSGateway implements ITheGateway{
     }
 }
 
-export {JSONMessage, BaseResponse as BaseWsResponse, ErrorResponse as ErrorWsResponse};
+export {JSONMessage, BaseResponse as BaseWsResponse, ErrorResponse as ErrorWsResponse, SocketWsResponse};

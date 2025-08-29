@@ -25,7 +25,7 @@ import IDbUser from './types/IDbUser';
 import { RWSFillService } from './services/RWSFillService';
 
 import {RWSBaseCommand, RWSCommand} from './commands/_command';
-import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse } from './gateways/_gateway';
+import { RWSGateway, JSONMessage, BaseWsResponse, ErrorWsResponse, SocketWsResponse } from './gateways/_gateway';
 
 import * as RWSErrorCodes from './errors';
 import * as NEST from '../nest';
@@ -65,12 +65,12 @@ export {
     Socket,          
     JSONMessage as RWSJSONMessage,         
     RWSErrorCodes,
-    BaseWsResponse, ErrorWsResponse,
+    BaseWsResponse, ErrorWsResponse, SocketWsResponse,
     TrackType,
     Helper,
 
     NEST,
     RWSAutoApiController,
     InjectServices,
-    CLIModule, RWSCliBootstrap
+    CLIModule, RWSCliBootstrap,        
 };
