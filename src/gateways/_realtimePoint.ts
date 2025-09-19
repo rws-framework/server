@@ -74,7 +74,7 @@ export abstract class RealtimePoint implements OnModuleInit {
   }
 
   emitMessage<T>(method: string, socket: Socket, data?: T, success: boolean = true): void
-    {
-        this.getGateway().emitMessage(this.getPointName(), method, socket, data, success);          
-    }
+  {
+      this.getGateway().emitMessage(this.getPointName(), method, socket, data, success);          
+  }
 }

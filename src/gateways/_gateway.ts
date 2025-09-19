@@ -163,7 +163,8 @@ export abstract class RWSGateway implements ITheGateway{
 
     
     handleConnection(@ConnectedSocket() socket: Socket): void {      
-        this.logger.log('WSClient connected:', socket.id);
+        this.logger.log('WSClient connected:', socket.id);        
+
     }
     
     handleDisconnect(@ConnectedSocket() socket: Socket): void {
