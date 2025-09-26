@@ -182,6 +182,39 @@ export abstract class RWSGateway implements ITheGateway{
         socket.emit(eventName, this.sendJson(payload));           
     }
 
+    broadcastMessage<T>(eventName: string, method: string, data?: T, success: boolean = true): void
+    {
+        const payload: SocketWsResponse<T> = { success, eventName, method, data: null };
+
+        if(data){
+            payload.data = data;
+        }
+
+        this.server.emit(eventName, this.sendJson(payload));
+    }
+
+    broadcastToRoom<T>(room: string, eventName: string, method: string, data?: T, success: boolean = true): void
+    {
+        const payload: SocketWsResponse<T> = { success, eventName, method, data: null };
+
+        if(data){
+            payload.data = data;
+        }
+
+        this.server.to(room).emit(eventName, this.sendJson(payload));
+    }
+
+    broadcastExceptSocket<T>(socket: Socket, eventName: string, method: string, data?: T, success: boolean = true): void
+    {
+        const payload: SocketWsResponse<T> = { success, eventName, method, data: null };
+
+        if(data){
+            payload.data = data;
+        }
+
+        socket.broadcast.emit(eventName, this.sendJson(payload));
+    }
+
     getData<T>(input: string): T
     {
         return this.getJson(input).msg as T
