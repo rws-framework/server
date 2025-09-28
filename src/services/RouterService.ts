@@ -201,7 +201,11 @@ class RouterService {
                     return res.sendFile(filePath);
                 }
 
-                return { statusCode: status };
+                if(routeParams.responseType === 'raw'){
+                    return res.status(status).send(output);
+                }
+
+                return res.send(output);
             }
 
             async handler(req: any, res: any) {
