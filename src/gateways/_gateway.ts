@@ -72,7 +72,6 @@ export abstract class RWSGateway implements ITheGateway{
         if(this.port){
             this.server.listen(this.port);
             this.setupGlobalEventHandlers();
-            console.log(`WebSocket server is running on port ${this.port}`);
         }        
     }
 
@@ -222,7 +221,7 @@ export abstract class RWSGateway implements ITheGateway{
 
     throwError(method: string, socket: Socket, error: Error | any): void
     {        
-        console.log(JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))));
+        console.error(JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))));
 
         socket.emit(method, this.sendJson({
             error: JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))),
