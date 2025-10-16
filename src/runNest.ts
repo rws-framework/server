@@ -3,6 +3,7 @@ import { NestModuleTypes } from './types/IRWSModule';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RouterService } from './services/RouterService';
 import { ConsoleService } from './services/ConsoleService';
+import { rwsPath } from '@rws-framework/console';
 import { RWSConfigService } from './services/RWSConfigService';
 import { NestDBService } from './services/NestDBService';
 import { AuthService } from './services/AuthService';
@@ -55,7 +56,7 @@ export class RWSModule {
         ];        
 
         if(serverOpts && serverOpts.pubDirEnabled){            
-            console.log(chalk.bgMagenta(`Public dir served on route "${cfg.static_route || '/'}" from path: "${path.join(process.cwd(), cfg.pub_dir)}"${serverOpts.spaMode ? `
+            console.log(chalk.bgMagenta(`Public dir served on route "${cfg.static_route || '/'}" from path: "${path.join(rwsPath.findRootWorkspacePath(), cfg.pub_dir)}"${serverOpts.spaMode ? `
 SPA mode enabled (only direct files requests are served)` : ''}`));
 
             if(serverOpts.spaMode){
@@ -63,7 +64,7 @@ SPA mode enabled (only direct files requests are served)` : ''}`));
 
             }else{
                 processedImports.push(ServeStaticModule.forRoot({
-                    rootPath: path.join(process.cwd(), cfg.pub_dir), 
+                    rootPath: path.join(rwsPath.findRootWorkspacePath(), cfg.pub_dir), 
                     serveRoot: cfg.static_route || '',
                 }));  
             }                        

@@ -15,7 +15,7 @@ export class FilteredServeModule implements NestModule {
     }
 
     configure(consumer: MiddlewareConsumer) {
-        const publicPath = path.join(rwsPath.findPackageDir(), this.config.pub_dir);
+        const publicPath = path.join(rwsPath.findRootWorkspacePath(), this.config.pub_dir);
 
         const staticMiddleware = express.static(publicPath, { redirect: false, fallthrough: false });
 
