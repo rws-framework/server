@@ -52,7 +52,7 @@ export class RWSModule {
     static async forRoot(cfg: IAppConfig, serverOpts: ServerOpts | null = null): Promise<DynamicModule> {       
         const processedImports: any[] = [
             ...baseModules(cfg)   
-        ];
+        ];        
 
         if(serverOpts && serverOpts.pubDirEnabled){            
             console.log(chalk.bgMagenta(`Public dir served on route "${cfg.static_route || '/'}" from path: "${path.join(process.cwd(), cfg.pub_dir)}"${serverOpts.spaMode ? `
@@ -73,17 +73,15 @@ SPA mode enabled (only direct files requests are served)` : ''}`));
             module: RWSModule,
             imports: processedImports as unknown as NestModuleTypes,
             providers: [
+                ConfigService,
+                RWSConfigService,
+                AuthGuard,                 
                 {
                     provide: APP_GUARD,
-                    useFactory: (reflector: Reflector, configService: RWSConfigService<IAppConfig>) => {
-                        return new AuthGuard(configService, reflector);
-                    },
-                    inject: [Reflector, RWSConfigService]
+                    useClass: AuthGuard,
                 },   
-                DiscoveryService,
-                ConfigService,
-                NestDBService,
-                RWSConfigService,        
+                DiscoveryService,                
+                NestDBService,                       
                 UtilsService, 
                 ConsoleService, 
                 AuthService,
@@ -150,6 +148,8 @@ export default async function bootstrap(
         logger.debug('Loki logs upload enabled.');
     }
 
+
+
     const app: INestApplication = await NestFactory.create(
         nestModule.forRoot(RWSModule.forRoot(rwsOptions, opts), rwsOptions)
     );
@@ -167,6 +167,7 @@ export default async function bootstrap(
     }
 
     const configService: RWSConfigService<IAppConfig> = app.get(RWSConfigService);
+    
     const dbService = app.get(NestDBService);  
     const autoRouteService: RWSAutoAPIService = app.get(RWSAutoAPIService);
     const websocketRoutingService: RWSWebsocketRoutingService = app.get(RWSWebsocketRoutingService);

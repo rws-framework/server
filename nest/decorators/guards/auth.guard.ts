@@ -1,7 +1,8 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, applyDecorators, UseGuards, createParamDecorator } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, applyDecorators, UseGuards, createParamDecorator, Inject } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from './public.decorator';
-import { IAppConfig, RWSConfigService } from '../../../src';
+import IAppConfig from '../../../src/types/IAppConfig';
+import { RWSConfigService } from '../../../src/services/RWSConfigService';
 import { OpModelType } from '@rws-framework/db';
 import { rwsPath } from '@rws-framework/console';
 import * as jwt from 'jsonwebtoken';
@@ -14,7 +15,7 @@ export const RWS_PROTECTED_KEY = 'rws_protected';
 export class AuthGuard implements CanActivate {
   private rwsConfigFeatures: IAppConfig['features'];
   constructor(
-    private configService: RWSConfigService<IAppConfig>,
+    @Inject(RWSConfigService) private configService: RWSConfigService<IAppConfig>,
     private reflector: Reflector
   ) {
     this.rwsConfigFeatures = this.configService.get('features');

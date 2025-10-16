@@ -3,9 +3,14 @@ import { ServerOpts } from "../src/types/ServerTypes";
 import { BootstrapRegistry } from "./decorators/RWSConfigInjector";
 import { RunCallback, RunCallbackList } from '../src/types/BootstrapTypes';
 import { INestApplication } from "@nestjs/common";
+import IAppConfig from "../src/types/IAppConfig";
 
 export abstract class RWSBootstrap {
     private static _instance: RWSBootstrap = null;
+
+    static setConfig(config: IAppConfig){
+        BootstrapRegistry.setConfig(config);
+    }
 
     static async run(nestModule: any, opts: ServerOpts, callbacks: RunCallbackList | null = null): Promise<INestApplication>
     {
@@ -21,7 +26,7 @@ export abstract class RWSBootstrap {
     async runServer(nestModule: any,         
         opts: ServerOpts = { pubDirEnabled: true },
         callbacks: RunCallbackList | null = null
-    ): Promise<INestApplication> {
+    ): Promise<INestApplication> {        
         const server = await serverInit(nestModule, () => BootstrapRegistry.getConfig(), opts, callbacks);
         server.listen();
         return server.app;
