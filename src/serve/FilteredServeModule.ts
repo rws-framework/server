@@ -26,6 +26,12 @@ export class FilteredServeModule implements NestModule {
                 this.logger.debug(`Request Path: ${req.path}`);
             }
 
+            // Skip API routes - let them be handled by NestJS controllers
+            if (req.originalUrl.startsWith('/api/')) {
+                next();
+                return;
+            }
+
             const parsedUrl = parse(req.originalUrl, /* parseQueryString */ true);
             const pathname = parsedUrl.pathname || req.originalUrl;
 

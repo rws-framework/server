@@ -101,7 +101,7 @@ export class RWSAutoAPIService {
             getClass: () => controllerMethod.constructor
           };
 
-          const error401 = () => res.status(401).json({ message: 'Unauthorized', statusCode: 401 });
+          const error401 = () => res.status(401).json({ success: false, data: null, error: 'Unauthorized' });
 
           try {
             const canActivate = await this.authGuard.canActivate(ctx as ExecutionContext);
@@ -120,7 +120,7 @@ export class RWSAutoAPIService {
           res.json(result);
         } catch (error: Error | any) {
           this.logger.error(error, error.stack);
-          res.status(500).json({ error: error.message });
+          res.status(500).json({ success: false, data: null, error: error.message });
         }
       }
     );
