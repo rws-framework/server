@@ -33,6 +33,8 @@ import chalk from 'chalk';
 import { FilteredServeModule } from './serve/FilteredServeModule';
 import { RWSGateway } from './gateways/_gateway';
 import { GatewayHelper } from './helpers/GatewayHelper';
+import { TraversalService } from './services/TraversalService';
+import { MD5Service } from './services/MD5Service';
 
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
@@ -90,6 +92,8 @@ SPA mode enabled (only direct files requests are served)` : ''}`));
                 RWSWebsocketRoutingService,
                 RWSFillService,
                 SerializeInterceptor,
+                MD5Service,
+                TraversalService,
                 {
                     provide: APP_INTERCEPTOR,
                     useFactory: (reflector: Reflector) => {
@@ -110,7 +114,9 @@ SPA mode enabled (only direct files requests are served)` : ''}`));
                 SerializeInterceptor,
                 RWSAutoAPIService,
                 RWSWebsocketRoutingService,
-                RWSFillService
+                RWSFillService,
+                MD5Service,
+                TraversalService
             ]            
         };
 

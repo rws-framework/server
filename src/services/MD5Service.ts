@@ -97,7 +97,25 @@ class MD5Service {
 
     md5(input: string): string
     {
+        return MD5Service.calculateMD5(input);
+    }
+
+    md5FromFileBase64(base64Data: string): string
+    {
+        return MD5Service.calculateFileMD5FromBase64(base64Data);
+    }
+
+    static calculateMD5(input: string): string
+    {
         return crypto.createHash('md5').update(input).digest('hex');
+    }
+
+    static calculateFileMD5FromBase64(base64Data: string): string
+    {
+        const buffer = Buffer.from(base64Data, 'base64');
+        const hash = crypto.createHash('md5');
+        hash.update(buffer);
+        return hash.digest('hex');
     }
 }
 
