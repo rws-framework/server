@@ -63,9 +63,10 @@ class AuthService {
     try {
       const user: RWSModel<any> = await this.configService.get('user_model').findOneBy({
         conditions: {
-          [userLoginKey]: login
+          [userLoginKey]: login,
+          active: true
         },
-        fullData: true
+        fullData: true,       
       });
 
       if(!user){
@@ -189,7 +190,8 @@ class AuthService {
       // Find user by id from decoded token
       const user = await this.configService.get('user_model').findOneBy({
         conditions: {
-          id: decoded.sub
+          id: decoded.sub,
+          active: true
         },
         fullData: true
       });
