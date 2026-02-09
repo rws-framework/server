@@ -20,6 +20,8 @@ import { RWSBaseCommand } from '../../src/commands/_command';
 import { RWSConfigService } from '../../src/services/RWSConfigService';
 import { RWSModel } from '@rws-framework/db';
 import { BlackLogger } from '../../nest';
+import { RealtimePoint } from '../../src/gateways/_realtimePoint';
+import { ModuleRef } from '@nestjs/core';
 
 // console.log = (any) => {};
 
@@ -203,8 +205,6 @@ export class RWSCliBootstrap {
             await this.makeModule();        
             this.$app = await NestFactory.create(this.module);
 
-            await this.$app.init();
-
             console.log(chalk.bgGreen('$APP is loaded.')); 
 
             const { discoveryService, utilsService, md5Service }: CLIServices = this.getServices();              
@@ -212,7 +212,19 @@ export class RWSCliBootstrap {
             const configService = this.$app.get(RWSConfigService);
             const dbService = this.$app.get(DBService);  
             
+            // Configure models BEFORE app.init() to ensure they're available during onModuleInit
             RWSModel.setServices({configService, dbService: dbService.core()}); 
+            
+            // Set PRISMA_DB_URL before initialization
+            if(configService.get('db_url')){
+                process.env.PRISMA_DB_URL = configService.get('db_url');
+            }
+
+            await this.$app.init();  
+            
+            // Set up additional service configurations like in normal server startup
+            const moduleRef = this.$app.get(ModuleRef);
+            RealtimePoint.setModuleRef(moduleRef);                 
 
             const services: ICommandBaseServices = {
                 utilsService: this.$app.get(UtilsService),
@@ -234,9 +246,6 @@ export class RWSCliBootstrap {
             
             if(cmdProvider){          
                 cmdProvider.instance.injectServices(services);
-                if(configService.get('db_url')){
-                    process.env.PRISMA_DB_URL = configService.get('db_url');
-                }
                 await cmdProvider.instance.run(passedParams, parsedOptions);
             } else {
                 console.log(chalk.yellowBright(`Command "${commandName}" does not exist. Maybe you are looking for:`));
