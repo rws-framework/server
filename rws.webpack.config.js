@@ -8,16 +8,13 @@ const { rwsPath, RWSConfigBuilder, RWSWebpackPlugins } = require('@rws-framework
 
 const verboseLog = console.log;
 
-
-
 console.log = (...x) => {
-  if(process.argv.find(a => a.includes('--verbose'))){
+  if(process.argv.includes('--verbose')){
       verboseLog(...x);
   }
 }
 
-const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
-  console.log('START')
+const RWSWebpackWrapper = async (appRoot, config, packageDir) => {  
   const rootPackageNodeModules = path.resolve(rwsPath.findRootWorkspacePath(appRoot), 'node_modules')
   const currentDir = path.join(rootPackageNodeModules, '@rws-framework', 'server');
   const executionDir = config.executionDir;

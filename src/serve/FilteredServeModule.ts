@@ -22,9 +22,8 @@ export class FilteredServeModule implements NestModule {
         const callback = (req: express.Request, res: express.Response, next: (err?: any) => void): void => {
             
             if(this.config.devMode){
-                this.logger.debug(`Request URL: ${req.originalUrl}`);
-                this.logger.debug(`Request Path: ${req.path}`);
-            }
+                this.logger.debug(`Request URL: ${req.originalUrl}`);                
+            }            
 
             // Skip API routes - let them be handled by NestJS controllers
             if (req.originalUrl.startsWith('/api/')) {

@@ -35,6 +35,7 @@ import { RWSGateway } from './gateways/_gateway';
 import { GatewayHelper } from './helpers/GatewayHelper';
 import { TraversalService } from './services/TraversalService';
 import { MD5Service } from './services/MD5Service';
+import { RWSRouteInterceptor } from './interceptors/rws-route.interceptor';
 
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
@@ -94,6 +95,10 @@ SPA mode enabled (only direct files requests are served)` : ''}`));
                 SerializeInterceptor,
                 MD5Service,
                 TraversalService,
+                {    
+                    provide: APP_INTERCEPTOR,
+                    useClass: RWSRouteInterceptor,
+                },
                 {
                     provide: APP_INTERCEPTOR,
                     useFactory: (reflector: Reflector) => {
@@ -200,8 +205,8 @@ export default async function bootstrap(
 
     const routerService = app.get(RouterService);
 
-    const routes = routerService.generateRoutesFromResources(rwsOptions.resources || []);
-    await routerService.assignRoutes(app.getHttpAdapter().getInstance(), routes, controllers);
+    // Keep the original generateRoutesFromResources call for compatibility
+    const routes = routerService.generateRoutesFromResources(rwsOptions.http_routes || []);
     
     // websocketRoutingService.assignRoutes();
 

@@ -3,7 +3,8 @@ import 'reflect-metadata';
 type RequestMethodType = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 interface IHTTProuteParams {
-    responseType: string
+    responseType: string;
+    mimeType?: string;
 }
 
 interface IHTTProuteOpts {

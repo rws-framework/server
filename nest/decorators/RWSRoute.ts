@@ -9,6 +9,8 @@ import { AuthGuard, RWS_PROTECTED_KEY } from './guards/auth.guard';
 export interface IRouteParams {
     public?: boolean;
     responseType?: string;
+    mimeType?: string;
+    fileDisplay?: 'download' | 'inline';
 };
 
 function isPrefixedRoutes(entry: RWSHTTPRoutingEntry): entry is IPrefixedHTTProutes {
@@ -44,13 +46,27 @@ export function RWSRoute(routeName: string, options: IRouteParams = {
             throw new Error(`No route configuration found for route name: ${routeName}`);
         }
 
-        // First apply the metadata
-        SetMetadata(RWS_PROTECTED_KEY, !options.public)(target, propertyKey, descriptor);
+        // Store route metadata for RouterService to read
+        const existingRoutes = Reflect.getMetadata('routes', target.constructor) || {};
+        existingRoutes[propertyKey as string] = {
+            annotationType: 'Route',
+            metadata: {
+                name: routeName,
+                method: routeConfig.method.toUpperCase(),
+                path: routeConfig.path,  
+                params: options // responseType, mimeType, etc.
+            }
+        };
+        Reflect.defineMetadata('routes', existingRoutes, target.constructor);
+        
 
-        // Then apply the guard
+
+        // Apply the auth metadata and guard
+        SetMetadata(RWS_PROTECTED_KEY, !options.public)(target, propertyKey, descriptor);
         UseGuards(AuthGuard)(target, propertyKey, descriptor);
 
-        // Finally apply the HTTP method decorator
+        // Apply the standard NestJS HTTP method decorator  
+        // The interceptor will handle custom response processing
         switch (routeConfig.method.toUpperCase()) {
             case 'GET':                        
                 Get(routeConfig.path)(target, propertyKey, descriptor);
