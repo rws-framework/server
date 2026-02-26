@@ -1,4 +1,4 @@
-import { applyDecorators, Get, Post, Put, Delete, SetMetadata, UseGuards  } from '@nestjs/common';
+import { applyDecorators, Get, Post, Put, Delete, SetMetadata, UseGuards, Patch  } from '@nestjs/common';
 import 'reflect-metadata';
 import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../../src/routing/routes';
 import { BootstrapRegistry } from './RWSConfigInjector';
@@ -79,6 +79,9 @@ export function RWSRoute(routeName: string, options: IRouteParams = {
                 break;
             case 'DELETE':
                 Delete(routeConfig.path)(target, propertyKey, descriptor);
+                break;
+            case 'PATCH':
+                Patch(routeConfig.path)(target, propertyKey, descriptor);
                 break;
             default:
                 throw new Error(`Unsupported HTTP method: ${routeConfig.method}`);
