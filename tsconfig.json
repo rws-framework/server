@@ -14,5 +14,8 @@
     "sourceMap": true,
     "noEmit": false,
     "declaration": false
-  }
+  },
+  "exclude": [  
+    "node_modules"  
+  ]
 }
