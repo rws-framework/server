@@ -13,9 +13,17 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "noEmit": false,
-    "declaration": false
+    "declaration": false,
+    "types": []
   },
+  "include": [
+    "src/**/*"
+  ],
   "exclude": [  
-    "node_modules"  
+    "node_modules",
+    "**/*.d.ts",
+    "**/node_modules/**",
+    "dist/**",
+    "build/**"
   ]
 }
