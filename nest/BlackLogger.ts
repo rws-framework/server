@@ -22,18 +22,26 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     if(!this.cfg){
       return;
     }
+
+    const skipConsoleFilter = winston.format((info) => { if (info.skipConsole) return false; });
     
-    const lokiTransport = new LokiTransport({
+    const lokiCfg = {
       host: this.cfg.loki_url,
       labels: { 
         app: this.cfg.app_name || 'nestjs',
         environment: this.cfg.environment || 'development'
       },
-      json: true,
-      format: winston.format.json(),
       replaceTimestamp: true,
-      onConnectionError: (err) => console.error('Loki Transport Error:', err)
+      onConnectionError: (err: Error) => console.error('Loki Transport Error:', err)
+    };
+
+    console.log('Loki Configuration:', { 
+      host: lokiCfg.host,
+      labels: lokiCfg.labels,
+      replaceTimestamp: lokiCfg.replaceTimestamp 
     });
+
+    const lokiTransport = new LokiTransport(lokiCfg);
     
     this.winstonLogger = winston.createLogger({
       level: this.cfg.log_level || 'info',
@@ -52,6 +60,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
       transports: [
         new winston.transports.Console({
           format: winston.format.combine(
+            skipConsoleFilter(),
             winston.format.timestamp({
               format: 'MM/DD/YYYY, HH:mm:ss'
             }),
@@ -103,7 +112,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
     this.winstonEnabled = true;
   }
 
-  log(message: unknown, context?: string): void {
+  log(message: unknown, context?: string, hidden: boolean = false): void {
     const formattedMessage = this.formatMessage(message);
     const safeContext = (context || this.context || '').toString();
 
