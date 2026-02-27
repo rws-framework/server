@@ -35,12 +35,6 @@ export class BlackLogger extends BaseLogger implements LoggerService {
       onConnectionError: (err: Error) => console.error('Loki Transport Error:', err)
     };
 
-    console.log('Loki Configuration:', { 
-      host: lokiCfg.host,
-      labels: lokiCfg.labels,
-      replaceTimestamp: lokiCfg.replaceTimestamp 
-    });
-
     const lokiTransport = new LokiTransport(lokiCfg);
     
     this.winstonLogger = winston.createLogger({
