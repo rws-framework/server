@@ -1,7 +1,7 @@
 {
   "name": "@rws-framework/server",
   "private": false,
-  "version": "3.32.3",
+  "version": "3.32.4",
   "description": "",
   "main": "src/index.ts",
   "scripts": {
@@ -30,8 +30,8 @@
     "axios": "^1.4.0",
     "bufferutil": "^4.0.7",
     "chalk": "3.0.0",
-    "class-transformer": "^0.3.1",
-    "class-validator": "^0.12.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "compression": "^1.7.4",
     "crypto-js": "^4.1.2",
     "dotenv": "^16.3.1",
