@@ -31,14 +31,14 @@ export class SerializeInterceptor implements NestInterceptor {
     );
   }
 
-  public static serialize(data: any){
-    const serialized = JSON.stringify(data, SerializeInterceptor.getCircularReplacer());    
+  public static serialize(data: any){ 
+    const serialized = JSON.stringify(data, SerializeInterceptor.getCircularReplacer());  
     return serialized === undefined ? null : JSON.parse(serialized);
   }
 
   public static getCircularReplacer() {
-    const seen = new WeakSet();
-    return (key: string, value: any) => {
+    const ancestors: any[] = [];
+    return function(this: any, key: string, value: any) {
       // First check if this is a key we want to ignore
       if (SerializeInterceptor.ignoredKeys.has(key)) {
         return undefined; // This will remove the key from the output
@@ -49,12 +49,17 @@ export class SerializeInterceptor implements NestInterceptor {
         return null; // Convert undefined to null for valid JSON
       }
 
-      // Then handle circular references
+      // Then handle circular references (only true cycles, not shared refs)
       if (typeof value === 'object' && value !== null) {
-        if (seen.has(value)) {
-          return null; // Convert circular references to null
+        // Trim ancestors back to current parent (`this` is the holder object)
+        while (ancestors.length > 0 && ancestors[ancestors.length - 1] !== this) {
+          ancestors.pop();
         }
-        seen.add(value);
+
+        if (ancestors.includes(value)) {
+          return null; // True circular reference
+        }
+        ancestors.push(value);
       }
       return value;
     };
