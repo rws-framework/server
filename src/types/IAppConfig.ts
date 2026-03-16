@@ -13,6 +13,7 @@ export default interface IAppConfig {
     db_type?: IDbConfigParams['db_type']
     db_url?: string
     db_name?: string    
+    db_preview_features?: string[];
     db_prisma_output?: string    
     db_prisma_binary_targets?: string[]
     http_routes: IPrefixedHTTProutes[]
