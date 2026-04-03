@@ -13,6 +13,7 @@ import { MD5Service } from '../../../src/services/MD5Service';
 import { RWSConfigService } from '../../../src/services/RWSConfigService';
 import { DBPushCommand } from '../../../src/commands/db-push.command';
 import { DBMigrateCommand } from '../../../src/commands/db-migrate.command';
+import { PostSchemaCommand } from '../../../src/commands/post-schema.command';
 
 export interface ParsedOpt {
   key: string,
@@ -57,6 +58,7 @@ export class CLIModule {
             InitCommand,
             DBPushCommand,
             DBMigrateCommand,
+            PostSchemaCommand,
             DiscoveryService,
             DecoratorExplorerService,
             MD5Service        

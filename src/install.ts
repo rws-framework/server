@@ -26,6 +26,14 @@ async function setupPrisma(leaveFile = false, services: {
     return;
 }
 
+async function postSchemaGenerate(configService: RWSConfigService)
+{       
+    
+    await DbHelper.postSchemaGenerate(configService as IDbConfigHandler);    
+
+    return;
+}
+
 async function setupRWS(generateProjectFiles: boolean = true): Promise<void>
 {
     const packageRootDir: string = rwsPath.findRootWorkspacePath(process.cwd());
@@ -69,4 +77,4 @@ const isInstalled = {
 
 const runShellCommand = ProcessService.runShellCommand;
 
-export {setupPrisma, setupRWS, isInstalled, runShellCommand, _RWS_INSTALED_TXT};
+export {setupPrisma, setupRWS, isInstalled, runShellCommand, postSchemaGenerate, _RWS_INSTALED_TXT};
