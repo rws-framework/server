@@ -17,10 +17,6 @@ export interface RealtimeRouteMetadata {
 }
 
 export function RWSRealtimeRoute(eventName: string, options?: RWSRealtimeRouteOptions) {
-    if(!BootstrapRegistry.getConfig()){
-      throw new Error('No config');
-    }       
-    
     return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {      
       let routesMap: Map<string | symbol, RealtimeRouteMetadata> = 
         Reflect.getMetadata(REALTIME_ROUTES_MAP_KEY, target.constructor) || new Map();

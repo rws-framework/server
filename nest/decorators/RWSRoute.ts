@@ -22,11 +22,24 @@ export function RWSRoute(routeName: string, options: IRouteParams = {
     responseType: 'json'
 }): MethodDecorator {   
     return (target: any, propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
-        if(!BootstrapRegistry.getConfig()){
-            return descriptor;
-        }
+        // Store deferred route metadata — actual NestJS decorators applied later via applyRWSRouteMetadata
+        const deferredRoutes = Reflect.getMetadata('rws:deferred-routes', target.constructor) || {};
+        deferredRoutes[propertyKey as string] = { routeName, options };
+        Reflect.defineMetadata('rws:deferred-routes', deferredRoutes, target.constructor);
 
-        const routes = BootstrapRegistry.getConfig().http_routes as RWSHTTPRoutingEntry[];
+        return descriptor;
+    };
+}
+
+export function applyRWSRouteMetadata(target: any): void {
+    const deferredRoutes = Reflect.getMetadata('rws:deferred-routes', target) || {};
+    const routes = BootstrapRegistry.getConfig().http_routes as RWSHTTPRoutingEntry[];
+
+    for (const [propertyKey, meta] of Object.entries(deferredRoutes) as [string, { routeName: string; options: IRouteParams }][]) {
+        const descriptor = Object.getOwnPropertyDescriptor(target.prototype, propertyKey);
+        if (!descriptor) continue;
+
+        const { routeName, options } = meta;
 
         let routeConfig: IHTTProute | undefined;
         for (const entry of routes) {
@@ -47,46 +60,44 @@ export function RWSRoute(routeName: string, options: IRouteParams = {
         }
 
         // Store route metadata for RouterService to read
-        const existingRoutes = Reflect.getMetadata('routes', target.constructor) || {};
-        existingRoutes[propertyKey as string] = {
+        const existingRoutes = Reflect.getMetadata('routes', target) || {};
+        existingRoutes[propertyKey] = {
             annotationType: 'Route',
             metadata: {
                 name: routeName,
                 method: routeConfig.method.toUpperCase(),
-                path: routeConfig.path,  
-                params: options // responseType, mimeType, etc.
+                path: routeConfig.path,
+                params: options
             }
         };
-        Reflect.defineMetadata('routes', existingRoutes, target.constructor);
-        
-
+        Reflect.defineMetadata('routes', existingRoutes, target);
 
         // Apply the auth metadata and guard
-        SetMetadata(RWS_PROTECTED_KEY, !options.public)(target, propertyKey, descriptor);
-        UseGuards(AuthGuard)(target, propertyKey, descriptor);
+        SetMetadata(RWS_PROTECTED_KEY, !options.public)(target.prototype, propertyKey, descriptor);
+        UseGuards(AuthGuard)(target.prototype, propertyKey, descriptor);
 
-        // Apply the standard NestJS HTTP method decorator  
-        // The interceptor will handle custom response processing
+        // Apply the standard NestJS HTTP method decorator
         switch (routeConfig.method.toUpperCase()) {
-            case 'GET':                        
-                Get(routeConfig.path)(target, propertyKey, descriptor);
+            case 'GET':
+                Get(routeConfig.path)(target.prototype, propertyKey, descriptor);
                 break;
             case 'POST':
-                Post(routeConfig.path)(target, propertyKey, descriptor);
+                Post(routeConfig.path)(target.prototype, propertyKey, descriptor);
                 break;
             case 'PUT':
-                Put(routeConfig.path)(target, propertyKey, descriptor);
+                Put(routeConfig.path)(target.prototype, propertyKey, descriptor);
                 break;
             case 'DELETE':
-                Delete(routeConfig.path)(target, propertyKey, descriptor);
+                Delete(routeConfig.path)(target.prototype, propertyKey, descriptor);
                 break;
             case 'PATCH':
-                Patch(routeConfig.path)(target, propertyKey, descriptor);
+                Patch(routeConfig.path)(target.prototype, propertyKey, descriptor);
                 break;
             default:
                 throw new Error(`Unsupported HTTP method: ${routeConfig.method}`);
         }
 
-        return descriptor;
-    };
+        // Redefine the descriptor since NestJS decorators may have modified it
+        Object.defineProperty(target.prototype, propertyKey, descriptor);
+    }
 }

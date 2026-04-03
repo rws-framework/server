@@ -22,6 +22,7 @@ import { RWSModel } from '@rws-framework/db';
 import { BlackLogger } from '../../nest';
 import { RealtimePoint } from '../../src/gateways/_realtimePoint';
 import { ModuleRef } from '@nestjs/core';
+import { applyAllDeferredMetadata } from '../../src/controller/_decorator';
 
 // console.log = (any) => {};
 
@@ -31,6 +32,10 @@ export class RWSCliBootstrap {
     protected static _instance: RWSCliBootstrap;
     protected $app: INestApplication;    
     constructor(protected nestModuleData: NestModuleInputData, protected module: Type<any> = null){}
+
+    static setConfig(config: IAppConfig){
+        BootstrapRegistry.setConfig(config);
+    }
 
     static async run<T extends IAppConfig>(       
         config: () => T, 
@@ -199,6 +204,9 @@ export class RWSCliBootstrap {
             if (!BootstrapRegistry.isInitialized()) {
                 BootstrapRegistry.setConfig(config);
             }
+
+            // Apply deferred @RWSController and @RWSRoute metadata now that config is available
+            applyAllDeferredMetadata();
 
             BlackLogger.setConfig(config.logging);
 

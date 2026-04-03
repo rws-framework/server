@@ -36,6 +36,8 @@ import { GatewayHelper } from './helpers/GatewayHelper';
 import { TraversalService } from './services/TraversalService';
 import { MD5Service } from './services/MD5Service';
 import { RWSRouteInterceptor } from './interceptors/rws-route.interceptor';
+import { applyDeferredControllerMetadata, applyAllDeferredMetadata } from './controller/_decorator';
+import { applyRWSRouteMetadata } from '../nest/decorators/RWSRoute';
 
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
@@ -154,6 +156,9 @@ export default async function bootstrap(
 
     const rwsOptions = cfgRunner();  
     
+    // Apply deferred @RWSController and @RWSRoute metadata now that config is available
+    applyAllDeferredMetadata();
+
     BlackLogger.setConfig(rwsOptions.logging);
 
     if(rwsOptions.logging){

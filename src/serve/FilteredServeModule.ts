@@ -54,12 +54,7 @@ export class FilteredServeModule implements NestModule {
                 }
 
                 const originalUrl = req.url;        
-                req.url = '.' + pathname;
-
-                if(this.config.devMode){
-                    this.logger.verbose(`Serving URL: ${req.url}`);
-                }
-
+                req.url = '.' + pathname;               
   
                 staticMiddleware(req, res, (err) => {
                     req.url = originalUrl;

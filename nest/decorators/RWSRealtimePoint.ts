@@ -11,10 +11,6 @@ export interface RWSRealtimePointOptions {
 export const REALTIME_POINT_META_KEY = 'RWS_REALTIME_POINT';
 
 export function RWSRealtimePoint(name: string, gateway: typeof RWSGateway, options?: RWSRealtimePointOptions) {
-    if(!BootstrapRegistry.getConfig()){
-        throw new Error('No config');
-    }    
-    
     return (target: any, propertyKey?: string, descriptor?: any) => {
         target.setGateway(gateway);
         target.setPointName(name);
