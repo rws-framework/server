@@ -141,6 +141,11 @@ export class RWSRouteInterceptor implements NestInterceptor {
             return;
         }
 
+        if (responseType === 'rawFile') {
+            res.sendFile(data);
+            return;
+        }
+
         // Default: return original data
         return data;
     }
