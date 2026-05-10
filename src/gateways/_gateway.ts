@@ -72,6 +72,7 @@ export abstract class RWSGateway implements ITheGateway {
         if (this.port) {
             this.server.listen(this.port);
             this.setupGlobalEventHandlers();
+            this.logger.log(`WebSocket server started on port "${this.port}"`);
         }
     }
 
