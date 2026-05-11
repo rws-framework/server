@@ -11,6 +11,7 @@ import multer from 'multer';
 import { json, urlencoded } from 'express';
 import { AuthGuard } from '../../nest/decorators/guards/auth.guard';
 import { RWSConfigService } from './RWSConfigService';
+import { AuthService } from './AuthService';
 import IAppConfig from '../types/IAppConfig';
 
 interface RouteConfig {
@@ -38,8 +39,9 @@ export class RWSAutoAPIService {
     private readonly discoveryService: DiscoveryService,
     private readonly configService: RWSConfigService<IAppConfig>,
     private readonly reflector: Reflector,
+    private readonly authService: AuthService,
   ) {
-    this.authGuard = new AuthGuard(this.configService, this.reflector);
+    this.authGuard = new AuthGuard(this.configService, this.authService, this.reflector);
   }
 
   setRouterProxy(routerProxy: any)
