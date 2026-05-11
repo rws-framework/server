@@ -1,7 +1,10 @@
 import { BlackLogger, Injectable } from '../../nest';
 
 import jwt from 'jsonwebtoken';
-import * as crypto from 'crypto';
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import { rwsPath } from '@rws-framework/console';
 import IDbUser from '../types/IDbUser';
 import { OpModelType, RWSModel } from '@rws-framework/db';
 import { ConsoleService } from './ConsoleService';
@@ -112,6 +115,39 @@ class AuthService {
           user: null
       };
     }
+  }
+
+  // Authenticate from a raw token + type (for WebSocket handshake auth)
+  async authenticateFromCredentials(token: string, type: 'Bearer' | 'ApiKey'): Promise<RWSModel<any> | null> {
+    const features = this.configService.get('features');
+
+    if (!features?.auth) {
+      return null;
+    }
+
+    if (type === 'Bearer') {
+      const isRS256 = features.auth_alghoritm === 'RS256';
+      const secret = isRS256
+        ? fs.readFileSync(path.join(rwsPath.findRootWorkspacePath(), features.auth_pub_key), 'utf-8')
+        : this.JWT_SECRET;
+      const decoded = jwt.verify(token, secret, isRS256 ? { algorithms: ['RS256'] } : undefined);
+
+      if (!features.token_auth_callback) {
+        throw new Error('App needs "features.token_auth_callback" defined');
+      }
+
+      return await features.token_auth_callback({ user: null } as any, decoded);
+    }
+
+    if (type === 'ApiKey') {
+      if (!features.apikey_auth_callback) {
+        throw new Error('App needs "features.apikey_auth_callback" defined');
+      }
+
+      return await features.apikey_auth_callback({ user: null } as any, token);
+    }
+
+    return null;
   }
 
   async hashPassword(password: string): Promise<string> {

@@ -15,6 +15,7 @@ import { BlackLogger, Injectable } from '../../nest';
 import { UtilsService, ConsoleService, AuthService } from '../index';
 import { ConfigService } from '@nestjs/config';
 import { RWSWebsocketRoutingService } from '../services/RWSWebsocketRoutingService';
+import IAppConfig from '../types/IAppConfig';
 
 interface JSONMessage<T = unknown> {
     method: string;
@@ -78,7 +79,13 @@ export abstract class RWSGateway implements ITheGateway {
 
     private async setupGlobalEventHandlers() {
 
-        this.server.on('connection', (socket: Socket) => {
+        this.server.on('connection', async (socket: Socket) => {
+            const authenticated = await this.authenticateSocket(socket);
+
+            if (!authenticated) {
+                return;
+            }
+
             socket.onAny((eventName: string, ...args: any[]) => {
                 this.handleAnyEvent(socket, eventName, args);
             });
@@ -88,6 +95,65 @@ export abstract class RWSGateway implements ITheGateway {
         this.server.on('error', (error) => {
             this.logger.error('WebSocket server error:', error);
         });
+    }
+
+    private async authenticateSocket(socket: Socket): Promise<boolean> {
+        const features = this.appConfigService.get<IAppConfig['features']>('features');
+
+        if (!features?.auth) {
+            return true;
+        }
+
+        const { token, type } = this.extractTokenFromHandshake(socket);
+
+        if (!token) {
+            socket.emit('error', { message: 'Unauthorized: no token provided' });
+            socket.disconnect(true);
+            return false;
+        }
+
+        try {
+            const user = await this.authService.authenticateFromCredentials(token, type);
+
+            if (!user) {
+                socket.emit('error', { message: 'Unauthorized: invalid credentials' });
+                socket.disconnect(true);
+                return false;
+            }
+
+            (socket as any).user = user;
+            return true;
+        } catch (error) {
+            this.logger.error(`WebSocket authentication failed: ${(error as Error)?.message ?? error}`);
+            socket.emit('error', { message: 'Unauthorized' });
+            socket.disconnect(true);
+            return false;
+        }
+    }
+
+    private extractTokenFromHandshake(socket: Socket): { token: string | undefined, type: 'Bearer' | 'ApiKey' | undefined } {
+        const headers = socket.handshake.headers;
+
+        const apiKey = headers['x-api-key'] as string;
+        if (apiKey) {
+            return { token: apiKey, type: 'ApiKey' };
+        }
+
+        const authHeader = headers.authorization as string;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            return { token: authHeader.substring(7), type: 'Bearer' };
+        }
+
+        // Also support token/apiKey passed via socket.io client auth option
+        const socketAuth = socket.handshake.auth;
+        if (socketAuth?.token) {
+            return { token: socketAuth.token, type: 'Bearer' };
+        }
+        if (socketAuth?.apiKey) {
+            return { token: socketAuth.apiKey, type: 'ApiKey' };
+        }
+
+        return { token: undefined, type: undefined };
     }
 
     protected async handleAnyEvent(socket: Socket, eventName: string, args: any) {
@@ -118,7 +184,7 @@ export abstract class RWSGateway implements ITheGateway {
         const foundRtp = Array.from(this.wsRoutingService.getRealtimePoints()).find(point => point[0] === eventName && point[1].getGateway().constructor.name === this.constructor.name);
 
         if (!foundRtp) {
-            this.logger.warn(`There is no Realtime Point for event "${eventName}" bound to Gateway "${this.constructor.name}"`);
+            // this.logger.warn(`There is no Realtime Point for event "${eventName}" bound to Gateway "${this.constructor.name}"`);
             return;
         }
 
