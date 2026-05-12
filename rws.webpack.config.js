@@ -153,8 +153,7 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
       alias: aliases,
       plugins: WEBPACK_RESOLVE_PLUGINS,
       fallback: {
-        "kerberos": false,
-        "mongodb-client-encryption": false
+        "kerberos": false
       }
     },
     module: {
