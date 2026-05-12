@@ -26,7 +26,7 @@ export class FilteredServeModule implements NestModule {
             }            
 
             // Skip API routes - let them be handled by NestJS controllers
-            if (req.originalUrl.startsWith('/api/')) {
+            if (this.isServerRoute(req.originalUrl)) {
                 next();
                 return;
             }
@@ -70,6 +70,58 @@ export class FilteredServeModule implements NestModule {
         consumer
             .apply(callback)
             .forRoutes('*');
+    }
+
+    isServerRoute(requestPath: string): boolean {
+        const debLog = (...args: any[]) => {
+            if(this.config.devMode && requestPath.startsWith('/uploads/')){
+                console.log(...args);
+            }
+        }
+
+        const httpRoutes = this.config.http_routes || [];
+
+        debLog('Checking server routes for path:', requestPath);
+
+        // Flatten all routes into a single list with their full paths
+        const flatRoutes: { fullPath: string; priority: number }[] = [];
+
+        for (const group of httpRoutes) {
+            for (const route of group.routes) {
+                const paths = Array.isArray(route.path) ? route.path : [route.path];
+                const priority = route.priority ?? 0;
+                for (const routePath of paths) {
+                    const fullPath = (group.prefix + routePath).replace(/\/+/g, '/');
+                    flatRoutes.push({ fullPath, priority });
+                }
+            }
+        }
+
+        // Sort by priority descending (higher priority checked first)
+        flatRoutes.sort((a, b) => b.priority - a.priority);
+
+        for (const { fullPath, priority } of flatRoutes) {
+            // Skip root-level catch-all routes (e.g. /*frontRoute)
+            // but keep prefixed wildcards (e.g. /image/*path)
+            if (/^\/?\*/.test(fullPath)) {
+                continue;
+            }
+
+            // Convert route params like {:id} or :id to a regex wildcard
+            // Convert wildcards like *path to match any remaining path segments
+            const pattern = fullPath
+                .replace(/\{:[^}]+\}/g, '[^/]+')
+                .replace(/:[^/]+/g, '[^/]+')
+                .replace(/\*[^/]*/g, '.+');
+            const regex = new RegExp(`^${pattern}/?$`);
+            debLog(`Checking route pattern: ${regex} (priority: ${priority}) against request path: ${requestPath}`);
+            if (regex.test(requestPath)) {
+                debLog(`Matched route pattern: ${regex} for request path: ${requestPath}`);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     static forRoot(config: IAppConfig): DynamicModule {

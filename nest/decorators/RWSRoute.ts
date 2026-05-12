@@ -35,11 +35,11 @@ export function applyRWSRouteMetadata(target: any): void {
     const deferredRoutes = Reflect.getMetadata('rws:deferred-routes', target) || {};
     const routes = BootstrapRegistry.getConfig().http_routes as RWSHTTPRoutingEntry[];
 
-    for (const [propertyKey, meta] of Object.entries(deferredRoutes) as [string, { routeName: string; options: IRouteParams }][]) {
-        const descriptor = Object.getOwnPropertyDescriptor(target.prototype, propertyKey);
-        if (!descriptor) continue;
+    // Resolve route configs and sort by priority (higher first) before applying NestJS decorators
+    const resolvedEntries: { propertyKey: string; meta: { routeName: string; options: IRouteParams }; routeConfig: IHTTProute }[] = [];
 
-        const { routeName, options } = meta;
+    for (const [propertyKey, meta] of Object.entries(deferredRoutes) as [string, { routeName: string; options: IRouteParams }][]) {
+        const { routeName } = meta;
 
         let routeConfig: IHTTProute | undefined;
         for (const entry of routes) {
@@ -58,6 +58,18 @@ export function applyRWSRouteMetadata(target: any): void {
         if (!routeConfig) {
             throw new Error(`No route configuration found for route name: ${routeName}`);
         }
+
+        resolvedEntries.push({ propertyKey, meta, routeConfig });
+    }
+
+    // Sort by priority descending — higher priority routes get registered first
+    resolvedEntries.sort((a, b) => (b.routeConfig.priority ?? 0) - (a.routeConfig.priority ?? 0));
+
+    for (const { propertyKey, meta, routeConfig } of resolvedEntries) {
+        const descriptor = Object.getOwnPropertyDescriptor(target.prototype, propertyKey);
+        if (!descriptor) continue;
+
+        const { routeName, options } = meta;
 
         // Store route metadata for RouterService to read
         const existingRoutes = Reflect.getMetadata('routes', target) || {};
@@ -99,5 +111,14 @@ export function applyRWSRouteMetadata(target: any): void {
 
         // Redefine the descriptor since NestJS decorators may have modified it
         Object.defineProperty(target.prototype, propertyKey, descriptor);
+    }
+
+    // Reorder methods on the prototype so NestJS's scanner picks them up in priority order.
+    // Object.getOwnPropertyNames() follows insertion order, so delete and re-add in sorted order.
+    for (const { propertyKey } of resolvedEntries) {
+        const desc = Object.getOwnPropertyDescriptor(target.prototype, propertyKey);
+        if (!desc) continue;
+        delete target.prototype[propertyKey];
+        Object.defineProperty(target.prototype, propertyKey, desc);
     }
 }

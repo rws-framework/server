@@ -5,6 +5,7 @@ import { BootstrapRegistry } from '../../nest/decorators/RWSConfigInjector';
 import { RWSHTTPRoutingEntry, IHTTProute, IPrefixedHTTProutes } from '../routing/routes';
 import { OpModelType } from '@rws-framework/db';
 import { RWSAutoApiController } from './_autoApi';
+import { applyRWSRouteMetadata } from '../../nest/decorators/RWSRoute';
 
 export type RWSControllerOptions = {}
 
@@ -66,8 +67,6 @@ export function applyDeferredControllerMetadata(target: any): any {
 }
 
 export function applyAllDeferredMetadata(): void {
-    const { applyRWSRouteMetadata } = require('../../nest/decorators/RWSRoute');
-
     for (const target of deferredControllerRegistry) {
         applyDeferredControllerMetadata(target);
         applyRWSRouteMetadata(target);

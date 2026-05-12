@@ -4,6 +4,7 @@ interface IHTTProute<P = {[key: string]: any}> {
     name: string;
     path: string | string[];  
     method: string;
+    priority?: number;
     noParams?: boolean;
     options?: IRouteParams;
     plugins?: P
