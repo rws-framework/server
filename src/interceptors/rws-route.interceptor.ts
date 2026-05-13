@@ -83,6 +83,10 @@ export class RWSRouteInterceptor implements NestInterceptor {
 
         // For file/PDF responses, we need to handle them specially
         if (responseType === 'file' || responseType === 'pdf') {
+            if (data === null || data === undefined) {
+                // Response already handled (streamed) by the controller
+                return;
+            }
             // Set proper content type
             const contentType = RouterService.responseTypeToMIME(responseType, routeParams.params?.mimeType);
             res.setHeader('Content-Type', contentType);
@@ -142,6 +146,10 @@ export class RWSRouteInterceptor implements NestInterceptor {
         }
 
         if (responseType === 'rawFile') {
+            if (data === null || data === undefined) {
+                // Response already handled (streamed) by the controller
+                return;
+            }
             res.sendFile(data);
             return;
         }
