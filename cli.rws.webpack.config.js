@@ -85,7 +85,6 @@ const RWSWebpackWrapper = async (appRoot, config, packageDir) => {
   const tsLoaderOptions = {        
     configFile: tsConfigPath, 
     compilerOptions: {
-        ignoreDeprecations: '6.0',
         emitDecoratorMetadata: true,
         experimentalDecorators: true,
         target: "ES2018",
