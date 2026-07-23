@@ -3,7 +3,18 @@ import * as winston from 'winston';
 import LokiTransport from 'winston-loki';
 import { RWSConfigService } from '../src/services/RWSConfigService';
 import IAppConfig from '../src/types/IAppConfig';
-import { skip } from 'node:test';
+
+export interface ILokiConfig {
+  host: string;
+  labels: {
+    app: string;
+    environment: string;
+    context: string;
+  };
+  replaceTimestamp: boolean;
+  onConnectionError: (err: Error) => void;
+  basicAuth?: string;
+}
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class BlackLogger extends BaseLogger implements LoggerService {
@@ -32,7 +43,7 @@ export class BlackLogger extends BaseLogger implements LoggerService {
       return info;
     });
 
-    const lokiCfg = {
+    const lokiCfg: ILokiConfig = {
       host: this.cfg.loki_url,
       labels: {
         app: this.cfg.app_name || 'nestjs',
@@ -42,6 +53,10 @@ export class BlackLogger extends BaseLogger implements LoggerService {
       replaceTimestamp: true,
       onConnectionError: (err: Error) => console.error('Loki Transport Error:', err)
     };
+
+    if(this.cfg.loki_login && this.cfg.loki_pass){
+      lokiCfg.basicAuth = `${this.cfg.loki_login}:${this.cfg.loki_pass}`;
+    }
 
     const lokiTransport = new LokiTransport(lokiCfg);
 

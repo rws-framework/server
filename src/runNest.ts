@@ -235,6 +235,6 @@ export default async function bootstrap(
 
     return {
         app,
-        listen: async () => app.listen(rwsOptions.port)
+        listen: async () => opts.hostOverride ? app.listen(opts.portOverride || rwsOptions.port, opts.hostOverride) : app.listen(opts.portOverride || rwsOptions.port)
     };
 }

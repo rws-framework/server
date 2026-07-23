@@ -42,6 +42,8 @@ type ServerOpts = {
     spaMode?: boolean,
     authorization?: boolean, 
     transport?: string, 
+    portOverride?: number,
+    hostOverride?: string,
     onAuthorize?: <T extends IDbUser>(user: T, authorizationScope: 'ws' | 'http') => Promise<void>
   }
 
