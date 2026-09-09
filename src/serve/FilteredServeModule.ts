@@ -80,9 +80,7 @@ export class FilteredServeModule implements NestModule {
         }
 
         const httpRoutes = this.config.http_routes || [];
-
-        debLog('Checking server routes for path:', requestPath);
-
+        
         // Flatten all routes into a single list with their full paths
         const flatRoutes: { fullPath: string; priority: number }[] = [];
 
@@ -114,9 +112,8 @@ export class FilteredServeModule implements NestModule {
                 .replace(/:[^/]+/g, '[^/]+')
                 .replace(/\*[^/]*/g, '.+');
             const regex = new RegExp(`^${pattern}/?$`);
-            debLog(`Checking route pattern: ${regex} (priority: ${priority}) against request path: ${requestPath}`);
+            
             if (regex.test(requestPath)) {
-                debLog(`Matched route pattern: ${regex} for request path: ${requestPath}`);
                 return true;
             }
         }

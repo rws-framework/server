@@ -104,7 +104,7 @@ export abstract class RWSGateway implements ITheGateway {
             return true;
         }
 
-        const { token, type } = this.extractTokenFromHandshake(socket);
+        const { token, type, customName } = this.extractTokenFromHandshake(socket);
 
         if (!token) {
             socket.emit('error', { message: 'Unauthorized: no token provided' });
@@ -113,7 +113,7 @@ export abstract class RWSGateway implements ITheGateway {
         }
 
         try {
-            const user = await this.authService.authenticateFromCredentials(token, type);
+            const user = await this.authService.authenticateFromCredentials(token, type, customName);
 
             if (!user) {
                 socket.emit('error', { message: 'Unauthorized: invalid credentials' });
@@ -131,10 +131,15 @@ export abstract class RWSGateway implements ITheGateway {
         }
     }
 
-    private extractTokenFromHandshake(socket: Socket): { token: string | undefined, type: 'Bearer' | 'ApiKey' | undefined } {
+    private extractTokenFromHandshake(socket: Socket): { token: string | undefined, type: 'Bearer' | 'ApiKey' | 'Custom' | undefined, customName?: string } {
         const headers = socket.handshake.headers;
 
         const apiKey = headers['x-api-key'] as string;
+
+        if (headers['x-custom-token'] && headers['x-custom-name']) {
+            return { token: headers['x-custom-token'] as string, type: 'Custom', customName: headers['x-custom-name'] as string };
+        }
+
         if (apiKey) {
             return { token: apiKey, type: 'ApiKey' };
         }
@@ -146,6 +151,13 @@ export abstract class RWSGateway implements ITheGateway {
 
         // Also support token/apiKey passed via socket.io client auth option
         const socketAuth = socket.handshake.auth;
+
+        console.log({socketAuth});
+
+        if(socketAuth?.token && socketAuth?.customTokenName){
+            return { token: socketAuth.token, type: 'Custom', customName: socketAuth.customTokenName };
+        }
+
         if (socketAuth?.token) {
             return { token: socketAuth.token, type: 'Bearer' };
         }

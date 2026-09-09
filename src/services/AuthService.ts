@@ -118,7 +118,7 @@ class AuthService {
   }
 
   // Authenticate from a raw token + type (for WebSocket handshake auth)
-  async authenticateFromCredentials(token: string, type: 'Bearer' | 'ApiKey'): Promise<RWSModel<any> | null> {
+  async authenticateFromCredentials(token: string, type: 'Bearer' | 'ApiKey' | 'Custom', customName?: string): Promise<RWSModel<any> | null> {
     const features = this.configService.get('features');
 
     if (!features?.auth) {
@@ -145,6 +145,22 @@ class AuthService {
       }
 
       return await features.apikey_auth_callback({ user: null } as any, token);
+    }
+
+    if(type === 'Custom'){
+      if (!features.custom_auth_callback) {
+        throw new Error('App needs "features.custom_auth_callback" defined');
+      }
+
+      if(!customName) {
+        throw new Error('Custom authentication requires a customName and token in x-custom-name and x-custom-token headers');
+      }
+
+      if(!features.custom_auth_callback[customName]) {
+        throw new Error(`App needs "features.custom_auth_callback['${customName}']" defined`);
+      }
+
+      return await features.custom_auth_callback[customName]({ user: null } as any, token);
     }
 
     return null;
