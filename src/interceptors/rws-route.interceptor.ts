@@ -51,6 +51,12 @@ export class RWSRouteInterceptor implements NestInterceptor {
     }
 
     private processRWSResponse(res: any, data: any, routeParams: any, req: any): any {
+        // ✅ CRITICAL: If headers are already sent, don't try to modify response
+        // This happens when controllers handle streaming and write headers directly
+        if (res.headersSent) {
+            return;
+        }
+
         const responseType = routeParams.params?.responseType || 'json';
         let status = 200;
         
