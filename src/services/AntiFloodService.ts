@@ -10,6 +10,7 @@ import { BlackLogger } from '../../nest';
 
 const S = 1000; // 1 second in milliseconds
 const M = 60 * S; // 1 minute in milliseconds
+
 @Injectable()
 export class AntiFloodService implements OnModuleInit {
     private logger = new BlackLogger(this.constructor.name);
@@ -29,9 +30,7 @@ export class AntiFloodService implements OnModuleInit {
     constructor(
         private readonly config: RWSConfigService<IAppConfig>,
         private readonly routerService: RouterService
-    ) {
-
-    }
+    ) {}
 
     onModuleInit() {
         const antifloodConfig = this.config.get('features')?.antiflood;
@@ -39,7 +38,7 @@ export class AntiFloodService implements OnModuleInit {
             this.suspiciousAgents.push(...antifloodConfig.suspiciousAgents);
         }
 
-         if (antifloodConfig?.ignoredIPs) {
+        if (antifloodConfig?.ignoredIPs) {
             this.ignoreIPs.push(...antifloodConfig.ignoredIPs);
         }
 
@@ -70,7 +69,7 @@ export class AntiFloodService implements OnModuleInit {
     }
 
     async shouldBlock(req: Request): Promise<boolean> {
-        if(this.config.get('features')?.antiflood?.enabled !== true) {
+        if (this.config.get('features')?.antiflood?.enabled !== true) {
             console.log('[AntiFlood] DISABLED via config, skipping check for', req.path);
             return false;
         }
@@ -93,28 +92,33 @@ export class AntiFloodService implements OnModuleInit {
 
         let existingBan: any = null;
         try {
-            existingBan = await AntifloodBans.findOneBy({conditions: { ip } });
-            console.log(`[AntiFlood] AntifloodBans.find(${ip}) resolved:`, existingBan);
+            existingBan = await AntifloodBans.findOneBy({ conditions: { ip } });
+            console.log(`[AntiFlood] AntifloodBans.find(${ip}) resolved:`, existingBan.ip);
         } catch (err) {
             console.error(`[AntiFlood] AntifloodBans.find(${ip}) THREW - failing open (not blocking) for this request. Error:`, err);
-            // NOTE: currently fails OPEN (request proceeds without a DB-backed ban check).
-            // If you'd rather fail CLOSED (block on DB error), return true here instead.
         }
+
+        const now = Date.now();
 
         if (existingBan) {
             const ban = Array.isArray(existingBan) ? existingBan[0] : existingBan;
-            console.log(`[AntiFlood] existing ban record for ${ip}, strikes=${ban.strikes}`);
+            console.log(`[AntiFlood] existing ban record for ${ip}, strikes=${ban.strikes}, bannedUntil=${ban.bannedUntil}`);
+            
             if (ban.strikes >= this.maxStrikes) {
                 console.log(`[AntiFlood] BLOCKED - ip ${ip} has maxStrikes from persisted ban`);
                 return true;
             }
+
+            if (ban.bannedUntil && new Date(ban.bannedUntil).getTime() > now) {
+                console.log(`[AntiFlood] BLOCKED - ip ${ip} under DB ban until ${new Date(ban.bannedUntil).toISOString()}`);
+                return true;
+            }
         }
 
-        const now = Date.now();
         const record = this.getRecord(ip);
 
-        if (record.blockedUntil > now) {
-            console.log(`[AntiFlood] BLOCKED - ip ${ip} still under temp block until ${new Date(record.blockedUntil).toISOString()}`);
+        if (record.blockedUntil && record.blockedUntil.getTime() > now) {
+            console.log(`[AntiFlood] BLOCKED - ip ${ip} still under temp block until ${record.blockedUntil.toISOString()}`);
             return true;
         }
 
@@ -163,21 +167,22 @@ export class AntiFloodService implements OnModuleInit {
     }
 
     private async blockClient(req: Request, record: IAntiFloodClientRecord, now: number): Promise<void> {
-        record.blockedUntil = now + this.blockMinutes;
+        const blockedUntilDate = new Date(now + this.blockMinutes);
+        record.blockedUntil = blockedUntilDate;
+
         try {
             const ban = await AntifloodBans.recordStrike(req);
-            console.log(`[AntiFlood] recordStrike(${this.getIp(req)}) resolved:`, ban);
+            console.log(`[AntiFlood] recordStrike(${this.getIp(req)}) resolved:`, ban.ip);
             this.logger.warn(`Blocking client IP: ${this.getIp(req)}. Current strikes: ${ban.strikes}`);
+            
             if (ban.strikes < this.maxStrikes) {
-                record.blockedUntil = now + this.blockMinutes;
+                record.blockedUntil = blockedUntilDate;
             } else {
                 record.permaBan = true;
                 this.logger.error(`Client IP: ${this.getIp(req)} has been permanently banned.`);
             }
         } catch (err) {
-            console.error(`[AntiFlood] AntifloodBans.recordStrike(${this.getIp(req)}) THREW - in-memory temp block still applied (blockedUntil set), but persisted strike count was NOT recorded. Error:`, err);
-            // record.blockedUntil was already set above, so the in-memory 15-minute block still takes
-            // effect for this process even though the DB write failed. permaBan logic is skipped.
+            console.error(`[AntiFlood] AntifloodBans.recordStrike(${this.getIp(req)}) THREW - in-memory temp block still applied (bannedUntil set), but persisted strike count was NOT recorded. Error:`, err);
         }
     }
 
@@ -189,7 +194,7 @@ export class AntiFloodService implements OnModuleInit {
                 requests: [],
                 routes: new Map(),
                 probes: 0,
-                blockedUntil: 0,
+                blockedUntil: null,
                 permaBan: false
             };
             this.clients.set(ip, record);

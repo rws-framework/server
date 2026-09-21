@@ -4,7 +4,9 @@ import { Request } from 'express';
 
 @RWSCollection('antiflood_bans', { noId: true })
 class AntifloodBans extends RWSModel<AntifloodBans> implements IAntifloodBansModelInterface {
-    @IdType(String)
+    @IdType(String, {
+        noAuto: true
+    })
     ip: string;
 
     @TrackType(String, { required: true })
@@ -16,8 +18,8 @@ class AntifloodBans extends RWSModel<AntifloodBans> implements IAntifloodBansMod
     @TrackType(Number, { required: true })
     strikes: number;
 
-    @TrackType(Number, { required: true })
-    bannedUntil: number;
+    @TrackType(Date, { required: true })
+    bannedUntil: Date;
     
     @TrackType(Boolean, { required: false })
     permaBan: boolean = false;
@@ -36,8 +38,10 @@ class AntifloodBans extends RWSModel<AntifloodBans> implements IAntifloodBansMod
         antifloodBan.agent = req.headers['user-agent'] || '';
         antifloodBan.requestData = requestData;
         antifloodBan.strikes = 1;
-        antifloodBan.bannedUntil = Date.now() + (15 * 60 * 1000);
+        antifloodBan.bannedUntil = new Date(Date.now() + (15 * 60 * 1000));
         antifloodBan.created_at = new Date();
+
+        console.log(`[AntifloodBans] buildFromRequestData: created new antiflood ban for IP ${antifloodBan.ip}`);
 
         await antifloodBan.save();
 
@@ -45,7 +49,7 @@ class AntifloodBans extends RWSModel<AntifloodBans> implements IAntifloodBansMod
     }
 
     static async recordStrike(req: Request): Promise<AntifloodBans> {
-        const existing = await AntifloodBans.find(req.ip);
+        const existing = await AntifloodBans.findOneBy({ conditions: { ip: req.ip } });
         const ban = Array.isArray(existing) ? existing[0] : existing;
 
         if (ban) {

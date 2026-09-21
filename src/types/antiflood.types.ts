@@ -5,7 +5,7 @@ export interface IAntiFloodClientRecord {
     requests: number[];
     routes: Map<string, number[]>;
     probes: number;
-    blockedUntil: number;
+    blockedUntil: Date | null;
     permaBan: boolean;
 }
 
@@ -14,7 +14,7 @@ export interface IAntifloodBansModelInterface extends IRWSModel {
     agent: string;
     requestData: IRequestData;
     strikes: number;
-    bannedUntil: number;
+    bannedUntil: Date | null;
     permaBan: boolean;
     created_at: Date;  
 }
