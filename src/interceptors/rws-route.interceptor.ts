@@ -1,46 +1,57 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, HttpException } from '@nestjs/common';
+import { Observable, from } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
 import { RouterService } from '../services/RouterService';
 import RWSError from '../errors/_error';
 import path from 'path';
+import { AntiFloodService } from '../services/AntiFloodService';
 
 @Injectable()
 export class RWSRouteInterceptor implements NestInterceptor {
     constructor(
         private reflector: Reflector,
-        private routerService: RouterService
+        private routerService: RouterService,
+        private antifloodService: AntiFloodService
     ) {}
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const handler = context.getHandler();
         const controller = context.getClass();
         const request = context.switchToHttp().getRequest();
-        const response = context.switchToHttp().getResponse();
+        const response = context.switchToHttp().getResponse();       
 
-        // Check if this method has RWSRoute metadata
-        const routeMetadata = this.getRouteMetadata(controller, handler.name);
-        
-        if (!routeMetadata) {
-            // No RWSRoute decorator, let it pass through normally
-            return next.handle();
-        }
-
-        return next.handle().pipe(
-            map(data => {
-                try {
-                    // Process response through RouterService's prepareResponse logic
-                    return this.processRWSResponse(
-                        response, 
-                        data, 
-                        routeMetadata,
-                        request
-                    );
-                } catch (error) {
-                    console.error(`[RWSRouteInterceptor] Error processing response:`, error);
-                    return data; // fallback to original data
+        return from(this.antifloodService.shouldBlock(request)).pipe(
+            switchMap((blocked: boolean) => {
+                console.log({blocked})
+                if (blocked) {
+                    throw new HttpException('Too Many Requests', 429);
                 }
+
+                // Check if this method has RWSRoute metadata
+                const routeMetadata = this.getRouteMetadata(controller, handler.name);
+                
+                if (!routeMetadata) {
+                    // No RWSRoute decorator, let it pass through normally
+                    return next.handle();
+                }
+
+                return next.handle().pipe(
+                    map(data => {
+                        try {
+                            // Process response through RouterService's prepareResponse logic
+                            return this.processRWSResponse(
+                                response, 
+                                data, 
+                                routeMetadata,
+                                request
+                            );
+                        } catch (error) {
+                            console.error(`[RWSRouteInterceptor] Error processing response:`, error);
+                            return data; // fallback to original data
+                        }
+                    })
+                );
             })
         );
     }

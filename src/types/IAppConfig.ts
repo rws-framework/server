@@ -45,12 +45,19 @@ export default interface IAppConfig {
         routing_enabled?: boolean
         test_routes?: boolean
         ssl?: boolean
-        auth?: boolean,
-        auth_pub_key?: string,
-        auth_alghoritm?: 'RS256' | null,
-        auth_passphrase?: string,
-        token_auth_callback?: (request: { user: RWSModel<any>},decoded: unknown) => Promise<RWSModel<any> | null>,
-        apikey_auth_callback?: (request: { user: RWSModel<any>}, apiKey: string) => Promise<RWSModel<any> | null>,
-        custom_auth_callback?: Record<string, (request: { user: RWSModel<any>}, customToken: string) => Promise<RWSModel<any> | null>>
+        antiflood?: {
+            enabled?: boolean,
+            suspiciousAgents?: string[],
+            ignoredIPs?: string[]
+        }
+        auth?: {
+            enabled?: boolean,
+            auth_pub_key?: string,
+            auth_alghoritm?: 'RS256' | null,
+            auth_passphrase?: string,
+            token_auth_callback?: (request: { user: RWSModel<any>},decoded: unknown) => Promise<RWSModel<any> | null>,
+            apikey_auth_callback?: (request: { user: RWSModel<any>}, apiKey: string) => Promise<RWSModel<any> | null>,
+            custom_auth_callback?: Record<string, (request: { user: RWSModel<any>}, customToken: string) => Promise<RWSModel<any> | null>>
+        },        
     } 
 }

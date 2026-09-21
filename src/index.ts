@@ -35,6 +35,8 @@ import { RWSConfigService } from './services/RWSConfigService';
 import { Helper } from './helpers/_helper';
 import { RealtimePoint } from './gateways/_realtimePoint';
 
+import AntifloodBans from './models/AntifloodBans.model';
+
 export {    
     RWSCommand,
     RWSBaseCommand,
@@ -72,5 +74,6 @@ export {
     NEST,
     RWSAutoApiController,
     InjectServices,
-    CLIModule, RWSCliBootstrap,        
+    CLIModule, RWSCliBootstrap,  
+    AntifloodBans      
 };

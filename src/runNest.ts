@@ -38,6 +38,7 @@ import { MD5Service } from './services/MD5Service';
 import { RWSRouteInterceptor } from './interceptors/rws-route.interceptor';
 import { applyDeferredControllerMetadata, applyAllDeferredMetadata } from './controller/_decorator';
 import { applyRWSRouteMetadata } from '../nest/decorators/RWSRoute';
+import { AntiFloodService } from './services/AntiFloodService';
 
 type AnyModule =  (DynamicModule| Type<any> | Promise<DynamicModule>);
 
@@ -97,6 +98,7 @@ SPA mode enabled (only direct files requests are served)` : ''}`));
                 SerializeInterceptor,
                 MD5Service,
                 TraversalService,
+                AntiFloodService,                
                 {    
                     provide: APP_INTERCEPTOR,
                     useClass: RWSRouteInterceptor,

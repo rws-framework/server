@@ -126,29 +126,29 @@ class AuthService {
     }
 
     if (type === 'Bearer') {
-      const isRS256 = features.auth_alghoritm === 'RS256';
+      const isRS256 = features.auth.auth_alghoritm === 'RS256';
       const secret = isRS256
-        ? fs.readFileSync(path.join(rwsPath.findRootWorkspacePath(), features.auth_pub_key), 'utf-8')
+        ? fs.readFileSync(path.join(rwsPath.findRootWorkspacePath(), features.auth.auth_pub_key), 'utf-8')
         : this.JWT_SECRET;
       const decoded = jwt.verify(token, secret, isRS256 ? { algorithms: ['RS256'] } : undefined);
 
-      if (!features.token_auth_callback) {
+      if (!features.auth.token_auth_callback) {
         throw new Error('App needs "features.token_auth_callback" defined');
       }
 
-      return await features.token_auth_callback({ user: null } as any, decoded);
+      return await features.auth.token_auth_callback({ user: null } as any, decoded);
     }
 
     if (type === 'ApiKey') {
-      if (!features.apikey_auth_callback) {
+      if (!features.auth.apikey_auth_callback) {
         throw new Error('App needs "features.apikey_auth_callback" defined');
       }
 
-      return await features.apikey_auth_callback({ user: null } as any, token);
+      return await features.auth.apikey_auth_callback({ user: null } as any, token);
     }
 
     if(type === 'Custom'){
-      if (!features.custom_auth_callback) {
+      if (!features.auth.custom_auth_callback) {
         throw new Error('App needs "features.custom_auth_callback" defined');
       }
 
@@ -156,11 +156,11 @@ class AuthService {
         throw new Error('Custom authentication requires a customName and token in x-custom-name and x-custom-token headers');
       }
 
-      if(!features.custom_auth_callback[customName]) {
+      if(!features.auth.custom_auth_callback[customName]) {
         throw new Error(`App needs "features.custom_auth_callback['${customName}']" defined`);
       }
 
-      return await features.custom_auth_callback[customName]({ user: null } as any, token);
+      return await features.auth.custom_auth_callback[customName]({ user: null } as any, token);
     }
 
     return null;

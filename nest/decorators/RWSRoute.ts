@@ -4,7 +4,9 @@ import { IHTTProute, IPrefixedHTTProutes, RWSHTTPRoutingEntry } from '../../src/
 import { BootstrapRegistry } from './RWSConfigInjector';
 
 import { AuthGuard, RWS_PROTECTED_KEY } from './guards/auth.guard';
+import { RWS_IGNORE_ANTIFLOOD_KEY } from './IgnoreAntiflood';
 
+export const appliedRWSControllers = new Set<any>();
 
 export interface IRouteParams {
     public?: boolean;
@@ -73,13 +75,15 @@ export function applyRWSRouteMetadata(target: any): void {
 
         // Store route metadata for RouterService to read
         const existingRoutes = Reflect.getMetadata('routes', target) || {};
+        const ignoreAntiflood = Reflect.getMetadata(RWS_IGNORE_ANTIFLOOD_KEY, descriptor.value) === true;
         existingRoutes[propertyKey] = {
             annotationType: 'Route',
             metadata: {
                 name: routeName,
                 method: routeConfig.method.toUpperCase(),
                 path: routeConfig.path,
-                params: options
+                params: options,
+                ignoreAntiflood
             }
         };
         Reflect.defineMetadata('routes', existingRoutes, target);
@@ -121,4 +125,6 @@ export function applyRWSRouteMetadata(target: any): void {
         delete target.prototype[propertyKey];
         Object.defineProperty(target.prototype, propertyKey, desc);
     }
+
+    appliedRWSControllers.add(target);
 }
