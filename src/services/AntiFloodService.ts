@@ -93,7 +93,6 @@ export class AntiFloodService implements OnModuleInit {
         let existingBan: any = null;
         try {
             existingBan = await AntifloodBans.findOneBy({ conditions: { ip } });
-            console.log(`[AntiFlood] AntifloodBans.find(${ip}) resolved:`, existingBan.ip);
         } catch (err) {
             console.error(`[AntiFlood] AntifloodBans.find(${ip}) THREW - failing open (not blocking) for this request. Error:`, err);
         }
