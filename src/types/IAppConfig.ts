@@ -47,8 +47,16 @@ export default interface IAppConfig {
         ssl?: boolean
         antiflood?: {
             enabled?: boolean,
+            logs?: boolean,
             suspiciousAgents?: string[],
-            ignoredIPs?: string[]
+            ignoredIPs?: string[],
+            windowS?: number, // 60 seconds per window
+            maxRequestsPerWindow?: number, // max total requests from a single IP within the window
+            max404RequestsPerWindow?: number, // max 404 (missing resource) responses served to a single IP within the window, used to detect probing/scanners
+            maxServeRequestsPerWindow?: number, // max static file requests served to a single IP within the window
+            maxProbes?: number, // max probe signals (suspicious user agents, etc.) from a single IP within the window, tracked per IP regardless of route
+            blockMinutes?: number, // duration of a temporary block after a threshold is exceeded
+            maxStrikes?: number, // number of temporary blocks before a permanent ban is applied
         }
         auth?: {
             enabled?: boolean,

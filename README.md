@@ -19,6 +19,8 @@
 - [License](#license)
 - [Contributing](#contributing)
 - [Database Integration (RWS DB)](#database-integration-rws-db)
+
+- [AntiFlood Service](#antiflood-service)
 - [Manager & Build Configuration](#manager--build-configuration)
 
 RWS is a comprehensive Node.js framework built on top of NestJS that provides a robust foundation for building real-time web applications. It integrates WebSocket support, MongoDB/Prisma ORM, authentication, and routing in a cohesive package.
@@ -583,6 +585,81 @@ yarn rws-db "<mongo_url>" <db_name> <db_type> <models_dir>
 ```
 
 - See the DB package README for advanced relation options and CLI usage.
+
+
+---
+
+## AntiFlood Service
+
+RWS includes a built-in antiflood service that protects your application from brute-force attempts, scanning/probing, and abuse of static file serving. It is disabled by default and must be enabled via the `features.antiflood.enabled` config flag.
+
+### How it works
+
+The service is invoked from three main places:
+
+- **HTTP route interceptor** (`RWSRouteInterceptor`) — checks requests that hit application controllers (`type: 'route'`).
+- **Static file server** (`FilteredServeModule`) — checks requests for static assets (`type: 'serve'`) and for missing files (`type: '404'`).
+
+For every incoming IP address the service keeps an in-memory sliding window (`windowS`, default 60 seconds) and a persisted `AntifloodBans` record. The following limits are enforced:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `maxRequestsPerWindow` | `120` | Maximum total requests from a single IP within the window. |
+| `max404RequestsPerWindow` | `20` | Maximum 404 responses served to a single IP within the window. This catches scanners and path probes. |
+| `maxServeRequestsPerWindow` | `30` | Maximum static file requests served to a single IP within the window. |
+| `maxProbes` | `3` | Maximum probe signals (suspicious user agents, etc.) from a single IP within the window. Probes are counted globally per IP, not per route. |
+| `windowS` | `60` | Length of the sliding window in seconds. |
+| `blockMinutes` | `15` | How long an IP is temporarily blocked after a threshold is exceeded. |
+| `maxStrikes` | `3` | Number of temporary blocks before an IP is permanently banned. |
+
+When a threshold is exceeded the IP is immediately blocked for `blockMinutes` and a strike is recorded. After `maxStrikes` strikes the IP is permanently banned. Temporary blocks are tracked in memory for speed, while strikes and permanent bans are persisted via the `AntifloodBans` model.
+
+Certain routes can be excluded from antiflood checks by setting `ignoreAntiflood: true` in the `@RWSRoute` metadata, and specific IPs can be whitelisted with `ignoredIPs`.
+
+### Enabling and configuring
+
+```typescript
+export default (): IAppConfig => {
+    return {
+        // ... other config
+        features: {
+            antiflood: {
+                enabled: true,
+                windowS: 60,
+                maxRequestsPerWindow: 120,
+                max404RequestsPerWindow: 20,
+                maxServeRequestsPerWindow: 30,
+                maxProbes: 3,
+                blockMinutes: 15,
+                maxStrikes: 3,
+                suspiciousAgents: ['sqlmap', 'nikto', 'nmap', 'masscan'],
+                ignoredIPs: ['127.0.0.1'],
+            }
+        },
+        // ... other config
+    }
+}
+```
+
+All values fall back to the defaults shown above when omitted.
+
+### Calibration guide
+
+Use the included test script to exercise the limits:
+
+```bash
+REQUESTS_PER_ROUTE=120 node .aider/scripts/antiflood_test.js
+```
+
+Adjust the values based on your traffic profile:
+
+1. **Normal users**: enable access logs, run a representative workload, and set `maxRequestsPerWindow` roughly 2–3× above the observed peak per IP.
+2. **404 scanners**: if you see repeated `404` hits in a short time, lower `max404RequestsPerWindow`. Legitimate SPAs may produce many 404s during boot; raise the value if real users are blocked.
+3. **Static asset bursts**: pages with many images/scripts can trigger `maxServeRequestsPerWindow`; set it above the typical number of assets per page load.
+4. **Probing**: keep `maxProbes` low and populate `suspiciousAgents` with the signatures of tools you want to block immediately.
+5. **Window and block duration**: shorten `windowS` and `blockMinutes` for faster response, or lengthen them for tolerance.
+
+Monitor the `[AntiFlood]` console logs after changes to confirm that legitimate traffic passes and abuse is blocked.
 
 ---
 

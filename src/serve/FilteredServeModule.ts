@@ -6,11 +6,15 @@ import IAppConfig from '../types/IAppConfig'; // adjust import to your interface
 import { rwsPath } from '@rws-framework/console';
 import { parse } from 'url';
 import { BlackLogger } from '../../nest';
+import { AntiFloodService } from '../services/AntiFloodService';
+import { RWSConfigService } from '../services/RWSConfigService';
+import { RouterService } from '../services/RouterService';
+import { ConsoleService } from '../services/ConsoleService';
 
 @Module({})
 export class FilteredServeModule implements NestModule {
     private logger: BlackLogger = new BlackLogger(this.constructor.name);
-    constructor(@Inject('APP_CONFIG') private readonly config: IAppConfig) {
+    constructor(@Inject('APP_CONFIG') private readonly config: IAppConfig, private readonly antifloodService: AntiFloodService) {
         this.logger.disableWinston();
     }
 
@@ -19,7 +23,7 @@ export class FilteredServeModule implements NestModule {
 
         const staticMiddleware = express.static(publicPath, { redirect: false, fallthrough: false });
 
-        const callback = (req: express.Request, res: express.Response, next: (err?: any) => void): void => {
+        const callback = async (req: express.Request, res: express.Response, next: (err?: any) => void): Promise<void> => {
             
             if(this.config.devMode){
                 this.logger.debug(`Request URL: ${req.originalUrl}`);                
@@ -29,7 +33,7 @@ export class FilteredServeModule implements NestModule {
             if (this.isServerRoute(req.originalUrl)) {
                 next();
                 return;
-            }
+            }         
 
             const parsedUrl = parse(req.originalUrl, /* parseQueryString */ true);
             const pathname = parsedUrl.pathname || req.originalUrl;
@@ -49,7 +53,18 @@ export class FilteredServeModule implements NestModule {
                     if(this.config.devMode){
                         this.logger.error(notFoundMsg);
                     }
+
+                    if(await this.antifloodService.shouldBlock(req, '404')){
+                        res.status(429).send('Too many requests');
+                        return;
+                    }
+
                     res.status(404).send(notFoundMsg);
+                    return;
+                }
+
+                if(await this.antifloodService.shouldBlock(req, 'serve')){
+                    res.status(429).send('Too many requests');
                     return;
                 }
 
@@ -125,6 +140,10 @@ export class FilteredServeModule implements NestModule {
         return {
             module: FilteredServeModule,
             providers: [
+                AntiFloodService,
+                RWSConfigService,
+                RouterService,
+                ConsoleService,
                 {
                     provide: 'APP_CONFIG',
                     useValue: config,

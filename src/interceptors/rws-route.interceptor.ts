@@ -21,7 +21,7 @@ export class RWSRouteInterceptor implements NestInterceptor {
         const request = context.switchToHttp().getRequest();
         const response = context.switchToHttp().getResponse();       
 
-        return from(this.antifloodService.shouldBlock(request)).pipe(
+        return from(this.antifloodService.shouldBlock(request, 'route')).pipe(
             switchMap((blocked: boolean) => {                
                 if (blocked) {
                     throw new HttpException('Too Many Requests', 429);

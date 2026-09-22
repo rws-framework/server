@@ -125,7 +125,8 @@ SPA mode enabled (only direct files requests are served)` : ''}`));
                 RWSWebsocketRoutingService,
                 RWSFillService,
                 MD5Service,
-                TraversalService
+                TraversalService,
+                AntiFloodService
             ]            
         };
 

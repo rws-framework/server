@@ -14,13 +14,15 @@ const M = 60 * S; // 1 minute in milliseconds
 @Injectable()
 export class AntiFloodService implements OnModuleInit {
     private logger = new BlackLogger(this.constructor.name);
+    private logsEnabled = false;
     private readonly clients = new Map<string, IAntiFloodClientRecord>();
-    private readonly windowS = M; // 60 seconds per window
-    private readonly maxRequestsPerWindow = 120;
-    private readonly maxRequestsPerRoutePerWindow = 40;
-    private readonly maxProbes = 3;
-    private readonly blockMinutes = 15 * M;
-    private readonly maxStrikes = 3;
+    private windowS = M; // 60 seconds per window
+    private maxRequestsPerWindow = 30; // max total requests from a single IP within the window
+    private max404RequestsPerWindow = 20; // max 404 (missing resource) responses served to a single IP within the window, used to detect probing/scanners
+    private maxServeRequestsPerWindow = 30; // max static file requests served to a single IP within the window
+    private maxProbes = 3; // max probe signals (suspicious user agents, etc.) from a single IP within the window, tracked per IP regardless of route
+    private blockMinutes = 15 * M; // duration of a temporary block after a threshold is exceeded
+    private maxStrikes = 3; // number of temporary blocks before a permanent ban is applied
 
     private readonly ignorePaths: string[] = [];
     private readonly ignoreIPs: string[] = [];
@@ -34,12 +36,38 @@ export class AntiFloodService implements OnModuleInit {
 
     onModuleInit() {
         const antifloodConfig = this.config.get('features')?.antiflood;
-        if (antifloodConfig?.suspiciousAgents) {
-            this.suspiciousAgents.push(...antifloodConfig.suspiciousAgents);
-        }
 
-        if (antifloodConfig?.ignoredIPs) {
-            this.ignoreIPs.push(...antifloodConfig.ignoredIPs);
+        if (antifloodConfig) {
+            if (antifloodConfig.windowS !== undefined) {
+                this.windowS = antifloodConfig.windowS * S;
+            }
+            if (antifloodConfig.maxRequestsPerWindow !== undefined) {
+                this.maxRequestsPerWindow = antifloodConfig.maxRequestsPerWindow;
+            }
+            if (antifloodConfig.max404RequestsPerWindow !== undefined) {
+                this.max404RequestsPerWindow = antifloodConfig.max404RequestsPerWindow;
+            }
+            if (antifloodConfig.maxServeRequestsPerWindow !== undefined) {
+                this.maxServeRequestsPerWindow = antifloodConfig.maxServeRequestsPerWindow;
+            }
+            if (antifloodConfig.maxProbes !== undefined) {
+                this.maxProbes = antifloodConfig.maxProbes;
+            }
+            if (antifloodConfig.blockMinutes !== undefined) {
+                this.blockMinutes = antifloodConfig.blockMinutes * M;
+            }
+            if (antifloodConfig.maxStrikes !== undefined) {
+                this.maxStrikes = antifloodConfig.maxStrikes;
+            }
+            if (antifloodConfig.logs !== undefined) {
+                this.logsEnabled = antifloodConfig.logs;
+            }
+            if (antifloodConfig.suspiciousAgents) {
+                this.suspiciousAgents.push(...antifloodConfig.suspiciousAgents);
+            }
+            if (antifloodConfig.ignoredIPs) {
+                this.ignoreIPs.push(...antifloodConfig.ignoredIPs);
+            }
         }
 
         for (const controller of appliedRWSControllers) {
@@ -57,36 +85,51 @@ export class AntiFloodService implements OnModuleInit {
             }
         }
 
-        console.log('[AntiFlood] INIT ignorePaths:', this.ignorePaths);
-        console.log('[AntiFlood] INIT ignoreIPs:', this.ignoreIPs);
-        console.log('[AntiFlood] INIT suspiciousAgents:', this.suspiciousAgents);
-        console.log('[AntiFlood] INIT thresholds:', {
+        this.log('debug', `[AntiFlood] INIT ignorePaths: ${this.stringify(this.ignorePaths)}`);
+        this.log('debug', `[AntiFlood] INIT ignoreIPs: ${this.stringify(this.ignoreIPs)}`);
+        this.log('debug', `[AntiFlood] INIT suspiciousAgents: ${this.stringify(this.suspiciousAgents)}`);
+        this.log('debug', `[AntiFlood] INIT thresholds: ${this.stringify({
             maxRequestsPerWindow: this.maxRequestsPerWindow,
-            maxRequestsPerRoutePerWindow: this.maxRequestsPerRoutePerWindow,
+            max404RequestsPerWindow: this.max404RequestsPerWindow,
+            maxServeRequestsPerWindow: this.maxServeRequestsPerWindow,
             maxProbes: this.maxProbes,
+            blockMinutesMs: this.blockMinutes,
+            maxStrikes: this.maxStrikes,
             windowMs: this.windowS
-        });
+        })}`);
     }
 
-    async shouldBlock(req: Request): Promise<boolean> {
+    private stringify(obj: any): string {
+        return JSON.stringify(obj, null, 2);
+
+    }
+
+    private log(level: 'debug' | 'warn' | 'error', message: string): void {
+        if (!this.logsEnabled) {
+            return;
+        }
+        this.logger[level](message);
+    }
+
+    async shouldBlock(req: Request, type: 'route' | '404' | 'serve'): Promise<boolean> {
         if (this.config.get('features')?.antiflood?.enabled !== true) {
-            console.log('[AntiFlood] DISABLED via config, skipping check for', req.path);
+            this.log('debug', `[AntiFlood] DISABLED via config, skipping check for ${req.path}`);
             return false;
         }
 
         for (const ignoredPath of this.ignorePaths) {
             if ((req.path || '/').includes(ignoredPath)) {
-                console.warn(`[AntiFlood] SKIPPED - path "${req.path}" matched ignorePath "${ignoredPath}"`);
+                this.log('warn', `[AntiFlood] SKIPPED - path "${req.path}" matched ignorePath "${ignoredPath}"`);
                 return false;
             }
         }        
 
         const ip = this.getIp(req);
         
-        console.log(`[AntiFlood] CHECKING ip=${ip} path=${req.path} method=${req.method}`);
+        this.log('debug', `[AntiFlood] CHECKING ip=${ip} path=${req.path} method=${req.method}`);
 
         if (this.ignoreIPs.includes(ip)) {
-            console.log(`[AntiFlood] SKIPPED - ip ${ip} is in ignoreIPs`);
+            this.log('warn', `[AntiFlood] SKIPPED - ip ${ip} is in ignoreIPs`);
             return false;
         }
 
@@ -94,22 +137,22 @@ export class AntiFloodService implements OnModuleInit {
         try {
             existingBan = await AntifloodBans.findOneBy({ conditions: { ip } });
         } catch (err) {
-            console.error(`[AntiFlood] AntifloodBans.find(${ip}) THREW - failing open (not blocking) for this request. Error:`, err);
+            this.log('error', `[AntiFlood] AntifloodBans.find(${ip}) THREW - failing open (not blocking) for this request. Error: ${err instanceof Error ? err.message : String(err)}`);
         }
 
         const now = Date.now();
 
         if (existingBan) {
             const ban = Array.isArray(existingBan) ? existingBan[0] : existingBan;
-            console.log(`[AntiFlood] existing ban record for ${ip}, strikes=${ban.strikes}, bannedUntil=${ban.bannedUntil}`);
+            this.log('debug', `[AntiFlood] existing ban record for ${ip}, strikes=${ban.strikes}, bannedUntil=${ban.bannedUntil}`);
             
             if (ban.strikes >= this.maxStrikes) {
-                console.log(`[AntiFlood] BLOCKED - ip ${ip} has maxStrikes from persisted ban`);
+                this.log('error', `[AntiFlood] BLOCKED - ip ${ip} has maxStrikes from persisted ban`);
                 return true;
             }
 
             if (ban.bannedUntil && new Date(ban.bannedUntil).getTime() > now) {
-                console.log(`[AntiFlood] BLOCKED - ip ${ip} under DB ban until ${new Date(ban.bannedUntil).toISOString()}`);
+                this.log('error', `[AntiFlood] BLOCKED - ip ${ip} under DB ban until ${new Date(ban.bannedUntil).toISOString()}`);
                 return true;
             }
         }
@@ -117,7 +160,7 @@ export class AntiFloodService implements OnModuleInit {
         const record = this.getRecord(ip);
 
         if (record.blockedUntil && record.blockedUntil.getTime() > now) {
-            console.log(`[AntiFlood] BLOCKED - ip ${ip} still under temp block until ${record.blockedUntil.toISOString()}`);
+            this.log('error', `[AntiFlood] BLOCKED - ip ${ip} still under temp block until ${record.blockedUntil.toISOString()}`);
             return true;
         }
 
@@ -125,34 +168,39 @@ export class AntiFloodService implements OnModuleInit {
 
         record.requests.push(now);
 
-        const routeKey = req.path || '/';
-        let routeHits = record.routes.get(routeKey);
-        if (!routeHits) {
-            routeHits = [];
-            record.routes.set(routeKey, routeHits);
-        }
+        const routeKey = type === 'route' ? (req.path || '/') : `__${type}__`;
+        const routeHits = record.routes.get(routeKey) || [];
         routeHits.push(now);
+        record.routes.set(routeKey, routeHits);
 
+        // Probes are counted per IP, not per route, because we care about the
+        // overall probing rate of a client rather than which paths they hit.
         if (this.isProbe(req)) {
             record.probes += 1;
         }
 
-        console.log(`[AntiFlood] COUNTS ip=${ip} path=${routeKey} totalReq=${record.requests.length}/${this.maxRequestsPerWindow} routeReq=${routeHits.length}/${this.maxRequestsPerRoutePerWindow} probes=${record.probes}/${this.maxProbes} clientMapSize=${this.clients.size}`);
+        this.log('debug', `[AntiFlood] COUNTS ip=${ip} type=${type} totalReq=${record.requests.length}/${this.maxRequestsPerWindow} routeReq=${routeHits.length} probes=${record.probes}/${this.maxProbes} clientMapSize=${this.clients.size}`);
+
+        if (type === '404' && routeHits.length >= this.max404RequestsPerWindow) {
+            this.log('error', `[AntiFlood] BLOCKING - ip ${ip} exceeded max404RequestsPerWindow`);
+            await this.blockClient(req, record, now);
+            return true;
+        }
+
+        if (type === 'serve' && routeHits.length >= this.maxServeRequestsPerWindow) {
+            this.log('error', `[AntiFlood] BLOCKING - ip ${ip} exceeded maxServeRequestsPerWindow`);
+            await this.blockClient(req, record, now);
+            return true;
+        }
 
         if (record.probes >= this.maxProbes) {
-            console.log(`[AntiFlood] BLOCKING - ip ${ip} exceeded maxProbes`);
+            this.log('error', `[AntiFlood] BLOCKING - ip ${ip} exceeded maxProbes`);
             await this.blockClient(req, record, now);
             return true;
         }
 
-        if (record.requests.length > this.maxRequestsPerWindow) {
-            console.log(`[AntiFlood] BLOCKING - ip ${ip} exceeded maxRequestsPerWindow`);
-            await this.blockClient(req, record, now);
-            return true;
-        }
-
-        if (routeHits.length > this.maxRequestsPerRoutePerWindow) {
-            console.log(`[AntiFlood] BLOCKING - ip ${ip} exceeded maxRequestsPerRoutePerWindow on ${routeKey}`);
+        if (record.requests.length >= this.maxRequestsPerWindow) {
+            this.log('error', `[AntiFlood] BLOCKING - ip ${ip} exceeded maxRequestsPerWindow`);
             await this.blockClient(req, record, now);
             return true;
         }
@@ -171,24 +219,25 @@ export class AntiFloodService implements OnModuleInit {
 
         try {
             const ban = await AntifloodBans.recordStrike(req);
-            console.log(`[AntiFlood] recordStrike(${this.getIp(req)}) resolved:`, ban.ip);
-            this.logger.warn(`Blocking client IP: ${this.getIp(req)}. Current strikes: ${ban.strikes}`);
+            const ip = this.getIp(req);
+            this.log('warn', `[AntiFlood] recordStrike(${ip}) resolved: ${ban.ip}`);
+            this.log('warn', `Blocking client IP: ${ip}. Current strikes: ${ban.strikes}`);
             
             if (ban.strikes < this.maxStrikes) {
                 record.blockedUntil = blockedUntilDate;
             } else {
                 record.permaBan = true;
-                this.logger.error(`Client IP: ${this.getIp(req)} has been permanently banned.`);
+                this.log('error', `Client IP: ${ip} has been permanently banned.`);
             }
         } catch (err) {
-            console.error(`[AntiFlood] AntifloodBans.recordStrike(${this.getIp(req)}) THREW - in-memory temp block still applied (bannedUntil set), but persisted strike count was NOT recorded. Error:`, err);
+            this.log('error', `[AntiFlood] AntifloodBans.recordStrike(${this.getIp(req)}) THREW - in-memory temp block still applied (bannedUntil set), but persisted strike count was NOT recorded. Error: ${err instanceof Error ? err.message : String(err)}`);
         }
     }
 
     private getRecord(ip: string): IAntiFloodClientRecord {
         let record = this.clients.get(ip);
         if (!record) {
-            console.log(`[AntiFlood] NEW client record created for ip=${ip}`);
+            this.log('debug', `[AntiFlood] NEW client record created for ip=${ip}`);
             record = {
                 requests: [],
                 routes: new Map(),
@@ -205,8 +254,10 @@ export class AntiFloodService implements OnModuleInit {
         const beforeCount = record.requests.length;
         record.requests = record.requests.filter(t => now - t <= this.windowS);
         if (beforeCount !== record.requests.length) {
-            console.log(`[AntiFlood] cleanOld trimmed requests ${beforeCount} -> ${record.requests.length}`);
+            this.log('debug', `[AntiFlood] cleanOld trimmed requests ${beforeCount} -> ${record.requests.length}`);
         }
+
+        // Clean old route-specific records
         for (const [route, hits] of record.routes.entries()) {
             const fresh = hits.filter(t => now - t <= this.windowS);
             if (fresh.length === 0) {
@@ -221,10 +272,10 @@ export class AntiFloodService implements OnModuleInit {
         const forwarded = req.headers['x-forwarded-for'];
         if (typeof forwarded === 'string') {
             const ip = forwarded.split(',')[0].trim();
-            console.log(`[AntiFlood] getIp using x-forwarded-for header: "${forwarded}" -> ${ip}`);
+            this.log('debug', `[AntiFlood] getIp using x-forwarded-for header: "${forwarded}" -> ${ip}`);
             return ip;
         }
-        console.log(`[AntiFlood] getIp using req.ip: ${req.ip}`);
+        this.log('debug', `[AntiFlood] getIp using req.ip: ${req.ip}`);
         return req.ip || 'unknown';
     }
 
@@ -240,7 +291,7 @@ export class AntiFloodService implements OnModuleInit {
 
         for (const agent of this.suspiciousAgents) {
             if (ua.includes(agent)) {
-                console.log(`[AntiFlood] PROBE detected via suspicious agent "${agent}" ua="${ua}"`);
+                this.log('warn', `[AntiFlood] PROBE detected via suspicious agent "${agent}" ua="${ua}"`);
                 return true;
             }
         }
