@@ -9,6 +9,9 @@ class AntifloodBans extends RWSModel<AntifloodBans> implements IAntifloodBansMod
     })
     ip: string;
 
+    @TrackType(String)
+    url: string;
+
     @TrackType(String, { required: true })
     agent: string;
 
@@ -38,6 +41,7 @@ class AntifloodBans extends RWSModel<AntifloodBans> implements IAntifloodBansMod
         antifloodBan.agent = req.headers['user-agent'] || '';
         antifloodBan.requestData = requestData;
         antifloodBan.strikes = 1;
+        antifloodBan.url = req.originalUrl;
         antifloodBan.bannedUntil = new Date(Date.now() + (15 * 60 * 1000));
         antifloodBan.created_at = new Date();
 
@@ -53,9 +57,10 @@ class AntifloodBans extends RWSModel<AntifloodBans> implements IAntifloodBansMod
         const ban = Array.isArray(existing) ? existing[0] : existing;
 
         if (ban) {
+            ban.url = req.originalUrl;
             ban.strikes += 1;
             if (ban.strikes < 3) {
-                ban.bannedUntil = Date.now() + (15 * 60 * 1000);
+                ban.bannedUntil = new Date(Date.now() + (15 * 60 * 1000));
             } else {
                 ban.permaBan = true;
             }
