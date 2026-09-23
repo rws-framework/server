@@ -119,7 +119,7 @@ export class AntiFloodService implements OnModuleInit {
 
         for (const ignoredPath of this.ignorePaths) {
             if ((req.path || '/').includes(ignoredPath)) {
-                this.log('warn', `[AntiFlood] SKIPPED - path "${req.path}" matched ignorePath "${ignoredPath}"`);
+                // this.log('warn', `[AntiFlood] SKIPPED - path "${req.path}" matched ignorePath "${ignoredPath}"`);
                 return false;
             }
         }        
