@@ -152,8 +152,6 @@ export abstract class RWSGateway implements ITheGateway {
         // Also support token/apiKey passed via socket.io client auth option
         const socketAuth = socket.handshake.auth;
 
-        console.log({socketAuth});
-
         if(socketAuth?.token && socketAuth?.customTokenName){
             return { token: socketAuth.token, type: 'Custom', customName: socketAuth.customTokenName };
         }

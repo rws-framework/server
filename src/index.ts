@@ -36,6 +36,7 @@ import { Helper } from './helpers/_helper';
 import { RealtimePoint } from './gateways/_realtimePoint';
 
 import AntifloodBans from './models/AntifloodBans.model';
+import { IgnoreAntiflood } from '../nest/decorators/IgnoreAntiflood';
 
 export {    
     RWSCommand,
@@ -75,5 +76,6 @@ export {
     RWSAutoApiController,
     InjectServices,
     CLIModule, RWSCliBootstrap,  
-    AntifloodBans      
+    AntifloodBans,
+    IgnoreAntiflood      
 };
