@@ -38,17 +38,19 @@ export function applyRWSRouteMetadata(target: any): void {
     const routes = BootstrapRegistry.getConfig().http_routes as RWSHTTPRoutingEntry[];
 
     // Resolve route configs and sort by priority (higher first) before applying NestJS decorators
-    const resolvedEntries: { propertyKey: string; meta: { routeName: string; options: IRouteParams }; routeConfig: IHTTProute }[] = [];
+    const resolvedEntries: { propertyKey: string; meta: { routeName: string; options: IRouteParams }; routeConfig: IHTTProute; routePrefix: string }[] = [];
 
     for (const [propertyKey, meta] of Object.entries(deferredRoutes) as [string, { routeName: string; options: IRouteParams }][]) {
         const { routeName } = meta;
 
         let routeConfig: IHTTProute | undefined;
+        let routePrefix = '';
         for (const entry of routes) {
             if (isPrefixedRoutes(entry)) {
                 const route = entry.routes.find(r => r.name === routeName);
                 if (route) {
                     routeConfig = route;
+                    routePrefix = entry.prefix;
                     break;
                 }
             } else if (entry.name === routeName) {
@@ -61,13 +63,13 @@ export function applyRWSRouteMetadata(target: any): void {
             throw new Error(`No route configuration found for route name: ${routeName}`);
         }
 
-        resolvedEntries.push({ propertyKey, meta, routeConfig });
+        resolvedEntries.push({ propertyKey, meta, routeConfig, routePrefix });
     }
 
     // Sort by priority descending — higher priority routes get registered first
     resolvedEntries.sort((a, b) => (b.routeConfig.priority ?? 0) - (a.routeConfig.priority ?? 0));
 
-    for (const { propertyKey, meta, routeConfig } of resolvedEntries) {
+    for (const { propertyKey, meta, routeConfig, routePrefix } of resolvedEntries) {
         const descriptor = Object.getOwnPropertyDescriptor(target.prototype, propertyKey);
         if (!descriptor) continue;
 
@@ -76,12 +78,16 @@ export function applyRWSRouteMetadata(target: any): void {
         // Store route metadata for RouterService to read
         const existingRoutes = Reflect.getMetadata('routes', target) || {};
         const ignoreAntiflood = Reflect.getMetadata(RWS_IGNORE_ANTIFLOOD_KEY, descriptor.value) === true;
+        const paths = Array.isArray(routeConfig.path) ? routeConfig.path : [routeConfig.path];
+        const fullPaths = paths.map(p => (routePrefix + p).replace(/\/+/g, '/'));
+
         existingRoutes[propertyKey] = {
             annotationType: 'Route',
             metadata: {
                 name: routeName,
                 method: routeConfig.method.toUpperCase(),
                 path: routeConfig.path,
+                fullPath: fullPaths.length === 1 ? fullPaths[0] : fullPaths,
                 params: options,
                 ignoreAntiflood
             }

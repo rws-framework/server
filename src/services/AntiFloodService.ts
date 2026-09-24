@@ -29,6 +29,8 @@ export class AntiFloodService implements OnModuleInit {
 
     private readonly suspiciousAgents: string[] = [];
 
+    private readonly requestTimestamps = new WeakMap<Request, { now: number; type: 'route' | '404' | 'serve'; probe: boolean }>();
+
     constructor(
         private readonly config: RWSConfigService<IAppConfig>,
         private readonly routerService: RouterService
@@ -75,7 +77,7 @@ export class AntiFloodService implements OnModuleInit {
             for (const methodName of Object.keys(annotations)) {
                 const meta = annotations[methodName]?.metadata;
                 if (meta?.ignoreAntiflood) {
-                    const path = meta.path;
+                    const path = meta.fullPath || meta.path;
                     if (Array.isArray(path)) {
                         this.ignorePaths.push(...path);
                     } else if (typeof path === 'string') {
@@ -166,6 +168,14 @@ export class AntiFloodService implements OnModuleInit {
 
         this.cleanOld(record, now);
 
+        const requestMeta = { now, type, probe: false };
+
+        // Only cache metadata for serve requests so 304 rollbacks do not
+        // affect or retain state for other request types.
+        if (type === 'serve') {
+            this.requestTimestamps.set(req, requestMeta);
+        }
+
         record.requests.push(now);
 
         const routeKey = type === 'route' ? (req.path || '/') : `__${type}__`;
@@ -176,6 +186,7 @@ export class AntiFloodService implements OnModuleInit {
         // Probes are counted per IP, not per route, because we care about the
         // overall probing rate of a client rather than which paths they hit.
         if (this.isProbe(req)) {
+            requestMeta.probe = true;
             record.probes += 1;
         }
 
@@ -211,6 +222,56 @@ export class AntiFloodService implements OnModuleInit {
     isRouteIgnored(controller: any, methodName: string): boolean {
         const annotations = this.routerService.getRouterAnnotations(controller);
         return annotations[methodName]?.metadata?.ignoreAntiflood === true;
+    }
+
+    rollbackCachedRequest(req: Request): void {
+        const entry = this.requestTimestamps.get(req);
+        if (!entry) {
+            this.log('debug', `[AntiFlood] ROLLBACK skipped - no cached request metadata for ${req.path}`);
+            return;
+        }
+
+        const ip = this.getIp(req);
+        this.log('debug', `[AntiFlood] ROLLBACK starting for ip=${ip} path=${req.path} type=${entry.type} probe=${entry.probe} ts=${entry.now}`);
+
+        const record = this.clients.get(ip);
+        if (record) {
+            const requestIdx = record.requests.lastIndexOf(entry.now);
+            if (requestIdx !== -1) {
+                record.requests.splice(requestIdx, 1);
+                this.log('debug', `[AntiFlood] ROLLBACK removed request timestamp for ip=${ip} totalReq=${record.requests.length}`);
+            } else {
+                this.log('warn', `[AntiFlood] ROLLBACK request timestamp not found for ip=${ip} ts=${entry.now}`);
+            }
+
+            const routeKey = entry.type === 'route' ? (req.path || '/') : `__${entry.type}__`;
+            const routeHits = record.routes.get(routeKey);
+            if (routeHits) {
+                const routeIdx = routeHits.lastIndexOf(entry.now);
+                if (routeIdx !== -1) {
+                    routeHits.splice(routeIdx, 1);
+                    this.log('debug', `[AntiFlood] ROLLBACK removed route hit for ip=${ip} route=${routeKey} routeReq=${routeHits.length}`);
+                } else {
+                    this.log('warn', `[AntiFlood] ROLLBACK route hit not found for ip=${ip} route=${routeKey} ts=${entry.now}`);
+                }
+                if (routeHits.length === 0) {
+                    record.routes.delete(routeKey);
+                    this.log('debug', `[AntiFlood] ROLLBACK deleted empty route key for ip=${ip} route=${routeKey}`);
+                }
+            } else {
+                this.log('warn', `[AntiFlood] ROLLBACK route key not found for ip=${ip} route=${routeKey}`);
+            }
+
+            if (entry.probe) {
+                record.probes = Math.max(0, record.probes - 1);
+                this.log('debug', `[AntiFlood] ROLLBACK decremented probe counter for ip=${ip} probes=${record.probes}`);
+            }
+        } else {
+            this.log('warn', `[AntiFlood] ROLLBACK no client record found for ip=${ip}`);
+        }
+
+        this.requestTimestamps.delete(req);
+        this.log('debug', `[AntiFlood] ROLLBACK completed for ip=${ip} path=${req.path}`);
     }
 
     private async blockClient(req: Request, record: IAntiFloodClientRecord, now: number): Promise<void> {

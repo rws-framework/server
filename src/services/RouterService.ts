@@ -72,6 +72,13 @@ class RouterService {
         return Reflect.getMetadata('routes', constructor) || {};
     }
 
+    // Method to get controller name/path from metadata - used by antiflood ignore path builder
+    getControllerName(constructor: Controller): string | undefined {
+        return Reflect.getMetadata('path', constructor)
+            || Reflect.getMetadata('name', constructor)
+            || Reflect.getMetadata('controllerName', constructor);
+    }
+
     // Utility methods kept for compatibility
     hasRoute(routePath: string, routes: IHTTProute[]): boolean {
         return this.getRoute(routePath, routes) !== null;

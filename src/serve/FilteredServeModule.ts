@@ -63,13 +63,19 @@ export class FilteredServeModule implements NestModule {
                     return;
                 }
 
-                if(await this.antifloodService.shouldBlock(req, 'serve')){
+                if (await this.antifloodService.shouldBlock(req, 'serve')) {
                     res.status(429).send('Too many requests');
                     return;
                 }
 
                 const originalUrl = req.url;        
                 req.url = '.' + pathname;               
+
+                res.once('finish', () => {
+                    if (res.statusCode === 304) {
+                        this.antifloodService.rollbackCachedRequest(req);
+                    }
+                });
   
                 staticMiddleware(req, res, (err) => {
                     req.url = originalUrl;
