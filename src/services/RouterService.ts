@@ -40,7 +40,9 @@ class RouterService {
                  routes.push({
                     path: parent ? parent.prefix + itemRoute : itemRoute,
                     name: item.name,
-                    method: item.method
+                    method: item.method,
+                    redirect: item.redirect,
+                    priority: item.priority
                 });
             }
             return;
@@ -49,7 +51,9 @@ class RouterService {
         routes.push({
             path: parent ? parent.prefix + item.path : item.path,
             name: item.name,
-            method: item.method
+            method: item.method,
+            redirect: item.redirect,
+            priority: item.priority
         });
     }
 

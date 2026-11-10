@@ -63,7 +63,7 @@ export function applyDeferredControllerMetadata(target: any): any {
       }
     }
   
-    throw new Error(`No controller "${controllerName}" defined in routes`);
+    throw new Error(`No route "${controllerName}" defined in routes`);
 }
 
 export function applyAllDeferredMetadata(): void {

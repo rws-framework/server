@@ -5,6 +5,7 @@ interface IHTTProute<P = {[key: string]: any}> {
     path: string | string[];  
     method: string;
     priority?: number;
+    redirect?: string | false;
     noParams?: boolean;
     options?: IRouteParams;
     plugins?: P
@@ -13,7 +14,7 @@ interface IHTTProute<P = {[key: string]: any}> {
 interface IPrefixedHTTProutes<P = {[key: string]: any}> {
     prefix: string;
     exportAutoRoutes?: boolean;
-    controllerName: string;
+    controllerName?: string;
     routes: IHTTProute<P>[];
 }
 

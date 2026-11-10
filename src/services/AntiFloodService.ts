@@ -135,6 +135,8 @@ export class AntiFloodService implements OnModuleInit {
             return false;
         }
 
+        const record = this.getRecord(ip);
+
         let existingBan: any = null;
         try {
             existingBan = await AntifloodBans.findOneBy({ conditions: { ip } });
@@ -159,12 +161,9 @@ export class AntiFloodService implements OnModuleInit {
             }
         }
 
-        const record = this.getRecord(ip);
-
-        if (record.blockedUntil && record.blockedUntil.getTime() > now) {
-            this.log('error', `[AntiFlood] BLOCKED - ip ${ip} still under temp block until ${record.blockedUntil.toISOString()}`);
-            return true;
-        }
+        // DB ban was removed or expired — clear stale in-memory block
+        record.blockedUntil = null;
+        record.permaBan = false;
 
         this.cleanOld(record, now);
 
