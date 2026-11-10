@@ -229,6 +229,31 @@ export function applyRWSRouteMetadata(target: any): void {
         Object.defineProperty(target.prototype, propertyKey, descriptor);
     }
 
+    // Reorder controller prototype methods so NestJS discovers them in priority order.
+    // NestJS scans methods in prototype property definition order, so routes defined
+    // later in the class (e.g. /:id) can shadow more specific routes (e.g. /category).
+    // By deleting and re-adding route methods in sorted priority order we ensure
+    // higher-priority routes are registered first.
+    const prototype = target.prototype;
+    const routeMethodKeys = new Set(resolvedEntries.map(e => e.propertyKey));
+    const savedDescriptors = new Map<string, PropertyDescriptor>();
+
+    for (const key of Object.getOwnPropertyNames(prototype)) {
+        if (key === 'constructor') continue;
+        const descriptor = Object.getOwnPropertyDescriptor(prototype, key);
+        if (descriptor && routeMethodKeys.has(key)) {
+            savedDescriptors.set(key, descriptor);
+            delete (prototype as any)[key];
+        }
+    }
+
+    for (const { propertyKey } of resolvedEntries) {
+        const descriptor = savedDescriptors.get(propertyKey);
+        if (descriptor) {
+            Object.defineProperty(prototype, propertyKey, descriptor);
+        }
+    }
+
     // Auto-generate redirect handlers for routes in this controller's group that have a redirect
     // but no explicit method on the controller.
     if (controllerName) {
